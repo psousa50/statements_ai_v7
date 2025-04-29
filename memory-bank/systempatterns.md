@@ -1,4 +1,3 @@
-
 # System Patterns
 
 ## Architecture
@@ -7,131 +6,151 @@ The application follows a service-oriented architecture, composed of a React fro
 
 ### Backend
 
-Please structure the code using Hexagonal Architecture (Ports and Adapters):
+The backend follows Hexagonal Architecture (Ports and Adapters):
 
-- The router/controller should depend only on an application service, not on infrastructure details.
-- The application service should implement the business logic and use ports (interfaces) to interact with external systems like databases or message brokers.
-- The actual infrastructure code (e.g., database repositories) should be implemented as adapters and injected via ports.
-- The domain logic should be isolated, testable, and independent of frameworks and infrastructure.
-- Follow separation of concerns across all layers.
+- The router/controller depends only on an application service, not on infrastructure details.
+- The application service implements the business logic and uses ports (interfaces) to interact with external systems like databases.
+- The actual infrastructure code (database repositories) is implemented as adapters and injected via ports.
+- The domain logic is isolated, testable, and independent of frameworks and infrastructure.
+- There is clear separation of concerns across all layers.
 - No database access or business logic in route handlers.
-- Favor dependency injection and clean, idiomatic code.
+- Dependency injection is used for clean, idiomatic code.
 
 ### Frontend
 
-Please follow a modular and production-ready architecture for the frontend:
+The frontend follows a modular and production-ready architecture:
 
-- No direct HTTP calls inside components (e.g. no fetch or axios inside useEffect)
-- Use a typed API client layer (e.g. built with axios or fetch) that wraps all HTTP requests
-- The API client should be injected via context, using something like a React Provider, hoist-non-react-statics, or hoax
-- Pages and components should depend only on a clean interface to the API (e.g. BankStatementApi.getList()), not on HTTP details
-- The client should be mockable and testable, to enable UI tests without needing a real backend
-- Use hooks to expose business operations (e.g. useBankStatements) and keep components clean
-- Maintain separation between presentation, hooks, and data-fetching logic
+- No direct HTTP calls inside components (no fetch or axios inside useEffect)
+- A typed API client layer (built with axios) wraps all HTTP requests
+- Pages and components depend only on a clean interface to the API (e.g. TransactionsApi.getAll()), not on HTTP details
+- Hooks expose business operations (e.g. useTransactions) and keep components clean
+- There is clear separation between presentation, hooks, and data-fetching logic
 
 ## Key Components
 
 ### Backend (FastAPI)
 
-- File upload API
-- Statement parsing (CSV, Excel)
+- Transaction API (create, read, update, delete)
 - Transaction storage and retrieval
-- Categorization logic (manual, possibly rule-based)
-- Export endpoint (CSV or JSON)
-- Authentication (JWT or session-based)
+- (Planned) File upload API
+- (Planned) Statement parsing (CSV, Excel)
+- (Planned) Categorization logic
+- (Planned) Export endpoint
+- (Planned) Authentication
 
 ### Frontend (React)
 
-- File upload interface (drag-and-drop + file selector)
-- Table view for extracted transactions
-- UI to categorize/edit/export transactions
-- Authentication (if needed)
+- Transaction form for adding new transactions
+- Transaction table for displaying transactions
+- (Planned) File upload interface
+- (Planned) UI to categorize/edit/export transactions
+- (Planned) Authentication
 
 ### Database (PostgreSQL)
 
-- Users
-- Uploaded statements
-- Transactions
-- Categories
+- Transactions table
+- (Planned) Users table
+- (Planned) Uploaded statements table
+- (Planned) Categories table
 
 ### Testing
 
-- **Backend:** pytest
-- **Frontend:** vitest (unit), Playwright (e2e)
+- (Planned) Backend: pytest
+- (Planned) Frontend: vitest (unit), Playwright (e2e)
 
 ### Deployment
 
-- GitHub Actions for CI/CD
-- Docker for containerization
-- Run unit tests on containers
-- Deploy the backend and frontend in test mode to Fly.io. Use a branched Neon database from a clean one.
-- Run e2e tests (Playwright) on the deployed app in test
-- Deploy the backend and frontend in dev mode to Fly.io Use a dev database in Neon
-- Deploy the backend and frontend in prod mode to Render. Use a prod database in Render
-
+- (Planned) GitHub Actions for CI/CD
+- (Planned) Docker for containerization
+- (Planned) Deploy to Render
 
 ## 📁 Project Structure
 
 ### Backend Structure
 
+The actual implemented structure for the steel thread:
+
 ```text
 bank-statements-api/
 ├── app/
 │   ├── api/                  # FastAPI routers
-│   │   ├── upload.py
-│   │   ├── transactions.py
-│   │   └── export.py
+│   │   ├── schemas.py        # Pydantic schemas
+│   │   └── transactions.py   # Transaction endpoints
 │   ├── core/                 # Core settings and startup logic
-│   │   ├── config.py
-│   │   └── security.py
-│   ├── db/                   # DB models and session
-│   │   ├── base.py
-│   │   ├── models/
-│   │   └── schemas/
-│   ├── services/             # Business logic (parse files, categorize, etc.)
-│   ├── tasks/                # Background tasks (optional)
-│   ├── utils/                # File parsers (CSV/XLSX)
+│   │   ├── config.py         # Configuration settings
+│   │   └── database.py       # Database connection
+│   ├── domain/               # Domain models
+│   │   └── models/
+│   │       └── transaction.py # Transaction model
+│   ├── ports/                # Repository interfaces
+│   │   └── repositories/
+│   │       └── transaction.py # Transaction repository interface
+│   ├── adapters/             # Repository implementations
+│   │   └── repositories/
+│   │       └── transaction.py # Transaction repository implementation
+│   ├── services/             # Application services
+│   │   └── transaction.py    # Transaction service
+│   ├── db_init.py            # Database initialization
 │   └── main.py               # FastAPI app instance
-├── tests/
-│   ├── unit/
-│   └── integration/
-├── alembic/                  # DB migrations
-├── pyproject.toml
-└── Dockerfile
+├── run.py                    # Script to run the application
+├── pyproject.toml            # Dependencies
+└── .env                      # Environment variables
 ```
 
 ### Frontend Structure
 
+The actual implemented structure for the steel thread:
+
 ```text
 bank-statements-web/
-├── public/
 ├── src/
-│   ├── components/
-│   ├── pages/
-│   ├── services/            # API clients
-│   ├── types/
-│   ├── utils/
-│   └── App.tsx
-├── tests/
-│   ├── unit/
-├── vite.config.ts
-├── package.json
-└── Dockerfile
-
-e2e/
-│   └── bank-statements-web/
-│       ├── tests/
-│       ├── playwright.config.ts
-│       └── package.json
+│   ├── components/           # UI components
+│   │   ├── TransactionForm.tsx # Form to add transactions
+│   │   └── TransactionTable.tsx # Table to display transactions
+│   ├── pages/                # Page components
+│   │   └── Transactions.tsx  # Main transactions page
+│   ├── services/             # API clients and hooks
+│   │   ├── api/
+│   │   │   └── transactions.ts # API client for transactions
+│   │   └── hooks/
+│   │       └── useTransactions.ts # Hook for transaction operations
+│   ├── types/                # TypeScript types
+│   │   └── Transaction.ts    # Transaction type definitions
+│   ├── App.tsx               # Main app component
+│   ├── main.tsx              # Entry point
+│   ├── App.css               # Component styles
+│   └── index.css             # Global styles
+├── vite.config.ts            # Vite configuration
+├── tsconfig.json             # TypeScript configuration
+├── tsconfig.node.json        # TypeScript configuration for Node
+└── package.json              # Dependencies
 ```
 
 ## Design Patterns
 
-- **Hexagonal Architecture (Ports and Adapters)**: Clear separation between the core domain logic (services) and external interfaces (API, DB, file parsers).
-- **Service Layer**: Encapsulates business logic such as categorization and parsing.
+- **Hexagonal Architecture (Ports and Adapters)**: Clear separation between the core domain logic (services) and external interfaces (API, DB).
+- **Service Layer**: Encapsulates business logic.
 - **Repository Pattern**: Abstracts database operations to keep business logic decoupled from persistence concerns.
+- **Dependency Injection**: Services and repositories are injected where needed.
+- **React Hooks**: Custom hooks encapsulate business logic and state management.
+- **API Client Layer**: Abstracts HTTP details from components.
 
 ## Data Flow
+
+### Current Implementation (Steel Thread)
+
+1. **User Adds Transaction**:
+   - User fills out the transaction form in the frontend.
+   - Frontend sends the transaction data to the backend API.
+   - Backend validates and stores the transaction in the database.
+   - Frontend refreshes the transaction list.
+
+2. **User Views Transactions**:
+   - Frontend fetches transactions from the backend API.
+   - Backend retrieves transactions from the database.
+   - Frontend displays transactions in a table.
+
+### Planned Implementation
 
 1. **User Uploads File**: File is sent from the frontend to the FastAPI backend.
 2. **File Processing**:
@@ -147,8 +166,9 @@ e2e/
 
 ## Critical Paths
 
-- **File Upload and Parsing**: Ensures the system can handle various formats and accurately extract data.
+- **Transaction Management**: Adding, viewing, updating, and deleting transactions.
+- **File Upload and Parsing**: (Planned) Handling various formats and accurately extracting data.
 - **Data Persistence**: Correctly storing and indexing transaction data for retrieval and categorization.
-- **Categorization Flow**: Providing a clean and intuitive way for users to review and categorize transactions.
-- **Export Functionality**: Reliable conversion of structured data into downloadable formats.
-- **Testing and CI/CD**: Ensure stability and confidence in changes through automated pipelines.
+- **Categorization Flow**: (Planned) Providing a clean and intuitive way for users to review and categorize transactions.
+- **Export Functionality**: (Planned) Reliable conversion of structured data into downloadable formats.
+- **Testing and CI/CD**: (Planned) Ensure stability and confidence in changes through automated pipelines.
