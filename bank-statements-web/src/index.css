@@ -1,4 +1,4 @@
-:root {
+    :root {
   font-family: Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
@@ -38,5 +38,25 @@ h1 {
   }
   button {
     background-color: #1a1a1a;
+  }
+  .positive {
+    color: #5aff83; /* Even brighter green for dark mode */
+    font-weight: bold; /* Make it bold for better visibility */
+  }
+  .negative {
+    color: #ff8080; /* Even brighter red for dark mode */
+    font-weight: bold; /* Make it bold for better visibility */
+  }
+  /* Ensure table text is visible in dark mode */
+  th, td {
+    color: rgba(255, 255, 255, 0.87);
+  }
+  /* Ensure table headers are visible */
+  th {
+    background-color: #333;
+  }
+  /* Ensure table hover effect is visible */
+  tr:hover {
+    background-color: #333;
   }
 }

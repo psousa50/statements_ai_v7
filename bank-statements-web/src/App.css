@@ -11,6 +11,13 @@
   color: #333;
 }
 
+/* Dark mode styles for page title */
+@media (prefers-color-scheme: dark) {
+  .transactions-page h1 {
+    color: rgba(255, 255, 255, 0.87);
+  }
+}
+
 .error-message {
   background-color: #f8d7da;
   color: #721c24;
@@ -43,6 +50,28 @@
   margin-top: 0;
   margin-bottom: 1.5rem;
   color: #333;
+}
+
+/* Dark mode styles for transaction form */
+@media (prefers-color-scheme: dark) {
+  .transaction-form {
+    background-color: #333;
+    box-shadow: 0 2px 4px rgba(255, 255, 255, 0.1);
+  }
+  
+  .transaction-form h2 {
+    color: rgba(255, 255, 255, 0.87);
+  }
+  
+  .form-group label {
+    color: rgba(255, 255, 255, 0.87);
+  }
+  
+  .form-group input {
+    background-color: #444;
+    color: rgba(255, 255, 255, 0.87);
+    border-color: #555;
+  }
 }
 
 .form-group {
@@ -97,6 +126,18 @@ button:disabled {
   color: #333;
 }
 
+/* Dark mode styles for transaction table */
+@media (prefers-color-scheme: dark) {
+  .transaction-table {
+    background-color: #333;
+    box-shadow: 0 2px 4px rgba(255, 255, 255, 0.1);
+  }
+  
+  .transaction-table h2 {
+    color: rgba(255, 255, 255, 0.87);
+  }
+}
+
 table {
   width: 100%;
   border-collapse: collapse;
@@ -117,6 +158,22 @@ tr:hover {
   background-color: #f8f9fa;
 }
 
+/* Dark mode styles for table elements */
+@media (prefers-color-scheme: dark) {
+  th, td {
+    border-bottom: 1px solid #555;
+    color: rgba(255, 255, 255, 0.87);
+  }
+  
+  th {
+    background-color: #444;
+  }
+  
+  tr:hover {
+    background-color: #444;
+  }
+}
+
 .positive {
   color: #28a745;
 }
@@ -129,4 +186,11 @@ tr:hover {
   text-align: center;
   padding: 2rem;
   color: #6c757d;
+}
+
+/* Dark mode styles for loading and no-data messages */
+@media (prefers-color-scheme: dark) {
+  .loading, .no-data {
+    color: #adb5bd;
+  }
 }
