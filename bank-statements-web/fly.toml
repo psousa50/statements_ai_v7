@@ -4,6 +4,9 @@ primary_region = "fra"
 [build]
 dockerfile = "Dockerfile"
 
+[build.args]
+VITE_API_URL = "https://bank-statements-api-test.fly.dev"
+
 [env]
 
 [http_service]

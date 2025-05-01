@@ -53,5 +53,3 @@ jobs:
           app_name: bank-statements-web-test
           region: fra
           working_directory: bank-statements-web
-          secrets: |
-            VITE_API_URL=https://bank-statements-api-test.fly.dev

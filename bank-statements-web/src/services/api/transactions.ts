@@ -5,7 +5,9 @@ import {
   TransactionListResponse,
 } from '../../types/Transaction';
 
-const API_URL = '/api/v1/transactions';
+// Use the VITE_API_URL environment variable for the base URL, or default to '' for local development
+const BASE_URL = import.meta.env.VITE_API_URL || '';
+const API_URL = `${BASE_URL}/api/v1/transactions`;
 
 export const TransactionsApi = {
   /**
