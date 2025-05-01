@@ -16,6 +16,7 @@ This steel thread follows the architectural patterns and principles that will be
 - Implemented the backend API with FastAPI following Hexagonal Architecture
 - Implemented the frontend with React, TypeScript, and Vite
 - Set up the database schema for transactions
+- Implemented end-to-end testing with Playwright for the TransactionPage
 
 ## Next Steps
 
@@ -24,7 +25,7 @@ This steel thread follows the architectural patterns and principles that will be
 - Implement data visualization
 - Add user authentication
 - Add export functionality
-- Set up end-to-end testing with Playwright
+- Expand end-to-end testing coverage with additional Playwright tests
 
 ## Decisions
 
@@ -45,3 +46,5 @@ This steel thread follows the architectural patterns and principles that will be
 - The steel thread approach allows us to validate the architecture and design patterns early in the development process
 - A comprehensive CI/CD pipeline ensures consistent and reliable deployments
 - Using different environments (test, dev, prod) allows for proper testing before production deployment
+- End-to-end testing with Playwright provides confidence in the application's functionality from a user's perspective
+- Using the API for test data setup and teardown makes end-to-end tests more reliable and faster than UI-only tests

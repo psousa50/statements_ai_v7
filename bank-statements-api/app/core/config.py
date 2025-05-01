@@ -12,6 +12,6 @@ class Settings(BaseSettings):
     DATABASE_URL: str = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/bank_statements")
     
     # CORS settings
-    BACKEND_CORS_ORIGINS: list = ["http://localhost:5173", "https://bank-statements-web-test.fly.dev"]
+    BACKEND_CORS_ORIGINS: list = ["*", "http://localhost:5173", "https://bank-statements-web-test.fly.dev"]
 
 settings = Settings()

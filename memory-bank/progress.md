@@ -6,6 +6,13 @@ The project is in the initial development phase. A steel thread implementation h
 
 ## Completed Tasks
 
+- 2025-05-01: Implemented end-to-end testing with Playwright
+  - Created Playwright project structure in e2e/bank-statements-web
+  - Implemented API helper functions for test data setup and teardown
+  - Created test for TransactionPage that verifies API-created transactions appear in the UI
+  - Added robust error handling and test isolation with unique transaction identifiers
+  - Created documentation for running and extending the tests
+
 - 2025-04-29: Implemented CI/CD pipeline
   - Created GitHub Actions workflows for CI/CD
   - Set up containerization with Docker
@@ -28,7 +35,7 @@ The project is in the initial development phase. A steel thread implementation h
 - Implement data visualization
 - Add user authentication
 - Add export functionality
-- Set up end-to-end testing with Playwright
+- Expand end-to-end testing coverage with additional Playwright tests
 - Configure GitHub secrets for CI/CD
 
 ## Issues
@@ -36,6 +43,15 @@ The project is in the initial development phase. A steel thread implementation h
 - No known issues at this time
 
 ## Changelog
+
+### 2025-05-01: End-to-End Testing Implementation
+
+- Created Playwright project structure in e2e/bank-statements-web
+- Implemented API helper functions for test data setup and teardown
+- Created test for TransactionPage that verifies API-created transactions appear in the UI
+- Added robust error handling and test isolation with unique transaction identifiers
+- Created documentation for running and extending the tests
+- Updated memory bank to reflect the implementation of end-to-end testing
 
 ### 2025-04-29: CI/CD Pipeline Implementation
 
