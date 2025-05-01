@@ -19,10 +19,11 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - run: ./deploy.sh
+    - run: .github/actions/deploy-fly-app/deploy.sh
       shell: bash
       env:
         FLY_APP_NAME: ${{ inputs.app_name }}
         FLY_REGION: ${{ inputs.region }}
         FLY_WORKING_DIR: ${{ inputs.working_directory }}
-        FLY_SECRETS: ${{ inputs.secrets }}
+        FLY_SECRETS: |
+          ${{ inputs.secrets }}

@@ -9,15 +9,16 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # Copy requirements file
 COPY pyproject.toml .
-
-# Install Python dependencies
-RUN pip install --no-cache-dir -e .
+COPY start_app.sh .
 
 # Copy application code
 COPY . .
+
+# Install Python dependencies
+RUN pip install --no-cache-dir .
 
 # Expose port
 EXPOSE 8000
 
 # Run the application
-CMD ["python", "run.py"]
+CMD ["./start_app.sh"]

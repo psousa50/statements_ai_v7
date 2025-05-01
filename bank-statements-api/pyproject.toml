@@ -2,7 +2,7 @@
 name = "bank-statements-api"
 version = "0.1.0"
 description = "API for Bank Statement Analyzer"
-authors = ["Your Name <your.email@example.com>"]
+authors = ["Pedro SOusa <pedronsousa@gamil.com>"]
 packages = [{include = "app"}]
 
 [tool.poetry.dependencies]

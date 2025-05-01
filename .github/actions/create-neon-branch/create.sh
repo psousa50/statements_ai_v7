@@ -5,7 +5,7 @@ set -euo pipefail
 
 BRANCH_NAME="e2e-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
 
-RESPONSE=$(curl -s -X POST "https://console.neon.tech/api/v2/projects/${NEON_PROJECT_ID}/branches" \
+RESPONSE=$(curl --fail --silent --show-error -s -X POST "https://console.neon.tech/api/v2/projects/${NEON_PROJECT_ID}/branches" \
   -H "Authorization: Bearer ${NEON_API_KEY}" \
   -H "Content-Type: application/json" \
   -d '{
@@ -16,7 +16,20 @@ RESPONSE=$(curl -s -X POST "https://console.neon.tech/api/v2/projects/${NEON_PRO
   }')
 
 BRANCH_ID=$(jq -r '.branch.id' <<<"$RESPONSE")
-DB_URL=$(jq -r '.branch.endpoints[0].connection_uri' <<<"$RESPONSE")
+
+RESPONSE=$(curl --fail --silent --show-error -s -X POST \
+  "https://console.neon.tech/api/v2/projects/${NEON_PROJECT_ID}/endpoints" \
+  -H "Authorization: Bearer ${NEON_API_KEY}" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "endpoint": {
+      "branch_id": "'"$BRANCH_ID"'",
+      "type": "read_write"
+    }
+  }')
+
+HOST=$(jq -r '.endpoint.host' <<<"$RESPONSE")
+DB_URL="postgresql://$NEON_DB_USERNAME:$NEON_DB_PASSWORD@$HOST/$NEON_DB_NAME?sslmode=require"
 
 echo "branch_id=$BRANCH_ID" >>"$GITHUB_OUTPUT"
 echo "db_url=$DB_URL" >>"$GITHUB_OUTPUT"

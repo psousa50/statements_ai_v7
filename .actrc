@@ -1,3 +1,1 @@
 --container-architecture linux/amd64
---bind
---reuse

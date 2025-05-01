@@ -1,4 +1,4 @@
-app = "bank-statements-api"
+app = "bank-statements-api-test"
 primary_region = "fra"
 
 [build]
