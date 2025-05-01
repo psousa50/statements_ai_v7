@@ -1,0 +1,30 @@
+name: Create Neon Branch
+description: Creates a temporary Neon branch and exports its ID and connection string.
+inputs:
+  neon_api_key:
+    required: true
+    description: Neon API key
+  neon_project_id:
+    required: true
+    description: Neon project ID
+  neon_template_branch_id:
+    required: true
+    description: Template branch ID
+outputs:
+  branch_id:
+    description: The created Neon branch ID
+    value: ""
+  db_url:
+    description: The connection URI for the created branch
+    value: ""
+runs:
+  using: "composite"
+  steps:
+    - run: ./create.sh
+      shell: bash
+      env:
+        NEON_API_KEY: ${{ inputs.neon_api_key }}
+        NEON_PROJECT_ID: ${{ inputs.neon_project_id }}
+        NEON_TEMPLATE_BRANCH_ID: ${{ inputs.neon_template_branch_id }}
+        GITHUB_RUN_ID: ${{ github.run_id }}
+        GITHUB_RUN_ATTEMPT: ${{ github.run_attempt }}

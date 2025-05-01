@@ -60,9 +60,14 @@ The frontend follows a modular and production-ready architecture:
 
 ### Deployment
 
-- (Planned) GitHub Actions for CI/CD
-- (Planned) Docker for containerization
-- (Planned) Deploy to Render
+- GitHub Actions for CI/CD
+- Docker for containerization
+- Run unit tests on containers
+- Deploy the backend and frontend in test mode to Fly.io. Use a branched Neon database from a clean one.
+- Run e2e tests (Playwright) on the deployed app in test
+- Deploy the backend and frontend in dev mode to Fly.io Use a dev database in Neon
+- Deploy the backend and frontend in prod mode to Render. Use a prod database in Render
+
 
 ## 📁 Project Structure
 

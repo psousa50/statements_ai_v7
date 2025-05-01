@@ -6,6 +6,13 @@ The project is in the initial development phase. A steel thread implementation h
 
 ## Completed Tasks
 
+- 2025-04-29: Implemented CI/CD pipeline
+  - Created GitHub Actions workflows for CI/CD
+  - Set up containerization with Docker
+  - Configured deployment to Fly.io for test and dev environments
+  - Configured deployment to Render for production environment
+  - Created documentation for CI/CD pipeline
+
 - 2025-04-27: Implemented steel thread with basic transaction functionality
   - Created PostgreSQL database schema for transactions
   - Implemented FastAPI backend with Hexagonal Architecture
@@ -21,15 +28,22 @@ The project is in the initial development phase. A steel thread implementation h
 - Implement data visualization
 - Add user authentication
 - Add export functionality
-- Set up testing infrastructure
-- Set up CI/CD pipeline
-- Deploy to Render
+- Set up end-to-end testing with Playwright
+- Configure GitHub secrets for CI/CD
 
 ## Issues
 
 - No known issues at this time
 
 ## Changelog
+
+### 2025-04-29: CI/CD Pipeline Implementation
+
+- Created GitHub Actions workflows for CI, test deployment, e2e testing, dev deployment, and prod deployment
+- Created Dockerfiles for backend and frontend
+- Created fly.toml configuration files for backend and frontend
+- Created documentation for CI/CD pipeline in docs/ci-cd.md
+- Updated memory bank to reflect CI/CD implementation
 
 ### 2025-04-27: Initial Steel Thread Implementation
 

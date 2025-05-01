@@ -22,10 +22,12 @@
 - Vitest - Frontend unit testing
 - Playwright - End-to-end testing
 
-### Deployment (Planned)
+### Deployment
 - Docker - Containerization
 - GitHub Actions - CI/CD
-- Render - Cloud hosting platform
+- Fly.io - Cloud hosting platform for test and dev environments
+- Render - Cloud hosting platform for production
+- Neon - PostgreSQL database hosting for test and dev environments
 
 ## Development Environment
 
@@ -64,6 +66,30 @@ npm install
 # Run the development server
 npm run dev
 ```
+
+### Docker Setup
+```bash
+# Build and run the backend
+cd bank-statements-api
+docker build -t bank-statements-api .
+docker run -p 8000:8000 -e DATABASE_URL=your_database_url bank-statements-api
+
+# Build and run the frontend
+cd bank-statements-web
+docker build -t bank-statements-web .
+docker run -p 80:80 bank-statements-web
+```
+
+### CI/CD Setup
+The project uses GitHub Actions for CI/CD. The following workflows are defined:
+
+- CI: Runs unit tests for both backend and frontend
+- Test Environment Deployment: Deploys the backend and frontend to Fly.io in test mode
+- End-to-End Testing: Runs Playwright tests against the test environment
+- Development Environment Deployment: Deploys the backend and frontend to Fly.io in dev mode
+- Production Environment Deployment: Deploys the backend and frontend to Render in production mode
+
+See `docs/ci-cd.md` for more details.
 
 ## API Endpoints
 
