@@ -1,46 +1,40 @@
-import axios from 'axios';
 import {
   Transaction,
   TransactionCreate,
   TransactionListResponse,
-} from '../../types/Transaction';
+} from '../types/Transaction';
+
+export interface TransactionClient {
+  getAll(): Promise<TransactionListResponse>;
+  getById(id: string): Promise<Transaction>;
+  create(transaction: TransactionCreate): Promise<Transaction>;
+  update(id: string, transaction: TransactionCreate): Promise<Transaction>;
+  delete(id: string): Promise<void>;
+}
 
 // Use the VITE_API_URL environment variable for the base URL, or default to '' for local development
 const BASE_URL = import.meta.env.VITE_API_URL || '';
 const API_URL = `${BASE_URL}/api/v1/transactions`;
 
-export const TransactionsApi = {
-  /**
-   * Get all transactions
-   */
-  getAll: async (): Promise<TransactionListResponse> => {
+import axios from 'axios';
+
+export const transactionClient: TransactionClient = {
+  async getAll() {
     const response = await axios.get<TransactionListResponse>(API_URL);
     return response.data;
   },
 
-  /**
-   * Get a transaction by ID
-   */
-  getById: async (id: string): Promise<Transaction> => {
+  async getById(id: string) {
     const response = await axios.get<Transaction>(`${API_URL}/${id}`);
     return response.data;
   },
 
-  /**
-   * Create a new transaction
-   */
-  create: async (transaction: TransactionCreate): Promise<Transaction> => {
+  async create(transaction: TransactionCreate) {
     const response = await axios.post<Transaction>(API_URL, transaction);
     return response.data;
   },
 
-  /**
-   * Update a transaction
-   */
-  update: async (
-    id: string,
-    transaction: TransactionCreate
-  ): Promise<Transaction> => {
+  async update(id: string, transaction: TransactionCreate) {
     const response = await axios.put<Transaction>(
       `${API_URL}/${id}`,
       transaction
@@ -48,10 +42,7 @@ export const TransactionsApi = {
     return response.data;
   },
 
-  /**
-   * Delete a transaction
-   */
-  delete: async (id: string): Promise<void> => {
+  async delete(id: string) {
     await axios.delete(`${API_URL}/${id}`);
   },
 };
