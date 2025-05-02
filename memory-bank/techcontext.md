@@ -3,6 +3,7 @@
 ## Technology Stack
 
 ### Backend
+
 - Python 3.8+
 - FastAPI - Web framework for building APIs
 - SQLAlchemy - ORM for database interactions
@@ -11,6 +12,7 @@
 - Uvicorn - ASGI server for running FastAPI applications
 
 ### Frontend
+
 - TypeScript - Typed JavaScript
 - React - UI library
 - Vite - Build tool and development server
@@ -18,11 +20,13 @@
 - date-fns - Date utility library
 
 ### Testing (Planned)
+
 - pytest - Backend testing
 - Vitest - Frontend unit testing
 - Playwright - End-to-end testing
 
 ### Deployment
+
 - Docker - Containerization
 - GitHub Actions - CI/CD
 - Fly.io - Cloud hosting platform for test and dev environments
@@ -32,17 +36,20 @@
 ## Development Environment
 
 ### Backend Requirements
+
 - Python 3.8+
 - PostgreSQL
 - Poetry (optional, for dependency management)
 
 ### Frontend Requirements
+
 - Node.js 14+
 - npm or yarn
 
 ## Project Setup
 
 ### Backend Setup
+
 ```bash
 # Create a virtual environment
 python -m venv venv
@@ -59,6 +66,7 @@ python run.py
 ```
 
 ### Frontend Setup
+
 ```bash
 # Install dependencies
 npm install
@@ -68,6 +76,7 @@ npm run dev
 ```
 
 ### Docker Setup
+
 ```bash
 # Build and run the backend
 cd bank-statements-api
@@ -81,6 +90,7 @@ docker run -p 80:80 bank-statements-web
 ```
 
 ### CI/CD Setup
+
 The project uses GitHub Actions for CI/CD. The following workflows are defined:
 
 - CI: Runs unit tests for both backend and frontend
@@ -94,6 +104,7 @@ See `docs/ci-cd.md` for more details.
 ## API Endpoints
 
 ### Current Endpoints
+
 - `GET /api/v1/transactions` - Get all transactions
 - `POST /api/v1/transactions` - Create a new transaction
 - `GET /api/v1/transactions/{transaction_id}` - Get a transaction by ID
@@ -101,6 +112,7 @@ See `docs/ci-cd.md` for more details.
 - `DELETE /api/v1/transactions/{transaction_id}` - Delete a transaction
 
 ### Planned Endpoints
+
 - `POST /api/v1/upload` - Upload a bank statement
 - `GET /api/v1/categories` - Get all categories
 - `POST /api/v1/export` - Export transactions
@@ -108,6 +120,7 @@ See `docs/ci-cd.md` for more details.
 ## Database Schema
 
 ### Current Schema
+
 - `transactions` table:
   - `id` (UUID, primary key)
   - `date` (Date)
@@ -116,6 +129,7 @@ See `docs/ci-cd.md` for more details.
   - `created_at` (DateTime)
 
 ### Planned Schema
+
 - `users` table
 - `statements` table
 - `categories` table

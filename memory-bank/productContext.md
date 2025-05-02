@@ -30,6 +30,7 @@ Home users often struggle to manage their finances effectively, leading to overs
 ## Current Implementation (Steel Thread)
 
 The current steel thread implementation provides:
+
 - A database schema for storing transactions
 - A backend API for adding and listing transactions
 - A frontend interface for viewing and adding transactions manually
