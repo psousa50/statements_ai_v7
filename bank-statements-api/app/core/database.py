@@ -13,7 +13,8 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 # Create Base class
 Base = declarative_base()
 
-# Dependency to get DB session
+# This function is kept for backward compatibility and testing
+# but is not used in the main application flow anymore
 def get_db():
     db = SessionLocal()
     try:
