@@ -53,11 +53,90 @@ The frontend follows a modular and production-ready architecture:
 - (Planned) Uploaded statements table
 - (Planned) Categories table
 
-### Testing
+### Testing (TDD Implementation)
 
-- (Planned) Backend: pytest
-- (Planned) Frontend: vitest (unit), Playwright (e2e)
+The project follows a Test-Driven Development (TDD) approach, ensuring that all features are thoroughly tested before implementation. The testing strategy includes unit tests, integration tests, and end-to-end tests.
+All features are implemented using TDD, ensuring that tests are written before the actual code. This approach helps maintain high code quality and ensures that all features are covered by tests.
+After writing a test (or tests), you must ask the developer if he agrees with the test. If he does, you can proceed to implement the feature. If he doesn't, you must discuss it with him until you reach an agreement.
 
+#### Backend Testing (Python)
+
+- **Unit Tests** (pytest)
+  - Follow strict TDD workflow:
+    1. Write failing test for a feature
+    2. Implement minimal code to pass test
+    3. Refactor while keeping tests passing
+  - Test coverage: 90% minimum
+  - Test structure:
+    - `tests/unit/` for isolated unit tests
+    - `tests/integration/` for integration tests
+  - Mock external dependencies with pytest-mock
+
+#### Frontend Testing (React)
+
+- **Unit Tests** (Vitest)
+  - Component tests follow TDD:
+    1. Write test for component behavior
+    2. Implement component to pass test
+    3. Refactor with passing tests
+  - Test coverage: 85% minimum
+  - Test structure:
+    - `tests/unit/` for component tests
+    - `tests/integration/` for integration tests
+
+#### E2E Tests (Playwright)
+
+- Follow behavior-driven development (BDT)
+- Write feature specs first
+- Implement UI to satisfy specs
+- Test critical user journeys
+TDD Workflow Documentation (add new section):
+
+## Development Workflow
+
+### TDD Process
+
+1. **Red Phase**
+   - Write a failing test for new feature
+   - Commit with message "RED: [feature description]"
+
+2. **Green Phase**
+   - Write minimal code to pass test
+   - Commit with message "GREEN: [feature description]"
+
+3. **Refactor Phase**
+   - Improve code while keeping tests green
+   - Commit with message "REFACTOR: [feature description]"
+
+### CI/CD Integration
+
+- All tests must pass before merge
+- Code coverage thresholds enforced
+- Pre-commit hooks run tests
+Example Section (add concrete example):
+
+### TDD Example: Adding a Transaction
+
+1. **Test First**
+
+```python
+def test_create_transaction():
+    # RED
+    transaction = Transaction(amount=100, description="Test")
+    assert transaction.amount == 100
+    assert transaction.description == "Test"
+Implementation
+# GREEN
+class Transaction:
+    def __init__(self, amount, description):
+        self.amount = amount
+        self.description = description
+Refactor
+# REFACTOR
+class Transaction:
+    def __init__(self, amount: float, description: str):
+        self.amount = amount
+        self.description = description
 ### Deployment
 
 - GitHub Actions for CI/CD
