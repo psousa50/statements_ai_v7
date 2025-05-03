@@ -1,10 +1,10 @@
-from datetime import date
+from datetime import date, datetime
 from decimal import Decimal
 from enum import Enum
-from typing import List, Optional
+from typing import List, Optional, Sequence
 from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict, field_validator
 
 from app.domain.models.transaction import CategorizationStatus
 
@@ -21,16 +21,16 @@ class CategoryUpdate(CategoryBase):
     parent_id: Optional[UUID] = None
 
 
-class CategoryResponse(CategoryBase):
+class CategoryResponse(BaseModel):
     id: UUID
+    name: str
     parent_id: Optional[UUID] = None
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class CategoryListResponse(BaseModel):
-    categories: List[CategoryResponse]
+    categories: Sequence[CategoryResponse]
     total: int
 
 
@@ -48,16 +48,25 @@ class TransactionUpdate(TransactionBase):
     category_id: Optional[UUID] = None
 
 
-class TransactionResponse(TransactionBase):
+class TransactionResponse(BaseModel):
     id: UUID
+    date: date
+    description: str
+    amount: Decimal
     created_at: date
     category_id: Optional[UUID] = None
     categorization_status: CategorizationStatus
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
+
+    @field_validator("created_at", mode="before")
+    @classmethod
+    def validate_created_at(cls, value):
+        if isinstance(value, datetime):
+            return value.date()
+        return value
 
 
 class TransactionListResponse(BaseModel):
-    transactions: List[TransactionResponse]
+    transactions: Sequence[TransactionResponse]
     total: int
