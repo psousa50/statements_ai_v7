@@ -99,7 +99,7 @@ The project uses GitHub Actions for CI/CD. The following workflows are defined:
 - Development Environment Deployment: Deploys the backend and frontend to Fly.io in dev mode
 - Production Environment Deployment: Deploys the backend and frontend to Render in production mode
 
-See `docs/ci-cd.md` for more details.
+See `docs/architecture/ci-cd.md` for more details.
 
 ## API Endpoints
 
