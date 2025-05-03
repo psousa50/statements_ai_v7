@@ -1,4 +1,5 @@
 import { defineConfig } from 'vitest/config';
+import path from 'path';
 
 export default defineConfig({
   test: {
@@ -6,6 +7,11 @@ export default defineConfig({
     setupFiles: './tests/setupTests.ts',
     environment: 'jsdom',
     include: ['tests/**/*.test.ts?(x)'],
+  },
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, 'src'), // <- This is the fix
+    },
   },
   server: {
     port: 5173,

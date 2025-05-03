@@ -1,12 +1,9 @@
 import { expect, test } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { TransactionsPage } from '../../src/pages/Transactions';
-import { ApiClientsProvider } from '../../src/api/ApiClientsContext';
-import { ApiClients } from '../../src/api/clients';
-import {
-  Transaction,
-  TransactionListResponse,
-} from '../../src/types/Transaction';
+import { TransactionsPage } from '@/pages/Transactions';
+import { ApiClientsProvider } from '@/api/ApiClientsContext';
+import { ApiClients } from '@/api/clients';
+import { Transaction, TransactionListResponse } from '@/types/Transaction';
 
 // Default mock implementation for transactionClient
 
