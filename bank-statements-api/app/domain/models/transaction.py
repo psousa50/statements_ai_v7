@@ -1,11 +1,27 @@
 from datetime import date, datetime
 from decimal import Decimal
+from enum import Enum
 from uuid import uuid4
 
-from sqlalchemy import Column, Date, DateTime, Numeric, String
+from sqlalchemy import (
+    Column,
+    Date,
+    DateTime,
+    Enum as SQLAlchemyEnum,
+    ForeignKey,
+    Numeric,
+    String,
+)
 from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.orm import relationship
 
 from app.core.database import Base
+
+
+class CategorizationStatus(str, Enum):
+    UNCATEGORIZED = "UNCATEGORIZED"
+    CATEGORIZED = "CATEGORIZED"
+    FAILURE = "FAILURE"
 
 
 class Transaction(Base):
@@ -17,5 +33,16 @@ class Transaction(Base):
     amount = Column(Numeric(precision=10, scale=2), nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
+    # Category relationship
+    category_id = Column(UUID(as_uuid=True), ForeignKey("categories.id"), nullable=True)
+    category = relationship("Category")
+
+    # Categorization status
+    categorization_status = Column(
+        SQLAlchemyEnum(CategorizationStatus),
+        default=CategorizationStatus.UNCATEGORIZED,
+        nullable=False,
+    )
+
     def __repr__(self):
-        return f"<Transaction(id={self.id}, date={self.date}, amount={self.amount})>"
+        return f"<Transaction(id={self.id}, date={self.date}, amount={self.amount}, category_id={self.category_id})>"

@@ -9,7 +9,7 @@ from fastapi.testclient import TestClient
 
 from app.api.routes.transactions import register_transaction_routes
 from app.core.dependencies import InternalDependencies
-from app.domain.models.transaction import Transaction
+from app.domain.models.transaction import CategorizationStatus, Transaction
 
 
 @pytest.fixture
@@ -19,10 +19,19 @@ def mock_transaction_service():
 
 
 @pytest.fixture
-def test_app(mock_transaction_service):
+def mock_category_service():
+    """Create a mock category service."""
+    return MagicMock()
+
+
+@pytest.fixture
+def test_app(mock_transaction_service, mock_category_service):
     """Create a test app with mocked dependencies."""
     app = FastAPI()
-    internal = InternalDependencies(transaction_service=mock_transaction_service)
+    internal = InternalDependencies(
+        transaction_service=mock_transaction_service,
+        category_service=mock_category_service,
+    )
     register_transaction_routes(app, internal)
     return app
 
@@ -37,12 +46,15 @@ def test_create_transaction(client, mock_transaction_service):
     """Test creating a transaction."""
     # Setup mock
     transaction_id = uuid4()
+    category_id = uuid4()
     mock_transaction = Transaction(
         id=transaction_id,
         date="2023-01-01",
         description="Test transaction",
         amount=100.00,
         created_at="2023-01-01",
+        category_id=category_id,
+        categorization_status=CategorizationStatus.CATEGORIZED,
     )
     mock_transaction_service.create_transaction.return_value = mock_transaction
 
@@ -53,6 +65,7 @@ def test_create_transaction(client, mock_transaction_service):
             "date": "2023-01-01",
             "description": "Test transaction",
             "amount": 100.00,
+            "category_id": str(category_id),
         },
     )
 
@@ -65,6 +78,7 @@ def test_create_transaction(client, mock_transaction_service):
         transaction_date=date(2023, 1, 1),
         description="Test transaction",
         amount=Decimal(100.00),
+        category_id=category_id,
     )
 
 
@@ -78,6 +92,7 @@ def test_get_transaction(client, mock_transaction_service):
         description="Test transaction",
         amount=100.00,
         created_at="2023-01-01",
+        categorization_status=CategorizationStatus.UNCATEGORIZED,
     )
     mock_transaction_service.get_transaction.return_value = mock_transaction
 

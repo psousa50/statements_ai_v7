@@ -1,18 +1,21 @@
 import { useState, FormEvent } from 'react';
-import { TransactionCreate } from '../types/Transaction';
+import { Category, TransactionCreate } from '../types/Transaction';
 
 interface TransactionFormProps {
   onSubmit: (transaction: TransactionCreate) => Promise<void>;
+  categories: Category[];
   isLoading: boolean;
 }
 
 export const TransactionForm = ({
   onSubmit,
+  categories,
   isLoading,
 }: TransactionFormProps) => {
   const [date, setDate] = useState<string>('');
   const [description, setDescription] = useState<string>('');
   const [amount, setAmount] = useState<string>('');
+  const [categoryId, setCategoryId] = useState<string>('');
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -32,6 +35,7 @@ export const TransactionForm = ({
       date,
       description,
       amount: amountValue,
+      category_id: categoryId || undefined,
     };
 
     await onSubmit(transaction);
@@ -40,6 +44,7 @@ export const TransactionForm = ({
     setDate('');
     setDescription('');
     setAmount('');
+    setCategoryId('');
   };
 
   return (
@@ -78,6 +83,22 @@ export const TransactionForm = ({
             onChange={(e) => setAmount(e.target.value)}
             required
           />
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="category">Category (optional)</label>
+          <select
+            id="category"
+            value={categoryId}
+            onChange={(e) => setCategoryId(e.target.value)}
+          >
+            <option value="">-- Select Category --</option>
+            {categories.map((category) => (
+              <option key={category.id} value={category.id}>
+                {category.name}
+              </option>
+            ))}
+          </select>
         </div>
 
         <button type="submit" disabled={isLoading}>

@@ -2,9 +2,13 @@ import atexit
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.api.routes.categories import register_category_routes
 from app.api.routes.transactions import register_transaction_routes
 from app.core.config import settings
-from app.core.dependencies import build_external_dependencies, build_internal_dependencies
+from app.core.dependencies import (
+    build_external_dependencies,
+    build_internal_dependencies,
+)
 
 # Create FastAPI app
 app = FastAPI(
@@ -30,6 +34,7 @@ atexit.register(external.cleanup)
 
 # Register routes with dependency injection
 register_transaction_routes(app, internal)
+register_category_routes(app, internal)
 
 
 @app.get("/")
