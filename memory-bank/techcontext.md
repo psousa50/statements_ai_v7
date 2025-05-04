@@ -142,10 +142,12 @@ See `docs/architecture/ci-cd.md` for more details.
 - Use poetry for dependency management
 - Do not use imports in the middle of the file, always at the top
 - Do not use monkeypatch, ever, use dependency injection instead
+- Do not use @patch, ever, use dependency injection instead
 
 ### General Principles
 
 - Clear, descriptive naming
 - Modular, maintainable structure
-- Do not write comments
-- Do not write doc strings
+- DO NOT WRITE COMMENTS
+- DO NOT WRITE DOC STRINGS
+- IF YOU THINK YOU NEED TO WRITE COMMENTS OR DOC STRINGS, THAT MEANS THE CODE IS NOT CLEAR ENOUGH
