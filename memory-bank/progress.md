@@ -2,9 +2,19 @@
 
 ## Current Status
 
-The project is in active development. We have completed the implementation of the Statement Processing Architecture, which enables the system to process bank statement files (CSV, XLSX), detect their schema, normalize the data, and persist transactions to the database. This builds upon the previously completed steel thread implementation.
+The project is in active development. We have completed the implementation of the Statement Processing Architecture, which enables the system to process bank statement files (CSV, XLSX), detect their schema, normalize the data, and persist transactions to the database. This builds upon the previously completed steel thread implementation. We have also implemented the separation of file storage and file analysis metadata to improve the architecture.
 
 ## Completed Tasks
+
+- 2025-05-04: Implemented separation of UploadedFile and FileAnalysisMetadata tables
+  - Created new domain models for UploadedFile (raw file content) and FileAnalysisMetadata (analysis data)
+  - Implemented repository interfaces and implementations for both models
+  - Updated StatementAnalyzerService to save only to UploadedFile table and check FileAnalysisMetadata by hash
+  - Updated StatementPersistenceService to retrieve file content from UploadedFile and save metadata to FileAnalysisMetadata
+  - Added database migration for the new tables
+  - Updated dependency injection configuration
+  - Fixed all tests to work with the new architecture
+  - Ensured all tests pass, confirming the implementation works as expected
 
 - 2025-05-04: Implemented Statement Processing Architecture
   - Created StatementFileTypeDetector for detecting CSV and XLSX files
