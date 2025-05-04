@@ -80,31 +80,13 @@ export async function createTransactions(
  */
 export async function deleteAllTransactions(): Promise<void> {
   try {
-    // Make multiple attempts to ensure all transactions are deleted
-    // Get all transactions
     const response = await axios.get(`${API_V1_BASE_URL}/transactions`);
-    const transactions: Transaction[] = Array.isArray(
-      response.data.transactions
-    )
-      ? response.data.transactions
-      : [];
+    const transactions: Transaction[] = response.data.transactions;
 
-    // Delete each transaction
-    const deletePromises = transactions.map(async (transaction) => {
-      if (transaction && transaction.id) {
-        try {
-          return await axios.delete(
-            `${API_V1_BASE_URL}/transactions/${transaction.id}`
-          );
-        } catch (err) {
-          return console.error(
-            `Failed to delete transaction ${transaction.id}:`,
-            err
-          );
-        }
-      }
-      return Promise.resolve();
-    });
+    const deletePromises = transactions.map(
+      async (transaction) =>
+        await axios.delete(`${API_V1_BASE_URL}/transactions/${transaction.id}`)
+    );
 
     await Promise.all(deletePromises);
   } catch (error: any) {
@@ -115,6 +97,7 @@ export async function deleteAllTransactions(): Promise<void> {
     } else {
       console.error('Error deleting transactions:', error);
     }
-    // Continue execution even if there's an error
+  } finally {
+    console.log('Delete all transactions process completed.');
   }
 }

@@ -53,7 +53,7 @@ class TransactionResponse(BaseModel):
     date: date
     description: str
     amount: Decimal
-    created_at: date
+    created_at: "date"
     category_id: Optional[UUID] = None
     categorization_status: CategorizationStatus
 

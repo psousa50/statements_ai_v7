@@ -25,10 +25,8 @@ class ExternalDependencies:
 
     @property
     def db(self) -> Session:
-        """Get the database session."""
-        if self._db is None:
-            self._db = self._db_factory()
-        return self._db
+        # Always return a new session
+        return self._db_factory()
 
     def cleanup(self):
         """Clean up resources."""
@@ -88,3 +86,8 @@ def get_dependencies() -> Iterator[tuple[ExternalDependencies, InternalDependenc
         yield external, internal
     finally:
         external.cleanup()
+
+
+def provide_dependencies() -> Iterator[InternalDependencies]:
+    with get_dependencies() as (_external, internal):
+        yield internal

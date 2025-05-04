@@ -1,5 +1,6 @@
 from decimal import Decimal
 from datetime import datetime, date
+from typing import Iterator
 from unittest.mock import MagicMock
 from uuid import UUID, uuid4
 
@@ -25,14 +26,24 @@ def mock_category_service():
 
 
 @pytest.fixture
-def test_app(mock_transaction_service, mock_category_service):
-    """Create a test app with mocked dependencies."""
-    app = FastAPI()
+def mock_provide_dependencies(mock_transaction_service, mock_category_service):
+    """Create a mock dependency provider function."""
     internal = InternalDependencies(
         transaction_service=mock_transaction_service,
         category_service=mock_category_service,
     )
-    register_transaction_routes(app, internal)
+
+    def _provide_dependencies() -> Iterator[InternalDependencies]:
+        yield internal
+
+    return _provide_dependencies
+
+
+@pytest.fixture
+def test_app(mock_provide_dependencies):
+    """Create a test app with mocked dependencies."""
+    app = FastAPI()
+    register_transaction_routes(app, mock_provide_dependencies)
     return app
 
 

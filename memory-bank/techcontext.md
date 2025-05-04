@@ -56,7 +56,7 @@ python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 
 # Install dependencies
-pip install -e .
+poetry install
 
 # Initialize the database
 python -m app.db_init
@@ -69,10 +69,10 @@ python run.py
 
 ```bash
 # Install dependencies
-npm install
+pnpm install
 
 # Run the development server
-npm run dev
+pnpm run dev
 ```
 
 ### Docker Setup
@@ -133,3 +133,12 @@ See `docs/architecture/ci-cd.md` for more details.
 - `users` table
 - `statements` table
 - `categories` table
+
+## Code Style Guidelines
+
+### General Principles
+
+- Clear, descriptive naming
+- Modular, maintainable structure
+- Do not write comments
+- Do not write doc strings

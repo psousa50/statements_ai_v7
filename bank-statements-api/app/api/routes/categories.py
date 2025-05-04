@@ -1,7 +1,7 @@
-from typing import List
+from typing import Iterator, Optional, Callable
 from uuid import UUID
 
-from fastapi import APIRouter, FastAPI, HTTPException, status
+from fastapi import APIRouter, Depends, FastAPI, HTTPException, status
 
 from app.api.schemas import (
     CategoryCreate,
@@ -12,14 +12,19 @@ from app.api.schemas import (
 from app.core.dependencies import InternalDependencies
 
 
-def register_category_routes(app: FastAPI, internal: InternalDependencies):
+def register_category_routes(
+    app: FastAPI, provide_dependencies: Callable[[], Iterator[InternalDependencies]]
+):
     """Register category routes with the FastAPI app."""
     router = APIRouter(prefix="/categories", tags=["categories"])
 
     @router.post(
         "", response_model=CategoryResponse, status_code=status.HTTP_201_CREATED
     )
-    def create_category(category_data: CategoryCreate):
+    def create_category(
+        category_data: CategoryCreate,
+        internal: InternalDependencies = Depends(provide_dependencies),
+    ):
         """Create a new category"""
         try:
             category = internal.category_service.create_category(
@@ -34,7 +39,9 @@ def register_category_routes(app: FastAPI, internal: InternalDependencies):
             )
 
     @router.get("", response_model=CategoryListResponse)
-    def get_categories():
+    def get_categories(
+        internal: InternalDependencies = Depends(provide_dependencies),
+    ):
         """Get all categories"""
         categories = internal.category_service.get_all_categories()
         return CategoryListResponse(
@@ -43,7 +50,9 @@ def register_category_routes(app: FastAPI, internal: InternalDependencies):
         )
 
     @router.get("/root", response_model=CategoryListResponse)
-    def get_root_categories():
+    def get_root_categories(
+        internal: InternalDependencies = Depends(provide_dependencies),
+    ):
         """Get all root categories (categories without a parent)"""
         categories = internal.category_service.get_root_categories()
         return CategoryListResponse(
@@ -52,7 +61,10 @@ def register_category_routes(app: FastAPI, internal: InternalDependencies):
         )
 
     @router.get("/{category_id}", response_model=CategoryResponse)
-    def get_category(category_id: UUID):
+    def get_category(
+        category_id: UUID,
+        internal: InternalDependencies = Depends(provide_dependencies),
+    ):
         """Get a category by ID"""
         category = internal.category_service.get_category(category_id)
         if not category:
@@ -63,7 +75,10 @@ def register_category_routes(app: FastAPI, internal: InternalDependencies):
         return category
 
     @router.get("/{category_id}/subcategories", response_model=CategoryListResponse)
-    def get_subcategories(category_id: UUID):
+    def get_subcategories(
+        category_id: UUID,
+        internal: InternalDependencies = Depends(provide_dependencies),
+    ):
         """Get all subcategories for a given parent category"""
         try:
             subcategories = internal.category_service.get_subcategories(category_id)
@@ -78,7 +93,11 @@ def register_category_routes(app: FastAPI, internal: InternalDependencies):
             )
 
     @router.put("/{category_id}", response_model=CategoryResponse)
-    def update_category(category_id: UUID, category_data: CategoryUpdate):
+    def update_category(
+        category_id: UUID,
+        category_data: CategoryUpdate,
+        internal: InternalDependencies = Depends(provide_dependencies),
+    ):
         """Update a category"""
         try:
             updated_category = internal.category_service.update_category(
@@ -99,7 +118,10 @@ def register_category_routes(app: FastAPI, internal: InternalDependencies):
             )
 
     @router.delete("/{category_id}", status_code=status.HTTP_204_NO_CONTENT)
-    def delete_category(category_id: UUID):
+    def delete_category(
+        category_id: UUID,
+        internal: InternalDependencies = Depends(provide_dependencies),
+    ):
         """Delete a category"""
         try:
             deleted = internal.category_service.delete_category(category_id)

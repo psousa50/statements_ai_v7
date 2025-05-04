@@ -1,7 +1,7 @@
-from typing import List, Optional
+from typing import Iterator, Optional, Callable
 from uuid import UUID
 
-from fastapi import APIRouter, FastAPI, HTTPException, Query, status
+from fastapi import APIRouter, Depends, FastAPI, HTTPException, Query, status
 
 from app.api.schemas import (
     TransactionCreate,
@@ -13,14 +13,19 @@ from app.core.dependencies import InternalDependencies
 from app.domain.models.transaction import CategorizationStatus
 
 
-def register_transaction_routes(app: FastAPI, internal: InternalDependencies):
+def register_transaction_routes(
+    app: FastAPI, provide_dependencies: Callable[[], Iterator[InternalDependencies]]
+):
     """Register transaction routes with the FastAPI app."""
     router = APIRouter(prefix="/transactions", tags=["transactions"])
 
     @router.post(
         "", response_model=TransactionResponse, status_code=status.HTTP_201_CREATED
     )
-    def create_transaction(transaction_data: TransactionCreate):
+    def create_transaction(
+        transaction_data: TransactionCreate,
+        internal: InternalDependencies = Depends(provide_dependencies),
+    ):
         """Create a new transaction"""
         transaction = internal.transaction_service.create_transaction(
             transaction_date=transaction_data.date,
@@ -36,6 +41,7 @@ def register_transaction_routes(app: FastAPI, internal: InternalDependencies):
         status: Optional[CategorizationStatus] = Query(
             None, description="Filter by categorization status"
         ),
+        internal: InternalDependencies = Depends(provide_dependencies),
     ):
         """Get all transactions with optional filtering"""
         # For now, we'll just get all transactions and filter in memory
@@ -57,7 +63,10 @@ def register_transaction_routes(app: FastAPI, internal: InternalDependencies):
         )
 
     @router.get("/{transaction_id}", response_model=TransactionResponse)
-    def get_transaction(transaction_id: UUID):
+    def get_transaction(
+        transaction_id: UUID,
+        internal: InternalDependencies = Depends(provide_dependencies),
+    ):
         """Get a transaction by ID"""
         transaction = internal.transaction_service.get_transaction(transaction_id)
         if not transaction:
@@ -68,7 +77,11 @@ def register_transaction_routes(app: FastAPI, internal: InternalDependencies):
         return transaction
 
     @router.put("/{transaction_id}", response_model=TransactionResponse)
-    def update_transaction(transaction_id: UUID, transaction_data: TransactionUpdate):
+    def update_transaction(
+        transaction_id: UUID,
+        transaction_data: TransactionUpdate,
+        internal: InternalDependencies = Depends(provide_dependencies),
+    ):
         """Update a transaction"""
         updated_transaction = internal.transaction_service.update_transaction(
             transaction_id=transaction_id,
@@ -85,7 +98,10 @@ def register_transaction_routes(app: FastAPI, internal: InternalDependencies):
         return updated_transaction
 
     @router.delete("/{transaction_id}", status_code=status.HTTP_204_NO_CONTENT)
-    def delete_transaction(transaction_id: UUID):
+    def delete_transaction(
+        transaction_id: UUID,
+        internal: InternalDependencies = Depends(provide_dependencies),
+    ):
         """Delete a transaction"""
         deleted = internal.transaction_service.delete_transaction(transaction_id)
         if not deleted:
@@ -93,10 +109,13 @@ def register_transaction_routes(app: FastAPI, internal: InternalDependencies):
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Transaction with ID {transaction_id} not found",
             )
+        return None
 
     @router.put("/{transaction_id}/categorize", response_model=TransactionResponse)
     def categorize_transaction(
-        transaction_id: UUID, category_id: Optional[UUID] = None
+        transaction_id: UUID,
+        category_id: Optional[UUID] = None,
+        internal: InternalDependencies = Depends(provide_dependencies),
     ):
         """Categorize a transaction"""
         updated_transaction = internal.transaction_service.categorize_transaction(
@@ -111,7 +130,10 @@ def register_transaction_routes(app: FastAPI, internal: InternalDependencies):
         return updated_transaction
 
     @router.put("/{transaction_id}/mark-failure", response_model=TransactionResponse)
-    def mark_categorization_failure(transaction_id: UUID):
+    def mark_categorization_failure(
+        transaction_id: UUID,
+        internal: InternalDependencies = Depends(provide_dependencies),
+    ):
         """Mark a transaction as having failed categorization"""
         updated_transaction = internal.transaction_service.mark_categorization_failure(
             transaction_id=transaction_id,

@@ -1,3 +1,4 @@
+from typing import Iterator
 from unittest.mock import MagicMock
 from uuid import uuid4
 
@@ -23,14 +24,24 @@ def mock_transaction_service():
 
 
 @pytest.fixture
-def test_app(mock_category_service, mock_transaction_service):
-    """Create a test app with mocked dependencies."""
-    app = FastAPI()
+def mock_provide_dependencies(mock_category_service, mock_transaction_service):
+    """Create a mock dependency provider function."""
     internal = InternalDependencies(
         category_service=mock_category_service,
         transaction_service=mock_transaction_service,
     )
-    register_category_routes(app, internal)
+
+    def _provide_dependencies() -> Iterator[InternalDependencies]:
+        yield internal
+
+    return _provide_dependencies
+
+
+@pytest.fixture
+def test_app(mock_provide_dependencies):
+    """Create a test app with mocked dependencies."""
+    app = FastAPI()
+    register_category_routes(app, mock_provide_dependencies)
     return app
 
 
