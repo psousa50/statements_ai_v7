@@ -133,8 +133,15 @@ See `docs/architecture/ci-cd.md` for more details.
 - `users` table
 - `statements` table
 - `categories` table
+- `transactions` table
 
 ## Code Style Guidelines
+
+### Python
+
+- Use poetry for dependency management
+- Do not use imports in the middle of the file, always at the top
+- Do not use monkeypatch, ever, use dependency injection instead
 
 ### General Principles
 
