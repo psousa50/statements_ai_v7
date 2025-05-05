@@ -1,27 +1,18 @@
-from typing import Iterator, Optional, Callable
+from typing import Callable, Iterator, Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, Query, status
 
-from app.api.schemas import (
-    TransactionCreate,
-    TransactionListResponse,
-    TransactionResponse,
-    TransactionUpdate,
-)
+from app.api.schemas import TransactionCreate, TransactionListResponse, TransactionResponse, TransactionUpdate
 from app.core.dependencies import InternalDependencies
 from app.domain.models.transaction import CategorizationStatus
 
 
-def register_transaction_routes(
-    app: FastAPI, provide_dependencies: Callable[[], Iterator[InternalDependencies]]
-):
+def register_transaction_routes(app: FastAPI, provide_dependencies: Callable[[], Iterator[InternalDependencies]]):
     """Register transaction routes with the FastAPI app."""
     router = APIRouter(prefix="/transactions", tags=["transactions"])
 
-    @router.post(
-        "", response_model=TransactionResponse, status_code=status.HTTP_201_CREATED
-    )
+    @router.post("", response_model=TransactionResponse, status_code=status.HTTP_201_CREATED)
     def create_transaction(
         transaction_data: TransactionCreate,
         internal: InternalDependencies = Depends(provide_dependencies),
@@ -38,9 +29,7 @@ def register_transaction_routes(
     @router.get("", response_model=TransactionListResponse)
     def get_transactions(
         category_id: Optional[UUID] = Query(None, description="Filter by category ID"),
-        status: Optional[CategorizationStatus] = Query(
-            None, description="Filter by categorization status"
-        ),
+        status: Optional[CategorizationStatus] = Query(None, description="Filter by categorization status"),
         internal: InternalDependencies = Depends(provide_dependencies),
     ):
         """Get all transactions with optional filtering"""
@@ -54,9 +43,7 @@ def register_transaction_routes(
 
         # Filter by categorization status if provided
         if status is not None:
-            transactions = [
-                t for t in transactions if t.categorization_status == status
-            ]
+            transactions = [t for t in transactions if t.categorization_status == status]
         return TransactionListResponse(
             transactions=transactions,
             total=len(transactions),

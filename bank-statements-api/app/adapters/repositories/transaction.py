@@ -1,6 +1,6 @@
+from datetime import datetime
 from typing import List, Optional
 from uuid import UUID
-from datetime import datetime
 
 from sqlalchemy.orm import Session
 
@@ -24,16 +24,10 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         return transaction
 
     def get_by_id(self, transaction_id: UUID) -> Optional[Transaction]:
-        return (
-            self.db_session.query(Transaction)
-            .filter(Transaction.id == transaction_id)
-            .first()
-        )
+        return self.db_session.query(Transaction).filter(Transaction.id == transaction_id).first()
 
     def get_all(self) -> List[Transaction]:
-        return (
-            self.db_session.query(Transaction).order_by(Transaction.date.desc()).all()
-        )
+        return self.db_session.query(Transaction).order_by(Transaction.date.desc()).all()
 
     def update(self, transaction: Transaction) -> Transaction:
         self.db_session.commit()

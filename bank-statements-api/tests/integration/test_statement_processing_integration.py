@@ -1,34 +1,23 @@
-import os
-import pytest
-import pandas as pd
 import json
-from datetime import datetime, timezone
+import os
+from uuid import UUID
+
+import pandas as pd
+import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from uuid import UUID
-from app.core.database import Base
-from app.domain.models.uploaded_file import UploadedFile, FileAnalysisMetadata
-from app.domain.models.transaction import Transaction
-from app.domain.models.category import Category
-from app.adapters.repositories.uploaded_file import (
-    SQLAlchemyUploadedFileRepository,
-    SQLAlchemyFileAnalysisMetadataRepository,
-)
+
 from app.adapters.repositories.transaction import SQLAlchemyTransactionRepository
-from app.services.statement_processing.file_type_detector import (
-    StatementFileTypeDetector,
-)
+from app.adapters.repositories.uploaded_file import SQLAlchemyFileAnalysisMetadataRepository, SQLAlchemyUploadedFileRepository
+from app.core.database import Base
+from app.domain.models.transaction import Transaction
+from app.domain.models.uploaded_file import FileAnalysisMetadata, UploadedFile
+from app.services.statement_processing.file_type_detector import StatementFileTypeDetector
+from app.services.statement_processing.schema_detector import LLMClient, SchemaDetector
+from app.services.statement_processing.statement_analyzer import StatementAnalyzerService
 from app.services.statement_processing.statement_parser import StatementParser
-from app.services.statement_processing.schema_detector import SchemaDetector, LLMClient
-from app.services.statement_processing.transaction_normalizer import (
-    TransactionNormalizer,
-)
-from app.services.statement_processing.statement_analyzer import (
-    StatementAnalyzerService,
-)
-from app.services.statement_processing.statement_persistence import (
-    StatementPersistenceService,
-)
+from app.services.statement_processing.statement_persistence import StatementPersistenceService
+from app.services.statement_processing.transaction_normalizer import TransactionNormalizer
 
 
 class MockLLMClient(LLMClient):
@@ -154,9 +143,7 @@ def sample_csv_file():
 
 
 class TestStatementProcessingIntegration:
-    def test_analyze_and_persist_new_file(
-        self, statement_processing_services, sample_csv_file, db_session, repositories
-    ):
+    def test_analyze_and_persist_new_file(self, statement_processing_services, sample_csv_file, db_session, repositories):
         analyzer_service = statement_processing_services["analyzer_service"]
         analysis_result = analyzer_service.analyze(
             filename=sample_csv_file["filename"],
@@ -186,33 +173,20 @@ class TestStatementProcessingIntegration:
         # Verify persistence result
         assert "uploaded_file_id" in persistence_result
         assert "transactions_saved" in persistence_result
-        assert (
-            persistence_result["uploaded_file_id"]
-            == analysis_result["uploaded_file_id"]
-        )
-        assert (
-            persistence_result["transactions_saved"] == 3
-        )  # We have 3 transactions in our sample file
+        assert persistence_result["uploaded_file_id"] == analysis_result["uploaded_file_id"]
+        assert persistence_result["transactions_saved"] == 3  # We have 3 transactions in our sample file
 
         # Step 3: Verify data in the database
         # Check uploaded file
         uploaded_file_id = UUID(analysis_result["uploaded_file_id"])
-        uploaded_file = (
-            db_session.query(UploadedFile)
-            .filter(UploadedFile.id == uploaded_file_id)
-            .first()
-        )
+        uploaded_file = db_session.query(UploadedFile).filter(UploadedFile.id == uploaded_file_id).first()
         assert uploaded_file is not None
         assert uploaded_file.filename == sample_csv_file["filename"]
         assert uploaded_file.content == sample_csv_file["content"]
 
         # Check file analysis metadata
         file_hash = analysis_result["file_hash"]
-        metadata = (
-            db_session.query(FileAnalysisMetadata)
-            .filter(FileAnalysisMetadata.file_hash == file_hash)
-            .first()
-        )
+        metadata = db_session.query(FileAnalysisMetadata).filter(FileAnalysisMetadata.file_hash == file_hash).first()
         assert metadata is not None
         assert metadata.uploaded_file_id == uploaded_file_id
         assert metadata.file_type == "CSV"
@@ -223,11 +197,7 @@ class TestStatementProcessingIntegration:
         }
 
         # Check transactions
-        transactions = (
-            db_session.query(Transaction)
-            .filter(Transaction.uploaded_file_id == uploaded_file_id)
-            .all()
-        )
+        transactions = db_session.query(Transaction).filter(Transaction.uploaded_file_id == uploaded_file_id).all()
         assert len(transactions) == 3
 
         # Verify transaction data
@@ -238,9 +208,7 @@ class TestStatementProcessingIntegration:
             assert float(transaction.amount) in expected_amounts
             assert transaction.description in expected_descriptions
 
-    def test_analyze_duplicate_file(
-        self, statement_processing_services, sample_csv_file, db_session, repositories
-    ):
+    def test_analyze_duplicate_file(self, statement_processing_services, sample_csv_file, db_session, repositories):
         """
         Test analyzing a duplicate file.
 
@@ -279,9 +247,7 @@ class TestStatementProcessingIntegration:
         assert db_session.query(UploadedFile).count() == initial_file_count
         assert db_session.query(FileAnalysisMetadata).count() == initial_metadata_count
 
-    def test_end_to_end_flow_with_different_file(
-        self, statement_processing_services, db_session
-    ):
+    def test_end_to_end_flow_with_different_file(self, statement_processing_services, db_session):
         """
         Test the end-to-end flow with a different file format.
 
@@ -292,16 +258,10 @@ class TestStatementProcessingIntegration:
         # Create a different file format (XLSX-like binary content)
         filename = "test_statement.xlsx"
         # This is a simplified mock of XLSX file content that will be detected as XLSX
-        content = (
-            b"PK\x03\x04"
-            + b"\x00" * 100
-            + b"Date\tAmount\tDescription\n2023-01-04\t75.25\tSalary\n2023-01-05\t-30.00\tBill Payment"
-        )
+        content = b"PK\x03\x04" + b"\x00" * 100 + b"Date\tAmount\tDescription\n2023-01-04\t75.25\tSalary\n2023-01-05\t-30.00\tBill Payment"
 
         # Mock the statement parser to handle our mock XLSX content
-        statement_parser = statement_processing_services[
-            "analyzer_service"
-        ].statement_parser
+        statement_parser = statement_processing_services["analyzer_service"].statement_parser
         original_parse = statement_parser.parse
 
         def mock_parse(file_content, file_type):
@@ -322,9 +282,7 @@ class TestStatementProcessingIntegration:
         try:
             # Analyze the file
             analyzer_service = statement_processing_services["analyzer_service"]
-            analysis_result = analyzer_service.analyze(
-                filename=filename, file_content=content
-            )
+            analysis_result = analyzer_service.analyze(filename=filename, file_content=content)
 
             # Verify analysis result
             assert analysis_result["file_type"] == "XLSX"
@@ -338,11 +296,7 @@ class TestStatementProcessingIntegration:
 
             # Verify transactions in database
             uploaded_file_id = UUID(analysis_result["uploaded_file_id"])
-            transactions = (
-                db_session.query(Transaction)
-                .filter(Transaction.uploaded_file_id == uploaded_file_id)
-                .all()
-            )
+            transactions = db_session.query(Transaction).filter(Transaction.uploaded_file_id == uploaded_file_id).all()
 
             assert len(transactions) == 2
 

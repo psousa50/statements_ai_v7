@@ -28,12 +28,12 @@ def mock_provide_dependencies(mock_category_service, mock_transaction_service):
     """Create a mock dependency provider function."""
     mock_statement_analyzer_service = MagicMock()
     mock_statement_persistence_service = MagicMock()
-    
+
     internal = InternalDependencies(
         category_service=mock_category_service,
         transaction_service=mock_transaction_service,
         statement_analyzer_service=mock_statement_analyzer_service,
-        statement_persistence_service=mock_statement_persistence_service
+        statement_persistence_service=mock_statement_persistence_service,
     )
 
     def _provide_dependencies() -> Iterator[InternalDependencies]:

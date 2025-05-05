@@ -1,4 +1,3 @@
-import atexit
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -7,13 +6,11 @@ from app.api.routes.transactions import register_transaction_routes
 from app.core.config import settings
 from app.core.dependencies import provide_dependencies
 
-# Create FastAPI app
 app = FastAPI(
     title=settings.PROJECT_NAME,
     openapi_url=f"{settings.API_V1_STR}/openapi.json",
 )
 
-# Set up CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.BACKEND_CORS_ORIGINS,
@@ -22,7 +19,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Register routes with dependency injection
 register_transaction_routes(app, provide_dependencies)
 register_category_routes(app, provide_dependencies)
 

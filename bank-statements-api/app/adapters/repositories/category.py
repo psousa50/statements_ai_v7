@@ -23,24 +23,16 @@ class SQLAlchemyCategoryRepository(CategoryRepository):
         return category
 
     def get_by_id(self, category_id: UUID) -> Optional[Category]:
-        return (
-            self.db_session.query(Category).filter(Category.id == category_id).first()
-        )
+        return self.db_session.query(Category).filter(Category.id == category_id).first()
 
     def get_all(self) -> List[Category]:
         return self.db_session.query(Category).all()
 
     def get_root_categories(self) -> List[Category]:
-        return (
-            self.db_session.query(Category).filter(Category.parent_id.is_(None)).all()
-        )
+        return self.db_session.query(Category).filter(Category.parent_id.is_(None)).all()
 
     def get_subcategories(self, parent_id: UUID) -> List[Category]:
-        return (
-            self.db_session.query(Category)
-            .filter(Category.parent_id == parent_id)
-            .all()
-        )
+        return self.db_session.query(Category).filter(Category.parent_id == parent_id).all()
 
     def update(self, category: Category) -> Category:
         self.db_session.commit()

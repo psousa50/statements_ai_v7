@@ -14,7 +14,6 @@ class Category(Base):
     name = Column(String, nullable=False)
     parent_id = Column(UUID(as_uuid=True), ForeignKey("categories.id"), nullable=True)
 
-    # Relationship to parent category
     parent = relationship("Category", remote_side=[id], backref="subcategories")
 
     def __repr__(self):

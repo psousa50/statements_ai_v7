@@ -1,11 +1,12 @@
 """
 Common test fixtures for the bank-statements-api tests.
 """
-import pytest
 from datetime import date
 from decimal import Decimal
 from unittest.mock import MagicMock
 from uuid import uuid4
+
+import pytest
 
 from app.domain.models.transaction import Transaction
 from app.ports.repositories.transaction import TransactionRepository

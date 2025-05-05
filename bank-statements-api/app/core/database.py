@@ -3,12 +3,8 @@ from sqlalchemy.orm import declarative_base, sessionmaker
 
 from app.core.config import settings
 
-# Create SQLAlchemy engine
-print("Database URL:", settings.DATABASE_URL)  # Debugging line to check database URL
 engine = create_engine(settings.DATABASE_URL)
 
-# Create SessionLocal class
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-# Create Base class
 Base = declarative_base()

@@ -1,26 +1,17 @@
-from typing import Iterator, Optional, Callable
+from typing import Callable, Iterator
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, status
 
-from app.api.schemas import (
-    CategoryCreate,
-    CategoryListResponse,
-    CategoryResponse,
-    CategoryUpdate,
-)
+from app.api.schemas import CategoryCreate, CategoryListResponse, CategoryResponse, CategoryUpdate
 from app.core.dependencies import InternalDependencies
 
 
-def register_category_routes(
-    app: FastAPI, provide_dependencies: Callable[[], Iterator[InternalDependencies]]
-):
+def register_category_routes(app: FastAPI, provide_dependencies: Callable[[], Iterator[InternalDependencies]]):
     """Register category routes with the FastAPI app."""
     router = APIRouter(prefix="/categories", tags=["categories"])
 
-    @router.post(
-        "", response_model=CategoryResponse, status_code=status.HTTP_201_CREATED
-    )
+    @router.post("", response_model=CategoryResponse, status_code=status.HTTP_201_CREATED)
     def create_category(
         category_data: CategoryCreate,
         internal: InternalDependencies = Depends(provide_dependencies),

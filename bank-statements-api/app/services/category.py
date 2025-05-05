@@ -44,9 +44,7 @@ class CategoryService:
 
         return self.category_repository.get_subcategories(parent_id)
 
-    def update_category(
-        self, category_id: UUID, name: str, parent_id: Optional[UUID] = None
-    ) -> Optional[Category]:
+    def update_category(self, category_id: UUID, name: str, parent_id: Optional[UUID] = None) -> Optional[Category]:
         """Update a category"""
         category = self.category_repository.get_by_id(category_id)
         if not category:

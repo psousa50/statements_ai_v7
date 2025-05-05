@@ -1,6 +1,7 @@
-import pandas as pd
-from abc import ABC, abstractmethod
 import json
+from abc import ABC, abstractmethod
+
+import pandas as pd
 
 
 class LLMClient(ABC):
@@ -17,7 +18,7 @@ class SchemaDetector:
         prompt = self._build_prompt(df)
         response = self.llm.complete(prompt)
         return self._parse_response(response)
-        
+
     def _build_prompt(self, df: pd.DataFrame) -> str:
         sample_data = df.head(5).to_string()
         prompt = f"""
@@ -41,19 +42,23 @@ Return your answer as a JSON object with the following structure:
 }}
 """
         return prompt
-        
+
     def _parse_response(self, response: str) -> dict:
         try:
             result = json.loads(response.strip())
-            required_keys = ["column_mapping", "header_row_index", "data_start_row_index"]
+            required_keys = [
+                "column_mapping",
+                "header_row_index",
+                "data_start_row_index",
+            ]
             required_mapping_keys = ["date", "amount", "description"]
-            
+
             if not all(key in result for key in required_keys):
                 raise ValueError("Missing required keys in response")
-                
+
             if not all(key in result["column_mapping"] for key in required_mapping_keys):
                 raise ValueError("Missing required column mapping keys in response")
-                
+
             return result
-        except (json.JSONDecodeError, ValueError) as e:
+        except (json.JSONDecodeError, ValueError):
             raise ValueError("Failed to parse LLM response")

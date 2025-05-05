@@ -1,8 +1,7 @@
-import pytest
 import pandas as pd
-from unittest.mock import MagicMock
+import pytest
 
-from app.services.statement_processing.schema_detector import SchemaDetector, LLMClient
+from app.services.statement_processing.schema_detector import LLMClient, SchemaDetector
 
 
 class MockLLMClient(LLMClient):
@@ -30,24 +29,26 @@ class TestSchemaDetector:
         """
         llm_client = MockLLMClient(llm_response)
         detector = SchemaDetector(llm_client)
-        
-        df = pd.DataFrame({
-            "Date": ["2023-01-01", "2023-01-02"],
-            "Amount": [100.00, 200.00],
-            "Description": ["Test 1", "Test 2"]
-        })
-        
+
+        df = pd.DataFrame(
+            {
+                "Date": ["2023-01-01", "2023-01-02"],
+                "Amount": [100.00, 200.00],
+                "Description": ["Test 1", "Test 2"],
+            }
+        )
+
         result = detector.detect_schema(df)
-        
+
         assert result["column_mapping"] == {
             "date": "Date",
             "amount": "Amount",
-            "description": "Description"
+            "description": "Description",
         }
         assert result["header_row_index"] == 0
         assert result["data_start_row_index"] == 1
         assert llm_client.last_prompt is not None
-        
+
     def test_detect_schema_with_complex_mapping(self):
         llm_response = """
         {
@@ -62,33 +63,37 @@ class TestSchemaDetector:
         """
         llm_client = MockLLMClient(llm_response)
         detector = SchemaDetector(llm_client)
-        
-        df = pd.DataFrame({
-            "Transaction Date": ["2023-01-01", "2023-01-02"],
-            "Value (EUR)": [100.00, 200.00],
-            "Transaction Details": ["Test 1", "Test 2"]
-        })
-        
+
+        df = pd.DataFrame(
+            {
+                "Transaction Date": ["2023-01-01", "2023-01-02"],
+                "Value (EUR)": [100.00, 200.00],
+                "Transaction Details": ["Test 1", "Test 2"],
+            }
+        )
+
         result = detector.detect_schema(df)
-        
+
         assert result["column_mapping"] == {
             "date": "Transaction Date",
             "amount": "Value (EUR)",
-            "description": "Transaction Details"
+            "description": "Transaction Details",
         }
         assert result["header_row_index"] == 2
         assert result["data_start_row_index"] == 3
-        
+
     def test_invalid_llm_response(self):
         llm_response = "This is not valid JSON"
         llm_client = MockLLMClient(llm_response)
         detector = SchemaDetector(llm_client)
-        
-        df = pd.DataFrame({
-            "Date": ["2023-01-01", "2023-01-02"],
-            "Amount": [100.00, 200.00],
-            "Description": ["Test 1", "Test 2"]
-        })
-        
+
+        df = pd.DataFrame(
+            {
+                "Date": ["2023-01-01", "2023-01-02"],
+                "Amount": [100.00, 200.00],
+                "Description": ["Test 1", "Test 2"],
+            }
+        )
+
         with pytest.raises(ValueError, match="Failed to parse LLM response"):
             detector.detect_schema(df)

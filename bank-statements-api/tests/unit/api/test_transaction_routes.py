@@ -1,8 +1,8 @@
+from datetime import date
 from decimal import Decimal
-from datetime import datetime, date
 from typing import Iterator
 from unittest.mock import MagicMock
-from uuid import UUID, uuid4
+from uuid import uuid4
 
 import pytest
 from fastapi import FastAPI
@@ -31,12 +31,12 @@ def mock_provide_dependencies(mock_transaction_service):
     mock_category_service = MagicMock()
     mock_statement_analyzer_service = MagicMock()
     mock_statement_persistence_service = MagicMock()
-    
+
     internal = InternalDependencies(
         transaction_service=mock_transaction_service,
         category_service=mock_category_service,
         statement_analyzer_service=mock_statement_analyzer_service,
-        statement_persistence_service=mock_statement_persistence_service
+        statement_persistence_service=mock_statement_persistence_service,
     )
 
     def _provide_dependencies() -> Iterator[InternalDependencies]:

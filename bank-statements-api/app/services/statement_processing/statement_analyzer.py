@@ -1,6 +1,4 @@
-import pandas as pd
 import hashlib
-import json
 
 
 class StatementAnalyzerService:
@@ -32,7 +30,7 @@ class StatementAnalyzerService:
                 "header_row_index": existing_metadata["header_row_index"],
                 "data_start_row_index": existing_metadata["data_start_row_index"],
                 "sample_data": existing_metadata["normalized_sample"],
-                "file_hash": file_hash
+                "file_hash": file_hash,
             }
 
         # Save the uploaded file first
@@ -58,7 +56,7 @@ class StatementAnalyzerService:
             "header_row_index": header_row_index,
             "data_start_row_index": data_start_row_index,
             "sample_data": sample_data,
-            "file_hash": file_hash
+            "file_hash": file_hash,
         }
 
     def _compute_hash(self, filename: str, file_content: bytes) -> str:

@@ -3,7 +3,6 @@ Tests for TransactionService using common fixtures from conftest.py
 """
 from datetime import date
 from decimal import Decimal
-from uuid import uuid4
 
 import pytest
 
@@ -78,7 +77,7 @@ class TestTransactionServiceWithFixtures:
         assert result == sample_transaction
         mock_transaction_repository.get_by_id.assert_called_once_with(transaction_id)
         mock_transaction_repository.update.assert_called_once_with(sample_transaction)
-        
+
         # Check that the transaction was updated with the new values
         assert sample_transaction.date == new_date
         assert sample_transaction.description == new_description

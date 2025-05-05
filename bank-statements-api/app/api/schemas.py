@@ -1,10 +1,9 @@
 from datetime import date, datetime
 from decimal import Decimal
-from enum import Enum
-from typing import List, Optional, Sequence
+from typing import Optional, Sequence
 from uuid import UUID
 
-from pydantic import BaseModel, Field, ConfigDict, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from app.domain.models.transaction import CategorizationStatus
 
