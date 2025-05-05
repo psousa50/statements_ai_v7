@@ -14,7 +14,8 @@ The project is in active development. We have completed the implementation of th
   - Added database migration for the new tables
   - Updated dependency injection configuration
   - Fixed all tests to work with the new architecture
-  - Ensured all tests pass, confirming the implementation works as expected
+  - Updated datetime handling to use timezone-aware methods (datetime.now(timezone.utc)) instead of deprecated datetime.utcnow()
+  - Ensured all tests pass without warnings, confirming the implementation works as expected
 
 - 2025-05-04: Implemented Statement Processing Architecture
   - Created StatementFileTypeDetector for detecting CSV and XLSX files

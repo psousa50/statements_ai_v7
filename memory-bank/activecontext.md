@@ -13,6 +13,17 @@ We have implemented the complete architecture following a bottom-up approach and
 
 ## Recent Changes
 
+- Implemented separation of UploadedFile and FileAnalysisMetadata tables
+  - Created new domain models for UploadedFile (raw file content) and FileAnalysisMetadata (analysis data)
+  - Implemented repository interfaces and implementations for both models
+  - Updated StatementAnalyzerService to save only to UploadedFile table and check FileAnalysisMetadata by hash
+  - Updated StatementPersistenceService to retrieve file content from UploadedFile and save metadata to FileAnalysisMetadata
+  - Added database migration for the new tables
+  - Updated dependency injection configuration
+  - Fixed all tests to work with the new architecture
+  - Updated datetime handling to use timezone-aware methods (datetime.now(timezone.utc)) instead of deprecated datetime.utcnow()
+  - Ensured all tests pass without warnings, confirming the implementation works as expected
+
 - Implemented the Statement Processing Architecture with the following components:
   - StatementFileTypeDetector - Detects file types (CSV, XLSX)
   - StatementParser - Parses file content into DataFrames
