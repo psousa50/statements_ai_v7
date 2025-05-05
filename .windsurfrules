@@ -1,0 +1,6 @@
+# Rules
+
+
+## Python
+
+- activate ".venv" virutal environment in the root of the monorepo before running any Python related command

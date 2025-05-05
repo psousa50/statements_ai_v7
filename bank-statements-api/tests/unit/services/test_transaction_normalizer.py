@@ -25,7 +25,8 @@ class TestTransactionNormalizer:
         
         assert list(normalized_df.columns) == ["date", "amount", "description"]
         assert len(normalized_df) == 2
-        assert isinstance(normalized_df["date"][0], datetime)
+        # Date is now a string for JSON serialization
+        assert normalized_df["date"][0] == "2023-01-01"
         assert normalized_df["amount"][0] == 100.00
         assert normalized_df["amount"][1] == -200.00
         assert normalized_df["description"][0] == "Deposit"
@@ -49,10 +50,8 @@ class TestTransactionNormalizer:
         
         assert list(normalized_df.columns) == ["date", "amount", "description"]
         assert len(normalized_df) == 2
-        assert isinstance(normalized_df["date"][0], datetime)
-        assert normalized_df["date"][0].day == 1
-        assert normalized_df["date"][0].month == 2
-        assert normalized_df["date"][0].year == 2023
+        # Date is now a string for JSON serialization
+        assert normalized_df["date"][0] == "2023-02-01"
         assert normalized_df["amount"][0] == 1000.50
         assert normalized_df["amount"][1] == -2000.75
         

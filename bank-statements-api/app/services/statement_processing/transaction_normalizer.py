@@ -19,6 +19,12 @@ class TransactionNormalizer:
         result_df["amount"] = self._normalize_amounts(df[amount_col])
         result_df["description"] = df[description_col]
         
+        # Convert pandas Timestamp objects to string format for JSON serialization
+        if "date" in result_df.columns:
+            result_df["date"] = result_df["date"].apply(
+                lambda x: x.strftime("%Y-%m-%d") if hasattr(x, "strftime") else x
+            )
+        
         return result_df
     
     def _normalize_dates(self, date_series):

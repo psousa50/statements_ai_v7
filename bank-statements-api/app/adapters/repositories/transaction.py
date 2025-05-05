@@ -1,5 +1,6 @@
 from typing import List, Optional
 from uuid import UUID
+from datetime import datetime
 
 from sqlalchemy.orm import Session
 
@@ -51,3 +52,22 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
             print(f"Transaction with ID: {transaction_id} deleted successfully.")
             return True
         return False
+
+    def save_batch(self, transactions: List[dict]) -> int:
+        saved_count = 0
+        for transaction_data in transactions:
+            date_val = transaction_data["date"]
+            if isinstance(date_val, str):
+                date_val = datetime.strptime(date_val, "%Y-%m-%d").date()
+
+            transaction = Transaction(
+                date=date_val,
+                amount=transaction_data["amount"],
+                description=transaction_data["description"],
+                uploaded_file_id=transaction_data["uploaded_file_id"],
+            )
+            self.db_session.add(transaction)
+            saved_count += 1
+
+        self.db_session.commit()
+        return saved_count
