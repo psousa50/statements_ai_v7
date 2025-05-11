@@ -142,6 +142,7 @@ def sample_csv_file():
     return {"filename": filename, "content": content}
 
 
+@pytest.mark.integration
 class TestStatementProcessingIntegration:
     def test_analyze_and_persist_new_file(self, statement_processing_services, sample_csv_file, db_session, repositories):
         analyzer_service = statement_processing_services["analyzer_service"]
