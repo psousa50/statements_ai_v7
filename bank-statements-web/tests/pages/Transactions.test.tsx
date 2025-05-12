@@ -1,16 +1,15 @@
 import { expect, test } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { TransactionsPage } from '@/pages/Transactions';
-import { ApiClientsProvider } from '@/api/ApiClientsContext';
-import { ApiClients } from '@/api/clients';
+import { ApiProvider } from '@/api/ApiContext';
+import { ApiClient } from '@/api/ApiClient';
+import { createMockApiClient } from '@/api/createMockApiClient';
 import {
   Category,
   Transaction,
   TransactionListResponse,
 } from '@/types/Transaction';
 import { CategoryListResponse } from '@/api/CategoryClient';
-
-// Default mock implementation for transactionClient
 
 const transaction: Transaction = {
   id: '1',
@@ -21,54 +20,9 @@ const transaction: Transaction = {
   categorization_status: 'UNCATEGORIZED',
 };
 
-const defaultTransactionClient = {
-  getAll: () =>
-    Promise.resolve({
-      transactions: [transaction],
-      total: 1,
-    } as TransactionListResponse),
-  getById: () => Promise.resolve(transaction),
-  create: () => Promise.resolve(transaction),
-  update: () => Promise.resolve(transaction),
-  delete: () => Promise.resolve(),
-};
-
-const defaultCategoryClient = {
-  getAll: () =>
-    Promise.resolve({
-      categories: [],
-      total: 0,
-    } as CategoryListResponse),
-  getRootCategories: () =>
-    Promise.resolve({
-      categories: [],
-      total: 0,
-    } as CategoryListResponse),
-  getById: () => Promise.resolve({} as Category),
-  getSubcategories: () =>
-    Promise.resolve({
-      categories: [],
-      total: 0,
-    } as CategoryListResponse),
-  create: () => Promise.resolve({} as Category),
-  update: () => Promise.resolve({} as Category),
-  delete: () => Promise.resolve(),
-};
-
-const defaultApiClients: ApiClients = {
-  transactionClient: defaultTransactionClient,
-  categoryClient: defaultCategoryClient,
-};
-
-const createApiClients = (overrides: Partial<ApiClients> = {}): ApiClients => ({
-  ...defaultApiClients,
-  ...overrides,
-});
-
 test('renders transactions page with mock data', async () => {
-  const apiClients: ApiClients = createApiClients({
-    transactionClient: {
-      ...defaultTransactionClient,
+  const apiClient = createMockApiClient({
+    transactions: {
       getAll: () =>
         Promise.resolve({
           transactions: [
@@ -82,14 +36,14 @@ test('renders transactions page with mock data', async () => {
             },
           ],
           total: 1,
-        } as TransactionListResponse),
+        }),
     },
   });
 
   render(
-    <ApiClientsProvider clients={apiClients}>
+    <ApiProvider client={apiClient}>
       <TransactionsPage />
-    </ApiClientsProvider>
+    </ApiProvider>
   );
 
   // Check that the page title is rendered

@@ -4,10 +4,10 @@ import {
   Transaction,
   TransactionCreate,
 } from '../../types/Transaction';
-import { useApiClients } from '../../api/ApiClientsContext';
+import { useApi } from '../../api/ApiContext';
 
 export const useTransactions = () => {
-  const { transactionClient } = useApiClients();
+  const api = useApi();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -16,7 +16,7 @@ export const useTransactions = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await transactionClient.getAll();
+      const response = await api.transactions.getAll();
       setTransactions(response.transactions);
     } catch (err) {
       console.error('Error fetching transactions:', err);
@@ -24,14 +24,14 @@ export const useTransactions = () => {
     } finally {
       setLoading(false);
     }
-  }, [transactionClient]);
+  }, [api.transactions]);
 
   const addTransaction = useCallback(
     async (transaction: TransactionCreate) => {
       setLoading(true);
       setError(null);
       try {
-        const newTransaction = await transactionClient.create(transaction);
+        const newTransaction = await api.transactions.create(transaction);
         setTransactions((prev) => [...prev, newTransaction]);
         return newTransaction;
       } catch (err) {
@@ -42,7 +42,7 @@ export const useTransactions = () => {
         setLoading(false);
       }
     },
-    [transactionClient]
+    [api.transactions]
   );
 
   const updateTransaction = useCallback(
@@ -50,7 +50,7 @@ export const useTransactions = () => {
       setLoading(true);
       setError(null);
       try {
-        const updatedTransaction = await transactionClient.update(
+        const updatedTransaction = await api.transactions.update(
           id,
           transaction
         );
@@ -66,7 +66,7 @@ export const useTransactions = () => {
         setLoading(false);
       }
     },
-    [transactionClient]
+    [api.transactions]
   );
 
   const deleteTransaction = useCallback(
@@ -74,7 +74,7 @@ export const useTransactions = () => {
       setLoading(true);
       setError(null);
       try {
-        await transactionClient.delete(id);
+        await api.transactions.delete(id);
         setTransactions((prev) => prev.filter((t) => t.id !== id));
         return true;
       } catch (err) {
@@ -85,7 +85,7 @@ export const useTransactions = () => {
         setLoading(false);
       }
     },
-    [transactionClient]
+    [api.transactions]
   );
 
   const categorizeTransaction = useCallback(
@@ -99,7 +99,7 @@ export const useTransactions = () => {
           throw new Error(`Transaction with ID ${id} not found`);
         }
 
-        const updatedTransaction = await transactionClient.update(id, {
+        const updatedTransaction = await api.transactions.update(id, {
           date: transaction.date,
           description: transaction.description,
           amount: transaction.amount,
@@ -119,7 +119,7 @@ export const useTransactions = () => {
         setLoading(false);
       }
     },
-    [transactionClient, transactions]
+    [api.transactions, transactions]
   );
 
   const getTransactionsByCategory = useCallback(

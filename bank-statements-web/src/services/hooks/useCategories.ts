@@ -1,10 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Category } from '../../types/Transaction';
-import { useApiClients } from '../../api/ApiClientsContext';
+import { useApi } from '../../api/ApiContext';
 import { CategoryListResponse } from '../../api/CategoryClient';
 
 export const useCategories = () => {
-  const { categoryClient } = useApiClients();
+  const api = useApi();
   const [categories, setCategories] = useState<Category[]>([]);
   const [rootCategories, setRootCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
@@ -14,7 +14,7 @@ export const useCategories = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await categoryClient.getAll();
+      const response = await api.categories.getAll();
       setCategories(response.categories);
     } catch (err) {
       console.error('Error fetching categories:', err);
@@ -22,13 +22,13 @@ export const useCategories = () => {
     } finally {
       setLoading(false);
     }
-  }, [categoryClient]);
+  }, [api.categories]);
 
   const fetchRootCategories = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await categoryClient.getRootCategories();
+      const response = await api.categories.getRootCategories();
       setRootCategories(response.categories);
     } catch (err) {
       console.error('Error fetching root categories:', err);
@@ -36,14 +36,14 @@ export const useCategories = () => {
     } finally {
       setLoading(false);
     }
-  }, [categoryClient]);
+  }, [api.categories]);
 
   const fetchSubcategories = useCallback(
     async (parentId: string) => {
       setLoading(true);
       setError(null);
       try {
-        const response = await categoryClient.getSubcategories(parentId);
+        const response = await api.categories.getSubcategories(parentId);
         return response.categories;
       } catch (err) {
         console.error('Error fetching subcategories:', err);
@@ -53,7 +53,7 @@ export const useCategories = () => {
         setLoading(false);
       }
     },
-    [categoryClient]
+    [api.categories]
   );
 
   const addCategory = useCallback(
@@ -61,7 +61,7 @@ export const useCategories = () => {
       setLoading(true);
       setError(null);
       try {
-        const newCategory = await categoryClient.create({
+        const newCategory = await api.categories.create({
           name,
           parent_id: parentId,
         });
@@ -78,7 +78,7 @@ export const useCategories = () => {
         setLoading(false);
       }
     },
-    [categoryClient]
+    [api.categories]
   );
 
   const updateCategory = useCallback(
@@ -86,7 +86,7 @@ export const useCategories = () => {
       setLoading(true);
       setError(null);
       try {
-        const updatedCategory = await categoryClient.update(id, {
+        const updatedCategory = await api.categories.update(id, {
           name,
           parent_id: parentId,
         });
@@ -118,7 +118,7 @@ export const useCategories = () => {
         setLoading(false);
       }
     },
-    [categoryClient]
+    [api.categories]
   );
 
   const deleteCategory = useCallback(
@@ -126,7 +126,7 @@ export const useCategories = () => {
       setLoading(true);
       setError(null);
       try {
-        await categoryClient.delete(id);
+        await api.categories.delete(id);
         setCategories((prev) => prev.filter((category) => category.id !== id));
         setRootCategories((prev) =>
           prev.filter((category) => category.id !== id)
@@ -140,7 +140,7 @@ export const useCategories = () => {
         setLoading(false);
       }
     },
-    [categoryClient]
+    [api.categories]
   );
 
   useEffect(() => {
