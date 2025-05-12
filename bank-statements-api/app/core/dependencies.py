@@ -1,6 +1,8 @@
 from contextlib import contextmanager
 from typing import Iterator
 
+from app.ai.gemini_ai import GeminiAI
+
 from sqlalchemy.orm import Session
 
 from app.adapters.repositories.category import SQLAlchemyCategoryRepository
@@ -74,7 +76,8 @@ def build_internal_dependencies(external: ExternalDependencies) -> InternalDepen
 
     file_type_detector = StatementFileTypeDetector()
     statement_parser = StatementParser()
-    schema_detector = SchemaDetector()
+    llm_client = GeminiAI()
+    schema_detector = SchemaDetector(llm_client)
     transaction_normalizer = TransactionNormalizer()
     category_service = CategoryService(category_repo)
     transaction_service = TransactionService(transaction_repo)

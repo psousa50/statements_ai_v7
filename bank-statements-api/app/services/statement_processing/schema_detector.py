@@ -1,13 +1,8 @@
 import json
-from abc import ABC, abstractmethod
+
+from app.ai.llm_client import LLMClient
 
 import pandas as pd
-
-
-class LLMClient(ABC):
-    @abstractmethod
-    def complete(self, prompt: str) -> str:
-        pass
 
 
 class SchemaDetector:
@@ -16,7 +11,7 @@ class SchemaDetector:
 
     def detect_schema(self, df: pd.DataFrame) -> dict:
         prompt = self._build_prompt(df)
-        response = self.llm.complete(prompt)
+        response = self.llm.generate(prompt)
         return self._parse_response(response)
 
     def _build_prompt(self, df: pd.DataFrame) -> str:

@@ -5,17 +5,22 @@ WORKDIR /app
 # Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
   build-essential \
+  curl \
   && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements file
-COPY pyproject.toml .
-COPY start_app.sh .
+# Install Poetry
+ENV POETRY_VERSION=1.8.2
+RUN curl -sSL https://install.python-poetry.org | python3 -
+ENV PATH="/root/.local/bin:$PATH"
 
-# Copy application code
+# Disable Poetry virtualenvs
+ENV POETRY_VIRTUALENVS_CREATE=false
+
+# Copy files
+COPY pyproject.toml poetry.lock* ./
+RUN poetry install --no-root
+
 COPY . .
-
-# Install Python dependencies
-RUN pip install --no-cache-dir .
 
 # Expose port
 EXPOSE 8000

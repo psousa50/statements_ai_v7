@@ -1,0 +1,54 @@
+services:
+  # PostgreSQL Database
+  db:
+    image: postgres:15
+    container_name: bank-statements-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: bank_statements
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Bank Statements API
+  api:
+    build:
+      context: ./bank-statements-api
+      dockerfile: Dockerfile
+    container_name: bank-statements-api
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/bank_statements
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./bank-statements-api:/app
+
+  # Bank Statements Web Frontend
+  web:
+    image: node:18
+    container_name: bank-statements-web
+    working_dir: /app
+    volumes:
+      - ./bank-statements-web:/app
+      - /app/node_modules
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_API_URL=http://localhost:8000
+    depends_on:
+      - api
+    command: bash -c "corepack enable && pnpm install && pnpm run dev -- --host 0.0.0.0"
+
+volumes:
+  postgres_data:
