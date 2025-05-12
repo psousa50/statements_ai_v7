@@ -41,7 +41,9 @@ Run the development server:
 ```
 npm run dev
 ```
+
 or
+
 ```
 yarn dev
 ```
@@ -53,7 +55,9 @@ The application will be available at http://localhost:5173.
 ```
 npm run build
 ```
+
 or
+
 ```
 yarn build
 ```

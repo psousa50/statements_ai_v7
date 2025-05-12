@@ -1,9 +1,8 @@
-import { useState } from 'react';
-import { useTransactions } from '../services/hooks/useTransactions';
-import { useCategories } from '../services/hooks/useCategories';
-import { TransactionForm } from '../components/TransactionForm';
-import { TransactionTable } from '../components/TransactionTable';
-import { TransactionCreate } from '../types/Transaction';
+import { useTransactions } from '../services/hooks/useTransactions'
+import { useCategories } from '../services/hooks/useCategories'
+import { TransactionForm } from '../components/TransactionForm'
+import { TransactionTable } from '../components/TransactionTable'
+import { TransactionCreate } from '../types/Transaction'
 
 export const TransactionsPage = () => {
   const {
@@ -12,27 +11,20 @@ export const TransactionsPage = () => {
     error: transactionsError,
     addTransaction,
     categorizeTransaction,
-  } = useTransactions();
+  } = useTransactions()
 
-  const {
-    categories,
-    loading: categoriesLoading,
-    error: categoriesError,
-  } = useCategories();
+  const { categories, loading: categoriesLoading, error: categoriesError } = useCategories()
 
-  const loading = transactionsLoading || categoriesLoading;
-  const error = transactionsError || categoriesError;
+  const loading = transactionsLoading || categoriesLoading
+  const error = transactionsError || categoriesError
 
   const handleAddTransaction = async (transaction: TransactionCreate) => {
-    await addTransaction(transaction);
-  };
+    await addTransaction(transaction)
+  }
 
-  const handleCategorizeTransaction = async (
-    transactionId: string,
-    categoryId?: string
-  ) => {
-    await categorizeTransaction(transactionId, categoryId);
-  };
+  const handleCategorizeTransaction = async (transactionId: string, categoryId?: string) => {
+    await categorizeTransaction(transactionId, categoryId)
+  }
 
   return (
     <div className="transactions-page">
@@ -42,11 +34,7 @@ export const TransactionsPage = () => {
 
       <div className="transactions-container">
         <div className="form-container">
-          <TransactionForm
-            onSubmit={handleAddTransaction}
-            categories={categories}
-            isLoading={loading}
-          />
+          <TransactionForm onSubmit={handleAddTransaction} categories={categories} isLoading={loading} />
         </div>
 
         <div className="table-container">
@@ -59,5 +47,5 @@ export const TransactionsPage = () => {
         </div>
       </div>
     </div>
-  );
-};
+  )
+}

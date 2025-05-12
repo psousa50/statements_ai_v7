@@ -1,7 +1,7 @@
-import { ApiClient } from './ApiClient';
-import { CategoryClient, CategoryListResponse } from './CategoryClient';
-import { TransactionClient } from './TransactionClient';
-import { Category, Transaction, TransactionListResponse } from '../types/Transaction';
+import { ApiClient } from './ApiClient'
+import { CategoryClient, CategoryListResponse } from './CategoryClient'
+import { TransactionClient } from './TransactionClient'
+import { Category, Transaction, TransactionListResponse } from '../types/Transaction'
 
 // Default mock transaction
 const defaultTransaction: Transaction = {
@@ -11,13 +11,13 @@ const defaultTransaction: Transaction = {
   amount: 100,
   created_at: '2023-01-01T00:00:00Z',
   categorization_status: 'UNCATEGORIZED',
-};
+}
 
 // Default mock category
 const defaultCategory: Category = {
   id: '1',
   name: 'Sample Category',
-};
+}
 
 // Default mock transaction client implementation
 const defaultTransactionClient: TransactionClient = {
@@ -30,7 +30,7 @@ const defaultTransactionClient: TransactionClient = {
   create: () => Promise.resolve(defaultTransaction),
   update: () => Promise.resolve(defaultTransaction),
   delete: () => Promise.resolve(),
-};
+}
 
 // Default mock category client implementation
 const defaultCategoryClient: CategoryClient = {
@@ -53,28 +53,19 @@ const defaultCategoryClient: CategoryClient = {
   create: () => Promise.resolve(defaultCategory),
   update: () => Promise.resolve(defaultCategory),
   delete: () => Promise.resolve(),
-};
+}
 
-// Default mock API client
-const defaultMockApiClient: ApiClient = {
-  transactions: defaultTransactionClient,
-  categories: defaultCategoryClient,
-};
-
-// Type for partial overrides of the transaction client
 type TransactionClientOverrides = Partial<{
-  [K in keyof TransactionClient]: TransactionClient[K];
-}>;
-
-// Type for partial overrides of the category client
+  [K in keyof TransactionClient]: TransactionClient[K]
+}>
 type CategoryClientOverrides = Partial<{
-  [K in keyof CategoryClient]: CategoryClient[K];
-}>;
+  [K in keyof CategoryClient]: CategoryClient[K]
+}>
 
 // Type for partial overrides of the API client
 interface ApiClientOverrides {
-  transactions?: TransactionClientOverrides;
-  categories?: CategoryClientOverrides;
+  transactions?: TransactionClientOverrides
+  categories?: CategoryClientOverrides
 }
 
 // Create a mock API client with optional overrides
@@ -88,5 +79,5 @@ export const createMockApiClient = (overrides: ApiClientOverrides = {}): ApiClie
       ...defaultCategoryClient,
       ...overrides.categories,
     },
-  };
-};
+  }
+}

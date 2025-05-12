@@ -1,34 +1,30 @@
-import { useState, FormEvent } from 'react';
-import { Category, TransactionCreate } from '../types/Transaction';
+import { useState, FormEvent } from 'react'
+import { Category, TransactionCreate } from '../types/Transaction'
 
 interface TransactionFormProps {
-  onSubmit: (transaction: TransactionCreate) => Promise<void>;
-  categories: Category[];
-  isLoading: boolean;
+  onSubmit: (transaction: TransactionCreate) => Promise<void>
+  categories: Category[]
+  isLoading: boolean
 }
 
-export const TransactionForm = ({
-  onSubmit,
-  categories,
-  isLoading,
-}: TransactionFormProps) => {
-  const [date, setDate] = useState<string>('');
-  const [description, setDescription] = useState<string>('');
-  const [amount, setAmount] = useState<string>('');
-  const [categoryId, setCategoryId] = useState<string>('');
+export const TransactionForm = ({ onSubmit, categories, isLoading }: TransactionFormProps) => {
+  const [date, setDate] = useState<string>('')
+  const [description, setDescription] = useState<string>('')
+  const [amount, setAmount] = useState<string>('')
+  const [categoryId, setCategoryId] = useState<string>('')
 
   const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
+    e.preventDefault()
 
     if (!date || !description || !amount) {
-      alert('Please fill in all fields');
-      return;
+      alert('Please fill in all fields')
+      return
     }
 
-    const amountValue = parseFloat(amount);
+    const amountValue = parseFloat(amount)
     if (isNaN(amountValue)) {
-      alert('Amount must be a valid number');
-      return;
+      alert('Amount must be a valid number')
+      return
     }
 
     const transaction: TransactionCreate = {
@@ -36,16 +32,16 @@ export const TransactionForm = ({
       description,
       amount: amountValue,
       category_id: categoryId || undefined,
-    };
+    }
 
-    await onSubmit(transaction);
+    await onSubmit(transaction)
 
     // Reset form
-    setDate('');
-    setDescription('');
-    setAmount('');
-    setCategoryId('');
-  };
+    setDate('')
+    setDescription('')
+    setAmount('')
+    setCategoryId('')
+  }
 
   return (
     <div className="transaction-form">
@@ -53,13 +49,7 @@ export const TransactionForm = ({
       <form onSubmit={handleSubmit}>
         <div className="form-group">
           <label htmlFor="date">Date</label>
-          <input
-            type="date"
-            id="date"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-            required
-          />
+          <input type="date" id="date" value={date} onChange={(e) => setDate(e.target.value)} required />
         </div>
 
         <div className="form-group">
@@ -87,11 +77,7 @@ export const TransactionForm = ({
 
         <div className="form-group">
           <label htmlFor="category">Category (optional)</label>
-          <select
-            id="category"
-            value={categoryId}
-            onChange={(e) => setCategoryId(e.target.value)}
-          >
+          <select id="category" value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>
             <option value="">-- Select Category --</option>
             {categories.map((category) => (
               <option key={category.id} value={category.id}>
@@ -106,5 +92,5 @@ export const TransactionForm = ({
         </button>
       </form>
     </div>
-  );
-};
+  )
+}

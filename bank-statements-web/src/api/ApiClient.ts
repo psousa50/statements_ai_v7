@@ -1,7 +1,7 @@
-import { CategoryClient } from './CategoryClient';
-import { TransactionClient } from './TransactionClient';
+import { CategoryClient } from './CategoryClient'
+import { TransactionClient } from './TransactionClient'
 
 export interface ApiClient {
-  transactions: TransactionClient;
-  categories: CategoryClient;
+  transactions: TransactionClient
+  categories: CategoryClient
 }

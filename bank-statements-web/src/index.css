@@ -1,4 +1,4 @@
-    :root {
+:root {
   font-family: Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
@@ -48,7 +48,8 @@ h1 {
     font-weight: bold; /* Make it bold for better visibility */
   }
   /* Ensure table text is visible in dark mode */
-  th, td {
+  th,
+  td {
     color: rgba(255, 255, 255, 0.87);
   }
   /* Ensure table headers are visible */

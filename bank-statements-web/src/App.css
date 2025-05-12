@@ -58,15 +58,15 @@
     background-color: #333;
     box-shadow: 0 2px 4px rgba(255, 255, 255, 0.1);
   }
-  
+
   .transaction-form h2 {
     color: rgba(255, 255, 255, 0.87);
   }
-  
+
   .form-group label {
     color: rgba(255, 255, 255, 0.87);
   }
-  
+
   .form-group input {
     background-color: #444;
     color: rgba(255, 255, 255, 0.87);
@@ -132,7 +132,7 @@ button:disabled {
     background-color: #333;
     box-shadow: 0 2px 4px rgba(255, 255, 255, 0.1);
   }
-  
+
   .transaction-table h2 {
     color: rgba(255, 255, 255, 0.87);
   }
@@ -143,7 +143,8 @@ table {
   border-collapse: collapse;
 }
 
-th, td {
+th,
+td {
   padding: 0.75rem;
   text-align: left;
   border-bottom: 1px solid #dee2e6;
@@ -160,15 +161,16 @@ tr:hover {
 
 /* Dark mode styles for table elements */
 @media (prefers-color-scheme: dark) {
-  th, td {
+  th,
+  td {
     border-bottom: 1px solid #555;
     color: rgba(255, 255, 255, 0.87);
   }
-  
+
   th {
     background-color: #444;
   }
-  
+
   tr:hover {
     background-color: #444;
   }
@@ -182,7 +184,8 @@ tr:hover {
   color: #dc3545;
 }
 
-.loading, .no-data {
+.loading,
+.no-data {
   text-align: center;
   padding: 2rem;
   color: #6c757d;
@@ -190,7 +193,8 @@ tr:hover {
 
 /* Dark mode styles for loading and no-data messages */
 @media (prefers-color-scheme: dark) {
-  .loading, .no-data {
+  .loading,
+  .no-data {
     color: #adb5bd;
   }
 }
