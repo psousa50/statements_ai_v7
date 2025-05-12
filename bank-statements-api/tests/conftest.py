@@ -11,6 +11,10 @@ import pytest
 from app.domain.models.transaction import Transaction
 from app.ports.repositories.transaction import TransactionRepository
 
+from dotenv import load_dotenv
+
+load_dotenv(".env.test")
+
 
 @pytest.fixture
 def sample_transaction_data():

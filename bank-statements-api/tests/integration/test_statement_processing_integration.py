@@ -4,12 +4,10 @@ from uuid import UUID
 
 import pandas as pd
 import pytest
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, event
 from sqlalchemy.orm import sessionmaker
-
 from app.adapters.repositories.transaction import SQLAlchemyTransactionRepository
 from app.adapters.repositories.uploaded_file import SQLAlchemyFileAnalysisMetadataRepository, SQLAlchemyUploadedFileRepository
-from app.core.database import Base
 from app.domain.models.transaction import Transaction
 from app.domain.models.uploaded_file import FileAnalysisMetadata, UploadedFile
 from app.services.statement_processing.file_type_detector import StatementFileTypeDetector
@@ -25,7 +23,11 @@ class MockLLMClient(LLMClient):
         self.fixed_response = fixed_response
         self.last_prompt = None
 
-    def complete(self, prompt: str) -> str:
+    def generate(self, prompt: str) -> str:
+        self.last_prompt = prompt
+        return self.fixed_response
+
+    async def generate_async(self, prompt: str) -> str:
         self.last_prompt = prompt
         return self.fixed_response
 
@@ -33,34 +35,40 @@ class MockLLMClient(LLMClient):
 @pytest.fixture
 def db_engine():
     """Create a test database engine using the DATABASE_URL environment variable."""
-    # Ensure DATABASE_URL is set
-    database_url = os.environ.get("DATABASE_URL")
+    database_url = os.environ.get("TEST_DATABASE_URL")
     if not database_url:
-        pytest.skip("DATABASE_URL environment variable not set")
+        pytest.fail("TEST_DATABASE_URL environment variable not set")
 
-    # Create engine
     engine = create_engine(database_url)
 
-    # Create all tables
-    Base.metadata.create_all(engine)
-
     yield engine
-
-    # Drop all tables after tests
-    Base.metadata.drop_all(engine)
 
 
 @pytest.fixture
 def db_session(db_engine):
-    """Create a new database session for testing."""
-    Session = sessionmaker(autocommit=False, autoflush=False, bind=db_engine)
+    """Creates a session that rolls back *everything* at the end of the test, even commits."""
+    connection = db_engine.connect()
+    transaction = connection.begin()
+
+    # Create a new session bound to the connection
+    Session = sessionmaker(bind=connection)
     session = Session()
+
+    # Start a nested transaction (savepoint)
+    session.begin_nested()
+
+    # Ensure new SAVEPOINTs are created after each commit
+    @event.listens_for(session, "after_transaction_end")
+    def restart_savepoint(session, transaction):
+        if transaction.nested and not transaction._parent.nested:
+            session.begin_nested()
 
     yield session
 
-    # Rollback any pending transactions
-    session.rollback()
+    # Cleanup: rollback outer transaction and close connection
     session.close()
+    transaction.rollback()
+    connection.close()
 
 
 @pytest.fixture

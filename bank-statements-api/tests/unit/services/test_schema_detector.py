@@ -9,7 +9,11 @@ class MockLLMClient(LLMClient):
         self.fixed_response = fixed_response
         self.last_prompt = None
 
-    def complete(self, prompt: str) -> str:
+    def generate(self, prompt: str) -> str:
+        self.last_prompt = prompt
+        return self.fixed_response
+
+    async def generate_async(self, prompt: str) -> str:
         self.last_prompt = prompt
         return self.fixed_response
 
