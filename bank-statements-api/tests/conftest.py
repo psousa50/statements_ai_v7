@@ -7,11 +7,10 @@ from unittest.mock import MagicMock
 from uuid import uuid4
 
 import pytest
+from dotenv import load_dotenv
 
 from app.domain.models.transaction import Transaction
 from app.ports.repositories.transaction import TransactionRepository
-
-from dotenv import load_dotenv
 
 load_dotenv(".env.test")
 

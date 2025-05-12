@@ -18,11 +18,8 @@ depends_on = None
 
 def upgrade():
     # Add uploaded_file_id column to transactions table
-    op.add_column(
-        "transactions",
-        sa.Column("uploaded_file_id", postgresql.UUID(as_uuid=True), nullable=True)
-    )
-    
+    op.add_column("transactions", sa.Column("uploaded_file_id", postgresql.UUID(as_uuid=True), nullable=True))
+
     # Add foreign key constraint
     op.create_foreign_key(
         "fk_transactions_uploaded_file_id_uploaded_files",
@@ -35,11 +32,7 @@ def upgrade():
 
 def downgrade():
     # Drop foreign key constraint
-    op.drop_constraint(
-        "fk_transactions_uploaded_file_id_uploaded_files",
-        "transactions",
-        type_="foreignkey"
-    )
-    
+    op.drop_constraint("fk_transactions_uploaded_file_id_uploaded_files", "transactions", type_="foreignkey")
+
     # Drop uploaded_file_id column
     op.drop_column("transactions", "uploaded_file_id")

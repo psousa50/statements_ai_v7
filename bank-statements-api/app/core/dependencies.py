@@ -1,13 +1,12 @@
 from contextlib import contextmanager
 from typing import Iterator
 
-from app.ai.gemini_ai import GeminiAI
-
 from sqlalchemy.orm import Session
 
 from app.adapters.repositories.category import SQLAlchemyCategoryRepository
 from app.adapters.repositories.transaction import SQLAlchemyTransactionRepository
 from app.adapters.repositories.uploaded_file import SQLAlchemyFileAnalysisMetadataRepository, SQLAlchemyUploadedFileRepository
+from app.ai.gemini_ai import GeminiAI
 from app.core.database import SessionLocal
 from app.services.category import CategoryService
 from app.services.statement_processing.file_type_detector import StatementFileTypeDetector

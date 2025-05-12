@@ -1,8 +1,8 @@
 import json
 
-from app.ai.llm_client import LLMClient
-
 import pandas as pd
+
+from app.ai.llm_client import LLMClient
 
 
 class SchemaDetector:
