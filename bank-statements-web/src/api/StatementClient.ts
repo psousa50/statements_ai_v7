@@ -39,6 +39,7 @@ export interface StatementUploadResponse {
   transactions_saved: number
   success: boolean
   message: string
+  sample_data?: SampleData[]
 }
 
 export interface StatementClient {

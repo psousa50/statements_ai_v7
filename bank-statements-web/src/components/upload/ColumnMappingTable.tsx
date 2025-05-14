@@ -18,7 +18,6 @@ import {
   SelectChangeEvent,
 } from '@mui/material'
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline'
-import { ColumnMapping } from '../../api/StatementClient'
 
 interface ColumnMappingTableProps {
   sampleData: Record<string, unknown>[]
@@ -47,19 +46,19 @@ export const ColumnMappingTable: React.FC<ColumnMappingTableProps> = ({
 
   const handleColumnTypeChange = (columnName: string, columnType: string) => {
     const newMapping = { ...columnMapping }
-    
+
     // Remove the column from any existing mapping
     Object.entries(newMapping).forEach(([type, col]) => {
       if (col === columnName) {
         delete newMapping[type]
       }
     })
-    
+
     // Add the new mapping if not "ignore"
     if (columnType !== 'ignore') {
       newMapping[columnType] = columnName
     }
-    
+
     onColumnMappingChange(newMapping)
   }
 
@@ -85,7 +84,7 @@ export const ColumnMappingTable: React.FC<ColumnMappingTableProps> = ({
       <Typography variant="h6" gutterBottom>
         Column Mapping
       </Typography>
-      
+
       <Box sx={{ mb: 3, display: 'flex', gap: 2 }}>
         <TextField
           label="Header Row Index"
@@ -96,7 +95,7 @@ export const ColumnMappingTable: React.FC<ColumnMappingTableProps> = ({
           size="small"
           sx={{ width: 150 }}
         />
-        
+
         <TextField
           label="Data Start Row Index"
           type="number"
@@ -107,7 +106,7 @@ export const ColumnMappingTable: React.FC<ColumnMappingTableProps> = ({
           sx={{ width: 150 }}
         />
       </Box>
-      
+
       <TableContainer component={Paper}>
         <Table size="small">
           <TableHead>

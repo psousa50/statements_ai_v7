@@ -130,3 +130,4 @@ class StatementUploadResponse(BaseModel):
     transactions_saved: int
     success: bool
     message: str
+    sample_data: Optional[List[Dict[str, Any]]] = None

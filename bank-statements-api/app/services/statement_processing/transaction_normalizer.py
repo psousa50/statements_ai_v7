@@ -61,7 +61,7 @@ class TransactionNormalizer:
 
         if missing_columns:
             raise ValueError(f"Not enough columns in DataFrame for positional mapping. Missing: {', '.join(missing_columns)}")
-            
+
         if df.empty:
             logger.warning("Empty DataFrame provided to normalizer")
             return result_df
@@ -86,24 +86,11 @@ class TransactionNormalizer:
         return result_df
 
     def _normalize_dates(self, date_series: pd.Series) -> pd.Series:
-        normalized = pd.to_datetime(
-            date_series, errors="coerce", infer_datetime_format=True, dayfirst=False, utc=False  # Adjust this if your data is usually in DD/MM/YYYY format
-        )
+        normalized = pd.to_datetime(date_series, errors="coerce", dayfirst=False, utc=False)
 
         return normalized
 
     def _normalize_amounts(self, amount_series: pd.Series) -> pd.Series:
-        """
-        Try to normalize a pandas Series into float values. Supports strings with commas,
-        currency symbols, whitespace, and more. Unparseable values become NaN.
-
-        Args:
-            number_series (pd.Series): A Series containing numeric-like values as strings or numbers.
-
-        Returns:
-            pd.Series: A Series of float values with unparseable entries as NaN.
-        """
-
         def clean_value(val):
             if pd.isna(val):
                 return np.nan

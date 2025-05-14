@@ -21,7 +21,6 @@ class StatementPersistenceService:
         file_hash = analysis_result["file_hash"]
         header_row_index = analysis_result["header_row_index"]
         data_start_row_index = analysis_result["data_start_row_index"]
-        sample_data = analysis_result["sample_data"]
         source_id = analysis_result.get("source_id", None)
 
         # Get file content from uploaded_file repository
@@ -40,7 +39,7 @@ class StatementPersistenceService:
             column_mapping=column_mapping,
             header_row_index=header_row_index,
             data_start_row_index=data_start_row_index,
-            normalized_sample=sample_data,
+            # Removed normalized_sample as it shouldn't be stored in the metadata table
         )
 
         # Save transactions
@@ -52,10 +51,10 @@ class StatementPersistenceService:
                 "description": row["description"],
                 "uploaded_file_id": uploaded_file_id,
             }
-            
+
             if source_id:
                 transaction["source_id"] = source_id
-                
+
             transactions.append(transaction)
 
         transactions_saved = self.transaction_repo.save_batch(transactions)

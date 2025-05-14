@@ -27,7 +27,6 @@ class FileAnalysisMetadata(Base):
     column_mapping = Column(JSONB, nullable=False)
     header_row_index = Column(Integer, nullable=False)
     data_start_row_index = Column(Integer, nullable=False)
-    normalized_sample = Column(JSONB, nullable=False)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
 
     uploaded_file = relationship("UploadedFile")

@@ -68,6 +68,7 @@ def register_statement_routes(app: FastAPI, provide_dependencies: Callable[[], I
                 transactions_saved=result["transactions_saved"],
                 success=True,
                 message=f"Successfully saved {result['transactions_saved']} transactions",
+                sample_data=result.get("sample_data"),
             )
         except Exception as e:
             log_exception("Error processing statement: %s", str(e))

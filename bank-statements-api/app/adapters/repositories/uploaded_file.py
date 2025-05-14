@@ -48,7 +48,6 @@ class SQLAlchemyFileAnalysisMetadataRepository(FileAnalysisMetadataRepository):
         column_mapping: Dict,
         header_row_index: int,
         data_start_row_index: int,
-        normalized_sample: List[Dict],
     ) -> Dict:
         metadata = FileAnalysisMetadata(
             uploaded_file_id=uploaded_file_id,
@@ -57,14 +56,13 @@ class SQLAlchemyFileAnalysisMetadataRepository(FileAnalysisMetadataRepository):
             column_mapping=column_mapping,
             header_row_index=header_row_index,
             data_start_row_index=data_start_row_index,
-            normalized_sample=normalized_sample,
         )
 
         self.session.add(metadata)
         self.session.commit()
         self.session.refresh(metadata)
 
-        return {
+        result = {
             "id": str(metadata.id),
             "uploaded_file_id": str(metadata.uploaded_file_id),
             "file_hash": metadata.file_hash,
@@ -72,9 +70,10 @@ class SQLAlchemyFileAnalysisMetadataRepository(FileAnalysisMetadataRepository):
             "column_mapping": metadata.column_mapping,
             "header_row_index": metadata.header_row_index,
             "data_start_row_index": metadata.data_start_row_index,
-            "normalized_sample": metadata.normalized_sample,
             "created_at": metadata.created_at,
         }
+
+        return result
 
     def find_by_hash(self, file_hash: str) -> Optional[Dict]:
         metadata = self.session.query(FileAnalysisMetadata).filter(FileAnalysisMetadata.file_hash == file_hash).first()
@@ -82,7 +81,7 @@ class SQLAlchemyFileAnalysisMetadataRepository(FileAnalysisMetadataRepository):
         if not metadata:
             return None
 
-        return {
+        result = {
             "id": str(metadata.id),
             "uploaded_file_id": str(metadata.uploaded_file_id),
             "file_hash": metadata.file_hash,
@@ -90,6 +89,11 @@ class SQLAlchemyFileAnalysisMetadataRepository(FileAnalysisMetadataRepository):
             "column_mapping": metadata.column_mapping,
             "header_row_index": metadata.header_row_index,
             "data_start_row_index": metadata.data_start_row_index,
-            "normalized_sample": metadata.normalized_sample,
             "created_at": metadata.created_at,
         }
+
+        # Include normalized_sample if it exists (for backward compatibility)
+        if hasattr(metadata, "normalized_sample") and metadata.normalized_sample is not None:
+            result["normalized_sample"] = metadata.normalized_sample
+
+        return result

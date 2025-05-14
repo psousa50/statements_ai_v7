@@ -85,5 +85,4 @@ class TestStatementPersistenceService:
             column_mapping=analysis_result["column_mapping"],
             header_row_index=analysis_result["header_row_index"],
             data_start_row_index=analysis_result["data_start_row_index"],
-            normalized_sample=analysis_result["sample_data"],
         )

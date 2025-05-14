@@ -37,7 +37,6 @@ class TestFileAnalysisMetadataModel:
             },
             header_row_index=0,
             data_start_row_index=1,
-            normalized_sample=[{"date": "2023-01-01", "amount": 100.0}],
             created_at=datetime.now(timezone.utc),
         )
 
@@ -52,6 +51,6 @@ class TestFileAnalysisMetadataModel:
         }
         assert metadata.header_row_index == 0
         assert metadata.data_start_row_index == 1
-        assert metadata.normalized_sample == [{"date": "2023-01-01", "amount": 100.0}]
+        # normalized_sample field has been removed
         assert isinstance(metadata.created_at, datetime)
         assert metadata.__tablename__ == "file_analysis_metadata"

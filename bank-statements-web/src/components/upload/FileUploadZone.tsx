@@ -19,25 +19,32 @@ export const FileUploadZone: React.FC<FileUploadZoneProps> = ({ onFileSelected, 
       }
 
       const file = acceptedFiles[0]
-      
+
       // Check file type
       if (!file.name.endsWith('.csv') && !file.name.endsWith('.xlsx')) {
         setError('Only CSV and XLSX files are supported')
         return
       }
-      
+
       // Check file size (10MB max)
       if (file.size > 10 * 1024 * 1024) {
         setError('File size must be less than 10MB')
         return
       }
-      
+
       onFileSelected(file)
     },
     [onFileSelected]
   )
 
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop })
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({ 
+    onDrop,
+    accept: {
+      'text/csv': ['.csv'],
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx']
+    },
+    maxFiles: 1
+  })
 
   return (
     <Box
@@ -49,30 +56,28 @@ export const FileUploadZone: React.FC<FileUploadZoneProps> = ({ onFileSelected, 
         textAlign: 'center',
         backgroundColor: isDragActive ? 'rgba(0, 0, 0, 0.05)' : 'transparent',
         cursor: 'pointer',
-        transition: 'all 0.2s ease',
-        mb: 3,
       }}
       {...getRootProps()}
     >
       <input {...getInputProps()} />
       
       {isLoading ? (
-        <Box display="flex" flexDirection="column" alignItems="center">
-          <CircularProgress size={40} sx={{ mb: 2 }} />
-          <Typography>Analyzing your statement...</Typography>
-        </Box>
+        <CircularProgress />
       ) : (
         <>
           <CloudUploadIcon sx={{ fontSize: 48, color: 'primary.main', mb: 2 }} />
           <Typography variant="h6" gutterBottom>
-            {isDragActive ? 'Drop your file here' : 'Drag and drop your bank statement'}
+            Drag & drop your bank statement file here
           </Typography>
-          <Typography variant="body2" color="textSecondary" gutterBottom>
-            Supported formats: CSV, XLSX (Max 10MB)
+          <Typography variant="body2" color="text.secondary" gutterBottom>
+            or
           </Typography>
-          <Button variant="contained" color="primary" sx={{ mt: 2 }}>
+          <Button variant="outlined" component="span">
             Browse Files
           </Button>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
+            Supported formats: CSV, XLSX (max 10MB)
+          </Typography>
           
           {error && (
             <Typography color="error" sx={{ mt: 2 }}>

@@ -75,7 +75,7 @@ class TestFileAnalysisMetadataRepository:
         }
         header_row_index = 0
         data_start_row_index = 1
-        normalized_sample = [{"date": "2023-01-01", "amount": 100.0}]
+        # normalized_sample field removed
 
         result = repo.save(
             uploaded_file_id=uploaded_file_id,
@@ -84,7 +84,6 @@ class TestFileAnalysisMetadataRepository:
             column_mapping=column_mapping,
             header_row_index=header_row_index,
             data_start_row_index=data_start_row_index,
-            normalized_sample=normalized_sample,
         )
 
         assert "id" in result
@@ -94,7 +93,7 @@ class TestFileAnalysisMetadataRepository:
         assert result["column_mapping"] == column_mapping
         assert result["header_row_index"] == header_row_index
         assert result["data_start_row_index"] == data_start_row_index
-        assert result["normalized_sample"] == normalized_sample
+        # normalized_sample field removed
 
         session.add.assert_called_once()
         session.commit.assert_called_once()
