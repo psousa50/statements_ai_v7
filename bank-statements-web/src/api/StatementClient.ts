@@ -7,11 +7,15 @@ export interface ColumnMapping {
   category?: string
 }
 
+export interface SampleDataMetadata {
+  header_row_index: number
+  data_start_row_index: number
+  column_mappings: Record<string, string>
+}
+
 export interface SampleData {
-  date: string
-  amount: number
-  description: string
-  category?: string
+  metadata: SampleDataMetadata
+  rows: string[][]
 }
 
 export interface StatementAnalysisResponse {
@@ -20,7 +24,8 @@ export interface StatementAnalysisResponse {
   column_mapping: Record<string, string>
   header_row_index: number
   data_start_row_index: number
-  sample_data: Record<string, unknown>[]
+  sample_data: SampleData
+  normalized_sample?: Record<string, unknown>[]
   file_hash: string
 }
 

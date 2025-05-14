@@ -105,13 +105,24 @@ class ColumnMapping(BaseModel):
     category: Optional[str] = None
 
 
+class SampleDataMetadata(BaseModel):
+    header_row_index: int
+    data_start_row_index: int
+    column_mappings: Dict[int, str]
+
+
+class SampleData(BaseModel):
+    metadata: SampleDataMetadata
+    rows: List[List[str]]
+
+
 class StatementAnalysisResponse(BaseModel):
     uploaded_file_id: str
     file_type: str
     column_mapping: Dict[str, str]
     header_row_index: int
     data_start_row_index: int
-    sample_data: List[Dict[str, Any]]
+    sample_data: SampleData
     file_hash: str
 
 

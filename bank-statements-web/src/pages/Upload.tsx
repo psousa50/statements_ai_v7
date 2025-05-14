@@ -152,8 +152,7 @@ export const Upload: React.FC = () => {
             <>
               <AnalysisSummary
                 fileType={analysisResult.file_type}
-                rowCount={analysisResult.sample_data.length}
-                sampleData={analysisResult.sample_data as unknown as SampleData[]}
+                sampleData={analysisResult.sample_data}
               />
               
               <Paper sx={{ p: 3, mt: 3, mb: 3, bgcolor: '#f8f9fa' }}>

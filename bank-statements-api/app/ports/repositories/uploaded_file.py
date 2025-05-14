@@ -23,7 +23,6 @@ class FileAnalysisMetadataRepository(ABC):
         column_mapping: Dict,
         header_row_index: int,
         data_start_row_index: int,
-        normalized_sample: List[Dict],
     ) -> Dict:
         pass
 

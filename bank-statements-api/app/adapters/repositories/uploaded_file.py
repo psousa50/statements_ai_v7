@@ -92,8 +92,4 @@ class SQLAlchemyFileAnalysisMetadataRepository(FileAnalysisMetadataRepository):
             "created_at": metadata.created_at,
         }
 
-        # Include normalized_sample if it exists (for backward compatibility)
-        if hasattr(metadata, "normalized_sample") and metadata.normalized_sample is not None:
-            result["normalized_sample"] = metadata.normalized_sample
-
         return result

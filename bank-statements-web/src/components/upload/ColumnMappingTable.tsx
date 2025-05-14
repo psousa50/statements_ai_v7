@@ -18,9 +18,10 @@ import {
   SelectChangeEvent,
 } from '@mui/material'
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline'
+import { SampleData } from '../../api/StatementClient'
 
 interface ColumnMappingTableProps {
-  sampleData: Record<string, unknown>[]
+  sampleData: SampleData
   columnMapping: Record<string, string>
   headerRowIndex: number
   dataStartRowIndex: number
@@ -38,14 +39,22 @@ export const ColumnMappingTable: React.FC<ColumnMappingTableProps> = ({
   onHeaderRowIndexChange,
   onDataStartRowIndexChange,
 }) => {
-  // Extract column names from the first row of sample data
+  // Get the number of columns from the sample data
   const columns = React.useMemo(() => {
-    if (sampleData.length === 0) return []
-    return Object.keys(sampleData[0])
+    if (!sampleData.rows || sampleData.rows.length === 0) return []
+    // Find the row with the most columns to ensure we display all data
+    const maxColumns = Math.max(...sampleData.rows.map(row => row.length))
+    return Array.from({ length: maxColumns }, (_, i) => i.toString())
   }, [sampleData])
 
-  const handleColumnTypeChange = (columnName: string, columnType: string) => {
+  const handleColumnTypeChange = (columnIndex: string, columnType: string) => {
     const newMapping = { ...columnMapping }
+    
+    // Get the column name from the header row
+    const headerRowIdx = sampleData.metadata.header_row_index
+    const columnName = headerRowIdx >= 0 && headerRowIdx < sampleData.rows.length 
+      ? sampleData.rows[headerRowIdx][parseInt(columnIndex)] || `Column ${columnIndex}`
+      : `Column ${columnIndex}`
 
     // Remove the column from any existing mapping
     Object.entries(newMapping).forEach(([type, col]) => {
@@ -62,12 +71,24 @@ export const ColumnMappingTable: React.FC<ColumnMappingTableProps> = ({
     onColumnMappingChange(newMapping)
   }
 
-  const getColumnType = (columnName: string): string => {
+  const getColumnType = (columnIndex: string): string => {
+    // Get the column name from the header row
+    const headerRowIdx = sampleData.metadata.header_row_index
+    const columnName = headerRowIdx >= 0 && headerRowIdx < sampleData.rows.length 
+      ? sampleData.rows[headerRowIdx][parseInt(columnIndex)] || `Column ${columnIndex}`
+      : `Column ${columnIndex}`
+      
     for (const [type, col] of Object.entries(columnMapping)) {
       if (col === columnName) {
         return type
       }
     }
+    
+    // Check if this column is mapped in the metadata
+    if (sampleData.metadata.column_mappings && sampleData.metadata.column_mappings[columnIndex]) {
+      return sampleData.metadata.column_mappings[columnIndex]
+    }
+    
     return 'ignore'
   }
 
@@ -77,6 +98,49 @@ export const ColumnMappingTable: React.FC<ColumnMappingTableProps> = ({
     description: 'The transaction description or memo',
     category: 'The category of the transaction (if available)',
     ignore: 'This column will be ignored during import',
+  }
+
+  // Display all rows including the first row with account information
+  const renderTableRows = () => {
+    return sampleData.rows.map((row, rowIndex) => {
+      // Highlight the header and data start rows
+      const isHeaderRow = rowIndex === sampleData.metadata.header_row_index
+      const isDataStartRow = rowIndex === sampleData.metadata.data_start_row_index
+      
+      return (
+        <TableRow 
+          key={rowIndex}
+          sx={{
+            backgroundColor: isHeaderRow 
+              ? 'rgba(25, 118, 210, 0.3)' 
+              : isDataStartRow 
+                ? 'rgba(76, 175, 80, 0.3)' 
+                : '#ffffff',
+            fontWeight: isHeaderRow ? 'bold' : 'normal',
+            color: '#000000',
+          }}
+        >
+          {columns.map((_, cellIndex) => {
+            // Ensure we don't try to access cells that don't exist in this row
+            const cellValue = cellIndex < row.length ? row[cellIndex] : ''
+            return (
+              <TableCell 
+                key={`${rowIndex}-${cellIndex}`}
+                sx={{
+                  color: '#000000',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  maxWidth: '200px',
+                }}
+              >
+                {cellValue || ''}
+              </TableCell>
+            )
+          })}
+        </TableRow>
+      )
+    })
   }
 
   return (
@@ -107,67 +171,70 @@ export const ColumnMappingTable: React.FC<ColumnMappingTableProps> = ({
         />
       </Box>
 
+      {/* Sample Data Table with Column Selectors */}
       <TableContainer component={Paper} sx={{ mb: 3 }}>
-        <Table size="small" sx={{ minWidth: 650 }}>
+        <Table size="small" sx={{ minWidth: 650, backgroundColor: '#ffffff' }}>
           <TableHead>
-            <TableRow>
-              {columns.map((column) => (
-                <TableCell key={column}>
-                  <FormControl fullWidth size="small">
-                    <InputLabel id={`column-type-label-${column}`}>Type</InputLabel>
-                    <Select
-                      labelId={`column-type-label-${column}`}
-                      value={getColumnType(column)}
-                      label="Type"
-                      onChange={(e: SelectChangeEvent) => handleColumnTypeChange(column, e.target.value)}
-                    >
-                      <MenuItem value="date">
-                        Date
-                        <Tooltip title={columnTypeTooltips.date}>
-                          <HelpOutlineIcon fontSize="small" sx={{ ml: 1 }} />
-                        </Tooltip>
-                      </MenuItem>
-                      <MenuItem value="amount">
-                        Amount
-                        <Tooltip title={columnTypeTooltips.amount}>
-                          <HelpOutlineIcon fontSize="small" sx={{ ml: 1 }} />
-                        </Tooltip>
-                      </MenuItem>
-                      <MenuItem value="description">
-                        Description
-                        <Tooltip title={columnTypeTooltips.description}>
-                          <HelpOutlineIcon fontSize="small" sx={{ ml: 1 }} />
-                        </Tooltip>
-                      </MenuItem>
-                      <MenuItem value="category">
-                        Category
-                        <Tooltip title={columnTypeTooltips.category}>
-                          <HelpOutlineIcon fontSize="small" sx={{ ml: 1 }} />
-                        </Tooltip>
-                      </MenuItem>
-                      <MenuItem value="ignore">
-                        Ignore
-                        <Tooltip title={columnTypeTooltips.ignore}>
-                          <HelpOutlineIcon fontSize="small" sx={{ ml: 1 }} />
-                        </Tooltip>
-                      </MenuItem>
-                    </Select>
-                  </FormControl>
-                  <Typography variant="body2" sx={{ mt: 1 }}>
-                    {column}
-                  </Typography>
-                </TableCell>
-              ))}
+            <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
+              {columns.map((columnIndex) => {
+                // Get the column name from the header row
+                const headerRowIdx = sampleData.metadata.header_row_index
+                const columnName = headerRowIdx >= 0 && headerRowIdx < sampleData.rows.length 
+                  ? sampleData.rows[headerRowIdx][parseInt(columnIndex)] || `Column ${columnIndex}`
+                  : `Column ${columnIndex}`
+                  
+                return (
+                  <TableCell key={columnIndex} sx={{ backgroundColor: '#f5f5f5', padding: '8px' }}>
+                    <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 1 }}>
+                      {columnName}
+                    </Typography>
+                    <FormControl fullWidth size="small" sx={{ backgroundColor: '#ffffff' }}>
+                      <InputLabel id={`column-type-label-${columnIndex}`}>Type</InputLabel>
+                      <Select
+                        labelId={`column-type-label-${columnIndex}`}
+                        value={getColumnType(columnIndex)}
+                        label="Type"
+                        onChange={(e: SelectChangeEvent) => handleColumnTypeChange(columnIndex, e.target.value)}
+                      >
+                        <MenuItem value="date">
+                          Date
+                          <Tooltip title={columnTypeTooltips.date}>
+                            <HelpOutlineIcon fontSize="small" sx={{ ml: 1 }} />
+                          </Tooltip>
+                        </MenuItem>
+                        <MenuItem value="amount">
+                          Amount
+                          <Tooltip title={columnTypeTooltips.amount}>
+                            <HelpOutlineIcon fontSize="small" sx={{ ml: 1 }} />
+                          </Tooltip>
+                        </MenuItem>
+                        <MenuItem value="description">
+                          Description
+                          <Tooltip title={columnTypeTooltips.description}>
+                            <HelpOutlineIcon fontSize="small" sx={{ ml: 1 }} />
+                          </Tooltip>
+                        </MenuItem>
+                        <MenuItem value="category">
+                          Category
+                          <Tooltip title={columnTypeTooltips.category}>
+                            <HelpOutlineIcon fontSize="small" sx={{ ml: 1 }} />
+                          </Tooltip>
+                        </MenuItem>
+                        <MenuItem value="ignore">
+                          Ignore
+                          <Tooltip title={columnTypeTooltips.ignore}>
+                            <HelpOutlineIcon fontSize="small" sx={{ ml: 1 }} />
+                          </Tooltip>
+                        </MenuItem>
+                      </Select>
+                    </FormControl>
+                  </TableCell>
+                )
+              })}
             </TableRow>
           </TableHead>
           <TableBody>
-            {sampleData.slice(0, 10).map((row, rowIndex) => (
-              <TableRow key={rowIndex}>
-                {columns.map((column) => (
-                  <TableCell key={`${rowIndex}-${column}`}>{String(row[column] || '')}</TableCell>
-                ))}
-              </TableRow>
-            ))}
+            {renderTableRows()}
           </TableBody>
         </Table>
       </TableContainer>
