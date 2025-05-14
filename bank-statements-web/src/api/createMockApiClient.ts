@@ -1,5 +1,6 @@
 import { ApiClient } from './ApiClient'
 import { CategoryClient, CategoryListResponse } from './CategoryClient'
+import { SampleData, StatementAnalysisResponse, StatementClient, StatementUploadResponse } from './StatementClient'
 import { TransactionClient } from './TransactionClient'
 import { Category, Transaction, TransactionListResponse } from '../types/Transaction'
 
@@ -55,17 +56,52 @@ const defaultCategoryClient: CategoryClient = {
   delete: () => Promise.resolve(),
 }
 
+// Default mock statement client implementation
+const defaultStatementClient: StatementClient = {
+  analyzeStatement: () =>
+    Promise.resolve({
+      uploaded_file_id: '1',
+      file_type: 'CSV',
+      column_mapping: {
+        date: 'Date',
+        amount: 'Amount',
+        description: 'Description',
+      },
+      header_row_index: 0,
+      data_start_row_index: 1,
+      sample_data: [
+        {
+          date: '2023-01-01',
+          amount: 100,
+          description: 'Sample Transaction',
+        },
+      ],
+      file_hash: 'abc123',
+    } as StatementAnalysisResponse),
+  uploadStatement: () =>
+    Promise.resolve({
+      uploaded_file_id: '1',
+      transactions_saved: 10,
+      success: true,
+      message: 'Successfully saved 10 transactions',
+    } as StatementUploadResponse),
+}
+
 type TransactionClientOverrides = Partial<{
   [K in keyof TransactionClient]: TransactionClient[K]
 }>
 type CategoryClientOverrides = Partial<{
   [K in keyof CategoryClient]: CategoryClient[K]
 }>
+type StatementClientOverrides = Partial<{
+  [K in keyof StatementClient]: StatementClient[K]
+}>
 
 // Type for partial overrides of the API client
 interface ApiClientOverrides {
   transactions?: TransactionClientOverrides
   categories?: CategoryClientOverrides
+  statements?: StatementClientOverrides
 }
 
 // Create a mock API client with optional overrides
@@ -78,6 +114,10 @@ export const createMockApiClient = (overrides: ApiClientOverrides = {}): ApiClie
     categories: {
       ...defaultCategoryClient,
       ...overrides.categories,
+    },
+    statements: {
+      ...defaultStatementClient,
+      ...overrides.statements,
     },
   }
 }

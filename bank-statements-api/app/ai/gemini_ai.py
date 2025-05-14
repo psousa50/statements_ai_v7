@@ -17,9 +17,9 @@ class GeminiAI(LLMClient):
         model_name: str = "gemini-2.0-flash",
         temperature: float = 0,
     ):
-        self.api_key = api_key or os.environ.get("GOOGLE_API_KEY")
+        self.api_key = api_key or os.environ.get("GEMINI_API_KEY")
         if not self.api_key:
-            raise ValueError("API key must be provided either as an argument or as GOOGLE_API_KEY environment variable")
+            raise ValueError("API key must be provided either as an argument or as GEMINI_API_KEY environment variable")
 
         self.model_name = model_name
 
@@ -31,11 +31,8 @@ class GeminiAI(LLMClient):
 
     def generate(self, prompt: str) -> str:
         try:
-            logger_content.debug(prompt, extra={"prefix": "gemini.prompt"})
             response = self.model.generate_content(prompt)
-            response = response.text
-            logger_content.debug(response, extra={"prefix": "gemini.response", "ext": "json"})
-            return response
+            return response.text
         except Exception as e:
             logger.error("Error generating response: %s", str(e))
             raise Exception(f"Error generating response: {str(e)}")
@@ -45,4 +42,5 @@ class GeminiAI(LLMClient):
             response = await self.model.generate_content_async(prompt)
             return response.text
         except Exception as e:
+            logger.error("Error generating response: %s", str(e))
             raise Exception(f"Error generating response: {str(e)}")

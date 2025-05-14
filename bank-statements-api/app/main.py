@@ -2,9 +2,14 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.routes.categories import register_category_routes
+from app.api.routes.statements import register_statement_routes
 from app.api.routes.transactions import register_transaction_routes
 from app.core.config import settings
 from app.core.dependencies import provide_dependencies
+from app.logging.config import init_logging
+import logging
+
+init_logging()
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -21,6 +26,7 @@ app.add_middleware(
 
 register_transaction_routes(app, provide_dependencies)
 register_category_routes(app, provide_dependencies)
+register_statement_routes(app, provide_dependencies)
 
 
 @app.get("/")

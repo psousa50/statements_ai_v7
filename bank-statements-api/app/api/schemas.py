@@ -1,6 +1,6 @@
 from datetime import date, datetime
 from decimal import Decimal
-from typing import Optional, Sequence
+from typing import Any, Dict, List, Optional, Sequence
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
@@ -69,3 +69,37 @@ class TransactionResponse(BaseModel):
 class TransactionListResponse(BaseModel):
     transactions: Sequence[TransactionResponse]
     total: int
+
+
+class ColumnMapping(BaseModel):
+    date: str
+    amount: str
+    description: str
+    category: Optional[str] = None
+
+
+class StatementAnalysisResponse(BaseModel):
+    uploaded_file_id: str
+    file_type: str
+    column_mapping: Dict[str, str]
+    header_row_index: int
+    data_start_row_index: int
+    sample_data: List[Dict[str, Any]]
+    file_hash: str
+
+
+class StatementUploadRequest(BaseModel):
+    uploaded_file_id: str
+    file_type: str
+    column_mapping: Dict[str, str]
+    header_row_index: int
+    data_start_row_index: int
+    file_hash: str
+    source: Optional[str] = None
+
+
+class StatementUploadResponse(BaseModel):
+    uploaded_file_id: str
+    transactions_saved: int
+    success: bool
+    message: str

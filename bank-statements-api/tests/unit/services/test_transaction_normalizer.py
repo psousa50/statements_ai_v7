@@ -65,5 +65,5 @@ class TestTransactionNormalizer:
             "description": "Description",
         }
 
-        with pytest.raises(ValueError, match="Missing mapped columns in DataFrame"):
+        with pytest.raises(ValueError, match="Not enough columns in DataFrame for positional mapping"):
             normalizer.normalize(df, column_mapping)

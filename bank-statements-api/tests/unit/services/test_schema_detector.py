@@ -44,13 +44,13 @@ class TestSchemaDetector:
 
         result = detector.detect_schema(df)
 
-        assert result["column_mapping"] == {
+        assert result.column_map == {
             "date": "Date",
             "amount": "Amount",
             "description": "Description",
         }
-        assert result["header_row_index"] == 0
-        assert result["data_start_row_index"] == 1
+        assert result.header_row == 0
+        assert result.start_row == 1
         assert llm_client.last_prompt is not None
 
     def test_detect_schema_with_complex_mapping(self):
@@ -78,13 +78,48 @@ class TestSchemaDetector:
 
         result = detector.detect_schema(df)
 
-        assert result["column_mapping"] == {
+        assert result.column_map == {
             "date": "Transaction Date",
             "amount": "Value (EUR)",
             "description": "Transaction Details",
         }
-        assert result["header_row_index"] == 2
-        assert result["data_start_row_index"] == 3
+        assert result.header_row == 2
+        assert result.start_row == 3
+
+    def test_detect_schema_with_fenced_json(self):
+        llm_response = """
+        ```json
+        {
+            "column_mapping": {
+                "date": "Transaction Date",
+                "amount": "Value (EUR)",
+                "description": "Transaction Details"
+            },
+            "header_row_index": 2,
+            "data_start_row_index": 3
+        }
+        ```
+        """
+        llm_client = MockLLMClient(llm_response)
+        detector = SchemaDetector(llm_client)
+
+        df = pd.DataFrame(
+            {
+                "Transaction Date": ["2023-01-01", "2023-01-02"],
+                "Value (EUR)": [100.00, 200.00],
+                "Transaction Details": ["Test 1", "Test 2"],
+            }
+        )
+
+        result = detector.detect_schema(df)
+
+        assert result.column_map == {
+            "date": "Transaction Date",
+            "amount": "Value (EUR)",
+            "description": "Transaction Details",
+        }
+        assert result.header_row == 2
+        assert result.start_row == 3
 
     def test_invalid_llm_response(self):
         llm_response = "This is not valid JSON"
