@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Box, Container, Paper, Snackbar, Typography, Alert } from '@mui/material'
+import { Box, Container, Paper, Snackbar, Typography, Alert, Divider } from '@mui/material'
 import { defaultApiClient } from '../api/createApiClient'
 import { SampleData, StatementAnalysisResponse } from '../api/StatementClient'
 import { FileUploadZone } from '../components/upload/FileUploadZone'
@@ -8,6 +8,7 @@ import { AnalysisSummary } from '../components/upload/AnalysisSummary'
 import { ColumnMappingTable } from '../components/upload/ColumnMappingTable'
 import { ValidationMessages } from '../components/upload/ValidationMessages'
 import { UploadFooter } from '../components/upload/UploadFooter'
+import { SourceSelector } from '../components/upload/SourceSelector'
 
 export const Upload: React.FC = () => {
   const navigate = useNavigate()
@@ -17,6 +18,7 @@ export const Upload: React.FC = () => {
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
   const [analysisResult, setAnalysisResult] = useState<StatementAnalysisResponse | null>(null)
+  const [selectedSource, setSelectedSource] = useState<string>("")
   
   // State for user edits
   const [columnMapping, setColumnMapping] = useState<Record<string, string>>({
@@ -92,7 +94,7 @@ export const Upload: React.FC = () => {
         header_row_index: headerRowIndex,
         data_start_row_index: dataStartRowIndex,
         file_hash: analysisResult.file_hash,
-        source: file?.name || 'Unknown',
+        source: selectedSource || (file?.name || 'Unknown'),
       })
       
       setNotification({
@@ -126,6 +128,7 @@ export const Upload: React.FC = () => {
       amount: '',
       description: '',
     })
+    // Don't reset the source selection to maintain user preference
   }
 
   return (
@@ -137,7 +140,9 @@ export const Upload: React.FC = () => {
         
         <Paper sx={{ p: 3, mb: 3 }}>
           {!analysisResult ? (
-            <FileUploadZone onFileSelected={handleFileSelected} isLoading={isAnalyzing} />
+            <>
+              <FileUploadZone onFileSelected={handleFileSelected} isLoading={isAnalyzing} />
+            </>
           ) : (
             <>
               <AnalysisSummary
@@ -145,6 +150,19 @@ export const Upload: React.FC = () => {
                 rowCount={analysisResult.sample_data.length}
                 sampleData={analysisResult.sample_data as unknown as SampleData[]}
               />
+              
+              <Paper sx={{ p: 3, mt: 3, mb: 3, bgcolor: '#f8f9fa' }}>
+                <Typography variant="h6" gutterBottom>
+                  Select Source Bank
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                  Choose the bank or financial institution that issued this statement.
+                </Typography>
+                <SourceSelector 
+                  value={selectedSource} 
+                  onChange={setSelectedSource} 
+                />
+              </Paper>
               
               <ColumnMappingTable
                 sampleData={analysisResult.sample_data}

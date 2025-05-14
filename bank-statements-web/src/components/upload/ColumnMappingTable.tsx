@@ -91,7 +91,7 @@ export const ColumnMappingTable: React.FC<ColumnMappingTableProps> = ({
           label="Header Row Index"
           type="number"
           value={headerRowIndex}
-          onChange={(e) => onHeaderRowIndexChange(parseInt(e.target.value, 10))}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => onHeaderRowIndexChange(parseInt(e.target.value, 10))}
           InputProps={{ inputProps: { min: 0 } }}
           size="small"
           sx={{ width: 150 }}
@@ -101,7 +101,7 @@ export const ColumnMappingTable: React.FC<ColumnMappingTableProps> = ({
           label="Data Start Row Index"
           type="number"
           value={dataStartRowIndex}
-          onChange={(e) => onDataStartRowIndexChange(parseInt(e.target.value, 10))}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => onDataStartRowIndexChange(parseInt(e.target.value, 10))}
           InputProps={{ inputProps: { min: 0 } }}
           size="small"
           sx={{ width: 150 }}

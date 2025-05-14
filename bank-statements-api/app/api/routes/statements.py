@@ -45,15 +45,22 @@ def register_statement_routes(app: FastAPI, provide_dependencies: Callable[[], I
             
             # Handle source if provided
             if upload_data.source:
-                # Try to find existing source by name
-                source = internal.source_service.get_source_by_name(upload_data.source)
-                
-                # If source doesn't exist, create it
-                if not source:
-                    source = internal.source_service.create_source(upload_data.source)
-                
-                # Add source_id to the data
-                data["source_id"] = source.id
+                try:
+                    # Try to find existing source by name
+                    source = internal.source_service.get_source_by_name(upload_data.source)
+                    
+                    # If source doesn't exist, create it
+                    if not source:
+                        logger.info(f"Creating new source: {upload_data.source}")
+                        source = internal.source_service.create_source(upload_data.source)
+                    else:
+                        logger.info(f"Using existing source: {upload_data.source}")
+                    
+                    # Add source_id to the data
+                    data["source_id"] = source.id
+                except Exception as e:
+                    log_exception("Error handling source: %s", str(e))
+                    # Continue without source if there's an error
             
             result = internal.statement_persistence_service.persist(data)
             return StatementUploadResponse(

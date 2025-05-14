@@ -1,5 +1,6 @@
 import { ApiClient } from './ApiClient'
 import { CategoryClient, CategoryListResponse } from './CategoryClient'
+import { Source, SourceClient, SourceListResponse } from './SourceClient'
 import { SampleData, StatementAnalysisResponse, StatementClient, StatementUploadResponse } from './StatementClient'
 import { TransactionClient } from './TransactionClient'
 import { Category, Transaction, TransactionListResponse } from '../types/Transaction'
@@ -18,6 +19,12 @@ const defaultTransaction: Transaction = {
 const defaultCategory: Category = {
   id: '1',
   name: 'Sample Category',
+}
+
+// Default mock source
+const defaultSource: Source = {
+  id: '1',
+  name: 'Sample Bank',
 }
 
 // Default mock transaction client implementation
@@ -54,6 +61,16 @@ const defaultCategoryClient: CategoryClient = {
   create: () => Promise.resolve(defaultCategory),
   update: () => Promise.resolve(defaultCategory),
   delete: () => Promise.resolve(),
+}
+
+// Default mock source client implementation
+const defaultSourceClient: SourceClient = {
+  getSources: () =>
+    Promise.resolve({
+      sources: [defaultSource],
+      total: 1,
+    } as SourceListResponse),
+  createSource: () => Promise.resolve(defaultSource),
 }
 
 // Default mock statement client implementation
@@ -96,12 +113,16 @@ type CategoryClientOverrides = Partial<{
 type StatementClientOverrides = Partial<{
   [K in keyof StatementClient]: StatementClient[K]
 }>
+type SourceClientOverrides = Partial<{
+  [K in keyof SourceClient]: SourceClient[K]
+}>
 
 // Type for partial overrides of the API client
 interface ApiClientOverrides {
   transactions?: TransactionClientOverrides
   categories?: CategoryClientOverrides
   statements?: StatementClientOverrides
+  sources?: SourceClientOverrides
 }
 
 // Create a mock API client with optional overrides
@@ -118,6 +139,10 @@ export const createMockApiClient = (overrides: ApiClientOverrides = {}): ApiClie
     statements: {
       ...defaultStatementClient,
       ...overrides.statements,
+    },
+    sources: {
+      ...defaultSourceClient,
+      ...overrides.sources,
     },
   }
 }
