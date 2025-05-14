@@ -107,8 +107,14 @@ class TestStatementRoutes:
     def test_upload_statement_success(self, client, mock_dependencies):
         # Prepare test data
         uploaded_file_id = str(uuid4())
+        source_id = uuid4()
         
-        # Configure mock
+        # Configure mock for source service
+        mock_source = MagicMock()
+        mock_source.id = source_id
+        mock_dependencies.source_service.get_source_by_name.return_value = mock_source
+        
+        # Configure mock for persistence service
         mock_dependencies.statement_persistence_service.persist.return_value = {
             "uploaded_file_id": uploaded_file_id,
             "transactions_saved": 10
@@ -129,6 +135,10 @@ class TestStatementRoutes:
             "source": "Test Bank"
         }
         
+        # Expected data with source_id
+        expected_data = request_data.copy()
+        expected_data["source_id"] = source_id
+        
         # Make request
         response = client.post(
             "/api/v1/statements/upload",
@@ -141,8 +151,13 @@ class TestStatementRoutes:
         assert response.json()["transactions_saved"] == 10
         assert response.json()["success"] is True
         
-        # Verify mock was called correctly
-        mock_dependencies.statement_persistence_service.persist.assert_called_once_with(request_data)
+        # Verify source service was called correctly
+        mock_dependencies.source_service.get_source_by_name.assert_called_once_with("Test Bank")
+        
+        # Verify persistence service was called with the source_id
+        mock_dependencies.statement_persistence_service.persist.assert_called_once()
+        call_args = mock_dependencies.statement_persistence_service.persist.call_args[0][0]
+        assert call_args["source_id"] == source_id
     
     def test_upload_statement_error(self, client, mock_dependencies):
         # Configure mock to raise an exception

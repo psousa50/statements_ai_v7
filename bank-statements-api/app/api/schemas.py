@@ -33,6 +33,30 @@ class CategoryListResponse(BaseModel):
     total: int
 
 
+class SourceBase(BaseModel):
+    name: str
+
+
+class SourceCreate(SourceBase):
+    pass
+
+
+class SourceUpdate(SourceBase):
+    pass
+
+
+class SourceResponse(BaseModel):
+    id: UUID
+    name: str
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class SourceListResponse(BaseModel):
+    sources: Sequence[SourceResponse]
+    total: int
+
+
 class TransactionBase(BaseModel):
     date: date
     description: str
@@ -41,10 +65,12 @@ class TransactionBase(BaseModel):
 
 class TransactionCreate(TransactionBase):
     category_id: Optional[UUID] = None
+    source_id: Optional[UUID] = None
 
 
 class TransactionUpdate(TransactionBase):
     category_id: Optional[UUID] = None
+    source_id: Optional[UUID] = None
 
 
 class TransactionResponse(BaseModel):
@@ -54,6 +80,7 @@ class TransactionResponse(BaseModel):
     amount: Decimal
     created_at: "date"
     category_id: Optional[UUID] = None
+    source_id: Optional[UUID] = None
     categorization_status: CategorizationStatus
 
     model_config = ConfigDict(from_attributes=True)

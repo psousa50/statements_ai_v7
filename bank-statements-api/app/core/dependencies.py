@@ -4,11 +4,13 @@ from typing import Iterator
 from sqlalchemy.orm import Session
 
 from app.adapters.repositories.category import SQLAlchemyCategoryRepository
+from app.adapters.repositories.source import SQLAlchemySourceRepository
 from app.adapters.repositories.transaction import SQLAlchemyTransactionRepository
 from app.adapters.repositories.uploaded_file import SQLAlchemyFileAnalysisMetadataRepository, SQLAlchemyUploadedFileRepository
 from app.ai.gemini_ai import GeminiAI
 from app.core.database import SessionLocal
 from app.services.category import CategoryService
+from app.services.source import SourceService
 from app.services.statement_processing.file_type_detector import StatementFileTypeDetector
 from app.services.statement_processing.schema_detector import SchemaDetector
 from app.services.statement_processing.statement_analyzer import StatementAnalyzerService
@@ -50,11 +52,13 @@ class InternalDependencies:
         self,
         transaction_service: TransactionService,
         category_service: CategoryService,
+        source_service: SourceService,
         statement_analyzer_service: StatementAnalyzerService,
         statement_persistence_service: StatementPersistenceService,
     ):
         self.transaction_service = transaction_service
         self.category_service = category_service
+        self.source_service = source_service
         self.statement_analyzer_service = statement_analyzer_service
         self.statement_persistence_service = statement_persistence_service
 
@@ -70,6 +74,7 @@ def build_external_dependencies() -> ExternalDependencies:
 def build_internal_dependencies(external: ExternalDependencies) -> InternalDependencies:
     transaction_repo = SQLAlchemyTransactionRepository(external.db)
     category_repo = SQLAlchemyCategoryRepository(external.db)
+    source_repo = SQLAlchemySourceRepository(external.db)
     uploaded_file_repo = SQLAlchemyUploadedFileRepository(external.db)
     file_analysis_metadata_repo = SQLAlchemyFileAnalysisMetadataRepository(external.db)
 
@@ -79,6 +84,7 @@ def build_internal_dependencies(external: ExternalDependencies) -> InternalDepen
     schema_detector = SchemaDetector(llm_client)
     transaction_normalizer = TransactionNormalizer()
     category_service = CategoryService(category_repo)
+    source_service = SourceService(source_repo)
     transaction_service = TransactionService(transaction_repo)
 
     statement_analyzer_service = StatementAnalyzerService(
@@ -101,6 +107,7 @@ def build_internal_dependencies(external: ExternalDependencies) -> InternalDepen
     return InternalDependencies(
         transaction_service=transaction_service,
         category_service=category_service,
+        source_service=source_service,
         statement_analyzer_service=statement_analyzer_service,
         statement_persistence_service=statement_persistence_service,
     )

@@ -22,6 +22,7 @@ class TransactionService:
         description: str,
         amount: Decimal,
         category_id: Optional[UUID] = None,
+        source_id: Optional[UUID] = None,
     ) -> Transaction:
         """Create a new transaction"""
         transaction = Transaction(
@@ -29,6 +30,7 @@ class TransactionService:
             description=description,
             amount=amount,
             category_id=category_id,
+            source_id=source_id,
             categorization_status=(CategorizationStatus.CATEGORIZED if category_id else CategorizationStatus.UNCATEGORIZED),
         )
         return self.transaction_repository.create(transaction)
@@ -48,6 +50,7 @@ class TransactionService:
         description: str,
         amount: Decimal,
         category_id: Optional[UUID] = None,
+        source_id: Optional[UUID] = None,
     ) -> Optional[Transaction]:
         """Update a transaction"""
         transaction = self.transaction_repository.get_by_id(transaction_id)
@@ -59,6 +62,9 @@ class TransactionService:
             # Update category and categorization status
             transaction.category_id = category_id
             transaction.categorization_status = CategorizationStatus.CATEGORIZED if category_id else CategorizationStatus.UNCATEGORIZED
+            
+            # Update source
+            transaction.source_id = source_id
 
             return self.transaction_repository.update(transaction)
         return None

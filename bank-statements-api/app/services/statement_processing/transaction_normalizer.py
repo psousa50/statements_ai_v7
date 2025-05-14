@@ -2,6 +2,7 @@ import re
 from datetime import datetime
 
 import pandas as pd
+import numpy as np
 import json
 import logging
 
@@ -55,9 +56,12 @@ class TransactionNormalizer:
 
         missing_columns = []
         for col_name, mapped_col in column_mapping.items():
-            if mapped_col not in df.columns:
+            if col_name in required_keys and mapped_col not in df.columns:
                 missing_columns.append(mapped_col)
 
+        if missing_columns:
+            raise ValueError(f"Not enough columns in DataFrame for positional mapping. Missing: {', '.join(missing_columns)}")
+            
         if df.empty:
             logger.warning("Empty DataFrame provided to normalizer")
             return result_df

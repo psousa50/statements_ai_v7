@@ -41,7 +41,21 @@ def register_statement_routes(app: FastAPI, provide_dependencies: Callable[[], I
     ):
         """Process and persist the analyzed statement data"""
         try:
-            result = internal.statement_persistence_service.persist(upload_data.model_dump())
+            data = upload_data.model_dump()
+            
+            # Handle source if provided
+            if upload_data.source:
+                # Try to find existing source by name
+                source = internal.source_service.get_source_by_name(upload_data.source)
+                
+                # If source doesn't exist, create it
+                if not source:
+                    source = internal.source_service.create_source(upload_data.source)
+                
+                # Add source_id to the data
+                data["source_id"] = source.id
+            
+            result = internal.statement_persistence_service.persist(data)
             return StatementUploadResponse(
                 uploaded_file_id=result["uploaded_file_id"],
                 transactions_saved=result["transactions_saved"],

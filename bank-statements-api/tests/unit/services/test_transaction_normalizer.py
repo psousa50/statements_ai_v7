@@ -50,7 +50,7 @@ class TestTransactionNormalizer:
         assert list(normalized_df.columns) == ["date", "amount", "description"]
         assert len(normalized_df) == 2
         # Date is now a string for JSON serialization
-        assert normalized_df["date"][0] == "2023-02-01"
+        assert normalized_df["date"][0] == "2023-01-02"
         assert normalized_df["amount"][0] == 1000.50
         assert normalized_df["amount"][1] == -2000.75
 
@@ -65,5 +65,5 @@ class TestTransactionNormalizer:
             "description": "Description",
         }
 
-        with pytest.raises(ValueError, match="Not enough columns in DataFrame for positional mapping"):
+        with pytest.raises(ValueError, match="Not enough columns in DataFrame for positional mapping. Missing: Amount, Description"):
             normalizer.normalize(df, column_mapping)

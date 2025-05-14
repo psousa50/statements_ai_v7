@@ -42,12 +42,14 @@ class TestTransactionService:
         transaction_date = date(2023, 4, 15)
         description = "Test Transaction"
         amount = Decimal("100.50")
+        source_id = uuid4()
 
         # Act
         result = service.create_transaction(
             transaction_date=transaction_date,
             description=description,
             amount=amount,
+            source_id=source_id,
         )
 
         # Assert
@@ -58,6 +60,7 @@ class TestTransactionService:
         assert created_transaction.date == transaction_date
         assert created_transaction.description == description
         assert created_transaction.amount == amount
+        assert created_transaction.source_id == source_id
 
     def test_get_transaction(self, service, mock_repository, sample_transaction):
         """Test getting a transaction by ID"""
@@ -121,6 +124,7 @@ class TestTransactionService:
         new_date = date(2023, 4, 20)
         new_description = "Updated Transaction"
         new_amount = Decimal("150.75")
+        new_source_id = uuid4()
 
         # Act
         result = service.update_transaction(
@@ -128,6 +132,7 @@ class TestTransactionService:
             transaction_date=new_date,
             description=new_description,
             amount=new_amount,
+            source_id=new_source_id,
         )
 
         # Assert
@@ -139,6 +144,7 @@ class TestTransactionService:
         assert sample_transaction.date == new_date
         assert sample_transaction.description == new_description
         assert sample_transaction.amount == new_amount
+        assert sample_transaction.source_id == new_source_id
 
     def test_update_transaction_not_found(self, service, mock_repository):
         """Test updating a transaction that doesn't exist"""

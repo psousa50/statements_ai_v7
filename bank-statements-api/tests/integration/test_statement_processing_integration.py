@@ -4,11 +4,13 @@ from uuid import UUID
 
 import pandas as pd
 import pytest
-from sqlalchemy import create_engine, event
+from sqlalchemy import create_engine, event, text
 from sqlalchemy.orm import sessionmaker
 
+from app.adapters.repositories.source import SQLAlchemySourceRepository
 from app.adapters.repositories.transaction import SQLAlchemyTransactionRepository
 from app.adapters.repositories.uploaded_file import SQLAlchemyFileAnalysisMetadataRepository, SQLAlchemyUploadedFileRepository
+from app.domain.models.source import Source
 from app.domain.models.transaction import Transaction
 from app.domain.models.uploaded_file import FileAnalysisMetadata, UploadedFile
 from app.services.statement_processing.file_type_detector import StatementFileTypeDetector
@@ -41,6 +43,74 @@ def db_engine():
         pytest.fail("TEST_DATABASE_URL environment variable not set")
 
     engine = create_engine(database_url)
+    
+    # Create necessary tables for testing
+    with engine.connect() as conn:
+        # Drop tables if they exist
+        conn.execute(text("DROP TABLE IF EXISTS transactions CASCADE"))
+        conn.execute(text("DROP TABLE IF EXISTS file_analysis_metadata CASCADE"))
+        conn.execute(text("DROP TABLE IF EXISTS uploaded_files CASCADE"))
+        conn.execute(text("DROP TABLE IF EXISTS sources CASCADE"))
+        conn.execute(text("DROP TABLE IF EXISTS categories CASCADE"))
+        
+        # Create tables
+        conn.execute(text("""
+            CREATE TABLE IF NOT EXISTS categories (
+                id UUID PRIMARY KEY,
+                name VARCHAR NOT NULL,
+                parent_id UUID,
+                created_at TIMESTAMP NOT NULL DEFAULT NOW()
+            )
+        """))
+        
+        conn.execute(text("""
+            CREATE TABLE IF NOT EXISTS sources (
+                id UUID PRIMARY KEY,
+                name VARCHAR NOT NULL UNIQUE
+            )
+        """))
+        
+        conn.execute(text("""
+            CREATE TABLE IF NOT EXISTS uploaded_files (
+                id UUID PRIMARY KEY,
+                filename TEXT NOT NULL,
+                content BYTEA NOT NULL,
+                created_at TIMESTAMP NOT NULL DEFAULT NOW()
+            )
+        """))
+        
+        conn.execute(text("""
+            CREATE TABLE IF NOT EXISTS file_analysis_metadata (
+                id UUID PRIMARY KEY,
+                uploaded_file_id UUID NOT NULL REFERENCES uploaded_files(id),
+                file_hash TEXT NOT NULL UNIQUE,
+                file_type VARCHAR NOT NULL,
+                column_mapping JSONB NOT NULL,
+                header_row_index INTEGER NOT NULL,
+                data_start_row_index INTEGER NOT NULL,
+                normalized_sample JSONB NOT NULL,
+                created_at TIMESTAMP NOT NULL DEFAULT NOW()
+            )
+        """))
+        
+        conn.execute(text("""
+            CREATE TABLE IF NOT EXISTS transactions (
+                id UUID PRIMARY KEY,
+                date DATE NOT NULL,
+                description VARCHAR NOT NULL,
+                amount NUMERIC(10,2) NOT NULL,
+                created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+                uploaded_file_id UUID REFERENCES uploaded_files(id),
+                category_id UUID REFERENCES categories(id),
+                source_id UUID REFERENCES sources(id),
+                categorization_status VARCHAR NOT NULL DEFAULT 'UNCATEGORIZED'
+            )
+        """))
+        
+        conn.execute(text("CREATE INDEX IF NOT EXISTS ix_transactions_date ON transactions (date)"))
+        conn.execute(text("CREATE INDEX IF NOT EXISTS ix_file_analysis_metadata_file_hash ON file_analysis_metadata (file_hash)"))
+        
+        conn.commit()
 
     yield engine
 
@@ -78,11 +148,13 @@ def repositories(db_session):
     uploaded_file_repo = SQLAlchemyUploadedFileRepository(db_session)
     file_analysis_metadata_repo = SQLAlchemyFileAnalysisMetadataRepository(db_session)
     transaction_repo = SQLAlchemyTransactionRepository(db_session)
+    source_repo = SQLAlchemySourceRepository(db_session)
 
     return {
         "uploaded_file_repo": uploaded_file_repo,
         "file_analysis_metadata_repo": file_analysis_metadata_repo,
         "transaction_repo": transaction_repo,
+        "source_repo": source_repo,
     }
 
 
@@ -176,6 +248,14 @@ class TestStatementProcessingIntegration:
             "description": "Description",
         }
 
+        # Create a test source
+        source = Source(name="Test Bank")
+        db_session.add(source)
+        db_session.flush()
+        
+        # Add source_id to the analysis result
+        analysis_result["source_id"] = source.id
+        
         # Step 2: Persist the analyzed file
         persistence_service = statement_processing_services["persistence_service"]
         persistence_result = persistence_service.persist(analysis_result)
@@ -235,6 +315,14 @@ class TestStatementProcessingIntegration:
             filename=sample_csv_file["filename"],
             file_content=sample_csv_file["content"],
         )
+        
+        # Create a test source
+        source = Source(name="Test Bank")
+        db_session.add(source)
+        db_session.flush()
+        
+        # Add source_id to the analysis result
+        first_analysis["source_id"] = source.id
 
         # Persist the first analysis
         persistence_service.persist(first_analysis)
@@ -297,6 +385,14 @@ class TestStatementProcessingIntegration:
             # Verify analysis result
             assert analysis_result["file_type"] == "XLSX"
 
+            # Create a test source
+            source = Source(name="Test Bank XLSX")
+            db_session.add(source)
+            db_session.flush()
+            
+            # Add source_id to the analysis result
+            analysis_result["source_id"] = source.id
+            
             # Persist the analyzed file
             persistence_service = statement_processing_services["persistence_service"]
             persistence_result = persistence_service.persist(analysis_result)

@@ -22,6 +22,7 @@ class StatementPersistenceService:
         header_row_index = analysis_result["header_row_index"]
         data_start_row_index = analysis_result["data_start_row_index"]
         sample_data = analysis_result["sample_data"]
+        source_id = analysis_result.get("source_id", None)
 
         # Get file content from uploaded_file repository
         uploaded_file = self.uploaded_file_repo.find_by_id(uploaded_file_id)
@@ -51,6 +52,10 @@ class StatementPersistenceService:
                 "description": row["description"],
                 "uploaded_file_id": uploaded_file_id,
             }
+            
+            if source_id:
+                transaction["source_id"] = source_id
+                
             transactions.append(transaction)
 
         transactions_saved = self.transaction_repo.save_batch(transactions)

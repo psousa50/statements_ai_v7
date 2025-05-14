@@ -32,6 +32,9 @@ class Transaction(Base):
     category_id = Column(UUID(as_uuid=True), ForeignKey("categories.id"), nullable=True)
     category = relationship("Category")
 
+    source_id = Column(UUID(as_uuid=True), ForeignKey("sources.id"), nullable=True)
+    source = relationship("Source", back_populates="transactions")
+
     categorization_status = Column(
         SQLAlchemyEnum(CategorizationStatus),
         default=CategorizationStatus.UNCATEGORIZED,
