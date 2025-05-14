@@ -18,7 +18,7 @@ class TestStatementParser:
         assert df.shape == (1, 3)
         assert list(df.columns) == ["date", "amount", "description"]
         assert df.iloc[0]["date"] == "2023-01-01"
-        assert df.iloc[0]["amount"] == 100.00
+        assert df.iloc[0]["amount"] == "100.00"
         assert df.iloc[0]["description"] == "Test transaction"
 
     def test_parse_xlsx_file(self):
@@ -27,7 +27,7 @@ class TestStatementParser:
         sample_df = pd.DataFrame(
             {
                 "date": ["2023-01-01", "2023-01-02"],
-                "amount": [100.00, 200.00],
+                "amount": ["100.00", "200.00"],
                 "description": ["Test 1", "Test 2"],
             }
         )

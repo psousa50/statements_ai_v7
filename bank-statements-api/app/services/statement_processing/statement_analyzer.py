@@ -66,49 +66,36 @@ class StatementAnalyzerService:
         # Process the DataFrame to use header row as columns and filter to start from start_row
         logger.debug(f"Original DataFrame shape: {raw_df.shape}")
         logger.debug(f"Header row index: {header_row_index}, Data start row index: {data_start_row_index}")
-        
+
         # Make a copy to avoid modifying the original
         processed_df = raw_df.copy()
-        
+
         # Set the header row as column names if header_row_index is valid
-        if header_row_index >= 0 and header_row_index < len(raw_df):
+        if header_row_index > 0 and header_row_index < len(raw_df):
             # Get the header row values
-            header_values = raw_df.iloc[header_row_index].tolist()
+            header_values = raw_df.iloc[header_row_index - 1].tolist()
             logger.debug(f"Header values: {header_values}")
-            
-            # Replace any NaN or None values with empty strings
-            header_values = [str(val).strip() if val is not None and str(val).strip() != 'nan' else f"Column_{i}" 
-                             for i, val in enumerate(header_values)]
-            
-            # Ensure header values are unique by appending a number if needed
-            unique_headers = []
-            for i, header in enumerate(header_values):
-                if header in unique_headers:
-                    unique_headers.append(f"{header}_{i}")
-                else:
-                    unique_headers.append(header)
-            
-            # Set as column names
-            processed_df.columns = unique_headers
-            logger.debug(f"Set columns to: {unique_headers}")
-        
+
+            processed_df.columns = header_values
+            logger.debug(f"Set columns to: {header_values}")
+
         # Filter to only include rows starting from start_row
         if data_start_row_index > 0 and data_start_row_index < len(processed_df):
             processed_df = processed_df.iloc[data_start_row_index:].reset_index(drop=True)
             logger.debug(f"Filtered DataFrame to start from row {data_start_row_index}")
-        
+
         logger.debug(f"Processed DataFrame shape: {processed_df.shape}")
         logger.debug(f"Processed DataFrame columns: {processed_df.columns.tolist()}")
-        
+
         if processed_df.empty:
             logger.warning("Processed DataFrame is empty after applying header row and data start row")
-        
+
         logger_content.debug(
             processed_df.head(),
             extra={"prefix": "statement_analyzer.processed_df", "ext": "json"},
         )
         normalized_df = self.transaction_normalizer.normalize(processed_df, column_mapping)
-        
+
         # Convert DataFrame to records and handle NaN values for JSON serialization
         sample_df = normalized_df.head(5).fillna("")
         sample_data = sample_df.to_dict(orient="records")
