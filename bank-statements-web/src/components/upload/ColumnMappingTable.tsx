@@ -107,8 +107,8 @@ export const ColumnMappingTable: React.FC<ColumnMappingTableProps> = ({
         />
       </Box>
 
-      <TableContainer component={Paper}>
-        <Table size="small">
+      <TableContainer component={Paper} sx={{ mb: 3 }}>
+        <Table size="small" sx={{ minWidth: 650 }}>
           <TableHead>
             <TableRow>
               {columns.map((column) => (

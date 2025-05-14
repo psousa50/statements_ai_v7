@@ -1,5 +1,5 @@
 import React from 'react'
-import { Box, Card, CardContent, Typography } from '@mui/material'
+import { Box, Card, CardContent, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper } from '@mui/material'
 import { SampleData } from '../../api/StatementClient'
 
 interface AnalysisSummaryProps {
@@ -110,31 +110,31 @@ export const AnalysisSummary: React.FC<AnalysisSummaryProps> = ({
           <Typography variant="h6" gutterBottom>
             Sample Data
           </Typography>
-          <Box sx={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-              <thead>
-                <tr>
-                  <th style={{ textAlign: 'left', padding: '8px', borderBottom: '1px solid #ddd' }}>Date</th>
-                  <th style={{ textAlign: 'left', padding: '8px', borderBottom: '1px solid #ddd' }}>Description</th>
-                  <th style={{ textAlign: 'right', padding: '8px', borderBottom: '1px solid #ddd' }}>Amount</th>
-                </tr>
-              </thead>
-              <tbody>
+          <TableContainer component={Paper}>
+            <Table size="small" sx={{ minWidth: 650 }}>
+              <TableHead>
+                <TableRow>
+                  <TableCell>Date</TableCell>
+                  <TableCell>Description</TableCell>
+                  <TableCell align="right">Amount</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
                 {sampleData.map((row, index) => (
-                  <tr key={index}>
-                    <td style={{ padding: '8px', borderBottom: '1px solid #ddd' }}>{row.date}</td>
-                    <td style={{ padding: '8px', borderBottom: '1px solid #ddd' }}>{row.description}</td>
-                    <td style={{ textAlign: 'right', padding: '8px', borderBottom: '1px solid #ddd' }}>
+                  <TableRow key={index}>
+                    <TableCell>{row.date}</TableCell>
+                    <TableCell>{row.description}</TableCell>
+                    <TableCell align="right">
                       {row.amount?.toLocaleString('en-US', {
                         style: 'currency',
                         currency: 'USD',
                       })}
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
-          </Box>
+              </TableBody>
+            </Table>
+          </TableContainer>
         </>
       )}
     </Box>
