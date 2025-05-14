@@ -1,5 +1,5 @@
 from contextlib import contextmanager
-from typing import Iterator
+from typing import Generator
 
 from sqlalchemy.orm import Session
 
@@ -21,33 +21,20 @@ from app.services.transaction import TransactionService
 
 
 class ExternalDependencies:
-    """Container for external dependencies like database connections, external APIs, etc."""
-
-    def __init__(self, db_factory):
-        """
-        Initialize with a database session factory.
-
-        Args:
-            db_factory: A callable that returns a database session
-        """
-        self._db_factory = db_factory
-        self._db = None
+    def __init__(self):
+        self._db = SessionLocal()
 
     @property
     def db(self) -> Session:
-        # Always return a new session
-        return self._db_factory()
+        return self._db
 
     def cleanup(self):
-        """Clean up resources."""
         if self._db is not None:
             self._db.close()
             self._db = None
 
 
 class InternalDependencies:
-    """Container for internal dependencies like services, repositories, etc."""
-
     def __init__(
         self,
         transaction_service: TransactionService,
@@ -63,12 +50,8 @@ class InternalDependencies:
         self.statement_persistence_service = statement_persistence_service
 
 
-def get_db_session() -> Session:
-    return SessionLocal()
-
-
 def build_external_dependencies() -> ExternalDependencies:
-    return ExternalDependencies(db_factory=get_db_session)
+    return ExternalDependencies()
 
 
 def build_internal_dependencies(external: ExternalDependencies) -> InternalDependencies:
@@ -114,7 +97,7 @@ def build_internal_dependencies(external: ExternalDependencies) -> InternalDepen
 
 
 @contextmanager
-def get_dependencies() -> Iterator[tuple[ExternalDependencies, InternalDependencies]]:
+def get_dependencies() -> Generator[tuple[ExternalDependencies, InternalDependencies], None, None]:
     external = build_external_dependencies()
     internal = build_internal_dependencies(external)
     try:
@@ -123,6 +106,6 @@ def get_dependencies() -> Iterator[tuple[ExternalDependencies, InternalDependenc
         external.cleanup()
 
 
-def provide_dependencies() -> Iterator[InternalDependencies]:
+def provide_dependencies() -> Generator[InternalDependencies, None, None]:
     with get_dependencies() as (_external, internal):
         yield internal
