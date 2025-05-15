@@ -32,7 +32,7 @@ class StatementAnalyzerService:
         if existing_metadata:
             # For existing metadata, we need to regenerate the sample_data and normalized_sample
             # since they're not stored in the database
-            
+
             # Get the file content to regenerate the samples
             uploaded_file = self.uploaded_file_repo.find_by_id(UUID(existing_metadata["uploaded_file_id"]))
             if not uploaded_file:
@@ -45,23 +45,23 @@ class StatementAnalyzerService:
                     "data_start_row_index": existing_metadata["data_start_row_index"],
                     "file_hash": file_hash,
                 }
-                
+
             # Regenerate the samples
             file_content = uploaded_file["content"]
             file_type = existing_metadata["file_type"]
             column_mapping = existing_metadata["column_mapping"]
             header_row_index = existing_metadata["header_row_index"]
             data_start_row_index = existing_metadata["data_start_row_index"]
-            
+
             # Parse the file to get the raw dataframe
             raw_df = self.statement_parser.parse(file_content, file_type)
-            
+
             # Generate sample_data (original file with metadata)
             sample_data = self._generate_sample_data(raw_df, column_mapping, header_row_index, data_start_row_index)
-            
+
             # Process the DataFrame to use header row as columns and filter to start from start_row
             processed_df = self._process_dataframe(raw_df, header_row_index, data_start_row_index)
-            
+
             return {
                 "uploaded_file_id": existing_metadata["uploaded_file_id"],
                 "file_type": existing_metadata["file_type"],
@@ -100,13 +100,6 @@ class StatementAnalyzerService:
         # Process the DataFrame to use header row as columns and filter to start from start_row
         processed_df = self._process_dataframe(raw_df, header_row_index, data_start_row_index)
 
-        logger_content.debug(
-            processed_df.head(),
-            extra={"prefix": "statement_analyzer.processed_df", "ext": "json"},
-        )
-        normalized_df = self.transaction_normalizer.normalize(processed_df, column_mapping)
-
-        # Generate sample_data for UI display
         sample_data = self._generate_sample_data(raw_df, column_mapping, header_row_index, data_start_row_index)
 
         self.file_analysis_metadata_repo.save(
@@ -133,7 +126,7 @@ class StatementAnalyzerService:
         hasher.update(filename.encode())
         hasher.update(file_content)
         return hasher.hexdigest()
-        
+
     def _process_dataframe(self, raw_df, header_row_index, data_start_row_index):
         """Process the DataFrame to use header row as columns and filter to start from start_row"""
         logger.debug(f"Original DataFrame shape: {raw_df.shape}")
@@ -161,22 +154,22 @@ class StatementAnalyzerService:
 
         if processed_df.empty:
             logger.warning("Processed DataFrame is empty after applying header row and data start row")
-            
+
         return processed_df
-        
+
     def _generate_sample_data(self, raw_df, column_mapping, header_row_index, data_start_row_index):
         """Generate sample data as a list of lists of strings for UI display"""
         # Take the first 10 rows of the raw dataframe to show in the UI
         sample_rows = min(10, len(raw_df))
         sample_df = raw_df.head(sample_rows).fillna("")
-        
+
         # Add metadata
         metadata = {
             "header_row_index": header_row_index - 1,  # Convert to 0-based index for UI
             "data_start_row_index": data_start_row_index - 1,  # Convert to 0-based index for UI
-            "column_mappings": {}  # Will store column index to standard field mappings
+            "column_mappings": {},  # Will store column index to standard field mappings
         }
-        
+
         # Create column mappings by index
         for std_field, file_col in column_mapping.items():
             if file_col and file_col != "":
@@ -189,26 +182,23 @@ class StatementAnalyzerService:
                         if str(val) == file_col:
                             metadata["column_mappings"][str(i)] = std_field
                             break
-        
+
         # Convert each row to a list of strings
         rows_as_lists = []
-        
+
         # Add the column names as the first row
         column_names_row = [str(col) for col in raw_df.columns.tolist()]
         rows_as_lists.append(column_names_row)
-        
+
         # Add the actual data rows
         for _, row in sample_df.iterrows():
             # Convert each value to string
             row_as_list = [str(val) if val is not None else "" for val in row.values]
             rows_as_lists.append(row_as_list)
-        
+
         # Update header and data start row indices to account for the added column names row
         metadata["header_row_index"] += 1
         metadata["data_start_row_index"] += 1
-        
+
         # Return metadata and rows
-        return {
-            "metadata": metadata,
-            "rows": rows_as_lists
-        }
+        return {"metadata": metadata, "rows": rows_as_lists}
