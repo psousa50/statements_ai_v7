@@ -95,6 +95,7 @@ export const ColumnMappingTable: React.FC<ColumnMappingTableProps> = ({
     amount: 'The transaction amount (positive for income, negative for expenses)',
     description: 'The transaction description or memo',
     category: 'The category of the transaction (if available)',
+    balance: 'The account balance after the transaction',
     ignore: 'This column will be ignored during import',
   }
 
@@ -311,6 +312,12 @@ export const ColumnMappingTable: React.FC<ColumnMappingTableProps> = ({
                         <MenuItem value="category">
                           Category
                           <Tooltip title={columnTypeTooltips.category}>
+                            <HelpOutlineIcon fontSize="small" sx={{ ml: 1 }} />
+                          </Tooltip>
+                        </MenuItem>
+                        <MenuItem value="balance">
+                          Balance
+                          <Tooltip title={columnTypeTooltips.balance}>
                             <HelpOutlineIcon fontSize="small" sx={{ ml: 1 }} />
                           </Tooltip>
                         </MenuItem>
