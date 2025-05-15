@@ -1,7 +1,7 @@
 # Import statement routes with patch to avoid dependency issues
 import sys
 from io import BytesIO
-from unittest.mock import MagicMock, ANY
+from unittest.mock import MagicMock
 from uuid import uuid4
 
 import pytest
@@ -56,14 +56,7 @@ class TestStatementRoutes:
             "column_mapping": {"date": "Date", "amount": "Amount", "description": "Description"},
             "header_row_index": 0,
             "data_start_row_index": 1,
-            "sample_data": {
-                "metadata": {
-                    "header_row_index": 0,
-                    "data_start_row_index": 1,
-                    "column_mappings": {"0": "date", "1": "amount", "2": "description"}
-                },
-                "rows": [["Date", "Amount", "Description"], ["2023-01-01", "100.00", "Test"]]
-            },
+            "sample_data": [{"date": "2023-01-01", "amount": 100.00, "description": "Test"}],
             "file_hash": file_hash,
         }
 
@@ -81,8 +74,7 @@ class TestStatementRoutes:
         mock_dependencies.statement_analyzer_service.analyze.assert_called_once()
         args, kwargs = mock_dependencies.statement_analyzer_service.analyze.call_args
         assert kwargs["filename"] == "test.csv"
-        # Use string comparison instead of direct binary comparison
-        assert kwargs["file_content"].decode() == file_content.decode()
+        assert kwargs["file_content"] == file_content
 
     def test_analyze_statement_error(self, client, mock_dependencies):
         # Configure mock to raise an exception

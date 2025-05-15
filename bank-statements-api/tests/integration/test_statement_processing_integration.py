@@ -10,6 +10,7 @@ from sqlalchemy.orm import sessionmaker
 from app.adapters.repositories.source import SQLAlchemySourceRepository
 from app.adapters.repositories.transaction import SQLAlchemyTransactionRepository
 from app.adapters.repositories.uploaded_file import SQLAlchemyFileAnalysisMetadataRepository, SQLAlchemyUploadedFileRepository
+from app.domain.models.category import Category
 from app.domain.models.source import Source
 from app.domain.models.transaction import Transaction
 from app.domain.models.uploaded_file import FileAnalysisMetadata, UploadedFile
@@ -283,7 +284,7 @@ class TestStatementProcessingIntegration:
         assert "uploaded_file_id" in persistence_result
         assert "transactions_saved" in persistence_result
         assert persistence_result["uploaded_file_id"] == analysis_result["uploaded_file_id"]
-        assert persistence_result["transactions_saved"] == 2  # The test is only saving 2 transactions
+        assert persistence_result["transactions_saved"] == 2  # The system is saving 2 transactions
 
         # Step 3: Verify data in the database
         # Check uploaded file

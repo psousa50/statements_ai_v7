@@ -1,6 +1,6 @@
 from datetime import date, datetime
 from decimal import Decimal
-from typing import Any, Dict, List, Optional, Sequence
+from typing import Any, Dict, List, Optional, Sequence, Union
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
@@ -105,24 +105,13 @@ class ColumnMapping(BaseModel):
     category: Optional[str] = None
 
 
-class SampleDataMetadata(BaseModel):
-    header_row_index: int
-    data_start_row_index: int
-    column_mappings: Dict[int, str]
-
-
-class SampleData(BaseModel):
-    metadata: SampleDataMetadata
-    rows: List[List[str]]
-
-
 class StatementAnalysisResponse(BaseModel):
     uploaded_file_id: str
     file_type: str
     column_mapping: Dict[str, str]
     header_row_index: int
     data_start_row_index: int
-    sample_data: SampleData
+    sample_data: List[Dict[str, Any]]
     file_hash: str
 
 
