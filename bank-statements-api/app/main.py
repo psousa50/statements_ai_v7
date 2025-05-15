@@ -8,7 +8,6 @@ from app.api.routes.transactions import register_transaction_routes
 from app.core.config import settings
 from app.core.dependencies import provide_dependencies
 from app.logging.config import init_logging
-import logging
 
 init_logging()
 

@@ -1,7 +1,5 @@
 import hashlib
 import logging
-import json
-import pandas as pd
 from uuid import UUID
 
 logger_content = logging.getLogger("app.llm.big")
@@ -59,9 +57,6 @@ class StatementAnalyzerService:
             # Generate sample_data (original file with metadata)
             sample_data = self._generate_sample_data(raw_df, column_mapping, header_row_index, data_start_row_index)
 
-            # Process the DataFrame to use header row as columns and filter to start from start_row
-            processed_df = self._process_dataframe(raw_df, header_row_index, data_start_row_index)
-
             return {
                 "uploaded_file_id": existing_metadata["uploaded_file_id"],
                 "file_type": existing_metadata["file_type"],
@@ -97,9 +92,6 @@ class StatementAnalyzerService:
             header_row_index = schema_info.header_row
             data_start_row_index = schema_info.start_row
 
-        # Process the DataFrame to use header row as columns and filter to start from start_row
-        processed_df = self._process_dataframe(raw_df, header_row_index, data_start_row_index)
-
         sample_data = self._generate_sample_data(raw_df, column_mapping, header_row_index, data_start_row_index)
 
         self.file_analysis_metadata_repo.save(
@@ -126,36 +118,6 @@ class StatementAnalyzerService:
         hasher.update(filename.encode())
         hasher.update(file_content)
         return hasher.hexdigest()
-
-    def _process_dataframe(self, raw_df, header_row_index, data_start_row_index):
-        """Process the DataFrame to use header row as columns and filter to start from start_row"""
-        logger.debug(f"Original DataFrame shape: {raw_df.shape}")
-        logger.debug(f"Header row index: {header_row_index}, Data start row index: {data_start_row_index}")
-
-        # Make a copy to avoid modifying the original
-        processed_df = raw_df.copy()
-
-        # Set the header row as column names if header_row_index is valid
-        if header_row_index > 0 and header_row_index < len(raw_df):
-            # Get the header row values
-            header_values = raw_df.iloc[header_row_index - 1].tolist()
-            logger.debug(f"Header values: {header_values}")
-
-            processed_df.columns = header_values
-            logger.debug(f"Set columns to: {header_values}")
-
-        # Filter to only include rows starting from start_row
-        if data_start_row_index > 0 and data_start_row_index < len(processed_df):
-            processed_df = processed_df.iloc[data_start_row_index:].reset_index(drop=True)
-            logger.debug(f"Filtered DataFrame to start from row {data_start_row_index}")
-
-        logger.debug(f"Processed DataFrame shape: {processed_df.shape}")
-        logger.debug(f"Processed DataFrame columns: {processed_df.columns.tolist()}")
-
-        if processed_df.empty:
-            logger.warning("Processed DataFrame is empty after applying header row and data start row")
-
-        return processed_df
 
     def _generate_sample_data(self, raw_df, column_mapping, header_row_index, data_start_row_index):
         """Generate sample data as a list of lists of strings for UI display"""

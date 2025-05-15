@@ -1,12 +1,11 @@
+import logging
 from typing import Callable, Iterator
 
 from fastapi import APIRouter, Depends, FastAPI, File, HTTPException, UploadFile, status
 
 from app.api.schemas import StatementAnalysisResponse, StatementUploadRequest, StatementUploadResponse
 from app.core.dependencies import InternalDependencies
-import logging
 from app.logging.utils import log_exception
-
 
 logger = logging.getLogger("app")
 
@@ -42,26 +41,26 @@ def register_statement_routes(app: FastAPI, provide_dependencies: Callable[[], I
         """Process and persist the analyzed statement data"""
         try:
             data = upload_data.model_dump()
-            
+
             # Handle source if provided
             if upload_data.source:
                 try:
                     # Try to find existing source by name
                     source = internal.source_service.get_source_by_name(upload_data.source)
-                    
+
                     # If source doesn't exist, create it
                     if not source:
                         logger.info(f"Creating new source: {upload_data.source}")
                         source = internal.source_service.create_source(upload_data.source)
                     else:
                         logger.info(f"Using existing source: {upload_data.source}")
-                    
+
                     # Add source_id to the data
                     data["source_id"] = source.id
                 except Exception as e:
                     log_exception("Error handling source: %s", str(e))
                     # Continue without source if there's an error
-            
+
             result = internal.statement_persistence_service.persist(data)
             return StatementUploadResponse(
                 uploaded_file_id=result["uploaded_file_id"],

@@ -1,7 +1,7 @@
 from typing import Callable, Iterator
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, status
-from uuid import UUID
 
 from app.api.schemas import SourceCreate, SourceListResponse, SourceResponse, SourceUpdate
 from app.core.dependencies import InternalDependencies
@@ -26,7 +26,7 @@ def register_source_routes(app: FastAPI, provide_dependencies: Callable[[], Iter
                     status_code=status.HTTP_409_CONFLICT,
                     detail=f"Source with name '{source_data.name}' already exists",
                 )
-            
+
             source = internal.source_service.create_source(source_data.name)
             return source
         except HTTPException:
@@ -91,7 +91,7 @@ def register_source_routes(app: FastAPI, provide_dependencies: Callable[[], Iter
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail=f"Source with ID {source_id} not found",
                 )
-            
+
             # Check if name is already taken by another source
             name_exists = internal.source_service.get_source_by_name(source_data.name)
             if name_exists and name_exists.id != source_id:
@@ -99,7 +99,7 @@ def register_source_routes(app: FastAPI, provide_dependencies: Callable[[], Iter
                     status_code=status.HTTP_409_CONFLICT,
                     detail=f"Source with name '{source_data.name}' already exists",
                 )
-            
+
             updated_source = internal.source_service.update_source(source_id, source_data.name)
             return updated_source
         except HTTPException:
@@ -125,7 +125,7 @@ def register_source_routes(app: FastAPI, provide_dependencies: Callable[[], Iter
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail=f"Source with ID {source_id} not found",
                 )
-            
+
             internal.source_service.delete_source(source_id)
             return None
         except HTTPException:

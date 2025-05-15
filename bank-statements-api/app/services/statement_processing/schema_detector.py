@@ -1,7 +1,7 @@
-from dataclasses import dataclass
-from typing import Dict
 import json
 import logging
+from dataclasses import dataclass
+from typing import Dict
 
 import pandas as pd
 
@@ -36,11 +36,11 @@ class SchemaDetector:
         )
         if not json_result:
             raise ValueError("Failed to parse LLM response: Invalid JSON response")
-        
+
         try:
             # Map the JSON fields to the ConversionModel fields
             model_data = {}
-            
+
             # Handle different possible field names
             if "column_map" in json_result:
                 model_data["column_map"] = json_result["column_map"]
@@ -48,23 +48,23 @@ class SchemaDetector:
                 model_data["column_map"] = json_result["column_mapping"]
             else:
                 raise ValueError("Missing column mapping in JSON response")
-                
+
             if "header_row" in json_result:
                 model_data["header_row"] = json_result["header_row"]
             elif "header_row_index" in json_result:
                 model_data["header_row"] = json_result["header_row_index"]
             else:
                 model_data["header_row"] = 0
-                
+
             if "start_row" in json_result:
                 model_data["start_row"] = json_result["start_row"]
             elif "data_start_row_index" in json_result:
                 model_data["start_row"] = json_result["data_start_row_index"]
             else:
                 model_data["start_row"] = 1
-                
+
             conversion_model = ConversionModel(**model_data)
-            
+
             logger_content.debug(
                 json.dumps(conversion_model.__dict__),
                 extra={"prefix": "column_normalizer.conversion_model", "ext": "json"},

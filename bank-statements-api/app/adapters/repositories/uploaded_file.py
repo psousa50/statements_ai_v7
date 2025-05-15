@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 from uuid import UUID
 
 from app.domain.models.uploaded_file import FileAnalysisMetadata, UploadedFile

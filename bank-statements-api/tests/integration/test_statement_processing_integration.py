@@ -43,7 +43,7 @@ def db_engine():
         pytest.fail("TEST_DATABASE_URL environment variable not set")
 
     engine = create_engine(database_url)
-    
+
     # Create necessary tables for testing
     with engine.connect() as conn:
         # Drop tables if they exist
@@ -52,34 +52,48 @@ def db_engine():
         conn.execute(text("DROP TABLE IF EXISTS uploaded_files CASCADE"))
         conn.execute(text("DROP TABLE IF EXISTS sources CASCADE"))
         conn.execute(text("DROP TABLE IF EXISTS categories CASCADE"))
-        
+
         # Create tables
-        conn.execute(text("""
+        conn.execute(
+            text(
+                """
             CREATE TABLE IF NOT EXISTS categories (
                 id UUID PRIMARY KEY,
                 name VARCHAR NOT NULL,
                 parent_id UUID,
                 created_at TIMESTAMP NOT NULL DEFAULT NOW()
             )
-        """))
-        
-        conn.execute(text("""
+        """
+            )
+        )
+
+        conn.execute(
+            text(
+                """
             CREATE TABLE IF NOT EXISTS sources (
                 id UUID PRIMARY KEY,
                 name VARCHAR NOT NULL UNIQUE
             )
-        """))
-        
-        conn.execute(text("""
+        """
+            )
+        )
+
+        conn.execute(
+            text(
+                """
             CREATE TABLE IF NOT EXISTS uploaded_files (
                 id UUID PRIMARY KEY,
                 filename TEXT NOT NULL,
                 content BYTEA NOT NULL,
                 created_at TIMESTAMP NOT NULL DEFAULT NOW()
             )
-        """))
-        
-        conn.execute(text("""
+        """
+            )
+        )
+
+        conn.execute(
+            text(
+                """
             CREATE TABLE IF NOT EXISTS file_analysis_metadata (
                 id UUID PRIMARY KEY,
                 uploaded_file_id UUID NOT NULL REFERENCES uploaded_files(id),
@@ -91,9 +105,13 @@ def db_engine():
                 normalized_sample JSONB NOT NULL,
                 created_at TIMESTAMP NOT NULL DEFAULT NOW()
             )
-        """))
-        
-        conn.execute(text("""
+        """
+            )
+        )
+
+        conn.execute(
+            text(
+                """
             CREATE TABLE IF NOT EXISTS transactions (
                 id UUID PRIMARY KEY,
                 date DATE NOT NULL,
@@ -105,11 +123,13 @@ def db_engine():
                 source_id UUID REFERENCES sources(id),
                 categorization_status VARCHAR NOT NULL DEFAULT 'UNCATEGORIZED'
             )
-        """))
-        
+        """
+            )
+        )
+
         conn.execute(text("CREATE INDEX IF NOT EXISTS ix_transactions_date ON transactions (date)"))
         conn.execute(text("CREATE INDEX IF NOT EXISTS ix_file_analysis_metadata_file_hash ON file_analysis_metadata (file_hash)"))
-        
+
         conn.commit()
 
     yield engine
@@ -252,10 +272,10 @@ class TestStatementProcessingIntegration:
         source = Source(name="Test Bank")
         db_session.add(source)
         db_session.flush()
-        
+
         # Add source_id to the analysis result
         analysis_result["source_id"] = source.id
-        
+
         # Step 2: Persist the analyzed file
         persistence_service = statement_processing_services["persistence_service"]
         persistence_result = persistence_service.persist(analysis_result)
@@ -315,12 +335,12 @@ class TestStatementProcessingIntegration:
             filename=sample_csv_file["filename"],
             file_content=sample_csv_file["content"],
         )
-        
+
         # Create a test source
         source = Source(name="Test Bank")
         db_session.add(source)
         db_session.flush()
-        
+
         # Add source_id to the analysis result
         first_analysis["source_id"] = source.id
 
@@ -389,10 +409,10 @@ class TestStatementProcessingIntegration:
             source = Source(name="Test Bank XLSX")
             db_session.add(source)
             db_session.flush()
-            
+
             # Add source_id to the analysis result
             analysis_result["source_id"] = source.id
-            
+
             # Persist the analyzed file
             persistence_service = statement_processing_services["persistence_service"]
             persistence_result = persistence_service.persist(analysis_result)

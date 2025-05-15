@@ -62,7 +62,7 @@ class TransactionService:
             # Update category and categorization status
             transaction.category_id = category_id
             transaction.categorization_status = CategorizationStatus.CATEGORIZED if category_id else CategorizationStatus.UNCATEGORIZED
-            
+
             # Update source
             transaction.source_id = source_id
 
