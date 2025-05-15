@@ -38,14 +38,16 @@ class StatementPersistenceService:
 
         normalized_df = self.transaction_normalizer.normalize(processed_df, column_mapping)
 
-        self.file_analysis_metadata_repo.save(
-            uploaded_file_id=uploaded_file_id,
-            file_hash=file_hash,
-            file_type=file_type,
-            column_mapping=column_mapping,
-            header_row_index=header_row_index,
-            data_start_row_index=data_start_row_index,
-        )
+        existing_metadata = self.file_analysis_metadata_repo.find_by_hash(file_hash)
+        if not existing_metadata:
+            self.file_analysis_metadata_repo.save(
+                uploaded_file_id=uploaded_file_id,
+                file_hash=file_hash,
+                file_type=file_type,
+                column_mapping=column_mapping,
+                header_row_index=header_row_index,
+                data_start_row_index=data_start_row_index,
+            )
 
         transactions = []
         for _, row in normalized_df.iterrows():
