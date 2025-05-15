@@ -1,14 +1,11 @@
 import React from 'react'
+import { Outlet } from 'react-router-dom'
 import { Box, CssBaseline, Drawer, AppBar, Toolbar, Typography, Divider } from '@mui/material'
 import { AppNavigation } from './AppNavigation'
 
 const drawerWidth = 240
 
-interface AppLayoutProps {
-  children: React.ReactNode
-}
-
-export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
+export const AppLayout = () => {
   return (
     <Box sx={{ display: 'flex' }}>
       <CssBaseline />
@@ -46,7 +43,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
         component="main"
         sx={{ flexGrow: 1, bgcolor: 'background.default', p: 3, mt: 8 }}
       >
-        {children}
+        <Outlet />
       </Box>
     </Box>
   )

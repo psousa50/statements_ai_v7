@@ -1,20 +1,35 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
+import { createBrowserRouter, RouterProvider, createRoutesFromElements, Route } from 'react-router-dom'
 import { TransactionsPage } from './pages/Transactions'
 import { Upload } from './pages/Upload'
 import { AppLayout } from './components/layout/AppLayout'
+import { RouterSafeApiProvider } from './api/RouterSafeApiProvider'
 import './App.css'
 
+// Create a simple router configuration
+const router = createBrowserRouter([
+  {
+    path: '/',
+    element: <AppLayout />,
+    children: [
+      { index: true, element: <TransactionsPage /> },
+      { path: 'transactions', element: <TransactionsPage /> },
+      { path: 'upload', element: <Upload /> }
+    ]
+  }
+], {
+  // Future flags configuration with type assertion to bypass TypeScript errors
+  future: {
+    v7_relativeSplatPath: true,
+    v7_startTransition: true
+  } as any
+})
+
+// Wrap the entire app with RouterSafeApiProvider
 function App() {
   return (
-    <Router>
-      <AppLayout>
-        <Routes>
-          <Route path="/" element={<TransactionsPage />} />
-          <Route path="/transactions" element={<TransactionsPage />} />
-          <Route path="/upload" element={<Upload />} />
-        </Routes>
-      </AppLayout>
-    </Router>
+    <RouterSafeApiProvider>
+      <RouterProvider router={router} />
+    </RouterSafeApiProvider>
   )
 }
 
