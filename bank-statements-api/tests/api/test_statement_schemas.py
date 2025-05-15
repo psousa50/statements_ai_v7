@@ -1,6 +1,6 @@
 from uuid import uuid4
 
-from app.api.schemas import StatementAnalysisResponse, StatementUploadRequest, StatementUploadResponse
+from app.api.schemas import StatementAnalysisResponse, StatementUploadRequest, StatementUploadResponse, SampleData, SampleDataMetadata
 
 
 class TestStatementSchemas:
@@ -8,13 +8,22 @@ class TestStatementSchemas:
         uploaded_file_id = str(uuid4())
         file_hash = "abc123"
 
+        sample_data = SampleData(
+            metadata=SampleDataMetadata(
+                header_row_index=0,
+                data_start_row_index=1,
+                column_mappings={0: "Date", 1: "Amount", 2: "Description"}
+            ),
+            rows=[["2023-01-01", "100.00", "Test transaction"]]
+        )
+        
         data = {
             "uploaded_file_id": uploaded_file_id,
             "file_type": "CSV",
             "column_mapping": {"date": "Date", "amount": "Amount", "description": "Description"},
             "header_row_index": 0,
             "data_start_row_index": 1,
-            "sample_data": [{"date": "2023-01-01", "amount": 100.00, "description": "Test transaction"}],
+            "sample_data": sample_data,
             "file_hash": file_hash,
         }
 
@@ -27,7 +36,8 @@ class TestStatementSchemas:
         assert response.column_mapping["description"] == "Description"
         assert response.header_row_index == 0
         assert response.data_start_row_index == 1
-        assert len(response.sample_data) == 1
+        assert response.sample_data.metadata.header_row_index == 0
+        assert len(response.sample_data.rows) == 1
         assert response.file_hash == file_hash
 
     def test_statement_upload_request_schema(self):

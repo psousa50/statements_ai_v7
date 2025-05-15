@@ -51,6 +51,16 @@ class TransactionNormalizer:
 
         if empty_columns:
             raise ValueError(f"Empty column mappings for: {', '.join(empty_columns)}")
+            
+        # Check if all required columns exist in the DataFrame
+        missing_df_columns = []
+        for key in required_keys:
+            col_name = column_mapping[key]
+            if col_name not in df.columns:
+                missing_df_columns.append(col_name)
+                
+        if missing_df_columns:
+            raise ValueError(f"Not enough columns in DataFrame for positional mapping. Missing: {', '.join(missing_df_columns)}")
 
         result_df["date"] = self._normalize_dates(df[date_col])
 

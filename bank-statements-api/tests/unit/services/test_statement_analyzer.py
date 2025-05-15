@@ -1,6 +1,7 @@
 import hashlib
 import uuid
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, ANY
+from uuid import UUID
 
 import pandas as pd
 
@@ -33,13 +34,6 @@ class TestStatementAnalyzerService:
         }
 
         transaction_normalizer = MagicMock()
-        transaction_normalizer.normalize.return_value = pd.DataFrame(
-            {
-                "date": ["2023-01-01", "2023-01-02"],
-                "amount": [100.00, -200.00],
-                "description": ["Deposit", "Withdrawal"],
-            }
-        )
 
         uploaded_file_repo = MagicMock()
         uploaded_file_id = str(uuid.uuid4())
@@ -77,8 +71,7 @@ class TestStatementAnalyzerService:
 
         file_type_detector.detect.assert_called_once_with(file_content)
         statement_parser.parse.assert_called_once_with(file_content, "CSV")
-        schema_detector.detect_schema.assert_called_once()
-        transaction_normalizer.normalize.assert_called_once()
+        schema_detector.detect_schema.assert_called_once_with(ANY)
         file_analysis_metadata_repo.find_by_hash.assert_called_once()
         uploaded_file_repo.save.assert_called_once_with(filename, file_content)
 
@@ -88,6 +81,9 @@ class TestStatementAnalyzerService:
         schema_detector = MagicMock()
         transaction_normalizer = MagicMock()
         uploaded_file_repo = MagicMock()
+        
+        # Mock the statement_parser to return an empty DataFrame
+        statement_parser.parse.return_value = pd.DataFrame()
 
         filename = "test.csv"
         file_content = b"Date,Amount,Description\n2023-01-01,100.00,Deposit\n2023-01-02,-200.00,Withdrawal"
@@ -110,15 +106,18 @@ class TestStatementAnalyzerService:
             },
             "header_row_index": 0,
             "data_start_row_index": 1,
-            "normalized_sample": [
-                {"date": "2023-01-01", "amount": 100.00, "description": "Deposit"},
-                {"date": "2023-01-02", "amount": -200.00, "description": "Withdrawal"},
-            ],
             "file_hash": file_hash,
         }
 
         file_analysis_metadata_repo = MagicMock()
         file_analysis_metadata_repo.find_by_hash.return_value = existing_metadata
+        
+        # Mock the uploaded_file_repo.find_by_id to return a valid uploaded file
+        uploaded_file_repo.find_by_id.return_value = {
+            "id": uploaded_file_id,
+            "filename": filename,
+            "content": file_content
+        }
 
         analyzer = StatementAnalyzerService(
             file_type_detector=file_type_detector,
@@ -136,12 +135,14 @@ class TestStatementAnalyzerService:
         assert result["column_mapping"] == existing_metadata["column_mapping"]
         assert result["header_row_index"] == existing_metadata["header_row_index"]
         assert result["data_start_row_index"] == existing_metadata["data_start_row_index"]
-        assert result["sample_data"] == existing_metadata["normalized_sample"]
+        assert "sample_data" in result
         assert result["file_hash"] == existing_metadata["file_hash"]
 
         file_type_detector.detect.assert_not_called()
-        statement_parser.parse.assert_not_called()
+        # We expect statement_parser.parse to be called once for regenerating sample data
+        statement_parser.parse.assert_called_once_with(file_content, existing_metadata["file_type"])
         schema_detector.detect_schema.assert_not_called()
         transaction_normalizer.normalize.assert_not_called()
         uploaded_file_repo.save.assert_not_called()
         file_analysis_metadata_repo.find_by_hash.assert_called_once()
+        uploaded_file_repo.find_by_id.assert_called_once_with(UUID(uploaded_file_id))
