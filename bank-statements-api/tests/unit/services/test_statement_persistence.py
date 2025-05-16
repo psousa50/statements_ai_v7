@@ -3,6 +3,8 @@ from unittest.mock import MagicMock, ANY
 
 import pandas as pd
 
+from app.domain.dto.statement_processing import AnalysisResultDTO, PersistenceResultDTO, TransactionDTO
+from app.domain.dto.uploaded_file import UploadedFileDTO, FileAnalysisMetadataDTO
 from app.services.statement_processing.statement_persistence import StatementPersistenceService
 
 
@@ -30,15 +32,25 @@ class TestStatementPersistenceService:
         transaction_repo.save_batch.return_value = 2
 
         uploaded_file_repo = MagicMock()
-        uploaded_file_repo.find_by_id.return_value = {
-            "id": str(uuid.uuid4()),
-            "filename": "test.csv",
-            "content": b"Date,Amount,Description\n2023-01-01,100.00,Deposit\n2023-01-02,-200.00,Withdrawal",
-        }
+        uploaded_file_repo.find_by_id.return_value = UploadedFileDTO(
+            id=str(uuid.uuid4()),
+            filename="test.csv",
+            content=b"Date,Amount,Description\n2023-01-01,100.00,Deposit\n2023-01-02,-200.00,Withdrawal",
+            created_at=None
+        )
 
         file_analysis_metadata_repo = MagicMock()
         file_analysis_metadata_repo.find_by_hash.return_value = None
-        file_analysis_metadata_repo.save.return_value = {"id": str(uuid.uuid4())}
+        file_analysis_metadata_repo.save.return_value = FileAnalysisMetadataDTO(
+            id=str(uuid.uuid4()),
+            uploaded_file_id=str(uuid.uuid4()),
+            file_hash="abc123",
+            file_type="CSV",
+            column_mapping={},
+            header_row_index=0,
+            data_start_row_index=1,
+            created_at=None
+        )
 
         persistence_service = StatementPersistenceService(
             statement_parser=statement_parser,
@@ -48,42 +60,45 @@ class TestStatementPersistenceService:
             file_analysis_metadata_repo=file_analysis_metadata_repo,
         )
 
-        analysis_result = {
-            "uploaded_file_id": str(uuid.uuid4()),
-            "file_type": "CSV",
-            "column_mapping": {
+        uploaded_file_id = str(uuid.uuid4())
+        analysis_result = AnalysisResultDTO(
+            uploaded_file_id=uploaded_file_id,
+            file_type="CSV",
+            column_mapping={
                 "date": "Date",
                 "amount": "Amount",
                 "description": "Description",
             },
-            "header_row_index": 0,
-            "data_start_row_index": 1,
-            "sample_data": [
+            header_row_index=0,
+            data_start_row_index=1,
+            sample_data=[
                 {"date": "2023-01-01", "amount": 100.00, "description": "Deposit"},
                 {"date": "2023-01-02", "amount": -200.00, "description": "Withdrawal"},
             ],
-            "file_hash": "abc123",
-        }
+            file_hash="abc123"
+        )
 
         result = persistence_service.persist(analysis_result)
 
-        assert result["uploaded_file_id"] == analysis_result["uploaded_file_id"]
-        assert result["transactions_saved"] == 2
+        assert isinstance(result, PersistenceResultDTO)
+        assert result.uploaded_file_id == analysis_result.uploaded_file_id
+        assert result.transactions_saved == 2
 
-        uploaded_file_repo.find_by_id.assert_called_once_with(analysis_result["uploaded_file_id"])
+        uploaded_file_repo.find_by_id.assert_called_once_with(analysis_result.uploaded_file_id)
         statement_parser.parse.assert_called_once()
-        transaction_normalizer.normalize.assert_called_once_with(ANY, analysis_result["column_mapping"])
+        transaction_normalizer.normalize.assert_called_once_with(ANY, analysis_result.column_mapping)
 
         transaction_repo.save_batch.assert_called_once()
         saved_transactions = transaction_repo.save_batch.call_args[0][0]
         assert len(saved_transactions) == 2
-        assert all(t["uploaded_file_id"] == analysis_result["uploaded_file_id"] for t in saved_transactions)
+        assert all(isinstance(t, TransactionDTO) for t in saved_transactions)
+        assert all(t.uploaded_file_id == analysis_result.uploaded_file_id for t in saved_transactions)
 
         file_analysis_metadata_repo.save.assert_called_once_with(
-            uploaded_file_id=analysis_result["uploaded_file_id"],
-            file_hash=analysis_result["file_hash"],
-            file_type=analysis_result["file_type"],
-            column_mapping=analysis_result["column_mapping"],
-            header_row_index=analysis_result["header_row_index"],
-            data_start_row_index=analysis_result["data_start_row_index"],
+            uploaded_file_id=analysis_result.uploaded_file_id,
+            file_hash=analysis_result.file_hash,
+            file_type=analysis_result.file_type,
+            column_mapping=analysis_result.column_mapping,
+            header_row_index=analysis_result.header_row_index,
+            data_start_row_index=analysis_result.data_start_row_index,
         )

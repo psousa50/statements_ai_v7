@@ -4,6 +4,8 @@ from unittest.mock import MagicMock
 
 import pandas as pd
 
+from app.domain.dto.statement_processing import AnalysisResultDTO
+from app.domain.dto.uploaded_file import FileAnalysisMetadataDTO, UploadedFileDTO
 from app.services.statement_processing.statement_analyzer import StatementAnalyzerService
 
 
@@ -43,7 +45,11 @@ class TestStatementAnalyzerService:
 
         uploaded_file_repo = MagicMock()
         uploaded_file_id = str(uuid.uuid4())
-        uploaded_file_repo.save.return_value = {"id": uploaded_file_id}
+        uploaded_file_repo.save.return_value = UploadedFileDTO(
+            id=uploaded_file_id,
+            filename="test.csv",
+            created_at=None
+        )
 
         file_analysis_metadata_repo = MagicMock()
         file_analysis_metadata_repo.find_by_hash.return_value = None
@@ -62,18 +68,18 @@ class TestStatementAnalyzerService:
 
         result = analyzer.analyze(filename, file_content)
 
-        assert "uploaded_file_id" in result
-        assert result["uploaded_file_id"] == uploaded_file_id
-        assert result["file_type"] == "CSV"
-        assert result["column_mapping"] == {
+        assert isinstance(result, AnalysisResultDTO)
+        assert result.uploaded_file_id == uploaded_file_id
+        assert result.file_type == "CSV"
+        assert result.column_mapping == {
             "date": "Date",
             "amount": "Amount",
             "description": "Description",
         }
-        assert result["header_row_index"] == 0
-        assert result["data_start_row_index"] == 1
-        assert "sample_data" in result
-        assert "file_hash" in result
+        assert result.header_row_index == 0
+        assert result.data_start_row_index == 1
+        assert result.sample_data is not None
+        assert result.file_hash is not None
 
         file_type_detector.detect.assert_called_once_with(file_content)
         statement_parser.parse.assert_called_once_with(file_content, "CSV")
@@ -88,14 +94,13 @@ class TestStatementAnalyzerService:
         schema_detector = MagicMock()
         transaction_normalizer = MagicMock()
         # Mock the normalized dataframe that will be converted to the sample data
-        normalized_df_mock = pd.DataFrame([
-            {"date": "2023-01-01", "amount": 100.00, "description": "Deposit"},
-            {"date": "2023-01-02", "amount": -200.00, "description": "Withdrawal"}
-        ])
+        normalized_df_mock = pd.DataFrame(
+            [{"date": "2023-01-01", "amount": 100.00, "description": "Deposit"}, {"date": "2023-01-02", "amount": -200.00, "description": "Withdrawal"}]
+        )
         transaction_normalizer.normalize.return_value = normalized_df_mock
-        
-        uploaded_file_repo = MagicMock()
 
+        uploaded_file_repo = MagicMock()
+        
         filename = "test.csv"
         file_content = b"Date,Amount,Description\n2023-01-01,100.00,Deposit\n2023-01-02,-200.00,Withdrawal"
 
@@ -106,26 +111,31 @@ class TestStatementAnalyzerService:
         file_hash = hasher.hexdigest()
 
         uploaded_file_id = str(uuid.uuid4())
-        existing_metadata = {
-            "id": str(uuid.uuid4()),
-            "uploaded_file_id": uploaded_file_id,
-            "file_type": "CSV",
-            "column_mapping": {
+        existing_metadata = FileAnalysisMetadataDTO(
+            id=str(uuid.uuid4()),
+            uploaded_file_id=uploaded_file_id,
+            file_hash=file_hash,
+            file_type="CSV",
+            column_mapping={
                 "date": "Date",
                 "amount": "Amount",
                 "description": "Description",
             },
-            "header_row_index": 0,
-            "data_start_row_index": 1,
-            "normalized_sample": [
-                {"date": "2023-01-01", "amount": 100.00, "description": "Deposit"},
-                {"date": "2023-01-02", "amount": -200.00, "description": "Withdrawal"},
-            ],
-            "file_hash": file_hash,
-        }
+            header_row_index=0,
+            data_start_row_index=1,
+            created_at=None
+        )
 
         file_analysis_metadata_repo = MagicMock()
         file_analysis_metadata_repo.find_by_hash.return_value = existing_metadata
+        
+        # Mock the uploaded_file_repo.find_by_id method
+        uploaded_file_repo.find_by_id.return_value = UploadedFileDTO(
+            id=uploaded_file_id,
+            filename="test.csv",
+            content=file_content,
+            created_at=None
+        )
 
         analyzer = StatementAnalyzerService(
             file_type_detector=file_type_detector,
@@ -138,13 +148,12 @@ class TestStatementAnalyzerService:
 
         result = analyzer.analyze(filename, file_content)
 
-        assert result["uploaded_file_id"] == uploaded_file_id
-        assert result["file_type"] == existing_metadata["file_type"]
-        assert result["column_mapping"] == existing_metadata["column_mapping"]
-        assert result["header_row_index"] == existing_metadata["header_row_index"]
-        assert result["data_start_row_index"] == existing_metadata["data_start_row_index"]
-        assert result["sample_data"] == existing_metadata["normalized_sample"]
-        assert result["file_hash"] == existing_metadata["file_hash"]
+        assert isinstance(result, AnalysisResultDTO)
+        assert result.uploaded_file_id == uploaded_file_id
+        assert result.file_type == existing_metadata.file_type
+        assert result.column_mapping == existing_metadata.column_mapping
+        assert result.header_row_index == existing_metadata.header_row_index
+        assert result.data_start_row_index == existing_metadata.data_start_row_index
 
         file_type_detector.detect.assert_not_called()
         statement_parser.parse.assert_not_called()

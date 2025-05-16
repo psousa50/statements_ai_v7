@@ -4,6 +4,7 @@ from uuid import UUID
 
 from sqlalchemy.orm import Session
 
+from app.domain.dto.statement_processing import TransactionDTO
 from app.domain.models.transaction import Transaction
 from app.ports.repositories.transaction import TransactionRepository
 
@@ -47,19 +48,23 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
             return True
         return False
 
-    def save_batch(self, transactions: List[dict]) -> int:
+    def save_batch(self, transactions: List[TransactionDTO]) -> int:
         saved_count = 0
-        for transaction_data in transactions:
-            date_val = transaction_data["date"]
+        for transaction_dto in transactions:
+            date_val = transaction_dto.date
             if isinstance(date_val, str):
                 date_val = datetime.strptime(date_val, "%Y-%m-%d").date()
 
             transaction = Transaction(
                 date=date_val,
-                amount=transaction_data["amount"],
-                description=transaction_data["description"],
-                uploaded_file_id=transaction_data["uploaded_file_id"],
+                amount=transaction_dto.amount,
+                description=transaction_dto.description,
+                uploaded_file_id=transaction_dto.uploaded_file_id,
             )
+            
+            if transaction_dto.source_id:
+                transaction.source_id = transaction_dto.source_id
+                
             self.db_session.add(transaction)
             saved_count += 1
 

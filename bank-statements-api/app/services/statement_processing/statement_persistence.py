@@ -1,3 +1,6 @@
+from app.domain.dto.statement_processing import AnalysisResultDTO, PersistenceResultDTO, TransactionDTO
+
+
 class StatementPersistenceService:
     def __init__(
         self,
@@ -13,24 +16,24 @@ class StatementPersistenceService:
         self.uploaded_file_repo = uploaded_file_repo
         self.file_analysis_metadata_repo = file_analysis_metadata_repo
 
-    def persist(self, analysis_result: dict) -> dict:
+    def persist(self, analysis_result: AnalysisResultDTO) -> PersistenceResultDTO:
         import logging
 
         logger = logging.getLogger("app")
 
-        uploaded_file_id = analysis_result["uploaded_file_id"]
-        file_type = analysis_result["file_type"]
-        column_mapping = analysis_result["column_mapping"]
-        file_hash = analysis_result["file_hash"]
-        header_row_index = analysis_result["header_row_index"]
-        data_start_row_index = analysis_result["data_start_row_index"]
-        source_id = analysis_result.get("source_id", None)
+        uploaded_file_id = analysis_result.uploaded_file_id
+        file_type = analysis_result.file_type
+        column_mapping = analysis_result.column_mapping
+        file_hash = analysis_result.file_hash
+        header_row_index = analysis_result.header_row_index
+        data_start_row_index = analysis_result.data_start_row_index
+        source_id = getattr(analysis_result, 'source_id', None)
 
         logger.info(f"Processing statement with column mapping: {column_mapping}")
         logger.info(f"Header row index: {header_row_index}, Data start row index: {data_start_row_index}")
 
         uploaded_file = self.uploaded_file_repo.find_by_id(uploaded_file_id)
-        file_content = uploaded_file["content"]
+        file_content = uploaded_file.content
 
         raw_df = self.statement_parser.parse(file_content, file_type)
 
@@ -51,24 +54,21 @@ class StatementPersistenceService:
 
         transactions = []
         for _, row in normalized_df.iterrows():
-            transaction = {
-                "date": row["date"],
-                "amount": row["amount"],
-                "description": row["description"],
-                "uploaded_file_id": uploaded_file_id,
-            }
-
-            if source_id:
-                transaction["source_id"] = source_id
-
+            transaction = TransactionDTO(
+                date=row["date"],
+                amount=row["amount"],
+                description=row["description"],
+                uploaded_file_id=uploaded_file_id,
+                source_id=source_id
+            )
             transactions.append(transaction)
 
         transactions_saved = self.transaction_repo.save_batch(transactions)
 
-        return {
-            "uploaded_file_id": uploaded_file_id,
-            "transactions_saved": transactions_saved,
-        }
+        return PersistenceResultDTO(
+            uploaded_file_id=uploaded_file_id,
+            transactions_saved=transactions_saved
+        )
 
     def _process_dataframe(self, raw_df, header_row_index, data_start_row_index):
         processed_df = raw_df.copy()

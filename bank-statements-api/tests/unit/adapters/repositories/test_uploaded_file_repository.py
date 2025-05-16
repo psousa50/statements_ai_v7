@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 from unittest.mock import MagicMock
 
 from app.adapters.repositories.uploaded_file import SQLAlchemyFileAnalysisMetadataRepository, SQLAlchemyUploadedFileRepository
+from app.domain.dto.uploaded_file import FileAnalysisMetadataDTO, UploadedFileDTO
 
 
 class TestUploadedFileRepository:
@@ -23,8 +24,9 @@ class TestUploadedFileRepository:
 
         result = repo.save(filename, content)
 
-        assert "id" in result
-        assert result["filename"] == filename
+        assert isinstance(result, UploadedFileDTO)
+        assert result.id is not None
+        assert result.filename == filename
 
         session.add.assert_called_once()
         session.commit.assert_called_once()
@@ -44,9 +46,10 @@ class TestUploadedFileRepository:
         repo = SQLAlchemyUploadedFileRepository(session)
         result = repo.find_by_id(file_id)
 
-        assert result["id"] == str(file_id)
-        assert result["filename"] == "test.csv"
-        assert result["content"] == b"test content"
+        assert isinstance(result, UploadedFileDTO)
+        assert result.id == str(file_id)
+        assert result.filename == "test.csv"
+        assert result.content == b"test content"
 
         session.query.assert_called_once()
         session.query.return_value.filter.assert_called_once()
@@ -86,13 +89,14 @@ class TestFileAnalysisMetadataRepository:
             data_start_row_index=data_start_row_index,
         )
 
-        assert "id" in result
-        assert result["uploaded_file_id"] == str(uploaded_file_id)
-        assert result["file_hash"] == file_hash
-        assert result["file_type"] == file_type
-        assert result["column_mapping"] == column_mapping
-        assert result["header_row_index"] == header_row_index
-        assert result["data_start_row_index"] == data_start_row_index
+        assert isinstance(result, FileAnalysisMetadataDTO)
+        assert result.id is not None
+        assert result.uploaded_file_id == str(uploaded_file_id)
+        assert result.file_hash == file_hash
+        assert result.file_type == file_type
+        assert result.column_mapping == column_mapping
+        assert result.header_row_index == header_row_index
+        assert result.data_start_row_index == data_start_row_index
         # normalized_sample field removed
 
         session.add.assert_called_once()
@@ -123,10 +127,11 @@ class TestFileAnalysisMetadataRepository:
         repo = SQLAlchemyFileAnalysisMetadataRepository(session)
         result = repo.find_by_hash("abc123")
 
-        assert result["id"] == str(metadata_id)
-        assert result["uploaded_file_id"] == str(uploaded_file_id)
-        assert result["file_hash"] == "abc123"
-        assert result["file_type"] == "CSV"
+        assert isinstance(result, FileAnalysisMetadataDTO)
+        assert result.id == str(metadata_id)
+        assert result.uploaded_file_id == str(uploaded_file_id)
+        assert result.file_hash == "abc123"
+        assert result.file_type == "CSV"
 
         session.query.assert_called_once()
         session.query.return_value.filter.assert_called_once()

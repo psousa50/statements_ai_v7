@@ -9,6 +9,7 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from app.api.routes.statements import register_statement_routes
+from app.domain.dto.statement_processing import AnalysisResultDTO, PersistenceResultDTO
 
 # Mock the dependencies that might cause import issues
 sys.modules["app.ai.gemini_ai"] = MagicMock()
@@ -50,15 +51,15 @@ class TestStatementRoutes:
         file_hash = "abc123"
 
         # Configure mock
-        mock_dependencies.statement_analyzer_service.analyze.return_value = {
-            "uploaded_file_id": uploaded_file_id,
-            "file_type": "CSV",
-            "column_mapping": {"date": "Date", "amount": "Amount", "description": "Description"},
-            "header_row_index": 0,
-            "data_start_row_index": 1,
-            "sample_data": [{"date": "2023-01-01", "amount": 100.00, "description": "Test"}],
-            "file_hash": file_hash,
-        }
+        mock_dependencies.statement_analyzer_service.analyze.return_value = AnalysisResultDTO(
+            uploaded_file_id=uploaded_file_id,
+            file_type="CSV",
+            column_mapping={"date": "Date", "amount": "Amount", "description": "Description"},
+            header_row_index=0,
+            data_start_row_index=1,
+            sample_data=[{"date": "2023-01-01", "amount": 100.00, "description": "Test"}],
+            file_hash=file_hash
+        )
 
         # Make request
         response = client.post("/api/v1/statements/analyze", files={"file": ("test.csv", BytesIO(file_content), "text/csv")})
@@ -98,7 +99,10 @@ class TestStatementRoutes:
         mock_dependencies.source_service.get_source_by_name.return_value = mock_source
 
         # Configure mock for persistence service
-        mock_dependencies.statement_persistence_service.persist.return_value = {"uploaded_file_id": uploaded_file_id, "transactions_saved": 10}
+        mock_dependencies.statement_persistence_service.persist.return_value = PersistenceResultDTO(
+            uploaded_file_id=uploaded_file_id,
+            transactions_saved=10
+        )
 
         # Request data
         request_data = {
@@ -110,10 +114,6 @@ class TestStatementRoutes:
             "file_hash": "abc123",
             "source": "Test Bank",
         }
-
-        # Expected data with source_id
-        expected_data = request_data.copy()
-        expected_data["source_id"] = source_id
 
         # Make request
         response = client.post("/api/v1/statements/upload", json=request_data)
@@ -130,7 +130,9 @@ class TestStatementRoutes:
         # Verify persistence service was called with the source_id
         mock_dependencies.statement_persistence_service.persist.assert_called_once()
         call_args = mock_dependencies.statement_persistence_service.persist.call_args[0][0]
-        assert call_args["source_id"] == source_id
+        assert isinstance(call_args, AnalysisResultDTO)
+        assert hasattr(call_args, 'source_id')
+        assert call_args.source_id == str(source_id)
 
     def test_upload_statement_error(self, client, mock_dependencies):
         # Configure mock to raise an exception

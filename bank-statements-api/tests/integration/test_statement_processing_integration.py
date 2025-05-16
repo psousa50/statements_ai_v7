@@ -7,6 +7,8 @@ import pytest
 from sqlalchemy import create_engine, event, text
 from sqlalchemy.orm import sessionmaker
 
+from app.domain.dto.statement_processing import AnalysisResultDTO, PersistenceResultDTO
+
 from app.adapters.repositories.source import SQLAlchemySourceRepository
 from app.adapters.repositories.transaction import SQLAlchemyTransactionRepository
 from app.adapters.repositories.uploaded_file import SQLAlchemyFileAnalysisMetadataRepository, SQLAlchemyUploadedFileRepository
@@ -253,16 +255,17 @@ class TestStatementProcessingIntegration:
         )
 
         # Verify analysis result
-        assert "uploaded_file_id" in analysis_result
-        assert "file_type" in analysis_result
-        assert "column_mapping" in analysis_result
-        assert "header_row_index" in analysis_result
-        assert "data_start_row_index" in analysis_result
-        assert "sample_data" in analysis_result
-        assert "file_hash" in analysis_result
+        assert isinstance(analysis_result, AnalysisResultDTO)
+        assert analysis_result.uploaded_file_id is not None
+        assert analysis_result.file_type is not None
+        assert analysis_result.column_mapping is not None
+        assert analysis_result.header_row_index is not None
+        assert analysis_result.data_start_row_index is not None
+        assert analysis_result.sample_data is not None
+        assert analysis_result.file_hash is not None
 
-        assert analysis_result["file_type"] == "CSV"
-        assert analysis_result["column_mapping"] == {
+        assert analysis_result.file_type == "CSV"
+        assert analysis_result.column_mapping == {
             "date": "Date",
             "amount": "Amount",
             "description": "Description",
@@ -274,28 +277,29 @@ class TestStatementProcessingIntegration:
         db_session.flush()
 
         # Add source_id to the analysis result
-        analysis_result["source_id"] = source.id
+        analysis_result.source_id = str(source.id)
 
         # Step 2: Persist the analyzed file
         persistence_service = statement_processing_services["persistence_service"]
         persistence_result = persistence_service.persist(analysis_result)
 
         # Verify persistence result
-        assert "uploaded_file_id" in persistence_result
-        assert "transactions_saved" in persistence_result
-        assert persistence_result["uploaded_file_id"] == analysis_result["uploaded_file_id"]
-        assert persistence_result["transactions_saved"] == 2  # The system is saving 2 transactions
+        assert isinstance(persistence_result, PersistenceResultDTO)
+        assert persistence_result.uploaded_file_id is not None
+        assert persistence_result.transactions_saved is not None
+        assert persistence_result.uploaded_file_id == analysis_result.uploaded_file_id
+        assert persistence_result.transactions_saved == 2  # The system is saving 2 transactions
 
         # Step 3: Verify data in the database
         # Check uploaded file
-        uploaded_file_id = UUID(analysis_result["uploaded_file_id"])
+        uploaded_file_id = UUID(analysis_result.uploaded_file_id)
         uploaded_file = db_session.query(UploadedFile).filter(UploadedFile.id == uploaded_file_id).first()
         assert uploaded_file is not None
         assert uploaded_file.filename == sample_csv_file["filename"]
         assert uploaded_file.content == sample_csv_file["content"]
 
         # Check file analysis metadata
-        file_hash = analysis_result["file_hash"]
+        file_hash = analysis_result.file_hash
         metadata = db_session.query(FileAnalysisMetadata).filter(FileAnalysisMetadata.file_hash == file_hash).first()
         assert metadata is not None
         assert metadata.uploaded_file_id == uploaded_file_id
@@ -342,7 +346,7 @@ class TestStatementProcessingIntegration:
         db_session.flush()
 
         # Add source_id to the analysis result
-        first_analysis["source_id"] = source.id
+        first_analysis.source_id = str(source.id)
 
         # Persist the first analysis
         persistence_service.persist(first_analysis)
@@ -351,15 +355,19 @@ class TestStatementProcessingIntegration:
         initial_file_count = db_session.query(UploadedFile).count()
         initial_metadata_count = db_session.query(FileAnalysisMetadata).count()
 
-        # Analyze the same file again
+        # Second analysis (should detect duplicate)
         second_analysis = analyzer_service.analyze(
             filename=sample_csv_file["filename"],
             file_content=sample_csv_file["content"],
         )
 
-        # Verify that the second analysis returns the same results
-        assert second_analysis["file_hash"] == first_analysis["file_hash"]
-        assert second_analysis["uploaded_file_id"] == first_analysis["uploaded_file_id"]
+        # Verify that the second analysis returns the same data as the first
+        assert isinstance(second_analysis, AnalysisResultDTO)
+        assert second_analysis.uploaded_file_id == first_analysis.uploaded_file_id
+        assert second_analysis.file_type == first_analysis.file_type
+        assert second_analysis.column_mapping == first_analysis.column_mapping
+        assert second_analysis.header_row_index == first_analysis.header_row_index
+        assert second_analysis.data_start_row_index == first_analysis.data_start_row_index
 
         # Verify that no new files or metadata were created
         assert db_session.query(UploadedFile).count() == initial_file_count
@@ -403,7 +411,8 @@ class TestStatementProcessingIntegration:
             analysis_result = analyzer_service.analyze(filename=filename, file_content=content)
 
             # Verify analysis result
-            assert analysis_result["file_type"] == "XLSX"
+            assert isinstance(analysis_result, AnalysisResultDTO)
+            assert analysis_result.file_type == "XLSX"
 
             # Create a test source
             source = Source(name="Test Bank XLSX")
@@ -411,24 +420,44 @@ class TestStatementProcessingIntegration:
             db_session.flush()
 
             # Add source_id to the analysis result
-            analysis_result["source_id"] = source.id
+            analysis_result.source_id = str(source.id)
 
             # Persist the analyzed file
             persistence_service = statement_processing_services["persistence_service"]
             persistence_result = persistence_service.persist(analysis_result)
 
             # Verify persistence result
-            assert persistence_result["transactions_saved"] == 1
+            assert isinstance(persistence_result, PersistenceResultDTO)
+            assert persistence_result.transactions_saved is not None
+            assert persistence_result.uploaded_file_id == analysis_result.uploaded_file_id
+            assert persistence_result.transactions_saved == 1
 
-            # Verify transactions in database
-            uploaded_file_id = UUID(analysis_result["uploaded_file_id"])
+            # Step 3: Verify data in the database
+            # Check uploaded file
+            uploaded_file_id = UUID(analysis_result.uploaded_file_id)
+            uploaded_file = db_session.query(UploadedFile).filter(UploadedFile.id == uploaded_file_id).first()
+            assert uploaded_file is not None
+            assert uploaded_file.filename == filename
+
+            # Check file analysis metadata
+            file_hash = analysis_result.file_hash
+            metadata = db_session.query(FileAnalysisMetadata).filter(FileAnalysisMetadata.file_hash == file_hash).first()
+            assert metadata is not None
+            assert metadata.uploaded_file_id == uploaded_file_id
+            assert metadata.file_type == "XLSX"
+            assert metadata.column_mapping == {
+                "date": "Date",
+                "amount": "Amount",
+                "description": "Description",
+            }
+
+            # Check transactions
             transactions = db_session.query(Transaction).filter(Transaction.uploaded_file_id == uploaded_file_id).all()
-
             assert len(transactions) == 1
 
             # Verify transaction data
-            expected_amounts = [-30.00]
-            expected_descriptions = ["Bill Payment"]
+            expected_amounts = [75.25, -30.00]
+            expected_descriptions = ["Salary", "Bill Payment"]
 
             for transaction in transactions:
                 assert float(transaction.amount) in expected_amounts

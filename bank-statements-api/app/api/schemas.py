@@ -111,8 +111,10 @@ class StatementAnalysisResponse(BaseModel):
     column_mapping: Dict[str, str]
     header_row_index: int
     data_start_row_index: int
-    sample_data: List[Dict[str, Any]]
+    sample_data: Optional[List[Dict[str, Any]]] = None
     file_hash: str
+    
+    model_config = ConfigDict(from_attributes=True)
 
 
 class StatementUploadRequest(BaseModel):
@@ -131,3 +133,5 @@ class StatementUploadResponse(BaseModel):
     success: bool
     message: str
     sample_data: Optional[List[Dict[str, Any]]] = None
+    
+    model_config = ConfigDict(from_attributes=True)

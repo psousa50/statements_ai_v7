@@ -1,7 +1,8 @@
 from abc import ABC, abstractmethod
-from typing import Dict, List, Optional
+from typing import List, Optional
 from uuid import UUID
 
+from app.domain.dto.statement_processing import TransactionDTO
 from app.domain.models.transaction import Transaction
 
 
@@ -37,12 +38,12 @@ class TransactionRepository(ABC):
         pass
 
     @abstractmethod
-    def save_batch(self, transactions: List[Dict]) -> int:
+    def save_batch(self, transactions: List[TransactionDTO]) -> int:
         """
         Save a batch of transactions to the database.
 
         Args:
-            transactions: List of transaction dictionaries with date, amount, description
+            transactions: List of TransactionDTO objects with date, amount, description
 
         Returns:
             Number of transactions saved

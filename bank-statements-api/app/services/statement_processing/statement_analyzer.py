@@ -2,6 +2,9 @@ import hashlib
 import logging
 from uuid import UUID
 
+from app.domain.dto.statement_processing import AnalysisResultDTO
+from app.domain.dto.uploaded_file import FileAnalysisMetadataDTO, UploadedFileDTO
+
 logger_content = logging.getLogger("app.llm.big")
 logger = logging.getLogger("app")
 
@@ -23,63 +26,27 @@ class StatementAnalyzerService:
         self.uploaded_file_repo = uploaded_file_repo
         self.file_analysis_metadata_repo = file_analysis_metadata_repo
 
-    def analyze(self, filename: str, file_content: bytes) -> dict:
+    def analyze(self, filename: str, file_content: bytes) -> AnalysisResultDTO:
         file_hash = self._compute_hash(filename, file_content)
         existing_metadata = self.file_analysis_metadata_repo.find_by_hash(file_hash)
 
         if existing_metadata:
-            # For existing metadata, we need to regenerate the sample_data and normalized_sample
-            # since they're not stored in the database
+            # For duplicate files, just return the existing metadata without reprocessing
+            return AnalysisResultDTO(
+                uploaded_file_id=existing_metadata.uploaded_file_id,
+                file_type=existing_metadata.file_type,
+                column_mapping=existing_metadata.column_mapping,
+                header_row_index=existing_metadata.header_row_index,
+                data_start_row_index=existing_metadata.data_start_row_index,
+                file_hash=file_hash,
+                sample_data=None
+            )
 
-            # Get the file content to regenerate the samples
-            uploaded_file = self.uploaded_file_repo.find_by_id(UUID(existing_metadata["uploaded_file_id"]))
-            if not uploaded_file:
-                # If file not found, return what we have without samples
-                return {
-                    "uploaded_file_id": existing_metadata["uploaded_file_id"],
-                    "file_type": existing_metadata["file_type"],
-                    "column_mapping": existing_metadata["column_mapping"],
-                    "header_row_index": existing_metadata["header_row_index"],
-                    "data_start_row_index": existing_metadata["data_start_row_index"],
-                    "file_hash": file_hash,
-                }
-
-            # Check if normalized_sample exists in metadata
-            if "normalized_sample" in existing_metadata and existing_metadata["normalized_sample"]:
-                # Use the existing normalized_sample
-                sample_data = existing_metadata["normalized_sample"]
-            else:
-                # Regenerate the samples
-                file_content = uploaded_file["content"]
-                file_type = existing_metadata["file_type"]
-                column_mapping = existing_metadata["column_mapping"]
-                header_row_index = existing_metadata["header_row_index"]
-                data_start_row_index = existing_metadata["data_start_row_index"]
-
-                # Parse the file to get the raw dataframe
-                raw_df = self.statement_parser.parse(file_content, file_type)
-
-                # Normalize the dataframe
-                normalized_df = self.transaction_normalizer.normalize(raw_df, column_mapping)
-
-                # Generate sample data for UI display
-                sample_data = self._generate_sample_data(
-                    normalized_df, column_mapping, header_row_index, data_start_row_index
-                )
-
-            return {
-                "uploaded_file_id": existing_metadata["uploaded_file_id"],
-                "file_type": existing_metadata["file_type"],
-                "column_mapping": existing_metadata["column_mapping"],
-                "header_row_index": existing_metadata["header_row_index"],
-                "data_start_row_index": existing_metadata["data_start_row_index"],
-                "sample_data": sample_data,
-                "file_hash": file_hash,
-            }
+            # This code is now unreachable due to the early return above
 
         # Save the uploaded file first
         saved_file = self.uploaded_file_repo.save(filename, file_content)
-        uploaded_file_id = saved_file["id"]
+        uploaded_file_id = saved_file.id
 
         # Process the file
         file_type = self.file_type_detector.detect(file_content)
@@ -104,7 +71,7 @@ class StatementAnalyzerService:
 
         # Normalize the dataframe
         normalized_df = self.transaction_normalizer.normalize(raw_df, column_mapping)
-        
+
         # Generate sample data for UI display
         sample_data = self._generate_sample_data(normalized_df, column_mapping, header_row_index, data_start_row_index)
 
@@ -117,15 +84,15 @@ class StatementAnalyzerService:
             data_start_row_index=data_start_row_index,
         )
 
-        return {
-            "uploaded_file_id": uploaded_file_id,
-            "file_type": file_type,
-            "column_mapping": column_mapping,
-            "header_row_index": header_row_index,
-            "data_start_row_index": data_start_row_index,
-            "sample_data": sample_data,
-            "file_hash": file_hash,
-        }
+        return AnalysisResultDTO(
+            uploaded_file_id=uploaded_file_id,
+            file_type=file_type,
+            column_mapping=column_mapping,
+            header_row_index=header_row_index,
+            data_start_row_index=data_start_row_index,
+            sample_data=sample_data,
+            file_hash=file_hash
+        )
 
     def _compute_hash(self, filename: str, file_content: bytes) -> str:
         hasher = hashlib.sha256()
@@ -138,9 +105,9 @@ class StatementAnalyzerService:
         # Take the first 10 rows of the normalized dataframe
         sample_rows = min(10, len(normalized_df))
         sample_df = normalized_df.head(sample_rows).fillna("")
-        
+
         # Convert to list of dictionaries (records format)
         sample_data = sample_df.to_dict(orient="records")
-        
+
         # Return the sample data as a list of records
         return sample_data

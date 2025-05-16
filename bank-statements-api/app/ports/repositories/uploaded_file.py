@@ -1,15 +1,17 @@
 from abc import ABC, abstractmethod
-from typing import Dict, Optional
+from typing import Optional
 from uuid import UUID
+
+from app.domain.dto.uploaded_file import FileAnalysisMetadataDTO, UploadedFileDTO
 
 
 class UploadedFileRepository(ABC):
     @abstractmethod
-    def save(self, filename: str, content: bytes) -> Dict:
+    def save(self, filename: str, content: bytes) -> UploadedFileDTO:
         pass
 
     @abstractmethod
-    def find_by_id(self, file_id: UUID) -> Optional[Dict]:
+    def find_by_id(self, file_id: UUID) -> Optional[UploadedFileDTO]:
         pass
 
 
@@ -20,12 +22,12 @@ class FileAnalysisMetadataRepository(ABC):
         uploaded_file_id: UUID,
         file_hash: str,
         file_type: str,
-        column_mapping: Dict,
+        column_mapping: dict,
         header_row_index: int,
         data_start_row_index: int,
-    ) -> Dict:
+    ) -> FileAnalysisMetadataDTO:
         pass
 
     @abstractmethod
-    def find_by_hash(self, file_hash: str) -> Optional[Dict]:
+    def find_by_hash(self, file_hash: str) -> Optional[FileAnalysisMetadataDTO]:
         pass
