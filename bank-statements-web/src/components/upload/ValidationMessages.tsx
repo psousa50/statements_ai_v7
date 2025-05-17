@@ -16,8 +16,12 @@ export const ValidationMessages: React.FC<ValidationMessagesProps> = ({ columnMa
       errorMessages.push('Date column is required')
     }
     
-    if (!columnMapping.amount) {
-      errorMessages.push('Amount column is required')
+    // Check for either amount or both debit_amount and credit_amount
+    const hasAmount = !!columnMapping.amount;
+    const hasDebitAndCredit = !!columnMapping.debit_amount && !!columnMapping.credit_amount;
+    
+    if (!hasAmount && !hasDebitAndCredit) {
+      errorMessages.push('Either Amount column or both Debit Amount and Credit Amount columns are required')
     }
     
     if (!columnMapping.description) {

@@ -73,9 +73,13 @@ export const Upload: React.FC = () => {
 
   // Check if the mapping is valid
   const isValid = React.useMemo(() => {
+    // Check for either amount or both debit_amount and credit_amount
+    const hasAmount = !!columnMapping.amount;
+    const hasDebitAndCredit = !!columnMapping.debit_amount && !!columnMapping.credit_amount;
+    
     return (
       !!columnMapping.date &&
-      !!columnMapping.amount &&
+      (hasAmount || hasDebitAndCredit) &&
       !!columnMapping.description
     )
   }, [columnMapping])

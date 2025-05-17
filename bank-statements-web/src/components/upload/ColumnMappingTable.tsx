@@ -87,6 +87,8 @@ export const ColumnMappingTable: React.FC<ColumnMappingTableProps> = ({
   const columnTypeTooltips = {
     date: 'The date when the transaction occurred',
     amount: 'The transaction amount (positive for income, negative for expenses)',
+    debit_amount: 'The debit amount (money going out of your account)',
+    credit_amount: 'The credit amount (money coming into your account)',
     description: 'The transaction description or memo',
     category: 'The category of the transaction (if available)',
     balance: 'The account balance after the transaction',
@@ -294,6 +296,18 @@ export const ColumnMappingTable: React.FC<ColumnMappingTableProps> = ({
                         <MenuItem value="amount">
                           Amount
                           <Tooltip title={columnTypeTooltips.amount}>
+                            <HelpOutlineIcon fontSize="small" sx={{ ml: 1 }} />
+                          </Tooltip>
+                        </MenuItem>
+                        <MenuItem value="debit_amount">
+                          Debit Amount
+                          <Tooltip title={columnTypeTooltips.debit_amount}>
+                            <HelpOutlineIcon fontSize="small" sx={{ ml: 1 }} />
+                          </Tooltip>
+                        </MenuItem>
+                        <MenuItem value="credit_amount">
+                          Credit Amount
+                          <Tooltip title={columnTypeTooltips.credit_amount}>
                             <HelpOutlineIcon fontSize="small" sx={{ ml: 1 }} />
                           </Tooltip>
                         </MenuItem>

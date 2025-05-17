@@ -68,6 +68,10 @@ class TransactionNormalizer:
 
             debit_amounts = debit_amounts.fillna(0)
             credit_amounts = credit_amounts.fillna(0)
+            
+            # Debit amounts are negative (money going out), credit amounts are positive (money coming in)
+            # Combine them into a single amount column
+            result_df["amount"] = credit_amounts - debit_amounts
 
         descriptions = df[description_col]
         result_df["description"] = descriptions.fillna("").astype(str)
