@@ -7,7 +7,9 @@ interface AnalysisSummaryProps {
   rowCount?: number
   dateRange?: { start: string; end: string }
   totalAmount?: number
-  sampleData: SampleData
+  sampleData: string[][]
+  headerRowIndex?: number
+  dataStartRowIndex?: number
 }
 
 export const AnalysisSummary: React.FC<AnalysisSummaryProps> = ({
@@ -16,9 +18,11 @@ export const AnalysisSummary: React.FC<AnalysisSummaryProps> = ({
   dateRange,
   totalAmount,
   sampleData,
+  headerRowIndex = 0,
+  dataStartRowIndex = 1,
 }) => {
   // Calculate the actual row count from the sample data if not provided
-  const actualRowCount = rowCount || (sampleData.rows ? sampleData.rows.length : 0)
+  const actualRowCount = rowCount || (sampleData ? sampleData.length : 0)
 
   return (
     <Box sx={{ mb: 4 }}>
@@ -55,7 +59,7 @@ export const AnalysisSummary: React.FC<AnalysisSummaryProps> = ({
             <Typography color="textSecondary" gutterBottom>
               Header Row
             </Typography>
-            <Typography variant="h6">{sampleData.metadata.header_row_index + 1}</Typography>
+            <Typography variant="h6">{headerRowIndex + 1}</Typography>
           </CardContent>
         </Card>
         
@@ -64,7 +68,7 @@ export const AnalysisSummary: React.FC<AnalysisSummaryProps> = ({
             <Typography color="textSecondary" gutterBottom>
               Data Start Row
             </Typography>
-            <Typography variant="h6">{sampleData.metadata.data_start_row_index + 1}</Typography>
+            <Typography variant="h6">{dataStartRowIndex + 1}</Typography>
           </CardContent>
         </Card>
       </Box>

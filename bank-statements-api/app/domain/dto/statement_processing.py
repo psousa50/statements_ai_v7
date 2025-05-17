@@ -11,7 +11,7 @@ class AnalysisResultDTO:
         column_mapping: dict,
         header_row_index: int,
         data_start_row_index: int,
-        sample_data: List[dict],
+        sample_data: list[list],
     ):
         self.uploaded_file_id = uploaded_file_id
         self.file_type = file_type

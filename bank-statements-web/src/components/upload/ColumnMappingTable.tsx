@@ -18,10 +18,9 @@ import {
   SelectChangeEvent,
 } from '@mui/material'
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline'
-import { SampleData } from '../../api/StatementClient'
 
 interface ColumnMappingTableProps {
-  sampleData: SampleData
+  sampleData: string[][]
   columnMapping: Record<string, string>
   headerRowIndex: number
   dataStartRowIndex: number
@@ -41,18 +40,18 @@ export const ColumnMappingTable: React.FC<ColumnMappingTableProps> = ({
 }) => {
   // Get the number of columns from the sample data
   const columns = React.useMemo(() => {
-    if (!sampleData.rows || sampleData.rows.length === 0) return []
+    if (!sampleData || sampleData.length === 0) return []
     // Find the row with the most columns to ensure we display all data
-    const maxColumns = Math.max(...sampleData.rows.map(row => row.length))
+    const maxColumns = Math.max(...sampleData.map(row => row.length))
     return Array.from({ length: maxColumns }, (_, i) => i.toString())
   }, [sampleData])
 
   const handleColumnTypeChange = (columnIndex: string, columnType: string) => {
     const newMapping = { ...columnMapping }
-    
+
     // Get the column name from the header row using props value, not metadata
-    const columnName = headerRowIndex >= 0 && headerRowIndex < sampleData.rows.length 
-      ? sampleData.rows[headerRowIndex][parseInt(columnIndex)] || `Column ${columnIndex}`
+    const columnName = headerRowIndex >= 0 && headerRowIndex < sampleData.length
+      ? sampleData[headerRowIndex][parseInt(columnIndex)] || `Column ${columnIndex}`
       : `Column ${columnIndex}`
 
     // Remove the column from any existing mapping
@@ -72,21 +71,16 @@ export const ColumnMappingTable: React.FC<ColumnMappingTableProps> = ({
 
   const getColumnType = (columnIndex: string): string => {
     // Get the column name from the header row using props value, not metadata
-    const columnName = headerRowIndex >= 0 && headerRowIndex < sampleData.rows.length 
-      ? sampleData.rows[headerRowIndex][parseInt(columnIndex)] || `Column ${columnIndex}`
+    const columnName = headerRowIndex >= 0 && headerRowIndex < sampleData.length
+      ? sampleData[headerRowIndex][parseInt(columnIndex)] || `Column ${columnIndex}`
       : `Column ${columnIndex}`
-      
+
     for (const [type, col] of Object.entries(columnMapping)) {
       if (col === columnName) {
         return type
       }
     }
-    
-    // Check if this column is mapped in the metadata
-    if (sampleData.metadata.column_mappings && sampleData.metadata.column_mappings[columnIndex]) {
-      return sampleData.metadata.column_mappings[columnIndex]
-    }
-    
+
     return 'ignore'
   }
 
@@ -101,43 +95,43 @@ export const ColumnMappingTable: React.FC<ColumnMappingTableProps> = ({
 
   // Display all rows including the first row with account information
   const renderTableRows = () => {
-    return sampleData.rows.map((row, rowIndex) => {
+    return sampleData.map((row, rowIndex) => {
       // Highlight the header and data start rows based on the props values, not metadata
       const isHeaderRow = rowIndex === headerRowIndex
       const isDataStartRow = rowIndex === dataStartRowIndex
-      
+
       return (
-        <TableRow 
+        <TableRow
           key={rowIndex}
           hover={false}
           sx={{
-            backgroundColor: isHeaderRow 
-              ? 'rgba(25, 118, 210, 0.3)' 
-              : isDataStartRow 
-                ? 'rgba(76, 175, 80, 0.3)' 
+            backgroundColor: isHeaderRow
+              ? 'rgba(25, 118, 210, 0.3)'
+              : isDataStartRow
+                ? 'rgba(76, 175, 80, 0.3)'
                 : '#ffffff',
             fontWeight: isHeaderRow ? 'bold' : 'normal',
             color: '#000000',
             '&:hover': {
-              backgroundColor: isHeaderRow 
-                ? 'rgba(25, 118, 210, 0.4)' 
-                : isDataStartRow 
-                  ? 'rgba(76, 175, 80, 0.4)' 
+              backgroundColor: isHeaderRow
+                ? 'rgba(25, 118, 210, 0.4)'
+                : isDataStartRow
+                  ? 'rgba(76, 175, 80, 0.4)'
                   : '#f5f5f5',
             },
             // Override any zebra-striping
             '&:nth-of-type(odd)': {
-              backgroundColor: isHeaderRow 
-                ? 'rgba(25, 118, 210, 0.3)' 
-                : isDataStartRow 
-                  ? 'rgba(76, 175, 80, 0.3)' 
+              backgroundColor: isHeaderRow
+                ? 'rgba(25, 118, 210, 0.3)'
+                : isDataStartRow
+                  ? 'rgba(76, 175, 80, 0.3)'
                   : '#ffffff',
             },
             '&:nth-of-type(even)': {
-              backgroundColor: isHeaderRow 
-                ? 'rgba(25, 118, 210, 0.3)' 
-                : isDataStartRow 
-                  ? 'rgba(76, 175, 80, 0.3)' 
+              backgroundColor: isHeaderRow
+                ? 'rgba(25, 118, 210, 0.3)'
+                : isDataStartRow
+                  ? 'rgba(76, 175, 80, 0.3)'
                   : '#ffffff',
             },
           }}
@@ -146,7 +140,7 @@ export const ColumnMappingTable: React.FC<ColumnMappingTableProps> = ({
             // Ensure we don't try to access cells that don't exist in this row
             const cellValue = cellIndex < row.length ? row[cellIndex] : ''
             return (
-              <TableCell 
+              <TableCell
                 key={`${rowIndex}-${cellIndex}`}
                 sx={{
                   color: '#000000',
@@ -178,15 +172,15 @@ export const ColumnMappingTable: React.FC<ColumnMappingTableProps> = ({
           value={headerRowIndex}
           onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
             const newValue = parseInt(e.target.value, 10);
-            const maxRowIndex = sampleData.rows.length - 1;
-            
+            const maxRowIndex = sampleData.length - 1;
+
             // Validate the input value
             if (isNaN(newValue) || newValue < 0) {
               // Invalid input, set to 0
               onHeaderRowIndexChange(0);
               return;
             }
-            
+
             if (newValue > maxRowIndex) {
               // Prevent exceeding the maximum row index
               onHeaderRowIndexChange(maxRowIndex);
@@ -196,7 +190,7 @@ export const ColumnMappingTable: React.FC<ColumnMappingTableProps> = ({
               }
               return;
             }
-            
+
             // Ensure header row is less than data start row
             if (newValue < dataStartRowIndex) {
               onHeaderRowIndexChange(newValue);
@@ -207,15 +201,15 @@ export const ColumnMappingTable: React.FC<ColumnMappingTableProps> = ({
               onDataStartRowIndexChange(newDataStartRow);
             }
           }}
-          InputProps={{ 
-            inputProps: { 
-              min: 0, 
-              max: sampleData.rows.length - 1 
-            } 
+          InputProps={{
+            inputProps: {
+              min: 0,
+              max: sampleData.length - 1
+            }
           }}
           size="small"
           sx={{ width: 150 }}
-          helperText={`Must be 0-${sampleData.rows.length - 1} and < Data Start Row`}
+          helperText={`Must be 0-${sampleData.length - 1} and < Data Start Row`}
         />
 
         <TextField
@@ -224,21 +218,21 @@ export const ColumnMappingTable: React.FC<ColumnMappingTableProps> = ({
           value={dataStartRowIndex}
           onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
             const newValue = parseInt(e.target.value, 10);
-            const maxRowIndex = sampleData.rows.length - 1;
-            
+            const maxRowIndex = sampleData.length - 1;
+
             // Validate the input value
             if (isNaN(newValue) || newValue <= 0) {
               // Invalid input, set to minimum valid value
               onDataStartRowIndexChange(Math.min(1, headerRowIndex + 1));
               return;
             }
-            
+
             if (newValue > maxRowIndex) {
               // Prevent exceeding the maximum row index
               onDataStartRowIndexChange(maxRowIndex);
               return;
             }
-            
+
             // Ensure data start row is greater than header row
             if (newValue > headerRowIndex) {
               onDataStartRowIndexChange(newValue);
@@ -247,24 +241,24 @@ export const ColumnMappingTable: React.FC<ColumnMappingTableProps> = ({
               onDataStartRowIndexChange(headerRowIndex + 1);
             }
           }}
-          InputProps={{ 
-            inputProps: { 
-              min: Math.max(1, headerRowIndex + 1), 
-              max: sampleData.rows.length - 1 
-            } 
+          InputProps={{
+            inputProps: {
+              min: Math.max(1, headerRowIndex + 1),
+              max: sampleData.length - 1
+            }
           }}
           size="small"
           sx={{ width: 150 }}
-          helperText={`Must be ${headerRowIndex + 1}-${sampleData.rows.length - 1}`}
+          helperText={`Must be ${headerRowIndex + 1}-${sampleData.length - 1}`}
         />
       </Box>
 
       {/* Sample Data Table with Column Selectors */}
       <TableContainer component={Paper} sx={{ mb: 3 }}>
-        <Table 
-          size="small" 
-          sx={{ 
-            minWidth: 650, 
+        <Table
+          size="small"
+          sx={{
+            minWidth: 650,
             backgroundColor: '#ffffff',
           }}
           // Disable the default zebra-striping behavior
@@ -274,10 +268,10 @@ export const ColumnMappingTable: React.FC<ColumnMappingTableProps> = ({
             <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
               {columns.map((columnIndex) => {
                 // Get the column name from the header row using props value, not metadata
-                const columnName = headerRowIndex >= 0 && headerRowIndex < sampleData.rows.length 
-                  ? sampleData.rows[headerRowIndex][parseInt(columnIndex)] || `Column ${columnIndex}`
+                const columnName = headerRowIndex >= 0 && headerRowIndex < sampleData.length
+                  ? sampleData[headerRowIndex][parseInt(columnIndex)] || `Column ${columnIndex}`
                   : `Column ${columnIndex}`
-                  
+
                 return (
                   <TableCell key={columnIndex} sx={{ backgroundColor: '#f5f5f5', padding: '8px' }}>
                     <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 1 }}>

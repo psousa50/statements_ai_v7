@@ -111,7 +111,7 @@ class StatementAnalysisResponse(BaseModel):
     column_mapping: Dict[str, str]
     header_row_index: int
     data_start_row_index: int
-    sample_data: Optional[List[Dict[str, Any]]] = None
+    sample_data: list[list]
 
     model_config = ConfigDict(from_attributes=True)
 

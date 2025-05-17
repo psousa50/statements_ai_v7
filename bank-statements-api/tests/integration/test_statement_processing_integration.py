@@ -104,8 +104,11 @@ class TestStatementProcessingIntegration:
         assert analysis_result.header_row_index == 1
         assert analysis_result.data_start_row_index == 3
         assert analysis_result.sample_data == [
-            {"date": "2023-01-02", "amount": -50.00, "description": "Withdrawal"},
-            {"date": "2023-01-03", "amount": 25.50, "description": "Refund"},
+            ["Header 1", "Header 2", "Header 3"],
+            ["Data", "Valor", "Descricao"],
+            ["2023-01-01", "100.00", "Deposit"],
+            ["2023-01-02", "-50.00", "Withdrawal"],
+            ["2023-01-03", "25.50", "Refund"],
         ]
 
         source = Source(name="Test Bank")

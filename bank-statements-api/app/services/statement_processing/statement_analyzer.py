@@ -52,7 +52,7 @@ class StatementAnalyzerService:
 
         normalized_df = self.transaction_normalizer.normalize(processed_df, column_mapping)
 
-        sample_data = self._generate_sample_data(normalized_df)
+        sample_data = self._generate_sample_data(raw_df)
 
         return AnalysisResultDTO(
             uploaded_file_id=uploaded_file_id,
@@ -63,8 +63,14 @@ class StatementAnalyzerService:
             sample_data=sample_data,
         )
 
-    def _generate_sample_data(self, normalized_df):
-        sample_rows = min(10, len(normalized_df))
-        sample_df = normalized_df.head(sample_rows).fillna("")
-        sample_data = sample_df.to_dict(orient="records")
-        return sample_data
+    def _generate_sample_data(self, raw_df):
+        rows_as_lists = []
+
+        column_names_row = [str(col) for col in raw_df.columns.tolist()]
+        rows_as_lists.append(column_names_row)
+
+        for _, row in raw_df.iloc[:10].iterrows():
+            row_as_list = [str(val) if val is not None else "" for val in row.values]
+            rows_as_lists.append(row_as_list)
+
+        return rows_as_lists

@@ -39,7 +39,7 @@ export const SourceSelector: React.FC<SourceSelectorProps> = ({ value, onChange 
         
         // If we have sources and no value is selected, select the first one
         if (response.sources.length > 0 && !value) {
-          onChange(response.sources[0].name)
+          onChange(response.sources[0].id)
         }
       } catch (error) {
         console.error('Error fetching sources:', error)
@@ -68,7 +68,7 @@ export const SourceSelector: React.FC<SourceSelectorProps> = ({ value, onChange 
       setCreatingSource(true)
       const newSource = await defaultApiClient.sources.createSource(newSourceName.trim())
       setSources(prevSources => [...prevSources, newSource])
-      onChange(newSource.name)
+      onChange(newSource.id)
       handleCloseDialog()
     } catch (error) {
       console.error('Error creating source:', error)
@@ -98,7 +98,7 @@ export const SourceSelector: React.FC<SourceSelectorProps> = ({ value, onChange 
           onChange={(e) => onChange(e.target.value)}
         >
           {sources.map((source) => (
-            <MenuItem key={source.id} value={source.name}>
+            <MenuItem key={source.id} value={source.id}>
               {source.name}
             </MenuItem>
           ))}

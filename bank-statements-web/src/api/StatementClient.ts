@@ -7,16 +7,7 @@ export interface ColumnMapping {
   category?: string
 }
 
-export interface SampleDataMetadata {
-  header_row_index: number
-  data_start_row_index: number
-  column_mappings: Record<string, string>
-}
-
-export interface SampleData {
-  metadata: SampleDataMetadata
-  rows: string[][]
-}
+export type SampleData = string[][];
 
 export interface StatementAnalysisResponse {
   uploaded_file_id: string
@@ -24,19 +15,15 @@ export interface StatementAnalysisResponse {
   column_mapping: Record<string, string>
   header_row_index: number
   data_start_row_index: number
-  sample_data: SampleData
-  normalized_sample?: Record<string, unknown>[]
-  file_hash: string
+  sample_data: string[][]
 }
 
 export interface StatementUploadRequest {
+  source_id: string
   uploaded_file_id: string
-  file_type: string
   column_mapping: Record<string, string>
   header_row_index: number
   data_start_row_index: number
-  file_hash: string
-  source?: string
 }
 
 export interface StatementUploadResponse {

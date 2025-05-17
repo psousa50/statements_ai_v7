@@ -89,12 +89,10 @@ export const Upload: React.FC = () => {
     try {
       const result = await defaultApiClient.statements.uploadStatement({
         uploaded_file_id: analysisResult.uploaded_file_id,
-        file_type: analysisResult.file_type,
         column_mapping: columnMapping,
         header_row_index: headerRowIndex,
         data_start_row_index: dataStartRowIndex,
-        file_hash: analysisResult.file_hash,
-        source: selectedSource || (file?.name || 'Unknown'),
+        source_id: selectedSource || (file?.name || 'Unknown')
       })
       
       // If sample_data is returned, use it for display
@@ -153,6 +151,8 @@ export const Upload: React.FC = () => {
               <AnalysisSummary
                 fileType={analysisResult.file_type}
                 sampleData={analysisResult.sample_data}
+                headerRowIndex={headerRowIndex}
+                dataStartRowIndex={dataStartRowIndex}
               />
               
               <Paper sx={{ p: 3, mt: 3, mb: 3, bgcolor: '#f8f9fa' }}>

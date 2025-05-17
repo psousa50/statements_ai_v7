@@ -4,7 +4,7 @@ import { SampleData } from '../../api/StatementClient'
 
 interface ValidationMessagesProps {
   columnMapping: Record<string, string>
-  sampleData: SampleData
+  sampleData: string[][]
 }
 
 export const ValidationMessages: React.FC<ValidationMessagesProps> = ({ columnMapping, sampleData }) => {

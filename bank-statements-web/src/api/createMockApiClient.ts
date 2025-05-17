@@ -86,34 +86,15 @@ const defaultStatementClient: StatementClient = {
       },
       header_row_index: 0,
       data_start_row_index: 1,
-      sample_data: {
-        metadata: {
-          header_row_index: 0,
-          data_start_row_index: 1,
-          column_mappings: {
-            "0": "date",
-            "1": "amount",
-            "2": "description"
-          }
-        },
-        rows: [
-          ["Date", "Amount", "Description"],
-          ["2023-01-01", "100", "Sample Transaction"],
-          ["2023-01-02", "200", "Another Transaction"],
-        ]
-      },
-      normalized_sample: [
-        {
-          date: '2023-01-01',
-          amount: 100,
-          description: 'Sample Transaction',
-        },
-      ],
-      file_hash: 'abc123',
+      sample_data: [
+        ["Date", "Amount", "Description"],
+        ["2023-01-01", "100", "Sample Transaction"],
+        ["2023-01-02", "200", "Another Transaction"]
+      ]
     } as StatementAnalysisResponse),
-  uploadStatement: () =>
+  uploadStatement: (request) =>
     Promise.resolve({
-      uploaded_file_id: '1',
+      uploaded_file_id: request.uploaded_file_id,
       transactions_saved: 10,
       success: true,
       message: 'Successfully saved 10 transactions',
