@@ -1,30 +1,19 @@
-from collections import Counter
 import os
+from collections import Counter
+from datetime import date
+from decimal import Decimal
 from unittest.mock import MagicMock
 from uuid import UUID
-from decimal import Decimal
-from datetime import date
 
-import pandas as pd
 import pytest
 from sqlalchemy import create_engine, event
 from sqlalchemy.orm import sessionmaker
 
-from app.adapters.repositories.source import SQLAlchemySourceRepository
-from app.adapters.repositories.transaction import SQLAlchemyTransactionRepository
-from app.adapters.repositories.uploaded_file import SQLAlchemyFileAnalysisMetadataRepository, SQLAlchemyUploadedFileRepository
-from app.domain.dto.statement_processing import AnalysisResultDTO, PersistenceRequestDTO, PersistenceResultDTO
+from app.core.dependencies import ExternalDependencies, build_internal_dependencies
+from app.domain.dto.statement_processing import PersistenceRequestDTO, PersistenceResultDTO
 from app.domain.models.source import Source
 from app.domain.models.transaction import Transaction
 from app.domain.models.uploaded_file import FileAnalysisMetadata, UploadedFile
-from app.services.statement_processing.file_type_detector import StatementFileTypeDetector
-from app.services.statement_processing.schema_detector import LLMClient, SchemaDetector
-from app.services.statement_processing.statement_analyzer import StatementAnalyzerService
-from app.services.statement_processing.statement_parser import StatementParser
-from app.services.statement_processing.statement_persistence import PersistenceRequestDTO, StatementPersistenceService
-from app.services.statement_processing.transaction_normalizer import TransactionNormalizer
-from app.core.dependencies import build_internal_dependencies, ExternalDependencies
-from app.ai.llm_client import LLMClient
 
 
 @pytest.fixture

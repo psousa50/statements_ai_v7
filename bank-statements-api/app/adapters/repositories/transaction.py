@@ -61,10 +61,10 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
                 description=transaction_dto.description,
                 uploaded_file_id=transaction_dto.uploaded_file_id,
             )
-            
+
             if transaction_dto.source_id:
                 transaction.source_id = transaction_dto.source_id
-                
+
             self.db_session.add(transaction)
             saved_count += 1
 

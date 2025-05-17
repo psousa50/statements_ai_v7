@@ -1,4 +1,3 @@
-from fastapi.encoders import jsonable_encoder
 import sys
 from io import BytesIO
 from unittest.mock import MagicMock
@@ -6,12 +5,12 @@ from uuid import uuid4
 
 import pytest
 from fastapi import FastAPI
+from fastapi.encoders import jsonable_encoder
 from fastapi.testclient import TestClient
 
 from app.api.routes.statements import register_statement_routes
-from app.domain.dto.statement_processing import AnalysisResultDTO, PersistenceResultDTO
 from app.api.schemas import StatementUploadRequest
-from app.domain.dto.statement_processing import PersistenceRequestDTO
+from app.domain.dto.statement_processing import AnalysisResultDTO, PersistenceRequestDTO, PersistenceResultDTO
 
 # Mock the dependencies that might cause import issues
 sys.modules["app.ai.gemini_ai"] = MagicMock()

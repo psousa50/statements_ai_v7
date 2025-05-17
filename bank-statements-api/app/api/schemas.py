@@ -5,8 +5,6 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-from app.domain.dto.statement_processing import AnalysisResultDTO
-
 from app.domain.models.transaction import CategorizationStatus
 
 

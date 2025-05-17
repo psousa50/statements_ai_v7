@@ -17,7 +17,9 @@ class SQLAlchemyUploadedFileRepository(UploadedFileRepository):
         self.session.commit()
         self.session.refresh(uploaded_file)
 
-        return UploadedFileDTO(id=str(uploaded_file.id), filename=uploaded_file.filename, file_type=uploaded_file.file_type, created_at=uploaded_file.created_at, content=None)
+        return UploadedFileDTO(
+            id=str(uploaded_file.id), filename=uploaded_file.filename, file_type=uploaded_file.file_type, created_at=uploaded_file.created_at, content=None
+        )
 
     def find_by_id(self, file_id: UUID) -> Optional[UploadedFileDTO]:
         uploaded_file = self.session.query(UploadedFile).filter(UploadedFile.id == file_id).first()
@@ -25,7 +27,13 @@ class SQLAlchemyUploadedFileRepository(UploadedFileRepository):
         if not uploaded_file:
             return None
 
-        return UploadedFileDTO(id=str(uploaded_file.id), filename=uploaded_file.filename, file_type=uploaded_file.file_type, content=uploaded_file.content, created_at=uploaded_file.created_at)
+        return UploadedFileDTO(
+            id=str(uploaded_file.id),
+            filename=uploaded_file.filename,
+            file_type=uploaded_file.file_type,
+            content=uploaded_file.content,
+            created_at=uploaded_file.created_at,
+        )
 
 
 class SQLAlchemyFileAnalysisMetadataRepository(FileAnalysisMetadataRepository):

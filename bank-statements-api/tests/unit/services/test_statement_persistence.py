@@ -1,10 +1,10 @@
 import uuid
-from unittest.mock import MagicMock, ANY
+from unittest.mock import ANY, MagicMock
 
 import pandas as pd
 
-from app.domain.dto.statement_processing import AnalysisResultDTO, PersistenceRequestDTO, PersistenceResultDTO, TransactionDTO
-from app.domain.dto.uploaded_file import UploadedFileDTO, FileAnalysisMetadataDTO
+from app.domain.dto.statement_processing import PersistenceRequestDTO, PersistenceResultDTO, TransactionDTO
+from app.domain.dto.uploaded_file import FileAnalysisMetadataDTO, UploadedFileDTO
 from app.services.statement_processing.statement_persistence import StatementPersistenceService
 
 
@@ -63,7 +63,7 @@ class TestStatementPersistenceService:
 
         uploaded_file_id = str(uuid.uuid4())
         source_id = uuid.uuid4()
-        
+
         persistence_request = PersistenceRequestDTO(
             source_id=source_id,
             uploaded_file_id=uploaded_file_id,

@@ -1,11 +1,10 @@
-import hashlib
 import uuid
 from unittest.mock import MagicMock
 
 import pandas as pd
 
 from app.domain.dto.statement_processing import AnalysisResultDTO
-from app.domain.dto.uploaded_file import FileAnalysisMetadataDTO, UploadedFileDTO
+from app.domain.dto.uploaded_file import UploadedFileDTO
 from app.services.statement_processing.schema_detector import ConversionModel
 from app.services.statement_processing.statement_analyzer import StatementAnalyzerService
 

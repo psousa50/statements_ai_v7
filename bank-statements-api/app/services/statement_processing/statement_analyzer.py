@@ -1,8 +1,7 @@
 import logging
-from app.services.common import compute_hash, process_dataframe
 
 from app.domain.dto.statement_processing import AnalysisResultDTO
-from app.domain.dto.uploaded_file import FileAnalysisMetadataDTO, UploadedFileDTO
+from app.services.common import compute_hash, process_dataframe
 
 logger_content = logging.getLogger("app.llm.big")
 logger = logging.getLogger("app")

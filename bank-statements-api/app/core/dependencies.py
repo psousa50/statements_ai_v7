@@ -8,6 +8,7 @@ from app.adapters.repositories.source import SQLAlchemySourceRepository
 from app.adapters.repositories.transaction import SQLAlchemyTransactionRepository
 from app.adapters.repositories.uploaded_file import SQLAlchemyFileAnalysisMetadataRepository, SQLAlchemyUploadedFileRepository
 from app.ai.gemini_ai import GeminiAI
+from app.ai.llm_client import LLMClient
 from app.core.database import SessionLocal
 from app.services.category import CategoryService
 from app.services.source import SourceService
@@ -18,7 +19,6 @@ from app.services.statement_processing.statement_parser import StatementParser
 from app.services.statement_processing.statement_persistence import StatementPersistenceService
 from app.services.statement_processing.transaction_normalizer import TransactionNormalizer
 from app.services.transaction import TransactionService
-from app.ai.llm_client import LLMClient
 
 
 class ExternalDependencies:
@@ -30,14 +30,6 @@ class ExternalDependencies:
         if self.db is not None:
             self.db.close()
             self.db = None
-
-
-class InternalDependencies:
-    transaction_service: TransactionService
-    category_service: CategoryService
-    source_service: SourceService
-    statement_analyzer_service: StatementAnalyzerService
-    statement_persistence_service: StatementPersistenceService
 
 
 class InternalDependencies:
