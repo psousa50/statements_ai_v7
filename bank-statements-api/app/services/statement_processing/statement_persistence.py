@@ -1,7 +1,7 @@
-import hashlib
 import logging
 
 from app.domain.dto.statement_processing import PersistenceRequestDTO, PersistenceResultDTO, TransactionDTO
+from app.services.common import compute_hash, process_dataframe
 
 logger = logging.getLogger("app")
 
@@ -34,15 +34,9 @@ class StatementPersistenceService:
 
         raw_df = self.statement_parser.parse(file_content, file_type)
 
-        print(f"Raw DataFrame: {raw_df}")
-
-        processed_df = self._process_dataframe(raw_df, header_row_index, data_start_row_index)
-
-        print(f"Processed DataFrame: {processed_df}")
+        processed_df = process_dataframe(raw_df, header_row_index, data_start_row_index)
 
         normalized_df = self.transaction_normalizer.normalize(processed_df, column_mapping)
-
-        print(f"Normalized DataFrame: {normalized_df}")
 
         transactions = []
         for _, row in normalized_df.iterrows():
@@ -51,12 +45,9 @@ class StatementPersistenceService:
             )
             transactions.append(transaction)
 
-        for transaction in transactions:
-            print(f"Saving transaction: {transaction}")
-
         transactions_saved = self.transaction_repo.save_batch(transactions)
 
-        file_hash = self._compute_hash(uploaded_file.filename, file_content)
+        file_hash = compute_hash(uploaded_file.filename, file_content)
         existing_metadata = self.file_analysis_metadata_repo.find_by_hash(file_hash)
         if not existing_metadata:
             self.file_analysis_metadata_repo.save(
@@ -69,20 +60,3 @@ class StatementPersistenceService:
             )
 
         return PersistenceResultDTO(uploaded_file_id=uploaded_file_id, transactions_saved=transactions_saved)
-
-    def _compute_hash(self, filename: str, file_content: bytes) -> str:
-        hasher = hashlib.sha256()
-        hasher.update(filename.encode())
-        hasher.update(file_content)
-        return hasher.hexdigest()
-
-    def _process_dataframe(self, raw_df, header_row_index, data_start_row_index):
-        processed_df = raw_df.copy()
-
-        if header_row_index > 0:
-            header_values = raw_df.iloc[header_row_index - 1].tolist()
-            processed_df.columns = header_values
-
-        processed_df = processed_df.iloc[data_start_row_index - 1 :].reset_index(drop=True)
-
-        return processed_df

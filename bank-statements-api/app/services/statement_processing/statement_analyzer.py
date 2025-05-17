@@ -1,6 +1,5 @@
-import hashlib
 import logging
-from uuid import UUID
+from app.services.common import compute_hash, process_dataframe
 
 from app.domain.dto.statement_processing import AnalysisResultDTO
 from app.domain.dto.uploaded_file import FileAnalysisMetadataDTO, UploadedFileDTO
@@ -27,7 +26,7 @@ class StatementAnalyzerService:
         self.file_analysis_metadata_repo = file_analysis_metadata_repo
 
     def analyze(self, filename: str, file_content: bytes) -> AnalysisResultDTO:
-        file_hash = self._compute_hash(filename, file_content)
+        file_hash = compute_hash(filename, file_content)
         existing_metadata = self.file_analysis_metadata_repo.find_by_hash(file_hash)
 
         if existing_metadata:
@@ -50,7 +49,9 @@ class StatementAnalyzerService:
         saved_file = self.uploaded_file_repo.save(filename, file_content, file_type)
         uploaded_file_id = saved_file.id
 
-        normalized_df = self.transaction_normalizer.normalize(raw_df, column_mapping)
+        processed_df = process_dataframe(raw_df, header_row_index, data_start_row_index)
+
+        normalized_df = self.transaction_normalizer.normalize(processed_df, column_mapping)
 
         sample_data = self._generate_sample_data(normalized_df)
 
@@ -62,12 +63,6 @@ class StatementAnalyzerService:
             data_start_row_index=data_start_row_index,
             sample_data=sample_data,
         )
-
-    def _compute_hash(self, filename: str, file_content: bytes) -> str:
-        hasher = hashlib.sha256()
-        hasher.update(filename.encode())
-        hasher.update(file_content)
-        return hasher.hexdigest()
 
     def _generate_sample_data(self, normalized_df):
         sample_rows = min(10, len(normalized_df))

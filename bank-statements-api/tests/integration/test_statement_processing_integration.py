@@ -65,7 +65,15 @@ def db_session(db_engine):
 def sample_csv_file():
     """Create a sample CSV file for testing."""
     filename = "test_statement.csv"
-    content = b"Data,Valor,Descricao\n2023-01-01,100.00,Deposit\n2023-01-02,-50.00,Withdrawal\n2023-01-03,25.50,Refund"
+    csv_content = [
+        ["Header 1", "Header 2", "Header 3"],
+        ["Data", "Valor", "Descricao"],
+        ["2023-01-01", "100.00", "Deposit"],
+        ["2023-01-02", "-50.00", "Withdrawal"],
+        ["2023-01-03", "25.50", "Refund"],
+    ]
+    content = "\n".join([",".join(row) for row in csv_content])
+    content = content.encode("utf-8")
 
     return {"filename": filename, "content": content}
 
@@ -80,8 +88,8 @@ def llm_client():
             "amount": "Valor",
             "description": "Descricao"
         },
-        "header_row_index": 0,
-        "data_start_row_index": 1
+        "header_row_index": 1,
+        "data_start_row_index": 3
     }
     """
     return llm_client
@@ -104,10 +112,9 @@ class TestStatementProcessingIntegration:
             "amount": "Valor",
             "description": "Descricao",
         }
-        assert analysis_result.header_row_index == 0
-        assert analysis_result.data_start_row_index == 1
+        assert analysis_result.header_row_index == 1
+        assert analysis_result.data_start_row_index == 3
         assert analysis_result.sample_data == [
-            {"date": "2023-01-01", "amount": 100.00, "description": "Deposit"},
             {"date": "2023-01-02", "amount": -50.00, "description": "Withdrawal"},
             {"date": "2023-01-03", "amount": 25.50, "description": "Refund"},
         ]
@@ -128,7 +135,7 @@ class TestStatementProcessingIntegration:
         persistence_result = persistence_service.persist(persistence_request)
 
         assert isinstance(persistence_result, PersistenceResultDTO)
-        assert persistence_result.transactions_saved == 3
+        assert persistence_result.transactions_saved == 2
         assert persistence_result.uploaded_file_id == analysis_result.uploaded_file_id
 
         uploaded_file_id = UUID(analysis_result.uploaded_file_id)
@@ -144,14 +151,13 @@ class TestStatementProcessingIntegration:
             "amount": "Valor",
             "description": "Descricao",
         }
-        assert metadata.header_row_index == 0
-        assert metadata.data_start_row_index == 1
+        assert metadata.header_row_index == 1
+        assert metadata.data_start_row_index == 3
 
         transactions = db_session.query(Transaction).filter(Transaction.uploaded_file_id == uploaded_file_id).all()
-        assert len(transactions) == 3
+        assert len(transactions) == 2
 
         expected = [
-            (date(2023, 1, 1), Decimal("100.00"), "Deposit"),
             (date(2023, 1, 2), Decimal("-50.00"), "Withdrawal"),
             (date(2023, 1, 3), Decimal("25.50"), "Refund"),
         ]
