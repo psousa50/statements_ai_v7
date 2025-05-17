@@ -8,11 +8,13 @@ class UploadedFileDTO:
         self,
         id: str,
         filename: str,
+        file_type: str,
         created_at: datetime,
         content: Optional[bytes] = None,
     ):
         self.id = id
         self.filename = filename
+        self.file_type = file_type
         self.created_at = created_at
         self.content = content
 
@@ -21,6 +23,7 @@ class UploadedFileDTO:
         return cls(
             id=str(entity.id),
             filename=entity.filename,
+            file_type=entity.file_type,
             created_at=entity.created_at,
             content=entity.content,
         )

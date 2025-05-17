@@ -14,6 +14,7 @@ class UploadedFile(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     filename = Column(Text, nullable=False)
     content = Column(LargeBinary, nullable=False)
+    file_type = Column(String, nullable=False)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
 
 

@@ -24,10 +24,14 @@ class SchemaDetector:
 
     def detect_schema(self, df: pd.DataFrame) -> ConversionModel:
         prompt = self.get_prompt(df)
+        logger_content.debug(
+            prompt,
+            extra={"prefix": "schema_detector.prompt", "ext": "json"},
+        )
         response = self.llm_client.generate(prompt)
         logger_content.debug(
             response,
-            extra={"prefix": "column_normalizer.response", "ext": "json"},
+            extra={"prefix": "schema_detector.response", "ext": "json"},
         )
         json_result = sanitize_json(response)
         logger_content.debug(

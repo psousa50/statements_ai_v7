@@ -22,7 +22,8 @@ class TestUploadedFileRepository:
         filename = "test.csv"
         content = b"test content"
 
-        result = repo.save(filename, content)
+        file_type = "CSV"
+        result = repo.save(filename, content, file_type)
 
         assert isinstance(result, UploadedFileDTO)
         assert result.id is not None
@@ -39,6 +40,7 @@ class TestUploadedFileRepository:
             id=file_id,
             filename="test.csv",
             content=b"test content",
+            file_type="CSV",
             created_at=datetime.now(timezone.utc),
         )
         session.query.return_value.filter.return_value.first.return_value = mock_file

@@ -18,20 +18,26 @@ from app.services.statement_processing.statement_parser import StatementParser
 from app.services.statement_processing.statement_persistence import StatementPersistenceService
 from app.services.statement_processing.transaction_normalizer import TransactionNormalizer
 from app.services.transaction import TransactionService
+from app.ai.llm_client import LLMClient
 
 
 class ExternalDependencies:
-    def __init__(self):
-        self._db = SessionLocal()
-
-    @property
-    def db(self) -> Session:
-        return self._db
+    def __init__(self, db: Session = SessionLocal(), llm_client: LLMClient = GeminiAI()):
+        self.db = db
+        self.llm_client = llm_client
 
     def cleanup(self):
-        if self._db is not None:
-            self._db.close()
-            self._db = None
+        if self.db is not None:
+            self.db.close()
+            self.db = None
+
+
+class InternalDependencies:
+    transaction_service: TransactionService
+    category_service: CategoryService
+    source_service: SourceService
+    statement_analyzer_service: StatementAnalyzerService
+    statement_persistence_service: StatementPersistenceService
 
 
 class InternalDependencies:
@@ -63,8 +69,7 @@ def build_internal_dependencies(external: ExternalDependencies) -> InternalDepen
 
     file_type_detector = StatementFileTypeDetector()
     statement_parser = StatementParser()
-    llm_client = GeminiAI()
-    schema_detector = SchemaDetector(llm_client)
+    schema_detector = SchemaDetector(external.llm_client)
     transaction_normalizer = TransactionNormalizer()
     category_service = CategoryService(category_repo)
     source_service = SourceService(source_repo)

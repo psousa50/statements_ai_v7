@@ -1,9 +1,11 @@
 from datetime import date, datetime
 from decimal import Decimal
-from typing import Any, Dict, List, Optional, Sequence, Union
+from typing import Any, Dict, List, Optional, Sequence
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
+
+from app.domain.dto.statement_processing import AnalysisResultDTO
 
 from app.domain.models.transaction import CategorizationStatus
 
@@ -112,19 +114,16 @@ class StatementAnalysisResponse(BaseModel):
     header_row_index: int
     data_start_row_index: int
     sample_data: Optional[List[Dict[str, Any]]] = None
-    file_hash: str
-    
+
     model_config = ConfigDict(from_attributes=True)
 
 
 class StatementUploadRequest(BaseModel):
+    source_id: str
     uploaded_file_id: str
-    file_type: str
-    column_mapping: Dict[str, str]
+    column_mapping: dict
     header_row_index: int
     data_start_row_index: int
-    file_hash: str
-    source: Optional[str] = None
 
 
 class StatementUploadResponse(BaseModel):
@@ -132,6 +131,5 @@ class StatementUploadResponse(BaseModel):
     transactions_saved: int
     success: bool
     message: str
-    sample_data: Optional[List[Dict[str, Any]]] = None
-    
+
     model_config = ConfigDict(from_attributes=True)

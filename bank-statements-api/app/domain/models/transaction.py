@@ -9,6 +9,7 @@ from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
 from app.core.database import Base
+from app.domain.models.category import Category
 
 
 class CategorizationStatus(str, Enum):

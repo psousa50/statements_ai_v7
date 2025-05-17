@@ -11,16 +11,30 @@ class AnalysisResultDTO:
         column_mapping: dict,
         header_row_index: int,
         data_start_row_index: int,
-        file_hash: str,
-        sample_data: Optional[List[dict]] = None,
+        sample_data: List[dict],
     ):
         self.uploaded_file_id = uploaded_file_id
         self.file_type = file_type
         self.column_mapping = column_mapping
         self.header_row_index = header_row_index
         self.data_start_row_index = data_start_row_index
-        self.file_hash = file_hash
         self.sample_data = sample_data
+
+
+class PersistenceRequestDTO:
+    def __init__(
+        self,
+        source_id: UUID,
+        uploaded_file_id: str,
+        column_mapping: dict,
+        header_row_index: int,
+        data_start_row_index: int,
+    ):
+        self.source_id = source_id
+        self.uploaded_file_id = uploaded_file_id
+        self.column_mapping = column_mapping
+        self.header_row_index = header_row_index
+        self.data_start_row_index = data_start_row_index
 
 
 class PersistenceResultDTO:

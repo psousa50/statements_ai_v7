@@ -10,19 +10,14 @@ class SQLAlchemyUploadedFileRepository(UploadedFileRepository):
     def __init__(self, session):
         self.session = session
 
-    def save(self, filename: str, content: bytes) -> UploadedFileDTO:
-        uploaded_file = UploadedFile(filename=filename, content=content)
+    def save(self, filename: str, content: bytes, file_type: str) -> UploadedFileDTO:
+        uploaded_file = UploadedFile(filename=filename, content=content, file_type=file_type)
 
         self.session.add(uploaded_file)
         self.session.commit()
         self.session.refresh(uploaded_file)
 
-        return UploadedFileDTO(
-            id=str(uploaded_file.id),
-            filename=uploaded_file.filename,
-            created_at=uploaded_file.created_at,
-            content=None
-        )
+        return UploadedFileDTO(id=str(uploaded_file.id), filename=uploaded_file.filename, file_type=uploaded_file.file_type, created_at=uploaded_file.created_at, content=None)
 
     def find_by_id(self, file_id: UUID) -> Optional[UploadedFileDTO]:
         uploaded_file = self.session.query(UploadedFile).filter(UploadedFile.id == file_id).first()
@@ -30,12 +25,7 @@ class SQLAlchemyUploadedFileRepository(UploadedFileRepository):
         if not uploaded_file:
             return None
 
-        return UploadedFileDTO(
-            id=str(uploaded_file.id),
-            filename=uploaded_file.filename,
-            content=uploaded_file.content,
-            created_at=uploaded_file.created_at
-        )
+        return UploadedFileDTO(id=str(uploaded_file.id), filename=uploaded_file.filename, file_type=uploaded_file.file_type, content=uploaded_file.content, created_at=uploaded_file.created_at)
 
 
 class SQLAlchemyFileAnalysisMetadataRepository(FileAnalysisMetadataRepository):
@@ -72,7 +62,7 @@ class SQLAlchemyFileAnalysisMetadataRepository(FileAnalysisMetadataRepository):
             column_mapping=metadata.column_mapping,
             header_row_index=metadata.header_row_index,
             data_start_row_index=metadata.data_start_row_index,
-            created_at=metadata.created_at
+            created_at=metadata.created_at,
         )
 
     def find_by_hash(self, file_hash: str) -> Optional[FileAnalysisMetadataDTO]:
@@ -89,5 +79,5 @@ class SQLAlchemyFileAnalysisMetadataRepository(FileAnalysisMetadataRepository):
             column_mapping=metadata.column_mapping,
             header_row_index=metadata.header_row_index,
             data_start_row_index=metadata.data_start_row_index,
-            created_at=metadata.created_at
+            created_at=metadata.created_at,
         )
