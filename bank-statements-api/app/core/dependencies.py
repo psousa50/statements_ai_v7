@@ -3,6 +3,7 @@ from typing import Generator
 
 from sqlalchemy.orm import Session
 
+from app.adapters.categorizers.simple_transaction_categorizer import SimpleTransactionCategorizer
 from app.adapters.repositories.category import SQLAlchemyCategoryRepository
 from app.adapters.repositories.source import SQLAlchemySourceRepository
 from app.adapters.repositories.transaction import SQLAlchemyTransactionRepository
@@ -19,6 +20,7 @@ from app.services.statement_processing.statement_parser import StatementParser
 from app.services.statement_processing.statement_persistence import StatementPersistenceService
 from app.services.statement_processing.transaction_normalizer import TransactionNormalizer
 from app.services.transaction import TransactionService
+from app.services.transaction_categorization import TransactionCategorizationService
 
 
 class ExternalDependencies:
@@ -40,12 +42,14 @@ class InternalDependencies:
         source_service: SourceService,
         statement_analyzer_service: StatementAnalyzerService,
         statement_persistence_service: StatementPersistenceService,
+        transaction_categorization_service: TransactionCategorizationService,
     ):
         self.transaction_service = transaction_service
         self.category_service = category_service
         self.source_service = source_service
         self.statement_analyzer_service = statement_analyzer_service
         self.statement_persistence_service = statement_persistence_service
+        self.transaction_categorization_service = transaction_categorization_service
 
 
 def build_external_dependencies() -> ExternalDependencies:
@@ -66,6 +70,13 @@ def build_internal_dependencies(external: ExternalDependencies) -> InternalDepen
     category_service = CategoryService(category_repo)
     source_service = SourceService(source_repo)
     transaction_service = TransactionService(transaction_repo)
+    
+    # Transaction categorization components
+    transaction_categorizer = SimpleTransactionCategorizer(category_repo)
+    transaction_categorization_service = TransactionCategorizationService(
+        transaction_repository=transaction_repo,
+        transaction_categorizer=transaction_categorizer,
+    )
 
     statement_analyzer_service = StatementAnalyzerService(
         file_type_detector=file_type_detector,
@@ -90,6 +101,7 @@ def build_internal_dependencies(external: ExternalDependencies) -> InternalDepen
         source_service=source_service,
         statement_analyzer_service=statement_analyzer_service,
         statement_persistence_service=statement_persistence_service,
+        transaction_categorization_service=transaction_categorization_service,
     )
 
 

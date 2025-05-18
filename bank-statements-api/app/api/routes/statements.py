@@ -8,12 +8,12 @@ from app.api.schemas import StatementAnalysisResponse, StatementUploadRequest, S
 from app.core.dependencies import InternalDependencies
 from app.domain.dto.statement_processing import PersistenceRequestDTO
 from app.logging.utils import log_exception
+from app.core.config import settings
 
 logger = logging.getLogger("app")
 
 
 def register_statement_routes(app: FastAPI, provide_dependencies: Callable[[], Iterator[InternalDependencies]]):
-    """Register statement routes with the FastAPI app."""
     router = APIRouter(prefix="/statements", tags=["statements"])
 
     @router.post("/analyze", response_model=StatementAnalysisResponse)
@@ -21,7 +21,6 @@ def register_statement_routes(app: FastAPI, provide_dependencies: Callable[[], I
         file: UploadFile = File(...),
         internal: InternalDependencies = Depends(provide_dependencies),
     ):
-        """Analyze a statement file and return column mappings and sample data"""
         try:
             file_content = await file.read()
             result = internal.statement_analyzer_service.analyze(
@@ -40,7 +39,6 @@ def register_statement_routes(app: FastAPI, provide_dependencies: Callable[[], I
         upload_data: StatementUploadRequest,
         internal: InternalDependencies = Depends(provide_dependencies),
     ):
-        """Process and persist the analyzed statement data"""
         try:
             persistence_request = PersistenceRequestDTO(
                 source_id=UUID(upload_data.source_id),
@@ -63,8 +61,5 @@ def register_statement_routes(app: FastAPI, provide_dependencies: Callable[[], I
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"Error processing statement: {str(e)}",
             )
-
-    # Include the router in the app with the API prefix from settings
-    from app.core.config import settings
 
     app.include_router(router, prefix=settings.API_V1_STR)

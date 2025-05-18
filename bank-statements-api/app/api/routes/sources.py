@@ -1,5 +1,6 @@
 from typing import Callable, Iterator
 from uuid import UUID
+from app.core.config import settings
 
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, status
 
@@ -136,8 +137,5 @@ def register_source_routes(app: FastAPI, provide_dependencies: Callable[[], Iter
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"Error deleting source: {str(e)}",
             )
-
-    # Include the router in the app with the API prefix from settings
-    from app.core.config import settings
 
     app.include_router(router, prefix=settings.API_V1_STR)
