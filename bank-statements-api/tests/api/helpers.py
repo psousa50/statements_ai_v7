@@ -1,16 +1,17 @@
 from typing import Callable, Iterator
 from unittest.mock import MagicMock
+
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from app.app import register_app_routes
 from app.core.dependencies import InternalDependencies
-from app.services.transaction_categorization import TransactionCategorizationService
-from app.services.transaction import TransactionService
 from app.services.category import CategoryService
 from app.services.source import SourceService
 from app.services.statement_processing.statement_analyzer import StatementAnalyzerService
 from app.services.statement_processing.statement_persistence import StatementPersistenceService
+from app.services.transaction import TransactionService
+from app.services.transaction_categorization import TransactionCategorizationService
 
 
 def mocked_dependencies(

@@ -1,10 +1,10 @@
 from typing import Callable, Iterator
 from uuid import UUID
-from app.core.config import settings
 
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, status
 
 from app.api.schemas import CategoryCreate, CategoryListResponse, CategoryResponse, CategoryUpdate
+from app.core.config import settings
 from app.core.dependencies import InternalDependencies
 
 

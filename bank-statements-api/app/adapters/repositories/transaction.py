@@ -5,7 +5,7 @@ from uuid import UUID
 from sqlalchemy.orm import Session
 
 from app.domain.dto.statement_processing import TransactionDTO
-from app.domain.models.transaction import Transaction, CategorizationStatus
+from app.domain.models.transaction import CategorizationStatus, Transaction
 from app.ports.repositories.transaction import TransactionRepository
 
 
@@ -70,7 +70,7 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
 
         self.db_session.commit()
         return saved_count
-        
+
     def get_oldest_uncategorized(self, limit: int = 10) -> List[Transaction]:
         return (
             self.db_session.query(Transaction)

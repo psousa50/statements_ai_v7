@@ -1,7 +1,7 @@
 import logging
 
 from app.domain.dto.statement_processing import AnalysisResultDTO
-from app.services.common import compute_hash, process_dataframe
+from app.services.common import compute_hash
 
 logger_content = logging.getLogger("app.llm.big")
 logger = logging.getLogger("app")
@@ -47,10 +47,6 @@ class StatementAnalyzerService:
 
         saved_file = self.uploaded_file_repo.save(filename, file_content, file_type)
         uploaded_file_id = saved_file.id
-
-        processed_df = process_dataframe(raw_df, header_row_index, data_start_row_index)
-
-        normalized_df = self.transaction_normalizer.normalize(processed_df, column_mapping)
 
         sample_data = self._generate_sample_data(raw_df)
 

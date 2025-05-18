@@ -1,10 +1,10 @@
 from typing import Callable, Iterator, Optional
 from uuid import UUID
-from app.core.config import settings
 
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, Query, status
 
 from app.api.schemas import CategorizationResponse, TransactionCreate, TransactionListResponse, TransactionResponse, TransactionUpdate
+from app.core.config import settings
 from app.core.dependencies import InternalDependencies
 from app.domain.models.transaction import CategorizationStatus
 

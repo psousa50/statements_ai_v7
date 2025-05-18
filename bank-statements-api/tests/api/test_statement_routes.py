@@ -3,9 +3,8 @@ from uuid import uuid4
 
 from fastapi.encoders import jsonable_encoder
 
-from app.api.schemas import StatementUploadRequest, StatementUploadResponse, StatementAnalysisResponse
+from app.api.schemas import StatementAnalysisResponse, StatementUploadRequest, StatementUploadResponse
 from app.domain.dto.statement_processing import AnalysisResultDTO, PersistenceRequestDTO, PersistenceResultDTO
-
 from tests.api.helpers import build_client, mocked_dependencies
 
 

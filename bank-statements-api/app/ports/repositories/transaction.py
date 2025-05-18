@@ -54,10 +54,10 @@ class TransactionRepository(ABC):
     def get_oldest_uncategorized(self, limit: int = 10) -> List[Transaction]:
         """
         Get the oldest uncategorized transactions
-        
+
         Args:
             limit: Maximum number of transactions to return
-            
+
         Returns:
             List of uncategorized transactions, ordered by date (oldest first)
         """

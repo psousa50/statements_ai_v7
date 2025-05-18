@@ -5,10 +5,10 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, FastAPI, File, HTTPException, UploadFile, status
 
 from app.api.schemas import StatementAnalysisResponse, StatementUploadRequest, StatementUploadResponse
+from app.core.config import settings
 from app.core.dependencies import InternalDependencies
 from app.domain.dto.statement_processing import PersistenceRequestDTO
 from app.logging.utils import log_exception
-from app.core.config import settings
 
 logger = logging.getLogger("app")
 

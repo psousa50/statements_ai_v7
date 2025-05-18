@@ -1,11 +1,12 @@
 from typing import Callable, Iterator
+
 from fastapi import FastAPI
 
 from app.api.routes.categories import register_category_routes
 from app.api.routes.sources import register_source_routes
 from app.api.routes.statements import register_statement_routes
 from app.api.routes.transactions import register_transaction_routes
-from app.core.dependencies import provide_dependencies, InternalDependencies
+from app.core.dependencies import InternalDependencies
 
 
 def register_root_routes(app: FastAPI):

@@ -2,7 +2,6 @@ import uuid
 from typing import Any
 from unittest.mock import MagicMock
 
-
 from app.domain.models.transaction import CategorizationStatus
 from app.ports.categorizers.transaction_categorizer import TransactionCategorizer
 from app.ports.repositories.transaction import TransactionRepository
@@ -34,14 +33,14 @@ class TestTransactionCategorizationService:
     def test_process_uncategorized_transactions_success(self) -> None:
         # Setup
         category_id = uuid.uuid4()
-        
+
         # Create mock transactions instead of real instances
         transaction1: Any = MagicMock()
         transaction1.categorization_status = CategorizationStatus.UNCATEGORIZED
-        
+
         transaction2: Any = MagicMock()
         transaction2.categorization_status = CategorizationStatus.UNCATEGORIZED
-        
+
         self.transaction_repository.get_oldest_uncategorized.return_value = [transaction1, transaction2]
         self.transaction_categorizer.categorize.return_value = category_id
 
@@ -53,7 +52,7 @@ class TestTransactionCategorizationService:
         self.transaction_repository.get_oldest_uncategorized.assert_called_once_with(limit=10)
         assert self.transaction_categorizer.categorize.call_count == 2
         assert self.transaction_repository.update.call_count == 2
-        
+
         # Check that transactions were updated correctly
         assert transaction1.category_id == category_id
         assert transaction1.categorization_status == CategorizationStatus.CATEGORIZED
@@ -63,22 +62,19 @@ class TestTransactionCategorizationService:
     def test_process_uncategorized_transactions_with_error(self) -> None:
         # Setup
         category_id = uuid.uuid4()
-        
+
         # Create mock transactions instead of real instances
         transaction1: Any = MagicMock()
         transaction1.categorization_status = CategorizationStatus.UNCATEGORIZED
-        
+
         transaction2: Any = MagicMock()
         transaction2.categorization_status = CategorizationStatus.UNCATEGORIZED
         transaction2.category_id = None
-        
+
         self.transaction_repository.get_oldest_uncategorized.return_value = [transaction1, transaction2]
-        
+
         # First call succeeds, second call raises an exception
-        self.transaction_categorizer.categorize.side_effect = [
-            category_id,
-            ValueError("Categorization error")
-        ]
+        self.transaction_categorizer.categorize.side_effect = [category_id, ValueError("Categorization error")]
 
         # Execute
         result = self.service.process_uncategorized_transactions(batch_size=10)
@@ -88,7 +84,7 @@ class TestTransactionCategorizationService:
         self.transaction_repository.get_oldest_uncategorized.assert_called_once_with(limit=10)
         assert self.transaction_categorizer.categorize.call_count == 2
         assert self.transaction_repository.update.call_count == 2
-        
+
         # Check that transactions were updated correctly
         assert transaction1.category_id == category_id
         assert transaction1.categorization_status == CategorizationStatus.CATEGORIZED

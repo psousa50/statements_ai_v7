@@ -1,8 +1,8 @@
 from unittest.mock import MagicMock
 
-from tests.api.helpers import build_client, mocked_dependencies
 from app.api.schemas import CategorizationResponse
 from app.services.transaction_categorization import TransactionCategorizationService
+from tests.api.helpers import build_client, mocked_dependencies
 
 
 class TestTransactionCategorizationRoutes:
@@ -16,7 +16,7 @@ class TestTransactionCategorizationRoutes:
         response = CategorizationResponse.model_validate(response.json())
 
         assert response.categorized_count == 5
-        assert response.success == True
+        assert response.success
         assert response.message == "Successfully categorized 5 transactions"
         transaction_categorization_service.process_uncategorized_transactions.assert_called_once_with(batch_size=10)
 
@@ -30,6 +30,6 @@ class TestTransactionCategorizationRoutes:
         response = CategorizationResponse.model_validate(response.json())
 
         assert response.categorized_count == 0
-        assert response.success == False
+        assert not response.success
         assert response.message == "Error categorizing transactions: Test error"
         transaction_categorization_service.process_uncategorized_transactions.assert_called_once_with(batch_size=10)
