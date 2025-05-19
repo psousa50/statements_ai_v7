@@ -71,7 +71,6 @@ def build_internal_dependencies(external: ExternalDependencies) -> InternalDepen
     source_service = SourceService(source_repo)
     transaction_service = TransactionService(transaction_repo)
 
-    # Transaction categorization components
     transaction_categorizer = SimpleTransactionCategorizer(category_repo)
     transaction_categorization_service = TransactionCategorizationService(
         transaction_repository=transaction_repo,

@@ -1,14 +1,16 @@
 # Bank Statement Analyzer
 
-A web application for uploading, parsing, and analyzing bank statements.
+A web application for uploading, parsing, categorizing, and analyzing bank statements.
 
 ## Project Overview
 
-This project is a steel thread implementation of the Bank Statement Analyzer, demonstrating the core functionality of the system from end to end. It includes:
+This project is a comprehensive implementation of the Bank Statement Analyzer, providing end-to-end functionality for processing bank statements. It includes:
 
-1. A PostgreSQL database with a table for transactions
-2. A FastAPI backend API to add and list transactions
-3. A React frontend to display transactions
+1. A PostgreSQL database with tables for transactions, categories, uploaded files, and file analysis metadata
+2. A FastAPI backend API with statement processing architecture and transaction categorization
+3. A React frontend with transaction management and file upload UI
+4. End-to-end testing with Playwright
+5. CI/CD pipeline with GitHub Actions
 
 ## Architecture
 
@@ -26,10 +28,12 @@ The project follows a service-oriented architecture with a clear separation of c
 
 The backend follows Hexagonal Architecture (Ports and Adapters) pattern:
 
-- Domain models define the core entities
+- Domain models define the core entities (transactions, categories, uploaded files, etc.)
 - Repository ports define interfaces for data access
 - Repository adapters implement these interfaces
 - Application services contain business logic
+- Statement processing architecture for parsing and normalizing bank statements
+- Transaction categorization system with hierarchical categories
 - API endpoints expose the functionality
 
 ### Frontend
@@ -39,6 +43,9 @@ The frontend follows a modular architecture:
 - API client layer for backend communication
 - React hooks for business logic
 - Components for UI presentation
+- File upload UI with drag-and-drop functionality
+- Column mapping customization for uploaded files
+- Transaction table with categorization
 - Clear separation of concerns
 
 ## Getting Started
@@ -92,29 +99,78 @@ The frontend follows a modular architecture:
 ```
 bank-statements-api/       # Backend API
 ├── app/
+│   ├── ai/                # LLM integration for schema detection
 │   ├── api/               # API endpoints
 │   ├── core/              # Core configuration
 │   ├── domain/            # Domain models
+│   │   └── models/        # Transaction, Category, UploadedFile, etc.
 │   ├── ports/             # Repository interfaces
+│   │   ├── repositories/  # Data access interfaces
+│   │   └── categorizers/  # Categorization interfaces
 │   ├── adapters/          # Repository implementations
 │   └── services/          # Application services
-└── ...
+│       ├── transaction.py # Transaction service
+│       ├── category.py    # Category service
+│       ├── transaction_categorization.py # Categorization service
+│       └── source.py      # Source service
+├── migrations/            # Database migrations
+└── tests/                 # Unit and integration tests
 
 bank-statements-web/       # Frontend application
 ├── src/
 │   ├── components/        # UI components
+│   │   ├── TransactionForm.tsx  # Transaction form
+│   │   ├── TransactionTable.tsx # Transaction table
+│   │   └── upload/        # File upload components
+│   │       ├── FileUploadZone.tsx    # Drag-and-drop upload
+│   │       ├── ColumnMappingTable.tsx # Column mapping
+│   │       └── SourceSelector.tsx    # Source selection
 │   ├── pages/             # Page components
+│   │   ├── Transactions.tsx # Transactions page
+│   │   └── Upload.tsx     # Upload page
 │   ├── services/          # API clients and hooks
+│   │   ├── api/           # API clients
+│   │   └── hooks/         # React hooks
 │   └── types/             # TypeScript types
-└── ...
+└── tests/                 # Unit and integration tests
+
+e2e/                      # End-to-end tests
+└── bank-statements-web/   # Playwright tests
 ```
+
+## Key Features
+
+### Statement Processing Architecture
+- File type detection (CSV, XLSX)
+- Statement parsing with pandas
+- Schema detection using LLM
+- Transaction normalization
+- Deduplication via file hashing
+
+### Transaction Categorization
+- Hierarchical category system (parent-child relationships)
+- Batch processing of uncategorized transactions
+- API endpoint for triggering categorization
+
+### File Upload UI
+- Drag-and-drop file upload
+- Column mapping customization
+- Source selection
+- Validation and analysis feedback
+
+### Database Structure
+- Transactions table with categorization
+- Categories table with hierarchical structure
+- UploadedFile table for raw file content
+- FileAnalysisMetadata table for analysis results
 
 ## Future Enhancements
 
-This steel thread implementation can be extended with:
+Planned enhancements include:
 
-- File upload and parsing functionality
-- Transaction categorization
-- Data visualization
+- Data visualization (charts and reports)
 - User authentication
 - Export functionality
+- Automatic categorization using machine learning
+- Transaction search and filtering
+- Dashboard with financial insights

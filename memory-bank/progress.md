@@ -2,9 +2,32 @@
 
 ## Current Status
 
-The project is in active development. We have completed the implementation of the Statement Processing Architecture, which enables the system to process bank statement files (CSV, XLSX), detect their schema, normalize the data, and persist transactions to the database. This builds upon the previously completed steel thread implementation. We have also implemented the separation of file storage and file analysis metadata to improve the architecture.
+The project is in active development. We have completed the implementation of transaction categorization and file upload UI, building upon the previously implemented Statement Processing Architecture. The system now allows users to upload bank statement files through an intuitive UI, process them using the Statement Processing Architecture, and categorize transactions using a hierarchical category system. The separation of file storage and file analysis metadata has improved the system architecture and performance.
 
 ## Completed Tasks
+
+- 2025-05-19: Implemented transaction categorization system
+  - Created Category domain model with hierarchical structure (parent-child relationships)
+  - Implemented CategoryRepository interface and implementation
+  - Created CategoryService for managing categories (CRUD operations)
+  - Implemented TransactionCategorizer interface for categorizing transactions
+  - Created TransactionCategorizationService for batch processing of uncategorized transactions
+  - Added API endpoint for triggering batch categorization
+  - Added database migration for the categories table
+  - Created comprehensive tests for all categorization components
+  - Ensured adherence to project guidelines (no comments/docstrings, clear naming)
+
+- 2025-05-15: Implemented file upload UI in the frontend
+  - Created Upload page with multi-step workflow
+  - Implemented FileUploadZone component with drag-and-drop functionality
+  - Added ColumnMappingTable for customizing column mappings
+  - Created SourceSelector for selecting the bank/source of statements
+  - Added validation messages to guide users through the upload process
+  - Implemented AnalysisSummary to show file analysis results
+  - Created UploadFooter with finalize and cancel actions
+  - Added navigation to transactions page after successful upload
+  - Integrated with the backend Statement Processing Architecture
+  - Created comprehensive tests for all components
 
 - 2025-05-04: Implemented separation of UploadedFile and FileAnalysisMetadata tables
   - Created new domain models for UploadedFile (raw file content) and FileAnalysisMetadata (analysis data)
@@ -14,7 +37,7 @@ The project is in active development. We have completed the implementation of th
   - Added database migration for the new tables
   - Updated dependency injection configuration
   - Fixed all tests to work with the new architecture
-  - Updated datetime handling to use timezone-aware methods (datetime.now(timezone.utc)) instead of deprecated datetime.utcnow()
+  - Updated datetime handling to use timezone-aware methods (datetime.now(timezone.utc)) instead of deprecated datetime.utcnow())
   - Ensured all tests pass without warnings, confirming the implementation works as expected
 
 - 2025-05-04: Implemented Statement Processing Architecture
@@ -50,12 +73,12 @@ The project is in active development. We have completed the implementation of th
 
 ## Pending Tasks
 
-- Integrate the Statement Processing Architecture with API endpoints
-- Implement file upload UI in the frontend
-- Add transaction categorization
-- Implement data visualization
+- Implement data visualization (charts and reports)
 - Add user authentication
 - Add export functionality
+- Implement automatic categorization using machine learning
+- Add transaction search and filtering
+- Create dashboard with financial insights
 - Expand end-to-end testing coverage with additional Playwright tests
 - Configure GitHub secrets for CI/CD
 
@@ -64,6 +87,32 @@ The project is in active development. We have completed the implementation of th
 - No known issues at this time
 
 ## Changelog
+
+### 2025-05-19: Transaction Categorization System Implementation
+
+- Created Category domain model with hierarchical structure (parent-child relationships)
+- Implemented CategoryRepository interface and implementation
+- Created CategoryService for managing categories (CRUD operations)
+- Implemented TransactionCategorizer interface for categorizing transactions
+- Created TransactionCategorizationService for batch processing of uncategorized transactions
+- Added API endpoint for triggering batch categorization
+- Added database migration for the categories table
+- Created comprehensive tests for all categorization components
+- Updated memory bank to reflect the implementation of the transaction categorization system
+
+### 2025-05-15: File Upload UI Implementation
+
+- Created Upload page with multi-step workflow
+- Implemented FileUploadZone component with drag-and-drop functionality
+- Added ColumnMappingTable for customizing column mappings
+- Created SourceSelector for selecting the bank/source of statements
+- Added validation messages to guide users through the upload process
+- Implemented AnalysisSummary to show file analysis results
+- Created UploadFooter with finalize and cancel actions
+- Added navigation to transactions page after successful upload
+- Integrated with the backend Statement Processing Architecture
+- Created comprehensive tests for all components
+- Updated memory bank to reflect the implementation of the file upload UI
 
 ### 2025-05-04: Statement Processing Architecture Implementation
 
