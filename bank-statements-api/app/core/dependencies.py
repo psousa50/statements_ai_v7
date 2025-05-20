@@ -14,7 +14,7 @@ from app.core.database import SessionLocal
 from app.services.category import CategoryService
 from app.services.source import SourceService
 from app.services.statement_processing.file_type_detector import StatementFileTypeDetector
-from app.services.statement_processing.schema_detector import SchemaDetector
+from app.services.schema_detection.llm_schema_detector import LLMSchemaDetector
 from app.services.statement_processing.statement_analyzer import StatementAnalyzerService
 from app.services.statement_processing.statement_parser import StatementParser
 from app.services.statement_processing.statement_persistence import StatementPersistenceService
@@ -65,7 +65,7 @@ def build_internal_dependencies(external: ExternalDependencies) -> InternalDepen
 
     file_type_detector = StatementFileTypeDetector()
     statement_parser = StatementParser()
-    schema_detector = SchemaDetector(external.llm_client)
+    schema_detector = LLMSchemaDetector(external.llm_client)
     transaction_normalizer = TransactionNormalizer()
     category_service = CategoryService(category_repo)
     source_service = SourceService(source_repo)

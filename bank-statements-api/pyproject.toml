@@ -22,6 +22,7 @@ python-multipart = "^0.0.20"
 ruff = "^0.11.8"
 sqlalchemy = "^2.0.9"
 uvicorn = "^0.21.1"
+openpyxl = "^3.1.5"
 
 
 [tool.poetry.group.dev.dependencies]

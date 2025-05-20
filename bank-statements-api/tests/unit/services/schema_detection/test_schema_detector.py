@@ -1,7 +1,7 @@
 import pandas as pd
 import pytest
 
-from app.services.statement_processing.schema_detector import LLMClient, SchemaDetector
+from app.services.schema_detection.llm_schema_detector import LLMClient, LLMSchemaDetector
 
 
 class MockLLMClient(LLMClient):
@@ -32,7 +32,7 @@ class TestSchemaDetector:
         }
         """
         llm_client = MockLLMClient(llm_response)
-        detector = SchemaDetector(llm_client)
+        detector = LLMSchemaDetector(llm_client)
 
         df = pd.DataFrame(
             {
@@ -68,7 +68,7 @@ class TestSchemaDetector:
         ```
         """
         llm_client = MockLLMClient(llm_response)
-        detector = SchemaDetector(llm_client)
+        detector = LLMSchemaDetector(llm_client)
 
         df = pd.DataFrame(
             {
@@ -91,7 +91,7 @@ class TestSchemaDetector:
     def test_invalid_llm_response(self):
         llm_response = "This is not valid JSON"
         llm_client = MockLLMClient(llm_response)
-        detector = SchemaDetector(llm_client)
+        detector = LLMSchemaDetector(llm_client)
 
         df = pd.DataFrame(
             {

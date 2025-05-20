@@ -1,24 +1,15 @@
 import json
 import logging
-from dataclasses import dataclass
-from typing import Dict
 
 import pandas as pd
 
 from app.ai.llm_client import LLMClient
 from app.common.json_utils import sanitize_json
+from app.services.schema_detection.schema_detector import SchemaDetectorProtocol, ConversionModel
 
 logger_content = logging.getLogger("app.llm.big")
 
-
-@dataclass
-class ConversionModel:
-    column_map: Dict[str, str]
-    header_row: int
-    start_row: int
-
-
-class SchemaDetector:
+class LLMSchemaDetector(SchemaDetectorProtocol):
     def __init__(self, llm_client: LLMClient):
         self.llm_client = llm_client
 

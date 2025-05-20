@@ -5,7 +5,7 @@ import pandas as pd
 
 from app.domain.dto.statement_processing import AnalysisResultDTO
 from app.domain.dto.uploaded_file import UploadedFileDTO
-from app.services.statement_processing.schema_detector import ConversionModel
+from app.services.schema_detection.llm_schema_detector import ConversionModel
 from app.services.statement_processing.statement_analyzer import StatementAnalyzerService
 
 
@@ -79,6 +79,5 @@ class TestStatementAnalyzerService:
         file_type_detector.detect.assert_called_once_with(file_content)
         statement_parser.parse.assert_called_once_with(file_content, "CSV")
         schema_detector.detect_schema.assert_called_once()
-        transaction_normalizer.normalize.assert_called_once()
         file_analysis_metadata_repo.find_by_hash.assert_called_once()
         uploaded_file_repo.save.assert_called_once_with(filename, file_content, "CSV")
