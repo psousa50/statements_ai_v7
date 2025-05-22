@@ -3,4 +3,4 @@
 
 ## Python
 
-- activate ".venv" virutal environment in the root of the monorepo before running any Python related command
+- activate ".venv" virtual environment in bank-statements-api folder before running any Python related command

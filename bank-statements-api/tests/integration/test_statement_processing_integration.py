@@ -49,24 +49,6 @@ def db_session(db_engine):
     transaction.rollback()
     connection.close()
 
-
-@pytest.fixture
-def sample_csv_file():
-    """Create a sample CSV file for testing."""
-    filename = "test_statement.csv"
-    csv_content = [
-        ["Header 1", "Header 2", "Header 3"],
-        ["Data", "Valor", "Descricao"],
-        ["2023-01-01", "100.00", "Deposit"],
-        ["2023-01-02", "-50.00", "Withdrawal"],
-        ["2023-01-03", "25.50", "Refund"],
-    ]
-    content = "\n".join([",".join(row) for row in csv_content])
-    content = content.encode("utf-8")
-
-    return {"filename": filename, "content": content}
-
-
 @pytest.fixture
 def llm_client():
     llm_client = MagicMock()
@@ -86,12 +68,23 @@ def llm_client():
 
 @pytest.mark.integration
 class TestStatementProcessingIntegration:
-    def test_analyze_and_persist_new_file(self, db_session, sample_csv_file, llm_client):
+    def test_analyze_and_persist_new_file(self, db_session, llm_client):
+        filename = "test_statement.csv"
+        csv_content = [
+            ["Header 1", "Header 2", "Header 3"],
+            ["Data", "Valor", "Descricao"],
+            ["2023-01-01", "100.00", "Deposit"],
+            ["2023-01-02", "-50.00", "Withdrawal"],
+        ["2023-01-03", "25.50", "Refund"],
+        ]
+        content = "\n".join([",".join(row) for row in csv_content])
+        content = content.encode("utf-8")
+
         dependencies = build_internal_dependencies(ExternalDependencies(db=db_session, llm_client=llm_client))
         analyzer_service = dependencies.statement_analyzer_service
         analysis_result = analyzer_service.analyze(
-            filename=sample_csv_file["filename"],
-            file_content=sample_csv_file["content"],
+            filename=filename,
+            file_content=content,
         )
 
         assert analysis_result.uploaded_file_id is not None
@@ -102,7 +95,7 @@ class TestStatementProcessingIntegration:
             "description": "Descricao",
         }
         assert analysis_result.header_row_index == 1
-        assert analysis_result.data_start_row_index == 3
+        assert analysis_result.data_start_row_index == 2
         assert analysis_result.sample_data == [
             ["Header 1", "Header 2", "Header 3"],
             ["Data", "Valor", "Descricao"],
@@ -127,13 +120,13 @@ class TestStatementProcessingIntegration:
         persistence_result = persistence_service.persist(persistence_request)
 
         assert isinstance(persistence_result, PersistenceResultDTO)
-        assert persistence_result.transactions_saved == 2
+        assert persistence_result.transactions_saved == 3
         assert persistence_result.uploaded_file_id == analysis_result.uploaded_file_id
 
         uploaded_file_id = UUID(analysis_result.uploaded_file_id)
         uploaded_file = db_session.query(UploadedFile).filter(UploadedFile.id == uploaded_file_id).first()
-        assert uploaded_file.filename == sample_csv_file["filename"]
-        assert uploaded_file.content == sample_csv_file["content"]
+        assert uploaded_file.filename == filename
+        assert uploaded_file.content == content
 
         metadata = db_session.query(FileAnalysisMetadata).filter(FileAnalysisMetadata.uploaded_file_id == uploaded_file_id).first()
         assert metadata.uploaded_file_id == uploaded_file_id
@@ -144,26 +137,37 @@ class TestStatementProcessingIntegration:
             "description": "Descricao",
         }
         assert metadata.header_row_index == 1
-        assert metadata.data_start_row_index == 3
+        assert metadata.data_start_row_index == 2
 
         transactions = db_session.query(Transaction).filter(Transaction.uploaded_file_id == uploaded_file_id).all()
-        assert len(transactions) == 2
+        assert len(transactions) == 3
 
         expected = [
             (date(2023, 1, 2), Decimal("-50.00"), "Withdrawal"),
             (date(2023, 1, 3), Decimal("25.50"), "Refund"),
+            (date(2023, 1, 1), Decimal("100.00"), "Deposit"),
         ]
 
         actual = [(t.date, t.amount, t.description) for t in transactions]
         assert Counter(actual) == Counter(expected)
 
-    def test_analyze_duplicate_file(self, db_session, sample_csv_file, llm_client):
+    def test_analyze_duplicate_file(self, db_session, llm_client):
+        filename = "test_statement.csv"
+        csv_content = [
+            ["Header 1", "Header 2", "Header 3"],
+            ["Data", "Valor", "Descricao"],
+            ["2023-01-01", "100.00", "Deposit"],
+            ["2023-01-02", "-50.00", "Withdrawal"],
+        ["2023-01-03", "25.50", "Refund"],
+        ]
+        content = "\n".join([",".join(row) for row in csv_content])
+        content = content.encode("utf-8")
         dependencies = build_internal_dependencies(ExternalDependencies(db=db_session, llm_client=llm_client))
         analyzer_service = dependencies.statement_analyzer_service
 
         first_analysis = analyzer_service.analyze(
-            filename=sample_csv_file["filename"],
-            file_content=sample_csv_file["content"],
+            filename=filename,
+            file_content=content,
         )
 
         source = Source(name="Test Bank")
@@ -184,8 +188,8 @@ class TestStatementProcessingIntegration:
         initial_metadata_count = db_session.query(FileAnalysisMetadata).count()
 
         second_analysis = analyzer_service.analyze(
-            filename=sample_csv_file["filename"],
-            file_content=sample_csv_file["content"],
+            filename=filename,
+            file_content=content,
         )
         persistence_request = PersistenceRequestDTO(
             uploaded_file_id=second_analysis.uploaded_file_id,

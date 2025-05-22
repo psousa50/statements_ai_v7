@@ -18,7 +18,7 @@ class MockLLMClient(LLMClient):
         return self.fixed_response
 
 
-class TestSchemaDetector:
+class TestLLMSchemaDetector:
     def test_detect_schema_with_llm(self):
         llm_response = """
         {

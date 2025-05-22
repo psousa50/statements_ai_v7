@@ -36,15 +36,10 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         return transaction
 
     def delete(self, transaction_id: UUID) -> bool:
-        print(f"Deleting transaction with ID: {transaction_id}")
         transaction = self.get_by_id(transaction_id)
-        print(f"Transaction found: {transaction}")
         if transaction:
-            print(f"Deleting transaction: {transaction}")
             self.db_session.delete(transaction)
-            print(f"Committing the transaction deletion for ID: {transaction_id}")
             self.db_session.commit()
-            print(f"Transaction with ID: {transaction_id} deleted successfully.")
             return True
         return False
 
