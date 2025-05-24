@@ -130,7 +130,7 @@ class TestStatementProcessingIntegration:
 
         metadata = db_session.query(FileAnalysisMetadata).filter(FileAnalysisMetadata.uploaded_file_id == uploaded_file_id).first()
         assert metadata.uploaded_file_id == uploaded_file_id
-        assert metadata.file_type == "CSV"
+        assert metadata.source_id == source.id
         assert metadata.column_mapping == {
             "date": "Data",
             "amount": "Valor",

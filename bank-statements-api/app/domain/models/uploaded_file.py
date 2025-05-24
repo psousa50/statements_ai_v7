@@ -24,7 +24,7 @@ class FileAnalysisMetadata(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     uploaded_file_id = Column(UUID(as_uuid=True), ForeignKey("uploaded_files.id"), nullable=False)
     file_hash = Column(Text, unique=True, nullable=False, index=True)
-    file_type = Column(String, nullable=False)
+    source_id = Column(UUID(as_uuid=True), nullable=True)
     column_mapping = Column(JSONB, nullable=False)
     header_row_index = Column(Integer, nullable=False)
     data_start_row_index = Column(Integer, nullable=False)

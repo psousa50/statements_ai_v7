@@ -21,10 +21,10 @@ class FileAnalysisMetadataRepository(ABC):
         self,
         uploaded_file_id: UUID,
         file_hash: str,
-        file_type: str,
         column_mapping: dict,
         header_row_index: int,
         data_start_row_index: int,
+        source_id: Optional[UUID] = None,
     ) -> FileAnalysisMetadataDTO:
         pass
 

@@ -46,7 +46,7 @@ class TestStatementPersistenceService:
             id=str(uuid.uuid4()),
             uploaded_file_id=str(uuid.uuid4()),
             file_hash="abc123",
-            file_type="CSV",
+            source_id=None,
             column_mapping={},
             header_row_index=0,
             data_start_row_index=1,
@@ -95,8 +95,8 @@ class TestStatementPersistenceService:
         file_analysis_metadata_repo.save.assert_called_once_with(
             uploaded_file_id=uploaded_file_id,
             file_hash=ANY,
-            file_type=ANY,
             column_mapping=persistence_request.column_mapping,
             header_row_index=persistence_request.header_row_index,
             data_start_row_index=persistence_request.data_start_row_index,
+            source_id=source_id,
         )

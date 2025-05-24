@@ -29,7 +29,7 @@ class TestFileAnalysisMetadataModel:
             id=uuid.uuid4(),
             uploaded_file_id=file_id,
             file_hash="abc123",
-            file_type="CSV",
+            source_id=uuid.uuid4(),
             column_mapping={
                 "date": "Date",
                 "amount": "Amount",
@@ -43,7 +43,7 @@ class TestFileAnalysisMetadataModel:
         assert isinstance(metadata.id, UUID)
         assert metadata.uploaded_file_id == file_id
         assert metadata.file_hash == "abc123"
-        assert metadata.file_type == "CSV"
+        assert isinstance(metadata.source_id, UUID)
         assert metadata.column_mapping == {
             "date": "Date",
             "amount": "Amount",

@@ -31,7 +31,7 @@ class StatementAnalyzerService:
 
         file_type = self.file_type_detector.detect(file_content)
         if existing_metadata:
-            raw_df = self.statement_parser.parse(file_content, existing_metadata.file_type)
+            raw_df = self.statement_parser.parse(file_content, file_type)
             conversion_model = ConversionModel(
                 column_map=existing_metadata.column_mapping,
                 header_row=existing_metadata.header_row_index,
@@ -46,6 +46,8 @@ class StatementAnalyzerService:
 
         sample_data = self._generate_sample_data(raw_df)
 
+        source_id = existing_metadata.source_id if existing_metadata else None
+        
         return AnalysisResultDTO(
             uploaded_file_id=uploaded_file_id,
             file_type=file_type,
@@ -53,6 +55,7 @@ class StatementAnalyzerService:
             header_row_index=conversion_model.header_row,
             data_start_row_index=conversion_model.start_row,
             sample_data=sample_data,
+            source_id=source_id,
         )
 
     def existing_metadata_to_schema_info(self, existing_metadata):

@@ -12,6 +12,7 @@ class AnalysisResultDTO:
         header_row_index: int,
         data_start_row_index: int,
         sample_data: list[list],
+        source_id: Optional[str] = None,
     ):
         self.uploaded_file_id = uploaded_file_id
         self.file_type = file_type
@@ -19,6 +20,7 @@ class AnalysisResultDTO:
         self.header_row_index = header_row_index
         self.data_start_row_index = data_start_row_index
         self.sample_data = sample_data
+        self.source_id = source_id
 
 
 class PersistenceRequestDTO:

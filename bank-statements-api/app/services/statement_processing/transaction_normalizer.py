@@ -18,10 +18,8 @@ class TransactionNormalizer:
         )
 
         if has_amount:
-            logger.info("Using single amount field schema")
             required_keys = ["date", "amount", "description"]
         elif has_debit_credit:
-            logger.info("Using debit/credit amount fields schema")
             required_keys = ["date", "debit_amount", "credit_amount", "description"]
         else:
             raise ValueError("No valid amount fields found")
