@@ -32,7 +32,6 @@ class FileAnalysisMetadataDTO:
     def __init__(
         self,
         id: str,
-        uploaded_file_id: str,
         file_hash: str,
         source_id: Optional[str],
         column_mapping: dict,
@@ -41,7 +40,6 @@ class FileAnalysisMetadataDTO:
         created_at: datetime,
     ):
         self.id = id
-        self.uploaded_file_id = uploaded_file_id
         self.file_hash = file_hash
         self.source_id = source_id
         self.column_mapping = column_mapping

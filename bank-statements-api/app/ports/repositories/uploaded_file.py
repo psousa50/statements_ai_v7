@@ -19,7 +19,6 @@ class FileAnalysisMetadataRepository(ABC):
     @abstractmethod
     def save(
         self,
-        uploaded_file_id: UUID,
         file_hash: str,
         column_mapping: dict,
         header_row_index: int,

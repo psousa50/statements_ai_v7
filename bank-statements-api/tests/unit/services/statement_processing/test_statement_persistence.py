@@ -44,7 +44,6 @@ class TestStatementPersistenceService:
         file_analysis_metadata_repo.find_by_hash.return_value = None
         file_analysis_metadata_repo.save.return_value = FileAnalysisMetadataDTO(
             id=str(uuid.uuid4()),
-            uploaded_file_id=str(uuid.uuid4()),
             file_hash="abc123",
             source_id=None,
             column_mapping={},
@@ -93,7 +92,6 @@ class TestStatementPersistenceService:
         assert all(t.uploaded_file_id == uploaded_file_id for t in saved_transactions)
 
         file_analysis_metadata_repo.save.assert_called_once_with(
-            uploaded_file_id=uploaded_file_id,
             file_hash=ANY,
             column_mapping=persistence_request.column_mapping,
             header_row_index=persistence_request.header_row_index,

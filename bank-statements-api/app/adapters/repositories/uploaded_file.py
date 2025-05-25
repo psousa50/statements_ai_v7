@@ -42,7 +42,6 @@ class SQLAlchemyFileAnalysisMetadataRepository(FileAnalysisMetadataRepository):
 
     def save(
         self,
-        uploaded_file_id: UUID,
         file_hash: str,
         column_mapping: dict,
         header_row_index: int,
@@ -50,7 +49,6 @@ class SQLAlchemyFileAnalysisMetadataRepository(FileAnalysisMetadataRepository):
         source_id: Optional[UUID] = None,
     ) -> FileAnalysisMetadataDTO:
         metadata = FileAnalysisMetadata(
-            uploaded_file_id=uploaded_file_id,
             file_hash=file_hash,
             source_id=source_id,
             column_mapping=column_mapping,
@@ -64,7 +62,6 @@ class SQLAlchemyFileAnalysisMetadataRepository(FileAnalysisMetadataRepository):
 
         return FileAnalysisMetadataDTO(
             id=str(metadata.id),
-            uploaded_file_id=str(metadata.uploaded_file_id),
             file_hash=metadata.file_hash,
             source_id=str(metadata.source_id) if metadata.source_id else None,
             column_mapping=metadata.column_mapping,
@@ -81,7 +78,6 @@ class SQLAlchemyFileAnalysisMetadataRepository(FileAnalysisMetadataRepository):
 
         return FileAnalysisMetadataDTO(
             id=str(metadata.id),
-            uploaded_file_id=str(metadata.uploaded_file_id),
             file_hash=metadata.file_hash,
             source_id=str(metadata.source_id) if metadata.source_id else None,
             column_mapping=metadata.column_mapping,

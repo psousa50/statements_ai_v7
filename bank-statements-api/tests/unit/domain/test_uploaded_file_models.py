@@ -23,11 +23,8 @@ class TestUploadedFileModel:
 
 class TestFileAnalysisMetadataModel:
     def test_file_analysis_metadata_model_attributes(self):
-        file_id = uuid.uuid4()
-
         metadata = FileAnalysisMetadata(
             id=uuid.uuid4(),
-            uploaded_file_id=file_id,
             file_hash="abc123",
             source_id=uuid.uuid4(),
             column_mapping={
@@ -41,7 +38,6 @@ class TestFileAnalysisMetadataModel:
         )
 
         assert isinstance(metadata.id, UUID)
-        assert metadata.uploaded_file_id == file_id
         assert metadata.file_hash == "abc123"
         assert isinstance(metadata.source_id, UUID)
         assert metadata.column_mapping == {

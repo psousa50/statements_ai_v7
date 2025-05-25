@@ -128,8 +128,7 @@ class TestStatementProcessingIntegration:
         assert uploaded_file.filename == filename
         assert uploaded_file.content == content
 
-        metadata = db_session.query(FileAnalysisMetadata).filter(FileAnalysisMetadata.uploaded_file_id == uploaded_file_id).first()
-        assert metadata.uploaded_file_id == uploaded_file_id
+        metadata = db_session.query(FileAnalysisMetadata).filter(FileAnalysisMetadata.source_id == source.id).first()
         assert metadata.source_id == source.id
         assert metadata.column_mapping == {
             "date": "Data",

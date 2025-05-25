@@ -70,7 +70,6 @@ class TestFileAnalysisMetadataRepository:
 
         session.add.side_effect = side_effect
 
-        uploaded_file_id = uuid.uuid4()
         file_hash = "abc123"
         source_id = uuid.uuid4()
         column_mapping = {
@@ -80,10 +79,8 @@ class TestFileAnalysisMetadataRepository:
         }
         header_row_index = 0
         data_start_row_index = 1
-        # normalized_sample field removed
 
         result = repo.save(
-            uploaded_file_id=uploaded_file_id,
             file_hash=file_hash,
             column_mapping=column_mapping,
             header_row_index=header_row_index,
@@ -93,7 +90,6 @@ class TestFileAnalysisMetadataRepository:
 
         assert isinstance(result, FileAnalysisMetadataDTO)
         assert result.id is not None
-        assert result.uploaded_file_id == str(uploaded_file_id)
         assert result.file_hash == file_hash
         assert result.source_id == str(source_id)
         assert result.column_mapping == column_mapping
@@ -108,10 +104,8 @@ class TestFileAnalysisMetadataRepository:
     def test_find_by_hash(self):
         session = MagicMock()
         metadata_id = uuid.uuid4()
-        uploaded_file_id = uuid.uuid4()
         mock_metadata = MagicMock(
             id=metadata_id,
-            uploaded_file_id=uploaded_file_id,
             file_hash="abc123",
             source_id=uuid.uuid4(),
             column_mapping={
@@ -130,7 +124,6 @@ class TestFileAnalysisMetadataRepository:
 
         assert isinstance(result, FileAnalysisMetadataDTO)
         assert result.id == str(metadata_id)
-        assert result.uploaded_file_id == str(uploaded_file_id)
         assert result.file_hash == "abc123"
         assert result.source_id is not None
 
