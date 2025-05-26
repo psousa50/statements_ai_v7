@@ -5,9 +5,10 @@ import pandas as pd
 
 from app.ai.llm_client import LLMClient
 from app.common.json_utils import sanitize_json
-from app.services.schema_detection.schema_detector import SchemaDetectorProtocol, ConversionModel
+from app.services.schema_detection.schema_detector import ConversionModel, SchemaDetectorProtocol
 
 logger_content = logging.getLogger("app.llm.big")
+
 
 class LLMSchemaDetector(SchemaDetectorProtocol):
     def __init__(self, llm_client: LLMClient):

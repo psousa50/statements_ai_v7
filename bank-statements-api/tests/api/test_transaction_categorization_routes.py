@@ -12,24 +12,11 @@ class TestTransactionCategorizationRoutes:
     def test_categorize_transactions_batch_success(self) -> None:
         # Create mock categorization results
         mock_results = [
-            CategorizationResult(
-                transaction_id=uuid4(),
-                category_id=uuid4(),
-                status=CategorizationStatus.CATEGORIZED
-            ),
-            CategorizationResult(
-                transaction_id=uuid4(),
-                category_id=uuid4(),
-                status=CategorizationStatus.CATEGORIZED
-            )
+            CategorizationResult(transaction_id=uuid4(), category_id=uuid4(), status=CategorizationStatus.CATEGORIZED),
+            CategorizationResult(transaction_id=uuid4(), category_id=uuid4(), status=CategorizationStatus.CATEGORIZED),
         ]
-        mock_batch_result = BatchCategorizationResult(
-            results=mock_results,
-            total_processed=2,
-            successful_count=2,
-            failed_count=0
-                )
-        
+        mock_batch_result = BatchCategorizationResult(results=mock_results, total_processed=2, successful_count=2, failed_count=0)
+
         transaction_categorization_service = MagicMock(spec=TransactionCategorizationService)
         transaction_categorization_service.process_uncategorized_transactions_detailed.return_value = mock_batch_result
         client = build_client(internal_dependencies=mocked_dependencies(transaction_categorization_service=transaction_categorization_service))

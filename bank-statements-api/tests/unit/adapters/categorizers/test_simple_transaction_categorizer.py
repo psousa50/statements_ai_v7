@@ -2,12 +2,10 @@ import uuid
 from typing import Any
 from unittest.mock import MagicMock
 
-import pytest
-
 from app.domain.models.categorization import CategorizationResult
 from app.domain.models.transaction import CategorizationStatus
-from app.services.transaction_categorization.simple_transaction_categorizer import SimpleTransactionCategorizer
 from app.ports.repositories.category import CategoryRepository
+from app.services.transaction_categorization.simple_transaction_categorizer import SimpleTransactionCategorizer
 
 
 class TestSimpleTransactionCategorizer:

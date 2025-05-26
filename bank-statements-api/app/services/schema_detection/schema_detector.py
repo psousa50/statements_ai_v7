@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 from typing import Dict
+
 import pandas as pd
+
 
 @dataclass
 class ConversionModel:
@@ -9,8 +11,6 @@ class ConversionModel:
     start_row: int
 
 
-
 class SchemaDetectorProtocol:
     def detect_schema(self, df: pd.DataFrame) -> ConversionModel:
         pass
-    

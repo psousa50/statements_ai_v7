@@ -1,13 +1,14 @@
 import io
+
 import pandas as pd
 import pytest
-from typing import Tuple, Dict
 
 from app.services.schema_detection.heuristic_schema_detector import HeuristicSchemaDetector
-from app.services.schema_detection.schema_detector import ConversionModel
+
 
 def unindent(content: str) -> str:
     return "\n".join([line.strip() for line in content.split("\n")])
+
 
 class TestHeuristicSchemaDetector:
     @pytest.fixture
@@ -24,14 +25,10 @@ class TestHeuristicSchemaDetector:
         content = unindent(content)
         data = pd.read_csv(io.StringIO(content))
         conversion_model = detector.detect_schema(data)
-        
+
         assert conversion_model.header_row == 0
         assert conversion_model.start_row == 1
-        assert conversion_model.column_map == {
-            "date": "Date",
-            "description": "Description",
-            "amount": "Amount"
-        }
+        assert conversion_model.column_map == {"date": "Date", "description": "Description", "amount": "Amount"}
 
     def test_heuristic_schema_detector_complex_case_1(self, detector):
         content = """
@@ -44,14 +41,10 @@ class TestHeuristicSchemaDetector:
         content = unindent(content)
         data = pd.read_csv(io.StringIO(content))
         conversion_model = detector.detect_schema(data)
-        
+
         assert conversion_model.header_row == 1
         assert conversion_model.start_row == 2
-        assert conversion_model.column_map == {
-            "date": "Data",
-            "description": "Descricao",
-            "amount": "Valor"
-        }
+        assert conversion_model.column_map == {"date": "Data", "description": "Descricao", "amount": "Valor"}
 
     def test_heuristic_schema_detector_complex_case_2(self, detector):
         content = """
@@ -63,15 +56,10 @@ class TestHeuristicSchemaDetector:
         content = unindent(content)
         data = pd.read_csv(io.StringIO(content))
         conversion_model = detector.detect_schema(data)
-        
+
         assert conversion_model.header_row == 0
         assert conversion_model.start_row == 1
-        assert conversion_model.column_map == {
-            "date": "Data",
-            "description": "Descricao",
-            "amount": "Valor"
-        }
-
+        assert conversion_model.column_map == {"date": "Data", "description": "Descricao", "amount": "Valor"}
 
     def test_heuristic_schema_detector_complex_case_3(self, detector):
         content = """
@@ -91,11 +79,7 @@ class TestHeuristicSchemaDetector:
 
         data = pd.read_csv(io.StringIO(content))
         conversion_model = detector.detect_schema(data)
-        
+
         assert conversion_model.header_row == 7
         assert conversion_model.start_row == 8
-        assert conversion_model.column_map == {
-            "date": "Data Lanc.",
-            "description": "Descrição",
-            "amount": "Valor"
-        }
+        assert conversion_model.column_map == {"date": "Data Lanc.", "description": "Descrição", "amount": "Valor"}

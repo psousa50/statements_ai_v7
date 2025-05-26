@@ -49,6 +49,7 @@ def db_session(db_engine):
     transaction.rollback()
     connection.close()
 
+
 @pytest.fixture
 def llm_client():
     llm_client = MagicMock()
@@ -75,7 +76,7 @@ class TestStatementProcessingIntegration:
             ["Data", "Valor", "Descricao"],
             ["2023-01-01", "100.00", "Deposit"],
             ["2023-01-02", "-50.00", "Withdrawal"],
-        ["2023-01-03", "25.50", "Refund"],
+            ["2023-01-03", "25.50", "Refund"],
         ]
         content = "\n".join([",".join(row) for row in csv_content])
         content = content.encode("utf-8")
@@ -157,7 +158,7 @@ class TestStatementProcessingIntegration:
             ["Data", "Valor", "Descricao"],
             ["2023-01-01", "100.00", "Deposit"],
             ["2023-01-02", "-50.00", "Withdrawal"],
-        ["2023-01-03", "25.50", "Refund"],
+            ["2023-01-03", "25.50", "Refund"],
         ]
         content = "\n".join([",".join(row) for row in csv_content])
         content = content.encode("utf-8")

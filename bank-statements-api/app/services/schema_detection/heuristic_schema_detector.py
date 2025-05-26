@@ -1,8 +1,10 @@
+from collections import Counter
 from typing import Dict, Optional
+
 import pandas as pd
 from dateutil.parser import parse
-from collections import Counter
-from app.services.schema_detection.schema_detector import SchemaDetectorProtocol, ConversionModel
+
+from app.services.schema_detection.schema_detector import ConversionModel, SchemaDetectorProtocol
 
 
 def is_probable_date(val) -> bool:
@@ -16,6 +18,7 @@ def is_probable_date(val) -> bool:
     except Exception:
         return False
 
+
 def is_probable_amount(val) -> bool:
     if pd.isna(val):
         return False
@@ -28,6 +31,7 @@ def is_probable_amount(val) -> bool:
     except Exception:
         return False
 
+
 def is_probable_description(val) -> bool:
     if pd.isna(val):
         return False
@@ -35,6 +39,7 @@ def is_probable_description(val) -> bool:
         val = str(val)
     stripped = val.strip()
     return len(stripped) >= 5 and not is_probable_date(stripped) and not is_probable_amount(stripped)
+
 
 def find_first_valid_streak(series: pd.Series, predicate, streak_length: int = 2) -> Optional[int]:
     values = series.tolist()
@@ -62,8 +67,8 @@ class HeuristicSchemaDetector(SchemaDetectorProtocol):
         if header_row == 0:
             header = df.columns.tolist()
         else:
-            header = df.iloc[header_row- 1].astype(str).tolist()
-        
+            header = df.iloc[header_row - 1].astype(str).tolist()
+
         data_df = df.iloc[start_row:].reset_index(drop=True).copy()
         data_df.columns = header
 
@@ -93,7 +98,7 @@ class HeuristicSchemaDetector(SchemaDetectorProtocol):
         return most_common_row
 
     def _infer_standard_columns(self, df: pd.DataFrame) -> Dict[str, str]:
-        candidates = {'date': None, 'description': None, 'amount': None}
+        candidates = {"date": None, "description": None, "amount": None}
         sample = df.head(10)
 
         scores = {}
@@ -103,9 +108,9 @@ class HeuristicSchemaDetector(SchemaDetectorProtocol):
                 continue
 
             score = {
-                'date': sum(is_probable_date(v) for v in values),
-                'amount': sum(is_probable_amount(v) for v in values),
-                'description': sum(is_probable_description(v) for v in values),
+                "date": sum(is_probable_date(v) for v in values),
+                "amount": sum(is_probable_amount(v) for v in values),
+                "description": sum(is_probable_description(v) for v in values),
             }
             scores[col] = score
 

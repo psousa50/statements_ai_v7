@@ -3,7 +3,14 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, Query, status
 
-from app.api.schemas import BatchCategorizationResponse, CategorizationResponse, CategorizationResultResponse, TransactionCreate, TransactionListResponse, TransactionResponse, TransactionUpdate
+from app.api.schemas import (
+    BatchCategorizationResponse,
+    CategorizationResultResponse,
+    TransactionCreate,
+    TransactionListResponse,
+    TransactionResponse,
+    TransactionUpdate,
+)
 from app.core.config import settings
 from app.core.dependencies import InternalDependencies
 from app.domain.models.transaction import CategorizationStatus
@@ -128,7 +135,7 @@ def register_transaction_routes(app: FastAPI, provide_dependencies: Callable[[],
     ):
         try:
             batch_result = internal.transaction_categorization_service.process_uncategorized_transactions_detailed(batch_size=batch_size)
-            
+
             # Convert domain results to API response format
             result_responses = [
                 CategorizationResultResponse(
@@ -136,11 +143,11 @@ def register_transaction_routes(app: FastAPI, provide_dependencies: Callable[[],
                     category_id=result.category_id,
                     status=result.status,
                     error_message=result.error_message,
-                    confidence=result.confidence
+                    confidence=result.confidence,
                 )
                 for result in batch_result.results
             ]
-            
+
             return BatchCategorizationResponse(
                 results=result_responses,
                 total_processed=batch_result.total_processed,

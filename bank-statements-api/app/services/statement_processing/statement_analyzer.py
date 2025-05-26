@@ -47,7 +47,7 @@ class StatementAnalyzerService:
         sample_data = self._generate_sample_data(raw_df)
 
         source_id = existing_metadata.source_id if existing_metadata else None
-        
+
         return AnalysisResultDTO(
             uploaded_file_id=uploaded_file_id,
             file_type=file_type,
@@ -56,13 +56,6 @@ class StatementAnalyzerService:
             data_start_row_index=conversion_model.start_row,
             sample_data=sample_data,
             source_id=source_id,
-        )
-
-    def existing_metadata_to_schema_info(self, existing_metadata):
-        return SchemaInfo(
-            header_row=existing_metadata.header_row_index,
-            start_row=existing_metadata.data_start_row_index,
-            column_map=existing_metadata.column_mapping,
         )
 
     def _generate_sample_data(self, raw_df):

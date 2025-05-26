@@ -3,8 +3,6 @@ from typing import Generator
 
 from sqlalchemy.orm import Session
 
-from app.services.transaction_categorization.llm_transaction_categorizer import LLMTransactionCategorizer
-from app.services.transaction_categorization.simple_transaction_categorizer import SimpleTransactionCategorizer
 from app.adapters.repositories.category import SQLAlchemyCategoryRepository
 from app.adapters.repositories.source import SQLAlchemySourceRepository
 from app.adapters.repositories.transaction import SQLAlchemyTransactionRepository
@@ -13,14 +11,15 @@ from app.ai.gemini_ai import GeminiAI
 from app.ai.llm_client import LLMClient
 from app.core.database import SessionLocal
 from app.services.category import CategoryService
+from app.services.schema_detection.heuristic_schema_detector import HeuristicSchemaDetector
 from app.services.source import SourceService
 from app.services.statement_processing.file_type_detector import StatementFileTypeDetector
-from app.services.schema_detection.heuristic_schema_detector import HeuristicSchemaDetector
 from app.services.statement_processing.statement_analyzer import StatementAnalyzerService
 from app.services.statement_processing.statement_parser import StatementParser
 from app.services.statement_processing.statement_persistence import StatementPersistenceService
 from app.services.statement_processing.transaction_normalizer import TransactionNormalizer
 from app.services.transaction import TransactionService
+from app.services.transaction_categorization.llm_transaction_categorizer import LLMTransactionCategorizer
 from app.services.transaction_categorization.transaction_categorization import TransactionCategorizationService
 
 

@@ -1,7 +1,9 @@
-from app.core.database import Base, engine
 import logging
 
+from app.core.database import Base, engine
+
 logger = logging.getLogger("app")
+
 
 def init_db():
     """Initialize the database by creating all tables"""

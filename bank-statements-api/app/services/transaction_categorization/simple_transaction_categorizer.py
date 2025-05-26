@@ -1,5 +1,4 @@
 from typing import List
-from uuid import UUID
 
 from app.domain.models.categorization import CategorizationResult
 from app.domain.models.transaction import CategorizationStatus, Transaction
@@ -21,7 +20,7 @@ class SimpleTransactionCategorizer(TransactionCategorizer):
                     transaction_id=transaction.id,
                     category_id=None,
                     status=CategorizationStatus.FAILURE,
-                    error_message="No categories available for categorization"
+                    error_message="No categories available for categorization",
                 )
                 for transaction in transactions
             ]
@@ -33,7 +32,7 @@ class SimpleTransactionCategorizer(TransactionCategorizer):
                 transaction_id=transaction.id,
                 category_id=default_category_id,
                 status=CategorizationStatus.CATEGORIZED,
-                confidence=1.0  # Simple categorizer is always "confident"
+                confidence=1.0,  # Simple categorizer is always "confident"
             )
             for transaction in transactions
         ]

@@ -1,8 +1,10 @@
 import json
 from dataclasses import dataclass
 from typing import List
-from app.domain.models.transaction import Transaction
+
 from app.domain.models.category import Category
+from app.domain.models.transaction import Transaction
+
 
 @dataclass
 class Subcategory:
@@ -10,20 +12,12 @@ class Subcategory:
     subcategory_name: str
 
 
-def categorization_prompt(
-    transactions: List[Transaction], categories: List[Category]
-) -> str:
+def categorization_prompt(transactions: List[Transaction], categories: List[Category]) -> str:
     # Convert categories to the format expected by the LLM
     # For now, we'll treat all categories as potential subcategories
-    expanded_categories = [
-        Subcategory(str(cat.id), cat.name)  # Convert UUID to string
-        for cat in categories
-    ]
+    expanded_categories = [Subcategory(str(cat.id), cat.name) for cat in categories]  # Convert UUID to string
 
-    categories_info = [
-        f"{{id: {cat.sub_category_id}, name: {cat.subcategory_name}}}"
-        for cat in expanded_categories
-    ]
+    categories_info = [f"{{id: {cat.sub_category_id}, name: {cat.subcategory_name}}}" for cat in expanded_categories]
 
     transaction_descriptions = [t.description for t in transactions]
 

@@ -1,5 +1,4 @@
 from typing import List
-from uuid import UUID
 
 from app.domain.models.categorization import BatchCategorizationResult, CategorizationResult
 from app.domain.models.transaction import CategorizationStatus, Transaction
@@ -21,12 +20,7 @@ class TransactionCategorizationService:
         transactions: List[Transaction] = self.transaction_repository.get_oldest_uncategorized(limit=batch_size)
 
         if not transactions:
-            return BatchCategorizationResult(
-                results=[],
-                total_processed=0,
-                successful_count=0,
-                failed_count=0
-            )
+            return BatchCategorizationResult(results=[], total_processed=0, successful_count=0, failed_count=0)
 
         # Use the new batch categorization interface
         categorization_results: List[CategorizationResult] = self.transaction_categorizer.categorize(transactions)
@@ -43,8 +37,5 @@ class TransactionCategorizationService:
         failed_count = len(categorization_results) - successful_count
 
         return BatchCategorizationResult(
-            results=categorization_results,
-            total_processed=len(categorization_results),
-            successful_count=successful_count,
-            failed_count=failed_count
+            results=categorization_results, total_processed=len(categorization_results), successful_count=successful_count, failed_count=failed_count
         )

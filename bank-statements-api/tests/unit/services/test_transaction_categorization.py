@@ -4,7 +4,6 @@ from unittest.mock import MagicMock
 
 from app.domain.models.categorization import BatchCategorizationResult, CategorizationResult
 from app.domain.models.transaction import CategorizationStatus
-from app.domain.models.transaction import CategorizationStatus, Transaction
 from app.ports.categorizers.transaction_categorizer import TransactionCategorizer
 from app.ports.repositories.transaction import TransactionRepository
 from app.services.transaction_categorization.transaction_categorization import TransactionCategorizationService
@@ -52,19 +51,11 @@ class TestTransactionCategorizationService:
         transaction2.categorization_status = CategorizationStatus.UNCATEGORIZED
 
         self.transaction_repository.get_oldest_uncategorized.return_value = [transaction1, transaction2]
-        
+
         # Mock the batch categorizer to return successful results
         mock_categorization_results = [
-            CategorizationResult(
-                transaction_id=transaction_id1,
-                category_id=category_id,
-                status=CategorizationStatus.CATEGORIZED
-            ),
-            CategorizationResult(
-                transaction_id=transaction_id2,
-                category_id=category_id,
-                status=CategorizationStatus.CATEGORIZED
-            )
+            CategorizationResult(transaction_id=transaction_id1, category_id=category_id, status=CategorizationStatus.CATEGORIZED),
+            CategorizationResult(transaction_id=transaction_id2, category_id=category_id, status=CategorizationStatus.CATEGORIZED),
         ]
         self.transaction_categorizer.categorize.return_value = mock_categorization_results
 
@@ -106,17 +97,8 @@ class TestTransactionCategorizationService:
 
         # Mock the batch categorizer to return mixed results (one success, one failure)
         mock_categorization_results = [
-            CategorizationResult(
-                transaction_id=transaction_id1,
-                category_id=category_id,
-                status=CategorizationStatus.CATEGORIZED
-            ),
-            CategorizationResult(
-                transaction_id=transaction_id2,
-                category_id=None,
-                status=CategorizationStatus.FAILURE,
-                error_message="Categorization failed"
-            )
+            CategorizationResult(transaction_id=transaction_id1, category_id=category_id, status=CategorizationStatus.CATEGORIZED),
+            CategorizationResult(transaction_id=transaction_id2, category_id=None, status=CategorizationStatus.FAILURE, error_message="Categorization failed"),
         ]
         self.transaction_categorizer.categorize.return_value = mock_categorization_results
 

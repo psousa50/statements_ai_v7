@@ -8,6 +8,7 @@ from app.domain.models.transaction import CategorizationStatus
 @dataclass
 class CategorizationResult:
     """Result of categorizing a single transaction"""
+
     transaction_id: UUID
     category_id: Optional[UUID]
     status: CategorizationStatus
@@ -18,6 +19,7 @@ class CategorizationResult:
 @dataclass
 class BatchCategorizationResult:
     """Result of categorizing a batch of transactions"""
+
     results: List[CategorizationResult]
     total_processed: int
     successful_count: int
@@ -34,10 +36,10 @@ class BatchCategorizationResult:
         """Validate that counts match the results"""
         if len(self.results) != self.total_processed:
             raise ValueError("Results count must match total_processed")
-        
+
         actual_successful = sum(1 for r in self.results if r.status == CategorizationStatus.CATEGORIZED)
         actual_failed = sum(1 for r in self.results if r.status == CategorizationStatus.FAILURE)
-        
+
         if actual_successful != self.successful_count:
             raise ValueError("successful_count must match actual successful results")
         if actual_failed != self.failed_count:
