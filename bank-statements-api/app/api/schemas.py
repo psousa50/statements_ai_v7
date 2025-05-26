@@ -1,6 +1,6 @@
 from datetime import date, datetime
 from decimal import Decimal
-from typing import Dict, Optional, Sequence
+from typing import Dict, List, Optional, Sequence
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
@@ -127,6 +127,27 @@ class StatementUploadRequest(BaseModel):
 class StatementUploadResponse(BaseModel):
     uploaded_file_id: str
     transactions_saved: int
+    success: bool
+    message: str
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class CategorizationResultResponse(BaseModel):
+    transaction_id: UUID
+    category_id: Optional[UUID] = None
+    status: CategorizationStatus
+    error_message: Optional[str] = None
+    confidence: Optional[float] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class BatchCategorizationResponse(BaseModel):
+    results: List[CategorizationResultResponse]
+    total_processed: int
+    successful_count: int
+    failed_count: int
     success: bool
     message: str
 

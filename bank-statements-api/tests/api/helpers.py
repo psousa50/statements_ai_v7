@@ -11,7 +11,7 @@ from app.services.source import SourceService
 from app.services.statement_processing.statement_analyzer import StatementAnalyzerService
 from app.services.statement_processing.statement_persistence import StatementPersistenceService
 from app.services.transaction import TransactionService
-from app.services.transaction_categorization import TransactionCategorizationService
+from app.services.transaction_categorization.transaction_categorization import TransactionCategorizationService
 
 
 def mocked_dependencies(

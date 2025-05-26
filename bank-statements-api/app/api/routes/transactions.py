@@ -3,7 +3,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, Query, status
 
-from app.api.schemas import CategorizationResponse, TransactionCreate, TransactionListResponse, TransactionResponse, TransactionUpdate
+from app.api.schemas import BatchCategorizationResponse, CategorizationResponse, CategorizationResultResponse, TransactionCreate, TransactionListResponse, TransactionResponse, TransactionUpdate
 from app.core.config import settings
 from app.core.dependencies import InternalDependencies
 from app.domain.models.transaction import CategorizationStatus
@@ -121,21 +121,40 @@ def register_transaction_routes(app: FastAPI, provide_dependencies: Callable[[],
             )
         return updated_transaction
 
-    @router.post("/categorize-batch", response_model=CategorizationResponse)
+    @router.post("/categorize-batch", response_model=BatchCategorizationResponse)
     def categorize_transactions_batch(
         batch_size: int = Query(10, gt=0, le=100, description="Number of transactions to process"),
         internal: InternalDependencies = Depends(provide_dependencies),
     ):
         try:
-            categorized_count = internal.transaction_categorization_service.process_uncategorized_transactions(batch_size=batch_size)
-            return CategorizationResponse(
-                categorized_count=categorized_count,
+            batch_result = internal.transaction_categorization_service.process_uncategorized_transactions_detailed(batch_size=batch_size)
+            
+            # Convert domain results to API response format
+            result_responses = [
+                CategorizationResultResponse(
+                    transaction_id=result.transaction_id,
+                    category_id=result.category_id,
+                    status=result.status,
+                    error_message=result.error_message,
+                    confidence=result.confidence
+                )
+                for result in batch_result.results
+            ]
+            
+            return BatchCategorizationResponse(
+                results=result_responses,
+                total_processed=batch_result.total_processed,
+                successful_count=batch_result.successful_count,
+                failed_count=batch_result.failed_count,
                 success=True,
-                message=f"Successfully categorized {categorized_count} transactions",
+                message=f"Processed {batch_result.total_processed} transactions: {batch_result.successful_count} categorized, {batch_result.failed_count} failed",
             )
         except Exception as e:
-            return CategorizationResponse(
-                categorized_count=0,
+            return BatchCategorizationResponse(
+                results=[],
+                total_processed=0,
+                successful_count=0,
+                failed_count=0,
                 success=False,
                 message=f"Error categorizing transactions: {str(e)}",
             )

@@ -3,7 +3,8 @@ from typing import Generator
 
 from sqlalchemy.orm import Session
 
-from app.adapters.categorizers.simple_transaction_categorizer import SimpleTransactionCategorizer
+from app.services.transaction_categorization.llm_transaction_categorizer import LLMTransactionCategorizer
+from app.services.transaction_categorization.simple_transaction_categorizer import SimpleTransactionCategorizer
 from app.adapters.repositories.category import SQLAlchemyCategoryRepository
 from app.adapters.repositories.source import SQLAlchemySourceRepository
 from app.adapters.repositories.transaction import SQLAlchemyTransactionRepository
@@ -20,7 +21,7 @@ from app.services.statement_processing.statement_parser import StatementParser
 from app.services.statement_processing.statement_persistence import StatementPersistenceService
 from app.services.statement_processing.transaction_normalizer import TransactionNormalizer
 from app.services.transaction import TransactionService
-from app.services.transaction_categorization import TransactionCategorizationService
+from app.services.transaction_categorization.transaction_categorization import TransactionCategorizationService
 
 
 class ExternalDependencies:
@@ -72,7 +73,8 @@ def build_internal_dependencies(external: ExternalDependencies) -> InternalDepen
     source_service = SourceService(source_repo)
     transaction_service = TransactionService(transaction_repo)
 
-    transaction_categorizer = SimpleTransactionCategorizer(category_repo)
+    # transaction_categorizer = SimpleTransactionCategorizer(category_repo)
+    transaction_categorizer = LLMTransactionCategorizer(category_repo, external.llm_client)
     transaction_categorization_service = TransactionCategorizationService(
         transaction_repository=transaction_repo,
         transaction_categorizer=transaction_categorizer,
