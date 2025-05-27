@@ -5,11 +5,11 @@ from uuid import UUID
 
 from app.adapters.repositories.category import SQLAlchemyCategoryRepository
 from app.ai.llm_client import LLMClient
+from app.ai.prompts import categorization_prompt
 from app.common.json_utils import sanitize_json
 from app.domain.models.categorization import CategorizationResult
 from app.domain.models.transaction import CategorizationStatus, Transaction
 from app.ports.categorizers.transaction_categorizer import TransactionCategorizer
-from app.services.transaction_categorization.prompts import categorization_prompt
 
 logger_content = logging.getLogger("app.llm.big")
 
@@ -50,24 +50,7 @@ class LLMTransactionCategorizer(TransactionCategorizer):
 
         try:
             prompt = categorization_prompt(transactions, self.categories)
-            # Note: This assumes a sync version of generate exists
-            # If only async is available, this would need refactoring
-            if hasattr(self.llm_client, "generate"):
-                response = self.llm_client.generate(prompt)
-            else:
-                # Fallback to a simple categorization if LLM is not available
-                logger_content.warning("LLM client does not have sync generate method, falling back to simple categorization")
-                return [
-                    CategorizationResult(
-                        transaction_id=transaction.id,
-                        category_id=self.categories[0].id if self.categories else None,
-                        status=CategorizationStatus.CATEGORIZED if self.categories else CategorizationStatus.FAILURE,
-                        error_message=None if self.categories else "No categories available",
-                        confidence=0.5,
-                    )
-                    for transaction in transactions
-                ]
-
+            response = self.llm_client.generate(prompt)
             logger_content.debug(
                 response,
                 extra={"prefix": "llm_transaction_categorizer.response", "ext": "json"},
