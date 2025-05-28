@@ -1,8 +1,8 @@
 # Documentation
 
-Read the core documentation (./docs/).
+Read the core documentation (ai/).
 
-## Core Documentation Files
+## Core Documentation Files (in ai/docs)
 
 1. `PRD.md`
 
@@ -21,18 +21,20 @@ Read the core documentation (./docs/).
 
 - Maps technology choices for frontend, backend, DB, and infrastructure
 
-4. `UserStories.md`
-
-- Contains all the user stories
-- Each story has a title, a description, acceptance criteria, dependencies
-- It drives the development of the features
-
-5. `APIContracts.md`
+4. `APIContracts.md`
 
 - Full REST API specification covering CRUD operations
 - Includes sample request/response for each route
 - Organized by resource group for clarity
 - Reflects final data model and authentication logic
+
+## Project Management Files (in ai/project-management)
+
+5. `UserStories.md`
+
+- Contains all the user stories
+- Each story has a title, a description, acceptance criteria, dependencies
+- It drives the development of the features
 
 6. `InProgress.md`
 

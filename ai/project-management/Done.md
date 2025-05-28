@@ -4,7 +4,7 @@ This document records all completed stories with their acceptance criteria and i
 
 ## Transaction Categorization System (Completed: 2025-05-19)
 
-**Story**: Implement a transaction categorization system with hierarchical categories and batch processing capabilities.
+**Story US-10, US-11, US-12**: Implement a transaction categorization system with hierarchical categories and batch processing capabilities.
 
 **Acceptance Criteria**:
 - ✅ Create Category domain model with hierarchical structure (parent-child relationships)
@@ -26,7 +26,7 @@ This document records all completed stories with their acceptance criteria and i
 
 ## File Upload UI (Completed: 2025-05-15)
 
-**Story**: Implement a user-friendly file upload interface with column mapping and source selection.
+**Story US-01, US-03, US-04**: Implement a user-friendly file upload interface with column mapping and source selection.
 
 **Acceptance Criteria**:
 - ✅ Create Upload page with multi-step workflow
@@ -69,7 +69,7 @@ This document records all completed stories with their acceptance criteria and i
 
 ## Statement Processing Architecture (Completed: 2025-05-04)
 
-**Story**: Implement a comprehensive statement processing architecture for handling various bank statement formats.
+**Story US-02, US-05**: Implement a comprehensive statement processing architecture for handling various bank statement formats.
 
 **Acceptance Criteria**:
 - ✅ Create StatementFileTypeDetector for detecting CSV and XLSX files
@@ -125,7 +125,7 @@ This document records all completed stories with their acceptance criteria and i
 
 ## Initial Steel Thread (Completed: 2025-04-27)
 
-**Story**: Implement a basic steel thread with transaction functionality.
+**Story US-06, US-07**: Implement a basic steel thread with transaction functionality.
 
 **Acceptance Criteria**:
 - ✅ Create PostgreSQL database schema for transactions
