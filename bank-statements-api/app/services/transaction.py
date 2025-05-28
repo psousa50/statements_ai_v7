@@ -3,6 +3,7 @@ from decimal import Decimal
 from typing import List, Optional
 from uuid import UUID
 
+from app.common.text_normalization import normalize_description
 from app.domain.models.transaction import CategorizationStatus, Transaction
 from app.ports.repositories.transaction import TransactionRepository
 
@@ -28,6 +29,7 @@ class TransactionService:
         transaction = Transaction(
             date=transaction_date,
             description=description,
+            normalized_description=normalize_description(description),
             amount=amount,
             category_id=category_id,
             source_id=source_id,
@@ -57,6 +59,7 @@ class TransactionService:
         if transaction:
             transaction.date = transaction_date
             transaction.description = description
+            transaction.normalized_description = normalize_description(description)
             transaction.amount = amount
 
             # Update category and categorization status

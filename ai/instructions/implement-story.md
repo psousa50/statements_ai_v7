@@ -1,6 +1,6 @@
 # Technical Design – Development Phase
 
-Analyse the development plan and follow the instructions:
+Analyse the development plan in InProgress.md and follow the instructions:
 
 1. Follow existing code conventions and patterns.
 

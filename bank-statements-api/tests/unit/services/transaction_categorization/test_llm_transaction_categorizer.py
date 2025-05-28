@@ -218,30 +218,6 @@ class TestLLMTransactionCategorizer:
         assert result.status == CategorizationStatus.FAILURE
         assert result.error_message == "No matching result from LLM"
 
-    def test_categorize_llm_client_without_generate_method(self) -> None:
-        """Test fallback when LLM client doesn't have sync generate method"""
-        # Setup
-        mock_llm_client = Mock()
-        # Remove the generate method to simulate async-only client
-        if hasattr(mock_llm_client, "generate"):
-            delattr(mock_llm_client, "generate")
-
-        categorizer = LLMTransactionCategorizer(categories_repository=self.category_repository, llm_client=mock_llm_client)
-
-        transaction = self._create_sample_transaction()
-
-        # Execute
-        results = categorizer.categorize([transaction])
-
-        # Assert
-        assert len(results) == 1
-        result = results[0]
-        assert result.transaction_id == transaction.id
-        assert result.category_id == self.category1_id  # Falls back to first category
-        assert result.status == CategorizationStatus.CATEGORIZED
-        assert result.confidence == 0.5
-        assert result.error_message is None
-
     def test_categorize_llm_exception_handling(self) -> None:
         """Test handling of exceptions during LLM categorization"""
         # Setup

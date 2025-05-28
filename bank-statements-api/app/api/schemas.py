@@ -77,6 +77,7 @@ class TransactionResponse(BaseModel):
     id: UUID
     date: date
     description: str
+    normalized_description: str
     amount: Decimal
     created_at: "date"
     category_id: Optional[UUID] = None

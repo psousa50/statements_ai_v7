@@ -4,6 +4,7 @@ from uuid import UUID
 
 from sqlalchemy.orm import Session
 
+from app.common.text_normalization import normalize_description
 from app.domain.dto.statement_processing import TransactionDTO
 from app.domain.models.transaction import CategorizationStatus, Transaction
 from app.ports.repositories.transaction import TransactionRepository
@@ -54,6 +55,7 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
                 date=date_val,
                 amount=transaction_dto.amount,
                 description=transaction_dto.description,
+                normalized_description=normalize_description(transaction_dto.description),
                 uploaded_file_id=transaction_dto.uploaded_file_id,
             )
 

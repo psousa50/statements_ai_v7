@@ -26,6 +26,7 @@ class TestTransactionService:
             id=uuid4(),
             date=date(2023, 4, 15),
             description="Test Transaction",
+            normalized_description="test transaction",
             amount=Decimal("100.50"),
         )
         return transaction
@@ -75,12 +76,14 @@ class TestTransactionService:
                 id=uuid4(),
                 date=date(2023, 4, 15),
                 description="Transaction 1",
+                normalized_description="transaction",
                 amount=Decimal("100.50"),
             ),
             Transaction(
                 id=uuid4(),
                 date=date(2023, 4, 16),
                 description="Transaction 2",
+                normalized_description="transaction",
                 amount=Decimal("200.75"),
             ),
         ]

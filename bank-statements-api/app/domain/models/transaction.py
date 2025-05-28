@@ -23,6 +23,7 @@ class Transaction(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     date = Column(Date, nullable=False, index=True)
     description = Column(String, nullable=False)
+    normalized_description = Column(String, nullable=False, index=True)
     amount = Column(Numeric(precision=10, scale=2), nullable=False)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
 
