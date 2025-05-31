@@ -11,6 +11,7 @@ This document contains all the user stories for the Bank Statement Analyzer appl
 **So that** I can analyze my transactions without manual data entry.
 
 **Acceptance Criteria:**
+
 - User can drag and drop a file onto the upload zone
 - User can click to browse and select a file
 - Supported file formats: CSV, Excel (XLSX)
@@ -19,6 +20,7 @@ This document contains all the user stories for the Bank Statement Analyzer appl
 - File is securely transmitted to the backend for processing
 
 **Dependencies:**
+
 - None
 
 ### US-02: Analyze Bank Statement Schema
@@ -28,6 +30,7 @@ This document contains all the user stories for the Bank Statement Analyzer appl
 **So that** I don't have to manually map columns.
 
 **Acceptance Criteria:**
+
 - System detects file type (CSV, XLSX)
 - System identifies header row
 - System identifies where data rows begin
@@ -36,6 +39,7 @@ This document contains all the user stories for the Bank Statement Analyzer appl
 - System detects and prevents duplicate file uploads via file hashing
 
 **Dependencies:**
+
 - US-01: Upload Bank Statement
 
 ### US-03: Customize Column Mapping
@@ -45,6 +49,7 @@ This document contains all the user stories for the Bank Statement Analyzer appl
 **So that** I can correct any misidentified columns.
 
 **Acceptance Criteria:**
+
 - User can view the suggested column mappings
 - User can modify the mappings through a user-friendly interface
 - User can see a preview of how the data will be imported
@@ -52,6 +57,7 @@ This document contains all the user stories for the Bank Statement Analyzer appl
 - User can cancel the import process
 
 **Dependencies:**
+
 - US-02: Analyze Bank Statement Schema
 
 ### US-04: Select Statement Source
@@ -61,12 +67,14 @@ This document contains all the user stories for the Bank Statement Analyzer appl
 **So that** my transactions are properly organized.
 
 **Acceptance Criteria:**
+
 - User can select from a list of existing sources
 - User can add a new source if needed
 - Source selection is required before finalizing import
 - Selected source is associated with imported transactions
 
 **Dependencies:**
+
 - US-02: Analyze Bank Statement Schema
 
 ### US-05: Import Transactions
@@ -76,6 +84,7 @@ This document contains all the user stories for the Bank Statement Analyzer appl
 **So that** the transactions are saved to the system.
 
 **Acceptance Criteria:**
+
 - User can confirm the import after reviewing mappings and source
 - System extracts and normalizes transactions from the file
 - System saves transactions to the database
@@ -85,6 +94,7 @@ This document contains all the user stories for the Bank Statement Analyzer appl
 - System handles errors gracefully and provides clear error messages
 
 **Dependencies:**
+
 - US-03: Customize Column Mapping
 - US-04: Select Statement Source
 
@@ -97,6 +107,7 @@ This document contains all the user stories for the Bank Statement Analyzer appl
 **So that** I can review my financial activity.
 
 **Acceptance Criteria:**
+
 - User can see a list of all transactions
 - Transactions are displayed in a table format
 - Table shows date, description, amount, and category
@@ -104,6 +115,7 @@ This document contains all the user stories for the Bank Statement Analyzer appl
 - User can see the categorization status of each transaction
 
 **Dependencies:**
+
 - None (can view empty state before any imports)
 
 ### US-07: Add Transaction Manually
@@ -113,6 +125,7 @@ This document contains all the user stories for the Bank Statement Analyzer appl
 **So that** I can include transactions not in my bank statements.
 
 **Acceptance Criteria:**
+
 - User can access a form to add a new transaction
 - Form includes fields for date, description, amount, and category
 - Form validates input before submission
@@ -120,6 +133,7 @@ This document contains all the user stories for the Bank Statement Analyzer appl
 - User receives confirmation after successful addition
 
 **Dependencies:**
+
 - None
 
 ### US-08: Edit Transaction
@@ -129,6 +143,7 @@ This document contains all the user stories for the Bank Statement Analyzer appl
 **So that** I can correct any errors or update information.
 
 **Acceptance Criteria:**
+
 - User can select a transaction to edit
 - Edit form is pre-populated with current transaction data
 - User can modify any field
@@ -138,6 +153,7 @@ This document contains all the user stories for the Bank Statement Analyzer appl
 - User receives confirmation after successful update
 
 **Dependencies:**
+
 - US-06: View Transactions
 
 ### US-09: Delete Transaction
@@ -147,6 +163,7 @@ This document contains all the user stories for the Bank Statement Analyzer appl
 **So that** I can remove duplicate or erroneous entries.
 
 **Acceptance Criteria:**
+
 - User can select a transaction to delete
 - User is asked to confirm deletion
 - Transaction is removed from the database after confirmation
@@ -154,6 +171,7 @@ This document contains all the user stories for the Bank Statement Analyzer appl
 - User receives confirmation after successful deletion
 
 **Dependencies:**
+
 - US-06: View Transactions
 
 ## Categorization
@@ -165,6 +183,7 @@ This document contains all the user stories for the Bank Statement Analyzer appl
 **So that** I can organize my transactions according to my needs.
 
 **Acceptance Criteria:**
+
 - User can view a list of existing categories
 - User can create a new category with a name
 - User can create hierarchical categories (parent-child relationships)
@@ -174,6 +193,7 @@ This document contains all the user stories for the Bank Statement Analyzer appl
 - User receives appropriate feedback after each action
 
 **Dependencies:**
+
 - None
 
 ### US-11: Categorize Transaction
@@ -183,6 +203,7 @@ This document contains all the user stories for the Bank Statement Analyzer appl
 **So that** I can organize my spending.
 
 **Acceptance Criteria:**
+
 - User can select a category for a transaction
 - User can select from a hierarchical list of categories
 - User can change a transaction's category
@@ -192,6 +213,7 @@ This document contains all the user stories for the Bank Statement Analyzer appl
 - User receives confirmation after successful categorization
 
 **Dependencies:**
+
 - US-06: View Transactions
 - US-10: Manage Categories
 
@@ -202,6 +224,7 @@ This document contains all the user stories for the Bank Statement Analyzer appl
 **So that** I can save time on manual categorization.
 
 **Acceptance Criteria:**
+
 - User can trigger batch categorization
 - System processes uncategorized transactions
 - System assigns categories based on transaction descriptions
@@ -211,6 +234,7 @@ This document contains all the user stories for the Bank Statement Analyzer appl
 - User can still manually categorize transactions as needed
 
 **Dependencies:**
+
 - US-10: Manage Categories
 - US-11: Categorize Transaction
 
@@ -221,6 +245,7 @@ This document contains all the user stories for the Bank Statement Analyzer appl
 **So that** I can track the success and failure of categorization attempts and handle large volumes of transactions effectively.
 
 **Acceptance Criteria:**
+
 - System can accept a list of transactions for batch processing
 - System returns detailed results for each transaction including:
   - Transaction ID
@@ -234,6 +259,7 @@ This document contains all the user stories for the Bank Statement Analyzer appl
 - API supports both single and batch categorization modes
 
 **Dependencies:**
+
 - US-10: Manage Categories
 - US-11: Categorize Transaction
 - US-12: Batch Categorize Transactions
@@ -247,6 +273,7 @@ This document contains all the user stories for the Bank Statement Analyzer appl
 **So that** I can understand my spending patterns.
 
 **Acceptance Criteria:**
+
 - User can view a pie chart of spending by category
 - User can view a bar chart of spending over time
 - User can filter visualizations by date range
@@ -254,6 +281,7 @@ This document contains all the user stories for the Bank Statement Analyzer appl
 - Data is accurate and reflects categorized transactions
 
 **Dependencies:**
+
 - US-11: Categorize Transaction
 
 ### US-15: Export Transactions
@@ -263,6 +291,7 @@ This document contains all the user stories for the Bank Statement Analyzer appl
 **So that** I can use the data in other applications.
 
 **Acceptance Criteria:**
+
 - User can export transactions in CSV or JSON format
 - User can select which transactions to export
 - User can choose which fields to include in the export
@@ -270,6 +299,7 @@ This document contains all the user stories for the Bank Statement Analyzer appl
 - User can download the exported file
 
 **Dependencies:**
+
 - US-06: View Transactions
 
 ### US-16: User Authentication
@@ -279,6 +309,7 @@ This document contains all the user stories for the Bank Statement Analyzer appl
 **So that** my financial data is protected.
 
 **Acceptance Criteria:**
+
 - User can register with email and password
 - User can log in with credentials
 - User can log out
@@ -288,6 +319,7 @@ This document contains all the user stories for the Bank Statement Analyzer appl
 story- Passwords are securely hashed and stored
 
 **Dependencies:**
+
 - None
 
 ### US-17: Search and Filter Transactions
@@ -297,6 +329,7 @@ story- Passwords are securely hashed and stored
 **So that** I can find specific transactions or groups of transactions.
 
 **Acceptance Criteria:**
+
 - User can search transactions by description
 - User can filter transactions by date range
 - User can filter transactions by amount range
@@ -308,6 +341,7 @@ story- Passwords are securely hashed and stored
 - User can clear all filters
 
 **Dependencies:**
+
 - US-06: View Transactions
 
 ### US-18: Add Normalized Description Field
@@ -317,7 +351,116 @@ story- Passwords are securely hashed and stored
 **So that** we can use it for fast and consistent matching during categorization.
 
 **Acceptance Criteria:**
+
 - Add `normalized_description` column to transactions table
 - Create `normalize_description()` utility function
 - Add DB index on `normalized_description` for performance
+
+**Dependencies:**
+
+- None
+
+### US-19: Transaction Categorization Rules Database Schema
+
+**As a** developer,  
+**I want to** create a database schema to store transaction categorization rules,  
+**So that** the system can perform efficient rule-based categorization before using AI.
+
+**Acceptance Criteria:**
+
+- Create `transaction_categorization` table with:
+  - `id` (UUID, primary key)
+  - `normalized_description` (VARCHAR, unique constraint)
+  - `category_id` (UUID, foreign key to categories table)
+  - `source` (ENUM: 'MANUAL', 'AI')
+  - `created_at` (TIMESTAMP)
+  - `updated_at` (TIMESTAMP)
+- Add database indexes for performance on `normalized_description`
+- Create database migration scripts
+- Verify foreign key constraints with categories table
+- Ensure unique constraint prevents duplicate normalized descriptions
+
+**Dependencies:**
+
+- US-18: Add Normalized Description Field
+
+### US-20: Rule-Based Categorization Service
+
+**As a** developer,  
+**I want to** implement a service that categorizes transactions using database rules,  
+**So that** known transaction patterns are quickly categorized without expensive AI calls.
+
+**Acceptance Criteria:**
+
+- Create `RuleBasedCategorizationService` with:
+  - `categorizeBatch(normalizedDescriptions: string[])` method
+  - Batch processing with configurable batch size (default 100)
+  - Returns map of normalized_description → category_id
+- Service queries `transaction_categorization` table efficiently using prepared statements
+- Handle empty batches gracefully
+- Log categorization statistics (matched vs unmatched)
+- Include comprehensive unit and integration tests
+- Use database connection pooling for performance
+- Implement caching for frequently matched descriptions
+
+**Dependencies:**
+
+- US-19: Transaction Categorization Rules Database Schema
+
+### US-21: Enhanced Transaction Processing Orchestrator
+
+**As a** developer,  
+**I want to** enhance the transaction processing orchestrator to use rule-based categorization first, then AI,  
+**So that** the system efficiently processes transactions using the fastest method first.
+
+**Acceptance Criteria:**
+
+- Update `TransactionProcessor` to implement two-phase categorization:
+  - Phase 1: Extract unique normalized descriptions and attempt rule-based categorization
+  - Phase 2: Use AI categorization only for unmatched transactions
+  - Phase 3: Update transaction_categorization table with new AI results
+- Handle conflicts when AI returns different categories for same normalized description
+- Implement learning mechanism that stores successful AI categorizations as rules
+- Add comprehensive logging of processing stages and performance metrics
+- Include progress tracking for large uploads
+- Implement rollback capability on processing failures
+- Add idempotency for retry scenarios
+- Support both manual and automatic categorization triggers
+
+**Dependencies:**
+
+- US-20: Rule-Based Categorization Service
+- US-13: Enhanced Batch Categorization with Detailed Results
+
+### US-22: Categorization Rules Management
+
+**As a** user,  
+**I want to** view and manage categorization rules,  
+**So that** I can understand and improve the automatic categorization system.
+
+**Acceptance Criteria:**
+
+- Create `GET /api/categorization-rules` endpoint with:
+  - Pagination support
+  - Filtering by source (MANUAL, AI)
+  - Filtering by category
+  - Sorting by confidence, created_at
+  - Include usage statistics and match counts
+- Create `POST /api/categorization-rules` endpoint for creating manual rules
+- Create `PUT /api/categorization-rules/{id}` endpoint for updating rules
+- Create `DELETE /api/categorization-rules/{id}` endpoint for removing rules
+- Add validation to prevent conflicting rules (same normalized description)
+- Include confidence scores and last used timestamps
+- Frontend interface for rules management:
+  - View rules in paginated table
+  - Create new manual rules
+  - Edit existing rules
+  - Delete rules with confirmation
+  - Search and filter rules
+  - Bulk operations for rule management
+
+**Dependencies:**
+
+- US-19: Transaction Categorization Rules Database Schema
+- US-20: Rule-Based Categorization Service
 

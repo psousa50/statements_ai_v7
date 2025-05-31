@@ -1,7 +1,6 @@
 """
 Unit tests for text normalization utilities.
 """
-import pytest
 
 from app.common.text_normalization import normalize_description
 
