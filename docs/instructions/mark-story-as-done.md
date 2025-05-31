@@ -1,7 +1,16 @@
-# This story is done
+# Story Done
 
-1. Move the story and the plan from InProgress.md to Done.md.
-2. Update the CompletedStories.md file.
-3. If the acceptance criteria changed during development, add a new acceptance criteria section to Done.md.
-4. Empty the InProgress.md file.
+This story is complete. Update the tracking files:
 
+## 1. Move to Done
+
+- Add the story and implementation plan to a file in the Done folder.
+- Include completion date and any final notes
+
+## 2. Document Changes (if applicable)
+
+- If acceptance criteria changed during development, add an "Actual Implementation" or "Final Acceptance Criteria" section
+- Note any significant deviations from original plan with justification
+
+
+**Show the updated content for both files after the changes.**

@@ -1,8 +1,8 @@
 # Documentation
 
-Read the core documentation (ai/).
+Read the core documentation (docs/).
 
-## Core Documentation Files (in ai/docs)
+## Core Documentation Files (in docs/app)
 
 1. `PRD.md`
 
@@ -28,20 +28,14 @@ Read the core documentation (ai/).
 - Organized by resource group for clarity
 - Reflects final data model and authentication logic
 
-## Project Management Files (in ai/project-management)
+## Project Management Files (in docs/project-management)
 
-5. `UserStories.md`
-
-- Contains all the user stories
-- Each story has a title, a description, acceptance criteria, dependencies
-- It drives the development of the features
-
-6. `InProgress.md`
+5. `InProgress.md`
 
 - Plan and progress of the current story
 - Nothing in progress if it's empty
 
-7. `Done.md`
+6. `Done.md`
 
 - Record of Story title plus ACs done
 - Save any other important details/changes

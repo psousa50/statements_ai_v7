@@ -21,13 +21,7 @@ Read the core documentation (ai/docs/).
 
 - Maps technology choices for frontend, backend, DB, and infrastructure
 
-4. `UserStories.md`
-
-- Contains all the user stories
-- Each story has a title, a description, acceptance criteria, dependencies
-- It drives the development of the features
-
-5. `APIContracts.md`
+4. `APIContracts.md`
 
 - Full REST API specification covering CRUD operations
 - Includes sample request/response for each route
