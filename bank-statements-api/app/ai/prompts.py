@@ -1,7 +1,8 @@
 import json
-import pandas as pd
 from dataclasses import dataclass
 from typing import List
+
+import pandas as pd
 
 from app.domain.models.category import Category
 from app.domain.models.transaction import Transaction
