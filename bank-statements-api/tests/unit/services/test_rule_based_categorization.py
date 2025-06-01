@@ -1,10 +1,7 @@
 import uuid
-from typing import Dict, List
 from unittest.mock import MagicMock, patch
 
-from app.ports.repositories.transaction_categorization import (
-    TransactionCategorizationRepository,
-)
+from app.ports.repositories.transaction_categorization import TransactionCategorizationRepository
 from app.services.rule_based_categorization import RuleBasedCategorizationService
 
 
@@ -31,9 +28,7 @@ class TestRuleBasedCategorizationService:
 
         # Assert
         assert result == {}
-        self.repository.get_categories_by_normalized_descriptions.assert_called_once_with(
-            descriptions, batch_size=100
-        )
+        self.repository.get_categories_by_normalized_descriptions.assert_called_once_with(descriptions, batch_size=100)
 
     def test_categorize_batch_with_matches(self) -> None:
         """Test successful categorization with matches"""
@@ -46,9 +41,7 @@ class TestRuleBasedCategorizationService:
             "starbucks coffee": category_id_1,
             "walmart store": category_id_2,
         }
-        self.repository.get_categories_by_normalized_descriptions.return_value = (
-            repository_result
-        )
+        self.repository.get_categories_by_normalized_descriptions.return_value = repository_result
 
         # Execute
         result = self.service.categorize_batch(descriptions)
@@ -59,9 +52,7 @@ class TestRuleBasedCategorizationService:
             "walmart store": category_id_2,
         }
         assert result == expected
-        self.repository.get_categories_by_normalized_descriptions.assert_called_once_with(
-            descriptions, batch_size=100
-        )
+        self.repository.get_categories_by_normalized_descriptions.assert_called_once_with(descriptions, batch_size=100)
 
     def test_categorize_batch_custom_batch_size(self) -> None:
         """Test that custom batch size is passed to repository"""
@@ -71,15 +62,11 @@ class TestRuleBasedCategorizationService:
         self.repository.get_categories_by_normalized_descriptions.return_value = {}
 
         # Execute
-        result = self.service.categorize_batch(
-            descriptions, batch_size=custom_batch_size
-        )
+        result = self.service.categorize_batch(descriptions, batch_size=custom_batch_size)
 
         # Assert
         assert result == {}
-        self.repository.get_categories_by_normalized_descriptions.assert_called_once_with(
-            descriptions, batch_size=custom_batch_size
-        )
+        self.repository.get_categories_by_normalized_descriptions.assert_called_once_with(descriptions, batch_size=custom_batch_size)
 
     def test_categorize_batch_handles_duplicates(self) -> None:
         """Test that duplicate descriptions are handled correctly"""
@@ -92,9 +79,7 @@ class TestRuleBasedCategorizationService:
             "starbucks coffee": category_id_1,
             "walmart store": category_id_2,
         }
-        self.repository.get_categories_by_normalized_descriptions.return_value = (
-            repository_result
-        )
+        self.repository.get_categories_by_normalized_descriptions.return_value = repository_result
 
         # Execute
         result = self.service.categorize_batch(descriptions)
@@ -106,9 +91,7 @@ class TestRuleBasedCategorizationService:
         }
         assert result == expected
         # Repository should be called with original list (deduplication handled there)
-        self.repository.get_categories_by_normalized_descriptions.assert_called_once_with(
-            descriptions, batch_size=100
-        )
+        self.repository.get_categories_by_normalized_descriptions.assert_called_once_with(descriptions, batch_size=100)
 
     @patch("app.services.rule_based_categorization.logger")
     def test_categorize_batch_logs_statistics(self, mock_logger) -> None:
@@ -120,9 +103,7 @@ class TestRuleBasedCategorizationService:
         repository_result = {
             "starbucks coffee": category_id,
         }
-        self.repository.get_categories_by_normalized_descriptions.return_value = (
-            repository_result
-        )
+        self.repository.get_categories_by_normalized_descriptions.return_value = repository_result
 
         # Execute
         result = self.service.categorize_batch(descriptions)
@@ -147,14 +128,10 @@ class TestRuleBasedCategorizationService:
             "starbucks coffee": category_id_1,
             "walmart store": category_id_2,
         }
-        self.repository.get_categories_by_normalized_descriptions.return_value = (
-            repository_result
-        )
+        self.repository.get_categories_by_normalized_descriptions.return_value = repository_result
 
         # Enable caching
-        service_with_cache = RuleBasedCategorizationService(
-            self.repository, enable_cache=True
-        )
+        service_with_cache = RuleBasedCategorizationService(self.repository, enable_cache=True)
 
         # Execute first call
         result1 = service_with_cache.categorize_batch(descriptions)
@@ -172,9 +149,7 @@ class TestRuleBasedCategorizationService:
         """Test that repository exceptions are handled gracefully"""
         # Setup
         descriptions = ["test merchant"]
-        self.repository.get_categories_by_normalized_descriptions.side_effect = (
-            Exception("Database error")
-        )
+        self.repository.get_categories_by_normalized_descriptions.side_effect = Exception("Database error")
 
         # Execute & Assert
         try:
@@ -191,9 +166,7 @@ class TestRuleBasedCategorizationService:
         # Setup
         descriptions = ["test merchant"]
         error_message = "Database connection failed"
-        self.repository.get_categories_by_normalized_descriptions.side_effect = (
-            Exception(error_message)
-        )
+        self.repository.get_categories_by_normalized_descriptions.side_effect = Exception(error_message)
 
         # Execute
         result = self.service.categorize_batch(descriptions)
@@ -207,9 +180,7 @@ class TestRuleBasedCategorizationService:
     def test_get_cache_statistics(self) -> None:
         """Test cache statistics retrieval"""
         # Setup service with caching enabled
-        service_with_cache = RuleBasedCategorizationService(
-            self.repository, enable_cache=True
-        )
+        service_with_cache = RuleBasedCategorizationService(self.repository, enable_cache=True)
 
         # Execute
         stats = service_with_cache.get_cache_statistics()
@@ -225,9 +196,7 @@ class TestRuleBasedCategorizationService:
     def test_clear_cache(self) -> None:
         """Test cache clearing functionality"""
         # Setup service with caching
-        service_with_cache = RuleBasedCategorizationService(
-            self.repository, enable_cache=True
-        )
+        service_with_cache = RuleBasedCategorizationService(self.repository, enable_cache=True)
 
         # Add some data to cache
         descriptions = ["test merchant"]

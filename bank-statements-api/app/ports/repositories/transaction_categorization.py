@@ -12,25 +12,21 @@ class TransactionCategorizationRepository(ABC):
     """
 
     @abstractmethod
-    def get_categories_by_normalized_descriptions(
-        self, normalized_descriptions: List[str], batch_size: int = 100
-    ) -> Dict[str, UUID]:
+    def get_categories_by_normalized_descriptions(self, normalized_descriptions: List[str], batch_size: int = 100) -> Dict[str, UUID]:
         """
         Get category mappings for normalized descriptions.
-        
+
         Args:
             normalized_descriptions: List of normalized transaction descriptions
             batch_size: Size of batches for processing large lists
-            
+
         Returns:
             Dictionary mapping normalized_description -> category_id for found matches
         """
         pass
 
     @abstractmethod
-    def create_rule(
-        self, normalized_description: str, category_id: UUID, source: CategorizationSource
-    ) -> TransactionCategorization:
+    def create_rule(self, normalized_description: str, category_id: UUID, source: CategorizationSource) -> TransactionCategorization:
         """Create a new categorization rule"""
         pass
 
@@ -42,4 +38,4 @@ class TransactionCategorizationRepository(ABC):
     @abstractmethod
     def get_statistics(self) -> Dict[str, int]:
         """Get repository statistics for monitoring and analytics"""
-        pass 
+        pass

@@ -1,52 +1,32 @@
 from contextlib import contextmanager
 from typing import Generator
 
+from sqlalchemy.orm import Session
+
 from app.adapters.repositories.category import SQLAlchemyCategoryRepository
 from app.adapters.repositories.source import SQLAlchemySourceRepository
 from app.adapters.repositories.transaction import SQLAlchemyTransactionRepository
-from app.adapters.repositories.transaction_categorization import (
-    SQLAlchemyTransactionCategorizationRepository,
-)
-from app.adapters.repositories.uploaded_file import (
-    SQLAlchemyFileAnalysisMetadataRepository,
-    SQLAlchemyUploadedFileRepository,
-)
+from app.adapters.repositories.transaction_categorization import SQLAlchemyTransactionCategorizationRepository
+from app.adapters.repositories.uploaded_file import SQLAlchemyFileAnalysisMetadataRepository, SQLAlchemyUploadedFileRepository
 from app.ai.gemini_ai import GeminiAI
 from app.ai.llm_client import LLMClient
 from app.core.database import SessionLocal
 from app.services.category import CategoryService
 from app.services.rule_based_categorization import RuleBasedCategorizationService
-from app.services.schema_detection.heuristic_schema_detector import (
-    HeuristicSchemaDetector,
-)
+from app.services.schema_detection.heuristic_schema_detector import HeuristicSchemaDetector
 from app.services.source import SourceService
-from app.services.statement_processing.file_type_detector import (
-    StatementFileTypeDetector,
-)
-from app.services.statement_processing.statement_analyzer import (
-    StatementAnalyzerService,
-)
+from app.services.statement_processing.file_type_detector import StatementFileTypeDetector
+from app.services.statement_processing.statement_analyzer import StatementAnalyzerService
 from app.services.statement_processing.statement_parser import StatementParser
-from app.services.statement_processing.statement_persistence import (
-    StatementPersistenceService,
-)
-from app.services.statement_processing.transaction_normalizer import (
-    TransactionNormalizer,
-)
+from app.services.statement_processing.statement_persistence import StatementPersistenceService
+from app.services.statement_processing.transaction_normalizer import TransactionNormalizer
 from app.services.transaction import TransactionService
-from app.services.transaction_categorization.llm_transaction_categorizer import (
-    LLMTransactionCategorizer,
-)
-from app.services.transaction_categorization.transaction_categorization import (
-    TransactionCategorizationService,
-)
-from sqlalchemy.orm import Session
+from app.services.transaction_categorization.llm_transaction_categorizer import LLMTransactionCategorizer
+from app.services.transaction_categorization.transaction_categorization import TransactionCategorizationService
 
 
 class ExternalDependencies:
-    def __init__(
-        self, db: Session = SessionLocal(), llm_client: LLMClient = GeminiAI()
-    ):
+    def __init__(self, db: Session = SessionLocal(), llm_client: LLMClient = GeminiAI()):
         self.db = db
         self.llm_client = llm_client
 
@@ -86,9 +66,7 @@ def build_internal_dependencies(external: ExternalDependencies) -> InternalDepen
     source_repo = SQLAlchemySourceRepository(external.db)
     uploaded_file_repo = SQLAlchemyUploadedFileRepository(external.db)
     file_analysis_metadata_repo = SQLAlchemyFileAnalysisMetadataRepository(external.db)
-    transaction_categorization_repo = SQLAlchemyTransactionCategorizationRepository(
-        external.db
-    )
+    transaction_categorization_repo = SQLAlchemyTransactionCategorizationRepository(external.db)
 
     file_type_detector = StatementFileTypeDetector()
     statement_parser = StatementParser()
@@ -100,14 +78,10 @@ def build_internal_dependencies(external: ExternalDependencies) -> InternalDepen
     transaction_service = TransactionService(transaction_repo)
 
     # Create rule-based categorization service with caching enabled
-    rule_based_categorization_service = RuleBasedCategorizationService(
-        repository=transaction_categorization_repo, enable_cache=True
-    )
+    rule_based_categorization_service = RuleBasedCategorizationService(repository=transaction_categorization_repo, enable_cache=True)
 
     # transaction_categorizer = SimpleTransactionCategorizer(category_repo)
-    transaction_categorizer = LLMTransactionCategorizer(
-        category_repo, external.llm_client
-    )
+    transaction_categorizer = LLMTransactionCategorizer(category_repo, external.llm_client)
     transaction_categorization_service = TransactionCategorizationService(
         transaction_repository=transaction_repo,
         transaction_categorizer=transaction_categorizer,
@@ -142,9 +116,7 @@ def build_internal_dependencies(external: ExternalDependencies) -> InternalDepen
 
 
 @contextmanager
-def get_dependencies() -> Generator[
-    tuple[ExternalDependencies, InternalDependencies], None, None
-]:
+def get_dependencies() -> Generator[tuple[ExternalDependencies, InternalDependencies], None, None]:
     external = build_external_dependencies()
     internal = build_internal_dependencies(external)
     try:

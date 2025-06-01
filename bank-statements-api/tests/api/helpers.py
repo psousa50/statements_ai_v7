@@ -1,23 +1,18 @@
 from typing import Callable, Iterator
 from unittest.mock import MagicMock
 
+from fastapi import FastAPI
+from fastapi.testclient import TestClient
+
 from app.app import register_app_routes
 from app.core.dependencies import InternalDependencies
 from app.services.category import CategoryService
 from app.services.rule_based_categorization import RuleBasedCategorizationService
 from app.services.source import SourceService
-from app.services.statement_processing.statement_analyzer import (
-    StatementAnalyzerService,
-)
-from app.services.statement_processing.statement_persistence import (
-    StatementPersistenceService,
-)
+from app.services.statement_processing.statement_analyzer import StatementAnalyzerService
+from app.services.statement_processing.statement_persistence import StatementPersistenceService
 from app.services.transaction import TransactionService
-from app.services.transaction_categorization.transaction_categorization import (
-    TransactionCategorizationService,
-)
-from fastapi import FastAPI
-from fastapi.testclient import TestClient
+from app.services.transaction_categorization.transaction_categorization import TransactionCategorizationService
 
 
 def mocked_dependencies(
@@ -33,14 +28,10 @@ def mocked_dependencies(
         transaction_service=transaction_service or MagicMock(spec=TransactionService),
         category_service=category_service or MagicMock(spec=CategoryService),
         source_service=source_service or MagicMock(spec=SourceService),
-        statement_analyzer_service=statement_analyzer_service
-        or MagicMock(spec=StatementAnalyzerService),
-        statement_persistence_service=statement_persistence_service
-        or MagicMock(spec=StatementPersistenceService),
-        transaction_categorization_service=transaction_categorization_service
-        or MagicMock(spec=TransactionCategorizationService),
-        rule_based_categorization_service=rule_based_categorization_service
-        or MagicMock(spec=RuleBasedCategorizationService),
+        statement_analyzer_service=statement_analyzer_service or MagicMock(spec=StatementAnalyzerService),
+        statement_persistence_service=statement_persistence_service or MagicMock(spec=StatementPersistenceService),
+        transaction_categorization_service=transaction_categorization_service or MagicMock(spec=TransactionCategorizationService),
+        rule_based_categorization_service=rule_based_categorization_service or MagicMock(spec=RuleBasedCategorizationService),
     )
 
 
