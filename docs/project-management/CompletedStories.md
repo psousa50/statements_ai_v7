@@ -11,3 +11,4 @@
 - US-11: Categorize Transaction
 - US-12: Batch Categorize Transactions
 - US-19: Transaction Categorization Rules Database Schema
+- US-20: Rule-Based Categorization Service

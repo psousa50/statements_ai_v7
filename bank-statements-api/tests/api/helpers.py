@@ -1,17 +1,23 @@
 from typing import Callable, Iterator
 from unittest.mock import MagicMock
 
-from fastapi import FastAPI
-from fastapi.testclient import TestClient
-
 from app.app import register_app_routes
 from app.core.dependencies import InternalDependencies
 from app.services.category import CategoryService
+from app.services.rule_based_categorization import RuleBasedCategorizationService
 from app.services.source import SourceService
-from app.services.statement_processing.statement_analyzer import StatementAnalyzerService
-from app.services.statement_processing.statement_persistence import StatementPersistenceService
+from app.services.statement_processing.statement_analyzer import (
+    StatementAnalyzerService,
+)
+from app.services.statement_processing.statement_persistence import (
+    StatementPersistenceService,
+)
 from app.services.transaction import TransactionService
-from app.services.transaction_categorization.transaction_categorization import TransactionCategorizationService
+from app.services.transaction_categorization.transaction_categorization import (
+    TransactionCategorizationService,
+)
+from fastapi import FastAPI
+from fastapi.testclient import TestClient
 
 
 def mocked_dependencies(
@@ -21,25 +27,35 @@ def mocked_dependencies(
     statement_analyzer_service: StatementAnalyzerService = None,
     statement_persistence_service: StatementPersistenceService = None,
     transaction_categorization_service: TransactionCategorizationService = None,
+    rule_based_categorization_service: RuleBasedCategorizationService = None,
 ) -> InternalDependencies:
     return InternalDependencies(
         transaction_service=transaction_service or MagicMock(spec=TransactionService),
         category_service=category_service or MagicMock(spec=CategoryService),
         source_service=source_service or MagicMock(spec=SourceService),
-        statement_analyzer_service=statement_analyzer_service or MagicMock(spec=StatementAnalyzerService),
-        statement_persistence_service=statement_persistence_service or MagicMock(spec=StatementPersistenceService),
-        transaction_categorization_service=transaction_categorization_service or MagicMock(spec=TransactionCategorizationService),
+        statement_analyzer_service=statement_analyzer_service
+        or MagicMock(spec=StatementAnalyzerService),
+        statement_persistence_service=statement_persistence_service
+        or MagicMock(spec=StatementPersistenceService),
+        transaction_categorization_service=transaction_categorization_service
+        or MagicMock(spec=TransactionCategorizationService),
+        rule_based_categorization_service=rule_based_categorization_service
+        or MagicMock(spec=RuleBasedCategorizationService),
     )
 
 
-def provide_mocked_dependencies(internal_dependencies: InternalDependencies) -> Callable[[], Iterator[InternalDependencies]]:
+def provide_mocked_dependencies(
+    internal_dependencies: InternalDependencies,
+) -> Callable[[], Iterator[InternalDependencies]]:
     def _provider() -> Iterator[InternalDependencies]:
         yield internal_dependencies
 
     return _provider
 
 
-def build_client(internal_dependencies: InternalDependencies = mocked_dependencies()) -> TestClient:
+def build_client(
+    internal_dependencies: InternalDependencies = mocked_dependencies(),
+) -> TestClient:
     app = FastAPI()
     register_app_routes(app, provide_mocked_dependencies(internal_dependencies))
     client = TestClient(app)
