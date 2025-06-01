@@ -1,0 +1,6 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+activate Python env with "source .venv/bin/activate" in "bank-statements-api" folder before running any Python related command
