@@ -3,4 +3,5 @@ description:
 globs: 
 alwaysApply: true
 ---
-activate Python env with "source .venv/bin/activate" in "bank-statements-api" folder before running any Python related command
+- activate Python env with "source .venv/bin/activate" in "bank-statements-api" folder before running any Python related command
+- all imports must be at the top of the file

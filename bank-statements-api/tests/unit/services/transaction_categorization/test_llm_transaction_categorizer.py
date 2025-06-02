@@ -7,7 +7,10 @@ from unittest.mock import MagicMock, Mock
 from app.adapters.repositories.category import SQLAlchemyCategoryRepository
 from app.ai.llm_client import LLMClient
 from app.domain.models.transaction import CategorizationStatus, Transaction
-from app.services.transaction_categorization.llm_transaction_categorizer import LLMCategorizationResult, LLMTransactionCategorizer
+from app.services.transaction_categorization.llm_transaction_categorizer import (
+    LLMCategorizationResult,
+    LLMTransactionCategorizer,
+)
 
 
 class MockLLMClient(LLMClient):
@@ -49,7 +52,9 @@ class TestLLMTransactionCategorizer:
         self.categories = [self.category1, self.category2]
         self.category_repository.get_all.return_value = self.categories
 
-        self.categorizer = LLMTransactionCategorizer(categories_repository=self.category_repository, llm_client=self.llm_client)
+        self.categorizer = LLMTransactionCategorizer(
+            categories_repository=self.category_repository, llm_client=self.llm_client
+        )
 
     def test_init_loads_categories(self) -> None:
         """Test that initialization loads categories from repository"""
@@ -68,8 +73,8 @@ class TestLLMTransactionCategorizer:
 
     def test_categorize_no_categories_returns_failure(self) -> None:
         """Test that categorizing with no categories returns failure results"""
-        # Setup
-        self.categorizer.categories = []
+        # Setup - Mock repository to return empty categories
+        self.category_repository.get_all.return_value = []
         transaction = self._create_sample_transaction()
 
         # Execute
@@ -89,7 +94,15 @@ class TestLLMTransactionCategorizer:
         # Setup
         transaction = self._create_sample_transaction()
 
-        llm_response = json.dumps([{"transaction_description": transaction.description, "sub_category_id": str(self.category1_id), "confidence": 0.9}])
+        llm_response = json.dumps(
+            [
+                {
+                    "transaction_description": transaction.description,
+                    "sub_category_id": str(self.category1_id),
+                    "confidence": 0.9,
+                }
+            ]
+        )
 
         self.llm_client.fixed_response = llm_response
 
@@ -109,13 +122,23 @@ class TestLLMTransactionCategorizer:
     def test_categorize_multiple_transactions_success(self) -> None:
         """Test successful categorization of multiple transactions"""
         # Setup
-        transaction1 = self._create_sample_transaction(description="Grocery store purchase")
+        transaction1 = self._create_sample_transaction(
+            description="Grocery store purchase"
+        )
         transaction2 = self._create_sample_transaction(description="Bus ticket")
 
         llm_response = json.dumps(
             [
-                {"transaction_description": transaction1.description, "sub_category_id": str(self.category1_id), "confidence": 0.85},
-                {"transaction_description": transaction2.description, "sub_category_id": str(self.category2_id), "confidence": 0.75},
+                {
+                    "transaction_description": transaction1.description,
+                    "sub_category_id": str(self.category1_id),
+                    "confidence": 0.85,
+                },
+                {
+                    "transaction_description": transaction2.description,
+                    "sub_category_id": str(self.category2_id),
+                    "confidence": 0.75,
+                },
             ]
         )
 
@@ -181,7 +204,15 @@ class TestLLMTransactionCategorizer:
         transaction = self._create_sample_transaction()
         non_existent_category_id = uuid.uuid4()
 
-        llm_response = json.dumps([{"transaction_description": transaction.description, "sub_category_id": str(non_existent_category_id), "confidence": 0.9}])
+        llm_response = json.dumps(
+            [
+                {
+                    "transaction_description": transaction.description,
+                    "sub_category_id": str(non_existent_category_id),
+                    "confidence": 0.9,
+                }
+            ]
+        )
 
         self.llm_client.fixed_response = llm_response
 
@@ -194,7 +225,10 @@ class TestLLMTransactionCategorizer:
         assert result.transaction_id == transaction.id
         assert result.category_id is None
         assert result.status == CategorizationStatus.FAILURE
-        assert f"Category with ID {non_existent_category_id} not found" in result.error_message
+        assert (
+            f"Category with ID {non_existent_category_id} not found"
+            in result.error_message
+        )
 
     def test_categorize_no_matching_transaction_from_llm(self) -> None:
         """Test handling when LLM response doesn't match any transaction"""
@@ -202,7 +236,13 @@ class TestLLMTransactionCategorizer:
         transaction = self._create_sample_transaction()
 
         llm_response = json.dumps(
-            [{"transaction_description": "Different transaction description", "sub_category_id": str(self.category1_id), "confidence": 0.9}]
+            [
+                {
+                    "transaction_description": "Different transaction description",
+                    "sub_category_id": str(self.category1_id),
+                    "confidence": 0.9,
+                }
+            ]
         )
 
         self.llm_client.fixed_response = llm_response
@@ -227,7 +267,9 @@ class TestLLMTransactionCategorizer:
         mock_llm_client = Mock()
         mock_llm_client.generate.side_effect = Exception("LLM service unavailable")
 
-        categorizer = LLMTransactionCategorizer(categories_repository=self.category_repository, llm_client=mock_llm_client)
+        categorizer = LLMTransactionCategorizer(
+            categories_repository=self.category_repository, llm_client=mock_llm_client
+        )
 
         # Execute
         results = categorizer.categorize([transaction])
@@ -238,7 +280,9 @@ class TestLLMTransactionCategorizer:
         assert result.transaction_id == transaction.id
         assert result.category_id is None
         assert result.status == CategorizationStatus.FAILURE
-        assert "LLM categorization error: LLM service unavailable" in result.error_message
+        assert (
+            "LLM categorization error: LLM service unavailable" in result.error_message
+        )
 
     def test_categorize_partial_llm_response(self) -> None:
         """Test handling when LLM response has fewer results than transactions"""
@@ -247,7 +291,15 @@ class TestLLMTransactionCategorizer:
         transaction2 = self._create_sample_transaction(description="Second transaction")
 
         # LLM response only has result for first transaction
-        llm_response = json.dumps([{"transaction_description": transaction1.description, "sub_category_id": str(self.category1_id), "confidence": 0.8}])
+        llm_response = json.dumps(
+            [
+                {
+                    "transaction_description": transaction1.description,
+                    "sub_category_id": str(self.category1_id),
+                    "confidence": 0.8,
+                }
+            ]
+        )
 
         self.llm_client.fixed_response = llm_response
 
@@ -293,7 +345,11 @@ class TestLLMTransactionCategorizer:
     def test_llm_categorization_result_dataclass(self) -> None:
         """Test LLMCategorizationResult dataclass"""
         # Execute
-        result = LLMCategorizationResult(transaction_description="Test transaction", sub_category_id=123, confidence=0.85)
+        result = LLMCategorizationResult(
+            transaction_description="Test transaction",
+            sub_category_id=123,
+            confidence=0.85,
+        )
 
         # Assert
         assert result.transaction_description == "Test transaction"
@@ -308,7 +364,15 @@ class TestLLMTransactionCategorizer:
         # Convert UUID to int for the response (simulating LLM behavior)
         category_id_as_int = int(str(self.category1_id).replace("-", ""), 16) % (2**31)
 
-        llm_response = json.dumps([{"transaction_description": transaction.description, "sub_category_id": category_id_as_int, "confidence": 0.9}])
+        llm_response = json.dumps(
+            [
+                {
+                    "transaction_description": transaction.description,
+                    "sub_category_id": category_id_as_int,
+                    "confidence": 0.9,
+                }
+            ]
+        )
 
         self.llm_client.fixed_response = llm_response
 
@@ -321,14 +385,22 @@ class TestLLMTransactionCategorizer:
         assert result.transaction_id == transaction.id
         assert result.category_id is None
         assert result.status == CategorizationStatus.FAILURE
-        assert f"Category with ID {category_id_as_int} not found" in result.error_message
+        assert (
+            f"Category with ID {category_id_as_int} not found" in result.error_message
+        )
 
     def test_categorize_prompt_generation(self) -> None:
         """Test that categorization generates proper prompt for LLM"""
         # Setup
         transaction = self._create_sample_transaction()
         self.llm_client.fixed_response = json.dumps(
-            [{"transaction_description": transaction.description, "sub_category_id": str(self.category1_id), "confidence": 0.9}]
+            [
+                {
+                    "transaction_description": transaction.description,
+                    "sub_category_id": str(self.category1_id),
+                    "confidence": 0.9,
+                }
+            ]
         )
 
         # Execute
@@ -339,7 +411,9 @@ class TestLLMTransactionCategorizer:
         assert transaction.description in self.llm_client.last_prompt
         assert "Available Categories" in self.llm_client.last_prompt
 
-    def _create_sample_transaction(self, description: str = "Test transaction") -> Transaction:
+    def _create_sample_transaction(
+        self, description: str = "Test transaction"
+    ) -> Transaction:
         """Helper method to create a sample transaction"""
         transaction = Mock()
         transaction.id = uuid.uuid4()

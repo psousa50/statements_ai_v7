@@ -7,7 +7,7 @@ export interface ColumnMapping {
   category?: string
 }
 
-export type SampleData = string[][];
+export type SampleData = string[][]
 
 export interface StatementAnalysisResponse {
   uploaded_file_id: string
@@ -31,6 +31,22 @@ export interface StatementUploadResponse {
   transactions_saved: number
   success: boolean
   message: string
+
+  // Synchronous categorization results
+  total_processed: number
+  rule_based_matches: number
+  match_rate_percentage: number
+  processing_time_ms: number
+
+  // Background job information (if unmatched transactions exist)
+  background_job?: {
+    job_id: string
+    status: string
+    remaining_transactions: number
+    estimated_completion_seconds?: number
+    status_url: string
+  }
+
   sample_data?: SampleData[]
 }
 
@@ -44,15 +60,11 @@ export const statementClient: StatementClient = {
     const formData = new FormData()
     formData.append('file', file)
 
-    const response = await axios.post<StatementAnalysisResponse>(
-      '/api/v1/statements/analyze',
-      formData,
-      {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      }
-    )
+    const response = await axios.post<StatementAnalysisResponse>('/api/v1/statements/analyze', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    })
     return response.data
   },
 

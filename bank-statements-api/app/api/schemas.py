@@ -3,9 +3,9 @@ from decimal import Decimal
 from typing import Dict, List, Optional, Sequence
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
-
+from app.domain.models.background_job import JobStatus
 from app.domain.models.transaction import CategorizationStatus
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class CategoryBase(BaseModel):
@@ -131,6 +131,15 @@ class StatementUploadResponse(BaseModel):
     success: bool
     message: str
 
+    # Synchronous categorization results
+    total_processed: int
+    rule_based_matches: int
+    match_rate_percentage: float
+    processing_time_ms: int
+
+    # Background job information (if unmatched transactions exist)
+    background_job: Optional["BackgroundJobInfoResponse"] = None
+
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -159,5 +168,56 @@ class CategorizationResponse(BaseModel):
     categorized_count: int
     success: bool
     message: str
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+# Background Job API Schemas
+class BackgroundJobInfoResponse(BaseModel):
+    """Background job information for API responses"""
+
+    job_id: UUID
+    status: JobStatus
+    remaining_transactions: int
+    estimated_completion_seconds: Optional[int] = None
+    status_url: str
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class JobStatusResponse(BaseModel):
+    """Response for job status endpoint"""
+
+    job_id: UUID
+    status: JobStatus
+    progress: Optional["JobProgressResponse"] = None
+    result: Optional["JobResultResponse"] = None
+    error_message: Optional[str] = None
+    created_at: datetime
+    started_at: Optional[datetime] = None
+    completed_at: Optional[datetime] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class JobProgressResponse(BaseModel):
+    """Job progress information"""
+
+    total_transactions: int
+    processed_transactions: int
+    remaining_transactions: int
+    completion_percentage: float
+    estimated_completion_seconds: Optional[int] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class JobResultResponse(BaseModel):
+    """Job completion results"""
+
+    total_processed: int
+    successfully_categorized: int
+    failed_categorizations: int
+    processing_time_ms: int
 
     model_config = ConfigDict(from_attributes=True)

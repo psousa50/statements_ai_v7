@@ -37,6 +37,9 @@ class LLMTransactionCategorizer(TransactionCategorizer):
         if not transactions:
             return []
 
+        # Refresh categories to ensure they're attached to the current session
+        self.refresh_rules()
+
         if not self.categories:
             return [
                 CategorizationResult(
@@ -60,12 +63,17 @@ class LLMTransactionCategorizer(TransactionCategorizer):
             if not json_result:
                 return [
                     CategorizationResult(
-                        transaction_id=transaction.id, category_id=None, status=CategorizationStatus.FAILURE, error_message="Invalid JSON response from LLM"
+                        transaction_id=transaction.id,
+                        category_id=None,
+                        status=CategorizationStatus.FAILURE,
+                        error_message="Invalid JSON response from LLM",
                     )
                     for transaction in transactions
                 ]
 
-            llm_categorization_results = [LLMCategorizationResult(**result) for result in json_result]
+            llm_categorization_results = [
+                LLMCategorizationResult(**result) for result in json_result
+            ]
 
             # Map LLM results back to transactions
             results = []
@@ -84,10 +92,20 @@ class LLMTransactionCategorizer(TransactionCategorizer):
                         # Convert to string first in case it's an integer
                         sub_category_id_str = str(matching_result.sub_category_id)
                         category_uuid = UUID(sub_category_id_str)
-                        category = next((cat for cat in self.categories if cat.id == category_uuid), None)
+                        category = next(
+                            (cat for cat in self.categories if cat.id == category_uuid),
+                            None,
+                        )
                     except ValueError:
                         # If sub_category_id is not a valid UUID, try string comparison
-                        category = next((cat for cat in self.categories if str(cat.id) == str(matching_result.sub_category_id)), None)
+                        category = next(
+                            (
+                                cat
+                                for cat in self.categories
+                                if str(cat.id) == str(matching_result.sub_category_id)
+                            ),
+                            None,
+                        )
 
                     if category:
                         results.append(
@@ -110,7 +128,10 @@ class LLMTransactionCategorizer(TransactionCategorizer):
                 else:
                     results.append(
                         CategorizationResult(
-                            transaction_id=transaction.id, category_id=None, status=CategorizationStatus.FAILURE, error_message="No matching result from LLM"
+                            transaction_id=transaction.id,
+                            category_id=None,
+                            status=CategorizationStatus.FAILURE,
+                            error_message="No matching result from LLM",
                         )
                     )
 
@@ -120,7 +141,10 @@ class LLMTransactionCategorizer(TransactionCategorizer):
             logger_content.error(f"Error in LLM categorization: {str(e)}")
             return [
                 CategorizationResult(
-                    transaction_id=transaction.id, category_id=None, status=CategorizationStatus.FAILURE, error_message=f"LLM categorization error: {str(e)}"
+                    transaction_id=transaction.id,
+                    category_id=None,
+                    status=CategorizationStatus.FAILURE,
+                    error_message=f"LLM categorization error: {str(e)}",
                 )
                 for transaction in transactions
             ]

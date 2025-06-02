@@ -2,12 +2,11 @@ from datetime import datetime
 from typing import List, Optional
 from uuid import UUID
 
-from sqlalchemy.orm import Session
-
 from app.common.text_normalization import normalize_description
 from app.domain.dto.statement_processing import TransactionDTO
 from app.domain.models.transaction import CategorizationStatus, Transaction
 from app.ports.repositories.transaction import TransactionRepository
+from sqlalchemy.orm import Session
 
 
 class SQLAlchemyTransactionRepository(TransactionRepository):
@@ -26,10 +25,16 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         return transaction
 
     def get_by_id(self, transaction_id: UUID) -> Optional[Transaction]:
-        return self.db_session.query(Transaction).filter(Transaction.id == transaction_id).first()
+        return (
+            self.db_session.query(Transaction)
+            .filter(Transaction.id == transaction_id)
+            .first()
+        )
 
     def get_all(self) -> List[Transaction]:
-        return self.db_session.query(Transaction).order_by(Transaction.date.desc()).all()
+        return (
+            self.db_session.query(Transaction).order_by(Transaction.date.desc()).all()
+        )
 
     def update(self, transaction: Transaction) -> Transaction:
         self.db_session.commit()
@@ -55,7 +60,9 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
                 date=date_val,
                 amount=transaction_dto.amount,
                 description=transaction_dto.description,
-                normalized_description=normalize_description(transaction_dto.description),
+                normalized_description=normalize_description(
+                    transaction_dto.description
+                ),
                 uploaded_file_id=transaction_dto.uploaded_file_id,
             )
 
@@ -71,8 +78,18 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
     def get_oldest_uncategorized(self, limit: int = 10) -> List[Transaction]:
         return (
             self.db_session.query(Transaction)
-            .filter(Transaction.categorization_status == CategorizationStatus.UNCATEGORIZED)
+            .filter(
+                Transaction.categorization_status == CategorizationStatus.UNCATEGORIZED
+            )
             .order_by(Transaction.date.asc())
             .limit(limit)
+            .all()
+        )
+
+    def get_by_uploaded_file_id(self, uploaded_file_id: UUID) -> List[Transaction]:
+        return (
+            self.db_session.query(Transaction)
+            .filter(Transaction.uploaded_file_id == uploaded_file_id)
+            .order_by(Transaction.date.asc())
             .all()
         )

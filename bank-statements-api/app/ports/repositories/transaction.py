@@ -62,3 +62,16 @@ class TransactionRepository(ABC):
             List of uncategorized transactions, ordered by date (oldest first)
         """
         pass
+
+    @abstractmethod
+    def get_by_uploaded_file_id(self, uploaded_file_id: UUID) -> List[Transaction]:
+        """
+        Get all transactions associated with an uploaded file
+
+        Args:
+            uploaded_file_id: UUID of the uploaded file
+
+        Returns:
+            List of transactions from the uploaded file
+        """
+        pass

@@ -12,3 +12,4 @@
 - US-12: Batch Categorize Transactions
 - US-19: Transaction Categorization Rules Database Schema
 - US-20: Rule-Based Categorization Service
+- US-21: Enhanced Transaction Processing Orchestrator (Dec 19, 2024)
