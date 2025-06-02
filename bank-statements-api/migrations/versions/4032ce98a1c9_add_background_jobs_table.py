@@ -46,9 +46,7 @@ def upgrade() -> None:
         sa.Column("progress", postgresql.JSONB(), nullable=False, server_default="{}"),
         sa.Column("result", postgresql.JSONB(), nullable=False, server_default="{}"),
         sa.Column("error_message", sa.Text(), nullable=True),
-        sa.Column(
-            "created_at", sa.DateTime(), nullable=False, server_default=sa.text("now()")
-        ),
+        sa.Column("created_at", sa.DateTime(), nullable=False, server_default=sa.text("now()")),
         sa.Column("started_at", sa.DateTime(), nullable=True),
         sa.Column("completed_at", sa.DateTime(), nullable=True),
         sa.Column("retry_count", sa.Integer(), nullable=False, server_default="0"),
@@ -62,9 +60,7 @@ def upgrade() -> None:
     # Create indexes for better query performance
     op.create_index("ix_background_jobs_status", "background_jobs", ["status"])
     op.create_index("ix_background_jobs_job_type", "background_jobs", ["job_type"])
-    op.create_index(
-        "ix_background_jobs_uploaded_file_id", "background_jobs", ["uploaded_file_id"]
-    )
+    op.create_index("ix_background_jobs_uploaded_file_id", "background_jobs", ["uploaded_file_id"])
     op.create_index("ix_background_jobs_created_at", "background_jobs", ["created_at"])
 
 
@@ -82,7 +78,5 @@ def downgrade() -> None:
     job_type = postgresql.ENUM("AI_CATEGORIZATION", name="jobtype")
     job_type.drop(op.get_bind())
 
-    job_status = postgresql.ENUM(
-        "PENDING", "IN_PROGRESS", "COMPLETED", "FAILED", "CANCELLED", name="jobstatus"
-    )
+    job_status = postgresql.ENUM("PENDING", "IN_PROGRESS", "COMPLETED", "FAILED", "CANCELLED", name="jobstatus")
     job_status.drop(op.get_bind())

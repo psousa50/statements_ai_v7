@@ -65,9 +65,7 @@ class BackgroundJobRepository(ABC):
         pass
 
     @abstractmethod
-    def get_jobs_by_uploaded_file_id(
-        self, uploaded_file_id: UUID
-    ) -> List[BackgroundJob]:
+    def get_jobs_by_uploaded_file_id(self, uploaded_file_id: UUID) -> List[BackgroundJob]:
         """Get all jobs associated with an uploaded file"""
         pass
 

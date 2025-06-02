@@ -2,9 +2,10 @@ from datetime import datetime, timedelta, timezone
 from typing import List, Optional
 from uuid import UUID
 
+from sqlalchemy.orm import Session
+
 from app.domain.models.background_job import BackgroundJob, JobStatus, JobType
 from app.ports.repositories.background_job import BackgroundJobRepository
-from sqlalchemy.orm import Session
 
 
 class SQLAlchemyBackgroundJobRepository(BackgroundJobRepository):
@@ -25,37 +26,19 @@ class SQLAlchemyBackgroundJobRepository(BackgroundJobRepository):
 
     def get_by_id(self, job_id: UUID) -> Optional[BackgroundJob]:
         """Get a background job by ID"""
-        return (
-            self.db_session.query(BackgroundJob)
-            .filter(BackgroundJob.id == job_id)
-            .first()
-        )
+        return self.db_session.query(BackgroundJob).filter(BackgroundJob.id == job_id).first()
 
     def get_all(self) -> List[BackgroundJob]:
         """Get all background jobs"""
-        return (
-            self.db_session.query(BackgroundJob)
-            .order_by(BackgroundJob.created_at.desc())
-            .all()
-        )
+        return self.db_session.query(BackgroundJob).order_by(BackgroundJob.created_at.desc()).all()
 
     def get_by_status(self, status: JobStatus) -> List[BackgroundJob]:
         """Get all jobs with a specific status"""
-        return (
-            self.db_session.query(BackgroundJob)
-            .filter(BackgroundJob.status == status)
-            .order_by(BackgroundJob.created_at.desc())
-            .all()
-        )
+        return self.db_session.query(BackgroundJob).filter(BackgroundJob.status == status).order_by(BackgroundJob.created_at.desc()).all()
 
     def get_by_type(self, job_type: JobType) -> List[BackgroundJob]:
         """Get all jobs of a specific type"""
-        return (
-            self.db_session.query(BackgroundJob)
-            .filter(BackgroundJob.job_type == job_type)
-            .order_by(BackgroundJob.created_at.desc())
-            .all()
-        )
+        return self.db_session.query(BackgroundJob).filter(BackgroundJob.job_type == job_type).order_by(BackgroundJob.created_at.desc()).all()
 
     def get_pending_jobs(self, limit: int = 10) -> List[BackgroundJob]:
         """Get pending jobs ordered by creation time"""
@@ -110,16 +93,9 @@ class SQLAlchemyBackgroundJobRepository(BackgroundJobRepository):
             return True
         return False
 
-    def get_jobs_by_uploaded_file_id(
-        self, uploaded_file_id: UUID
-    ) -> List[BackgroundJob]:
+    def get_jobs_by_uploaded_file_id(self, uploaded_file_id: UUID) -> List[BackgroundJob]:
         """Get all jobs associated with an uploaded file"""
-        return (
-            self.db_session.query(BackgroundJob)
-            .filter(BackgroundJob.uploaded_file_id == uploaded_file_id)
-            .order_by(BackgroundJob.created_at.desc())
-            .all()
-        )
+        return self.db_session.query(BackgroundJob).filter(BackgroundJob.uploaded_file_id == uploaded_file_id).order_by(BackgroundJob.created_at.desc()).all()
 
     def cleanup_completed_jobs(self, days_old: int = 7) -> int:
         """Clean up completed jobs older than specified days"""
@@ -129,9 +105,7 @@ class SQLAlchemyBackgroundJobRepository(BackgroundJobRepository):
         jobs_to_delete = (
             self.db_session.query(BackgroundJob)
             .filter(
-                BackgroundJob.status.in_(
-                    [JobStatus.COMPLETED, JobStatus.FAILED, JobStatus.CANCELLED]
-                ),
+                BackgroundJob.status.in_([JobStatus.COMPLETED, JobStatus.FAILED, JobStatus.CANCELLED]),
                 BackgroundJob.completed_at < cutoff_date,
             )
             .all()

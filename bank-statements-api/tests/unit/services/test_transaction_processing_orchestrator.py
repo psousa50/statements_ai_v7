@@ -2,18 +2,16 @@ import uuid
 from datetime import date
 from decimal import Decimal
 from unittest.mock import MagicMock
-from uuid import UUID
 
 import pytest
+
 from app.domain.models.background_job import BackgroundJob, JobStatus, JobType
 from app.domain.models.processing import BackgroundJobInfo, SyncCategorizationResult
 from app.domain.models.transaction import CategorizationStatus, Transaction
 from app.ports.repositories.transaction import TransactionRepository
 from app.services.background.background_job_service import BackgroundJobService
 from app.services.rule_based_categorization import RuleBasedCategorizationService
-from app.services.transaction_processing_orchestrator import (
-    TransactionProcessingOrchestrator,
-)
+from app.services.transaction_processing_orchestrator import TransactionProcessingOrchestrator
 
 
 class TestTransactionProcessingOrchestrator:
@@ -103,9 +101,7 @@ class TestTransactionProcessingOrchestrator:
         }
 
         # Act
-        result = orchestrator.process_transactions(
-            uploaded_file_id, sample_transactions
-        )
+        result = orchestrator.process_transactions(uploaded_file_id, sample_transactions)
 
         # Assert
         assert isinstance(result, SyncCategorizationResult)
@@ -150,14 +146,10 @@ class TestTransactionProcessingOrchestrator:
             # "unknown merchant xyz" not matched
         }
 
-        mock_background_job_service.queue_ai_categorization_job.return_value = (
-            background_job
-        )
+        mock_background_job_service.queue_ai_categorization_job.return_value = background_job
 
         # Act
-        result = orchestrator.process_transactions(
-            uploaded_file_id, sample_transactions
-        )
+        result = orchestrator.process_transactions(uploaded_file_id, sample_transactions)
 
         # Assert
         assert isinstance(result, SyncCategorizationResult)
@@ -169,23 +161,12 @@ class TestTransactionProcessingOrchestrator:
 
         # Verify background job was queued with unmatched transaction ID
         unmatched_transaction_id = sample_transactions[2].id  # The unknown merchant
-        mock_background_job_service.queue_ai_categorization_job.assert_called_once_with(
-            uploaded_file_id, [unmatched_transaction_id]
-        )
+        mock_background_job_service.queue_ai_categorization_job.assert_called_once_with(uploaded_file_id, [unmatched_transaction_id])
 
         # Verify transaction statuses
-        assert (
-            sample_transactions[0].categorization_status
-            == CategorizationStatus.CATEGORIZED
-        )
-        assert (
-            sample_transactions[1].categorization_status
-            == CategorizationStatus.CATEGORIZED
-        )
-        assert (
-            sample_transactions[2].categorization_status
-            == CategorizationStatus.UNCATEGORIZED
-        )
+        assert sample_transactions[0].categorization_status == CategorizationStatus.CATEGORIZED
+        assert sample_transactions[1].categorization_status == CategorizationStatus.CATEGORIZED
+        assert sample_transactions[2].categorization_status == CategorizationStatus.UNCATEGORIZED
 
     def test_process_transactions_no_matches(
         self,
@@ -206,14 +187,10 @@ class TestTransactionProcessingOrchestrator:
         # Mock rule-based categorization returns no matches
         mock_rule_based_service.categorize_batch.return_value = {}
 
-        mock_background_job_service.queue_ai_categorization_job.return_value = (
-            background_job
-        )
+        mock_background_job_service.queue_ai_categorization_job.return_value = background_job
 
         # Act
-        result = orchestrator.process_transactions(
-            uploaded_file_id, sample_transactions
-        )
+        result = orchestrator.process_transactions(uploaded_file_id, sample_transactions)
 
         # Assert
         assert isinstance(result, SyncCategorizationResult)
@@ -225,20 +202,14 @@ class TestTransactionProcessingOrchestrator:
 
         # Verify background job was queued with all transaction IDs
         expected_unmatched_ids = [t.id for t in sample_transactions]
-        mock_background_job_service.queue_ai_categorization_job.assert_called_once_with(
-            uploaded_file_id, expected_unmatched_ids
-        )
+        mock_background_job_service.queue_ai_categorization_job.assert_called_once_with(uploaded_file_id, expected_unmatched_ids)
 
         # Verify all transactions remain uncategorized
         for transaction in sample_transactions:
-            assert (
-                transaction.categorization_status == CategorizationStatus.UNCATEGORIZED
-            )
+            assert transaction.categorization_status == CategorizationStatus.UNCATEGORIZED
             assert transaction.category_id is None
 
-    def test_process_transactions_empty_list(
-        self, orchestrator, mock_rule_based_service, mock_background_job_service
-    ):
+    def test_process_transactions_empty_list(self, orchestrator, mock_rule_based_service, mock_background_job_service):
         """Test processing empty transaction list"""
         # Arrange
         uploaded_file_id = uuid.uuid4()
@@ -288,25 +259,17 @@ class TestTransactionProcessingOrchestrator:
             # "unknown merchant xyz" not matched
         }
 
-        mock_background_job_service.queue_ai_categorization_job.return_value = (
-            background_job
-        )
+        mock_background_job_service.queue_ai_categorization_job.return_value = background_job
         mock_background_job_service.get_background_job_info.return_value = job_info
 
         # Act
-        sync_result = orchestrator.process_transactions(
-            uploaded_file_id, sample_transactions
-        )
-        bg_job_info = orchestrator.get_background_job_info(
-            background_job.id, "/api/v1/jobs/{}/status"
-        )
+        sync_result = orchestrator.process_transactions(uploaded_file_id, sample_transactions)
+        bg_job_info = orchestrator.get_background_job_info(background_job.id, "/api/v1/jobs/{}/status")
 
         # Assert
         assert sync_result.has_unmatched_transactions
         assert bg_job_info == job_info
-        mock_background_job_service.get_background_job_info.assert_called_once_with(
-            background_job.id, "/api/v1/jobs/{}/status"
-        )
+        mock_background_job_service.get_background_job_info.assert_called_once_with(background_job.id, "/api/v1/jobs/{}/status")
 
     def test_process_transactions_rule_based_service_exception(
         self,
@@ -318,9 +281,7 @@ class TestTransactionProcessingOrchestrator:
         """Test handling exception from rule-based categorization service"""
         # Arrange
         uploaded_file_id = uuid.uuid4()
-        mock_rule_based_service.categorize_batch.side_effect = Exception(
-            "Rule service failed"
-        )
+        mock_rule_based_service.categorize_batch.side_effect = Exception("Rule service failed")
 
         # Act & Assert
         with pytest.raises(Exception, match="Rule service failed"):
@@ -345,9 +306,7 @@ class TestTransactionProcessingOrchestrator:
             "starbucks coffee": uuid.uuid4(),
             # Other transactions not matched
         }
-        mock_background_job_service.queue_ai_categorization_job.side_effect = Exception(
-            "Background job service failed"
-        )
+        mock_background_job_service.queue_ai_categorization_job.side_effect = Exception("Background job service failed")
 
         # Act & Assert
         with pytest.raises(Exception, match="Background job service failed"):
@@ -373,9 +332,7 @@ class TestTransactionProcessingOrchestrator:
         # Assert
         assert processing_time == 500
 
-    def test_get_background_job_info_not_found(
-        self, orchestrator, mock_background_job_service
-    ):
+    def test_get_background_job_info_not_found(self, orchestrator, mock_background_job_service):
         """Test getting background job info when job doesn't exist"""
         # Arrange
         job_id = uuid.uuid4()
@@ -386,13 +343,9 @@ class TestTransactionProcessingOrchestrator:
 
         # Assert
         assert result is None
-        mock_background_job_service.get_background_job_info.assert_called_once_with(
-            job_id, "/api/v1/jobs/{}/status"
-        )
+        mock_background_job_service.get_background_job_info.assert_called_once_with(job_id, "/api/v1/jobs/{}/status")
 
-    def test_process_transactions_deduplication_optimization(
-        self, orchestrator, mock_rule_based_service, mock_background_job_service
-    ):
+    def test_process_transactions_deduplication_optimization(self, orchestrator, mock_rule_based_service, mock_background_job_service):
         """Test that duplicate normalized descriptions are deduplicated before calling rule service"""
         # Arrange
         uploaded_file_id = uuid.uuid4()
@@ -441,9 +394,7 @@ class TestTransactionProcessingOrchestrator:
         }
 
         # Act
-        result = orchestrator.process_transactions(
-            uploaded_file_id, duplicate_transactions
-        )
+        result = orchestrator.process_transactions(uploaded_file_id, duplicate_transactions)
 
         # Assert
         # Verify that categorize_batch was called with deduplicated list

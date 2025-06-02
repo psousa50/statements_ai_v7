@@ -71,9 +71,7 @@ class LLMTransactionCategorizer(TransactionCategorizer):
                     for transaction in transactions
                 ]
 
-            llm_categorization_results = [
-                LLMCategorizationResult(**result) for result in json_result
-            ]
+            llm_categorization_results = [LLMCategorizationResult(**result) for result in json_result]
 
             # Map LLM results back to transactions
             results = []
@@ -99,11 +97,7 @@ class LLMTransactionCategorizer(TransactionCategorizer):
                     except ValueError:
                         # If sub_category_id is not a valid UUID, try string comparison
                         category = next(
-                            (
-                                cat
-                                for cat in self.categories
-                                if str(cat.id) == str(matching_result.sub_category_id)
-                            ),
+                            (cat for cat in self.categories if str(cat.id) == str(matching_result.sub_category_id)),
                             None,
                         )
 

@@ -47,9 +47,7 @@ async def main():
             processed_count = await process_pending_jobs(internal)
 
             if processed_count > 0:
-                logger.info(
-                    f"Background job processor completed successfully. Processed {processed_count} jobs."
-                )
+                logger.info(f"Background job processor completed successfully. Processed {processed_count} jobs.")
             else:
                 logger.info("No pending jobs found.")
 

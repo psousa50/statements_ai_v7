@@ -2,21 +2,12 @@ from datetime import datetime, timezone
 from io import BytesIO
 from uuid import uuid4
 
-from app.api.schemas import (
-    JobStatusResponse,
-    StatementAnalysisResponse,
-    StatementUploadRequest,
-    StatementUploadResponse,
-)
-from app.domain.dto.statement_processing import (
-    AnalysisResultDTO,
-    PersistenceRequestDTO,
-    PersistenceResultDTO,
-)
-from app.domain.models.background_job import BackgroundJob, JobStatus, JobType
-from app.domain.models.processing import BackgroundJobInfo, SyncCategorizationResult
 from fastapi.encoders import jsonable_encoder
 
+from app.api.schemas import JobStatusResponse, StatementAnalysisResponse, StatementUploadRequest, StatementUploadResponse
+from app.domain.dto.statement_processing import AnalysisResultDTO
+from app.domain.models.background_job import JobStatus
+from app.domain.models.processing import BackgroundJobInfo
 from tests.api.helpers import build_client, mocked_dependencies
 
 
@@ -28,19 +19,17 @@ class TestStatementRoutes:
         internal_dependencies = mocked_dependencies()
         client = build_client(internal_dependencies)
 
-        internal_dependencies.statement_analyzer_service.analyze.return_value = (
-            AnalysisResultDTO(
-                uploaded_file_id=uploaded_file_id,
-                file_type="CSV",
-                column_mapping={
-                    "date": "Date",
-                    "amount": "Amount",
-                    "description": "Description",
-                },
-                header_row_index=0,
-                data_start_row_index=1,
-                sample_data=[["2023-01-01", 100.00, "Test"]],
-            )
+        internal_dependencies.statement_analyzer_service.analyze.return_value = AnalysisResultDTO(
+            uploaded_file_id=uploaded_file_id,
+            file_type="CSV",
+            column_mapping={
+                "date": "Date",
+                "amount": "Amount",
+                "description": "Description",
+            },
+            header_row_index=0,
+            data_start_row_index=1,
+            sample_data=[["2023-01-01", 100.00, "Test"]],
         )
 
         response = client.post(
@@ -56,18 +45,14 @@ class TestStatementRoutes:
         assert analysis_result.column_mapping["date"] == "Date"
 
         internal_dependencies.statement_analyzer_service.analyze.assert_called_once()
-        args, kwargs = (
-            internal_dependencies.statement_analyzer_service.analyze.call_args
-        )
+        args, kwargs = internal_dependencies.statement_analyzer_service.analyze.call_args
         assert kwargs["filename"] == "test.csv"
         assert kwargs["file_content"] == file_content
 
     def test_analyze_statement_error(self):
         internal_dependencies = mocked_dependencies()
         client = build_client(internal_dependencies)
-        internal_dependencies.statement_analyzer_service.analyze.side_effect = (
-            Exception("Test error")
-        )
+        internal_dependencies.statement_analyzer_service.analyze.side_effect = Exception("Test error")
 
         response = client.post(
             "/api/v1/statements/analyze",
@@ -83,22 +68,19 @@ class TestStatementRoutes:
         uploaded_file_id = str(uuid4())
         source_id = uuid4()
 
-        # Mock persistence service
-        internal_dependencies.statement_persistence_service.persist.return_value = (
-            PersistenceResultDTO(
-                uploaded_file_id=uploaded_file_id, transactions_saved=10
-            )
-        )
+        # Mock the new upload service
+        from app.services.statement_processing.statement_upload import StatementUploadResult
 
-        # Mock orchestrator - all transactions matched by rules
-        sync_result = SyncCategorizationResult(
+        upload_result = StatementUploadResult(
+            uploaded_file_id=uploaded_file_id,
+            transactions_saved=10,
             total_processed=10,
             rule_based_matches=10,
-            unmatched_transaction_ids=[],
-            processing_time_ms=150,
             match_rate_percentage=100.0,
+            processing_time_ms=150,
+            background_job_info=None,
         )
-        internal_dependencies.transaction_processing_orchestrator.process_transactions.return_value = sync_result
+        internal_dependencies.statement_upload_service.upload_and_process.return_value = upload_result
 
         request_data = StatementUploadRequest(
             uploaded_file_id=uploaded_file_id,
@@ -112,9 +94,7 @@ class TestStatementRoutes:
             source_id=str(source_id),
         )
 
-        response = client.post(
-            "/api/v1/statements/upload", json=jsonable_encoder(request_data)
-        )
+        response = client.post("/api/v1/statements/upload", json=jsonable_encoder(request_data))
 
         persistence_result = StatementUploadResponse.model_validate(response.json())
 
@@ -128,26 +108,15 @@ class TestStatementRoutes:
         assert persistence_result.processing_time_ms == 150
         assert persistence_result.background_job is None
 
-        internal_dependencies.statement_persistence_service.persist.assert_called_once()
-        call_args = (
-            internal_dependencies.statement_persistence_service.persist.call_args[0][0]
-        )
-        assert isinstance(call_args, PersistenceRequestDTO)
-        assert call_args.source_id == source_id
+        # Verify the service was called with the correct request
+        internal_dependencies.statement_upload_service.upload_and_process.assert_called_once_with(request_data)
 
     def test_upload_statement_error(self):
         internal_dependencies = mocked_dependencies()
         client = build_client(internal_dependencies)
 
-        # Mock persistence service success
-        internal_dependencies.statement_persistence_service.persist.return_value = (
-            PersistenceResultDTO(uploaded_file_id=str(uuid4()), transactions_saved=5)
-        )
-
-        # Mock orchestrator failure
-        internal_dependencies.transaction_processing_orchestrator.process_transactions.side_effect = Exception(
-            "Test error"
-        )
+        # Mock service failure
+        internal_dependencies.statement_upload_service.upload_and_process.side_effect = Exception("Test error")
 
         request_data = StatementUploadRequest(
             uploaded_file_id=str(uuid4()),
@@ -161,9 +130,7 @@ class TestStatementRoutes:
             source_id=str(uuid4()),
         )
 
-        response = client.post(
-            "/api/v1/statements/upload", json=jsonable_encoder(request_data)
-        )
+        response = client.post("/api/v1/statements/upload", json=jsonable_encoder(request_data))
 
         assert response.status_code == 400
         assert "Test error" in response.json()["detail"]
@@ -176,23 +143,6 @@ class TestStatementRoutes:
         source_id = uuid4()
         job_id = uuid4()
 
-        # Mock persistence service
-        internal_dependencies.statement_persistence_service.persist.return_value = (
-            PersistenceResultDTO(
-                uploaded_file_id=uploaded_file_id, transactions_saved=10
-            )
-        )
-
-        # Mock orchestrator - partial matches requiring background job
-        sync_result = SyncCategorizationResult(
-            total_processed=10,
-            rule_based_matches=7,
-            unmatched_transaction_ids=[uuid4(), uuid4(), uuid4()],
-            processing_time_ms=250,
-            match_rate_percentage=70.0,
-        )
-        internal_dependencies.transaction_processing_orchestrator.process_transactions.return_value = sync_result
-
         # Mock background job info
         background_job_info = BackgroundJobInfo(
             job_id=job_id,
@@ -201,7 +151,20 @@ class TestStatementRoutes:
             estimated_completion_seconds=45,
             status_url=f"/api/v1/transactions/categorization-jobs/{job_id}/status",
         )
-        internal_dependencies.transaction_processing_orchestrator.get_background_job_info.return_value = background_job_info
+
+        # Mock the new upload service with background job
+        from app.services.statement_processing.statement_upload import StatementUploadResult
+
+        upload_result = StatementUploadResult(
+            uploaded_file_id=uploaded_file_id,
+            transactions_saved=10,
+            total_processed=10,
+            rule_based_matches=7,
+            match_rate_percentage=70.0,
+            processing_time_ms=250,
+            background_job_info=background_job_info,
+        )
+        internal_dependencies.statement_upload_service.upload_and_process.return_value = upload_result
 
         # Mock background job repository to prevent hanging when process_pending_jobs is called
         internal_dependencies.background_job_repository.claim_single_pending_job.return_value = None
@@ -218,9 +181,7 @@ class TestStatementRoutes:
             source_id=str(source_id),
         )
 
-        response = client.post(
-            "/api/v1/statements/upload", json=jsonable_encoder(request_data)
-        )
+        response = client.post("/api/v1/statements/upload", json=jsonable_encoder(request_data))
 
         upload_result = StatementUploadResponse.model_validate(response.json())
 
@@ -241,23 +202,14 @@ class TestStatementRoutes:
         assert upload_result.background_job.estimated_completion_seconds == 45
 
     def test_upload_orchestrator_error(self):
-        """Test upload when orchestrator fails"""
+        """Test upload when service fails"""
         internal_dependencies = mocked_dependencies()
         client = build_client(internal_dependencies)
         uploaded_file_id = str(uuid4())
         source_id = uuid4()
 
-        # Mock persistence service success
-        internal_dependencies.statement_persistence_service.persist.return_value = (
-            PersistenceResultDTO(
-                uploaded_file_id=uploaded_file_id, transactions_saved=5
-            )
-        )
-
-        # Mock orchestrator failure
-        internal_dependencies.transaction_processing_orchestrator.process_transactions.side_effect = Exception(
-            "Orchestrator failed"
-        )
+        # Mock service failure
+        internal_dependencies.statement_upload_service.upload_and_process.side_effect = Exception("Service failed")
 
         request_data = StatementUploadRequest(
             uploaded_file_id=uploaded_file_id,
@@ -271,12 +223,10 @@ class TestStatementRoutes:
             source_id=str(source_id),
         )
 
-        response = client.post(
-            "/api/v1/statements/upload", json=jsonable_encoder(request_data)
-        )
+        response = client.post("/api/v1/statements/upload", json=jsonable_encoder(request_data))
 
         assert response.status_code == 400
-        assert "Orchestrator failed" in response.json()["detail"]
+        assert "Service failed" in response.json()["detail"]
 
 
 class TestJobStatusRoutes:
@@ -307,9 +257,7 @@ class TestJobStatusRoutes:
         }
         internal_dependencies.background_job_service.get_job_status_for_api.return_value = job_status_response
 
-        response = client.get(
-            f"/api/v1/transactions/categorization-jobs/{job_id}/status"
-        )
+        response = client.get(f"/api/v1/transactions/categorization-jobs/{job_id}/status")
 
         status_result = JobStatusResponse.model_validate(response.json())
 
@@ -351,9 +299,7 @@ class TestJobStatusRoutes:
         }
         internal_dependencies.background_job_service.get_job_status_for_api.return_value = job_status_response
 
-        response = client.get(
-            f"/api/v1/transactions/categorization-jobs/{job_id}/status"
-        )
+        response = client.get(f"/api/v1/transactions/categorization-jobs/{job_id}/status")
 
         status_result = JobStatusResponse.model_validate(response.json())
 
@@ -375,9 +321,7 @@ class TestJobStatusRoutes:
         # Mock background job service returning None
         internal_dependencies.background_job_service.get_job_status_for_api.return_value = None
 
-        response = client.get(
-            f"/api/v1/transactions/categorization-jobs/{job_id}/status"
-        )
+        response = client.get(f"/api/v1/transactions/categorization-jobs/{job_id}/status")
 
         assert response.status_code == 404
         assert "not found" in response.json()["detail"].lower()

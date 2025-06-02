@@ -1,7 +1,8 @@
-from unittest.mock import AsyncMock, Mock, patch
+from unittest.mock import Mock
 from uuid import uuid4
 
 import pytest
+
 from app.domain.models.background_job import BackgroundJob, JobStatus, JobType
 from app.domain.models.transaction import CategorizationStatus, Transaction
 from app.workers.job_processor import JobProcessor, process_pending_jobs
@@ -82,9 +83,7 @@ class TestJobProcessor:
         mock_internal.background_job_repository.claim_single_pending_job.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_process_pending_jobs_single_job_success(
-        self, job_processor, mock_internal, sample_job, sample_transactions
-    ):
+    async def test_process_pending_jobs_single_job_success(self, job_processor, mock_internal, sample_job, sample_transactions):
         """Test successful processing of a single job"""
         # Setup
         mock_internal.background_job_repository.claim_single_pending_job.side_effect = [
@@ -94,9 +93,7 @@ class TestJobProcessor:
 
         # Mock transaction retrieval
         def mock_get_by_id(transaction_id):
-            return next(
-                (t for t in sample_transactions if t.id == transaction_id), None
-            )
+            return next((t for t in sample_transactions if t.id == transaction_id), None)
 
         mock_internal.transaction_service.transaction_repository.get_by_id.side_effect = mock_get_by_id
 
@@ -105,9 +102,7 @@ class TestJobProcessor:
         mock_result.status = CategorizationStatus.CATEGORIZED
         mock_result.category_id = uuid4()
         mock_result.confidence = 0.85
-        mock_internal.transaction_categorization_service.transaction_categorizer.categorize.return_value = [
-            mock_result
-        ]
+        mock_internal.transaction_categorization_service.transaction_categorizer.categorize.return_value = [mock_result]
 
         # Execute
         result = await job_processor.process_pending_jobs()
@@ -117,9 +112,7 @@ class TestJobProcessor:
         mock_internal.background_job_service.mark_job_completed.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_process_pending_jobs_job_failure(
-        self, job_processor, mock_internal, sample_job
-    ):
+    async def test_process_pending_jobs_job_failure(self, job_processor, mock_internal, sample_job):
         """Test handling of job processing failure"""
         # Setup
         mock_internal.background_job_repository.claim_single_pending_job.side_effect = [
@@ -139,9 +132,7 @@ class TestJobProcessor:
         # but not be marked as failed - this is the new behavior
 
     @pytest.mark.asyncio
-    async def test_categorize_single_transaction_success(
-        self, job_processor, mock_internal, sample_transactions
-    ):
+    async def test_categorize_single_transaction_success(self, job_processor, mock_internal, sample_transactions):
         """Test successful categorization of a single transaction"""
         # Setup
         transaction = sample_transactions[0]
@@ -154,9 +145,7 @@ class TestJobProcessor:
         mock_internal.transaction_service.transaction_repository.get_by_id.return_value = transaction
 
         # Mock the transaction_categorizer.categorize method
-        mock_internal.transaction_categorization_service.transaction_categorizer.categorize.return_value = [
-            mock_result
-        ]
+        mock_internal.transaction_categorization_service.transaction_categorizer.categorize.return_value = [mock_result]
 
         # Mock the rule checking to return None (no existing rule)
         mock_internal.transaction_categorization_repository.get_rule_by_normalized_description.return_value = None
@@ -170,9 +159,7 @@ class TestJobProcessor:
         mock_internal.transaction_categorization_repository.create_rule.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_categorize_single_transaction_failure(
-        self, job_processor, mock_internal, sample_transactions
-    ):
+    async def test_categorize_single_transaction_failure(self, job_processor, mock_internal, sample_transactions):
         """Test handling of AI categorization failure"""
         # Setup
         transaction = sample_transactions[0]
@@ -188,17 +175,13 @@ class TestJobProcessor:
         # Verify transaction repository was called to mark the transaction as failed
         mock_internal.transaction_service.transaction_repository.update.assert_called_once()
 
-    def test_get_transactions_by_ids(
-        self, job_processor, mock_internal, sample_transactions
-    ):
+    def test_get_transactions_by_ids(self, job_processor, mock_internal, sample_transactions):
         """Test retrieving transactions by their IDs"""
         # Setup
         transaction_ids = [t.id for t in sample_transactions]
 
         def mock_get_by_id(transaction_id):
-            return next(
-                (t for t in sample_transactions if t.id == transaction_id), None
-            )
+            return next((t for t in sample_transactions if t.id == transaction_id), None)
 
         mock_internal.transaction_service.transaction_repository.get_by_id.side_effect = mock_get_by_id
 
@@ -222,16 +205,12 @@ class TestJobProcessor:
         assert len(result) == 0
 
     @pytest.mark.asyncio
-    async def test_ai_categorization_job_progress_updates(
-        self, job_processor, mock_internal, sample_job, sample_transactions
-    ):
+    async def test_ai_categorization_job_progress_updates(self, job_processor, mock_internal, sample_job, sample_transactions):
         """Test that progress updates are sent during AI categorization"""
 
         # Setup
         def mock_get_by_id(transaction_id):
-            return next(
-                (t for t in sample_transactions if t.id == transaction_id), None
-            )
+            return next((t for t in sample_transactions if t.id == transaction_id), None)
 
         mock_internal.transaction_service.transaction_repository.get_by_id.side_effect = mock_get_by_id
 
@@ -239,9 +218,7 @@ class TestJobProcessor:
         mock_result.status = CategorizationStatus.CATEGORIZED
         mock_result.category_id = uuid4()
         mock_result.confidence = 0.85
-        mock_internal.transaction_categorization_service.transaction_categorizer.categorize.return_value = [
-            mock_result
-        ]
+        mock_internal.transaction_categorization_service.transaction_categorizer.categorize.return_value = [mock_result]
 
         # Execute
         await job_processor._process_ai_categorization_job(sample_job)

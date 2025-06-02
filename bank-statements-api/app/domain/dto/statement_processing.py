@@ -59,6 +59,9 @@ class TransactionDTO:
         source_id: Optional[str] = None,
         id: Optional[str] = None,
         created_at: Optional[datetime] = None,
+        category_id: Optional[UUID] = None,
+        categorization_status: Optional[str] = None,
+        normalized_description: Optional[str] = None,
     ):
         self.id = id
         self.date = date
@@ -67,6 +70,9 @@ class TransactionDTO:
         self.uploaded_file_id = uploaded_file_id
         self.source_id = source_id
         self.created_at = created_at
+        self.category_id = category_id
+        self.categorization_status = categorization_status
+        self.normalized_description = normalized_description
 
     @classmethod
     def from_entity(cls, entity):
@@ -78,4 +84,9 @@ class TransactionDTO:
             uploaded_file_id=str(entity.uploaded_file_id),
             source_id=str(entity.source_id) if entity.source_id else None,
             created_at=entity.created_at,
+            category_id=entity.category_id,
+            categorization_status=entity.categorization_status.value
+            if entity.categorization_status
+            else None,
+            normalized_description=entity.normalized_description,
         )

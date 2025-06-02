@@ -16,7 +16,7 @@ def main():
         # Get statistics
         stats = internal.transaction_categorization_repository.get_statistics()
 
-        print(f"\n📈 Rules Summary:")
+        print("\n📈 Rules Summary:")
         print(f"  Total rules: {stats['total_rules']}")
         print(f"  Manual rules: {stats['manual_rules']}")
         print(f"  AI rules: {stats['ai_rules']}")

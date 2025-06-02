@@ -1,9 +1,9 @@
 import uuid
 from datetime import datetime, timezone
 from unittest.mock import MagicMock
-from uuid import UUID
 
 import pytest
+
 from app.domain.models.background_job import BackgroundJob, JobStatus, JobType
 from app.domain.models.processing import BackgroundJobInfo, ProcessingProgress
 from app.ports.repositories.background_job import BackgroundJobRepository
@@ -38,9 +38,7 @@ class TestBackgroundJobService:
         )
         return job
 
-    def test_queue_ai_categorization_job_success(
-        self, service, mock_repository, sample_job
-    ):
+    def test_queue_ai_categorization_job_success(self, service, mock_repository, sample_job):
         """Test successfully queuing an AI categorization job"""
         # Arrange
         uploaded_file_id = uuid.uuid4()
@@ -48,9 +46,7 @@ class TestBackgroundJobService:
         mock_repository.create.return_value = sample_job
 
         # Act
-        result = service.queue_ai_categorization_job(
-            uploaded_file_id, unmatched_transaction_ids
-        )
+        result = service.queue_ai_categorization_job(uploaded_file_id, unmatched_transaction_ids)
 
         # Assert
         assert result == sample_job
@@ -60,25 +56,17 @@ class TestBackgroundJobService:
         assert created_job.uploaded_file_id == uploaded_file_id
         assert created_job.status == JobStatus.PENDING
         assert "unmatched_transaction_ids" in created_job.progress
-        assert created_job.progress["unmatched_transaction_ids"] == [
-            str(tid) for tid in unmatched_transaction_ids
-        ]
+        assert created_job.progress["unmatched_transaction_ids"] == [str(tid) for tid in unmatched_transaction_ids]
 
-    def test_queue_ai_categorization_job_empty_transaction_ids(
-        self, service, mock_repository
-    ):
+    def test_queue_ai_categorization_job_empty_transaction_ids(self, service, mock_repository):
         """Test queuing job with empty transaction IDs raises error"""
         # Arrange
         uploaded_file_id = uuid.uuid4()
         unmatched_transaction_ids = []
 
         # Act & Assert
-        with pytest.raises(
-            ValueError, match="Cannot queue job with empty transaction list"
-        ):
-            service.queue_ai_categorization_job(
-                uploaded_file_id, unmatched_transaction_ids
-            )
+        with pytest.raises(ValueError, match="Cannot queue job with empty transaction list"):
+            service.queue_ai_categorization_job(uploaded_file_id, unmatched_transaction_ids)
 
         mock_repository.create.assert_not_called()
 
@@ -257,9 +245,7 @@ class TestBackgroundJobService:
         mock_repository.get_by_id.assert_called_once_with(job_id)
         mock_repository.update.assert_not_called()
 
-    def test_retry_failed_job_not_failed_status(
-        self, service, mock_repository, sample_job
-    ):
+    def test_retry_failed_job_not_failed_status(self, service, mock_repository, sample_job):
         """Test retrying job that is not in failed status"""
         # Arrange
         job_id = sample_job.id
@@ -281,9 +267,7 @@ class TestBackgroundJobService:
         mock_repository.get_by_id.return_value = sample_job
 
         # Act
-        result = service.get_background_job_info(
-            job_id, "http://api.com/jobs/{}/status"
-        )
+        result = service.get_background_job_info(job_id, "http://api.com/jobs/{}/status")
 
         # Assert
         assert isinstance(result, BackgroundJobInfo)
@@ -299,9 +283,7 @@ class TestBackgroundJobService:
         mock_repository.get_by_id.return_value = None
 
         # Act
-        result = service.get_background_job_info(
-            job_id, "http://api.com/jobs/{}/status"
-        )
+        result = service.get_background_job_info(job_id, "http://api.com/jobs/{}/status")
 
         # Assert
         assert result is None
@@ -314,9 +296,7 @@ class TestBackgroundJobService:
         avg_processing_time_per_transaction = 0.5  # 500ms per transaction
 
         # Act
-        result = service.estimate_completion_time(
-            remaining_transactions, avg_processing_time_per_transaction
-        )
+        result = service.estimate_completion_time(remaining_transactions, avg_processing_time_per_transaction)
 
         # Assert
         assert result == 25  # 50 * 0.5 = 25 seconds

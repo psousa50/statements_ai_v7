@@ -1,0 +1,234 @@
+import logging
+from typing import List
+from uuid import UUID
+
+from app.api.schemas import StatementUploadRequest
+from app.domain.dto.statement_processing import TransactionDTO
+
+logger = logging.getLogger("app")
+
+
+class StatementUploadResult:
+    def __init__(
+        self,
+        uploaded_file_id: str,
+        transactions_saved: int,
+        total_processed: int,
+        rule_based_matches: int,
+        match_rate_percentage: float,
+        processing_time_ms: int,
+        background_job_info=None,
+    ):
+        self.uploaded_file_id = uploaded_file_id
+        self.transactions_saved = transactions_saved
+        self.total_processed = total_processed
+        self.rule_based_matches = rule_based_matches
+        self.match_rate_percentage = match_rate_percentage
+        self.processing_time_ms = processing_time_ms
+        self.background_job_info = background_job_info
+
+
+class StatementUploadService:
+    def __init__(
+        self,
+        statement_parser,
+        transaction_normalizer,
+        uploaded_file_repo,
+        file_analysis_metadata_repo,
+        transaction_processing_orchestrator,
+        statement_persistence_service,
+    ):
+        self.statement_parser = statement_parser
+        self.transaction_normalizer = transaction_normalizer
+        self.uploaded_file_repo = uploaded_file_repo
+        self.file_analysis_metadata_repo = file_analysis_metadata_repo
+        self.transaction_processing_orchestrator = transaction_processing_orchestrator
+        self.statement_persistence_service = statement_persistence_service
+
+    def upload_and_process(
+        self, upload_request: StatementUploadRequest
+    ) -> StatementUploadResult:
+        """
+        Complete statement upload and processing flow:
+        1. Parse file to transaction DTOs
+        2. Process DTOs (categorization, etc.)
+        3. Save processed transactions to database
+        """
+        # Step 1: Parse file to transaction DTOs (without persisting)
+        transaction_dtos = self._parse_to_transaction_dtos(
+            uploaded_file_id=upload_request.uploaded_file_id,
+            column_mapping=upload_request.column_mapping,
+            header_row_index=upload_request.header_row_index,
+            data_start_row_index=upload_request.data_start_row_index,
+            source_id=UUID(upload_request.source_id),
+        )
+
+        # Step 2: Process transaction DTOs (categorization, background job setup)
+        processing_result = (
+            self.transaction_processing_orchestrator.process_transaction_dtos(
+                transaction_dtos=transaction_dtos,
+                uploaded_file_id=UUID(upload_request.uploaded_file_id),
+            )
+        )
+
+        # Step 3: Save processed transactions with all data complete
+        persistence_result = (
+            self.statement_persistence_service.save_processed_transactions(
+                processed_dtos=processing_result.processed_dtos,
+                source_id=UUID(upload_request.source_id),
+                uploaded_file_id=upload_request.uploaded_file_id,
+            )
+        )
+
+        # Step 3.5: Schedule background job for unmatched transactions (after persistence)
+        background_job_info = None
+        if processing_result.has_unmatched_transactions:
+            # Get the persisted transaction IDs for unmatched transactions
+            unmatched_transaction_ids = self._get_unmatched_transaction_ids(
+                upload_request.uploaded_file_id, processing_result.processed_dtos
+            )
+
+            if unmatched_transaction_ids:
+                logger.info(
+                    f"Queuing background job for {len(unmatched_transaction_ids)} unmatched transactions"
+                )
+                # Get the background job service from the orchestrator
+                background_job_service = (
+                    self.transaction_processing_orchestrator.background_job_service
+                )
+                background_job = background_job_service.queue_ai_categorization_job(
+                    UUID(upload_request.uploaded_file_id), unmatched_transaction_ids
+                )
+
+                # Create background job info for response
+                from app.domain.models.processing import BackgroundJobInfo
+
+                background_job_info = BackgroundJobInfo(
+                    job_id=background_job.id,
+                    status=background_job.status,
+                    remaining_transactions=len(unmatched_transaction_ids),
+                    estimated_completion_seconds=len(unmatched_transaction_ids)
+                    * 2,  # Rough estimate
+                    status_url=f"/api/v1/transactions/categorization-jobs/{background_job.id}/status",
+                )
+
+        # Step 4: Save file analysis metadata for future duplicate detection
+        self._save_file_analysis_metadata(
+            uploaded_file_id=upload_request.uploaded_file_id,
+            column_mapping=upload_request.column_mapping,
+            header_row_index=upload_request.header_row_index,
+            data_start_row_index=upload_request.data_start_row_index,
+            source_id=UUID(upload_request.source_id),
+        )
+
+        # Step 5: Return result (background job info already set above)
+        return StatementUploadResult(
+            uploaded_file_id=persistence_result.uploaded_file_id,
+            transactions_saved=persistence_result.transactions_saved,
+            total_processed=processing_result.total_processed,
+            rule_based_matches=processing_result.rule_based_matches,
+            match_rate_percentage=processing_result.match_rate_percentage,
+            processing_time_ms=processing_result.processing_time_ms,
+            background_job_info=background_job_info,
+        )
+
+    def _parse_to_transaction_dtos(
+        self,
+        uploaded_file_id: str,
+        column_mapping: dict,
+        header_row_index: int,
+        data_start_row_index: int,
+        source_id: UUID,
+    ) -> List[TransactionDTO]:
+        """Parse uploaded file to transaction DTOs without persisting"""
+        # Get uploaded file
+        uploaded_file = self.uploaded_file_repo.find_by_id(uploaded_file_id)
+        file_content = uploaded_file.content
+        file_type = uploaded_file.file_type
+
+        # Parse file to dataframe
+        raw_df = self.statement_parser.parse(file_content, file_type)
+
+        # Process dataframe (header/data row handling)
+        from app.services.common import process_dataframe
+
+        processed_df = process_dataframe(raw_df, header_row_index, data_start_row_index)
+
+        # Normalize columns
+        normalized_df = self.transaction_normalizer.normalize(
+            processed_df, column_mapping
+        )
+
+        # Convert to DTOs
+        transaction_dtos = []
+        for _, row in normalized_df.iterrows():
+            transaction_dto = TransactionDTO(
+                date=row["date"],
+                amount=row["amount"],
+                description=row["description"],
+                uploaded_file_id=uploaded_file_id,
+                source_id=str(source_id),
+            )
+            transaction_dtos.append(transaction_dto)
+
+        return transaction_dtos
+
+    def _save_file_analysis_metadata(
+        self,
+        uploaded_file_id: str,
+        column_mapping: dict,
+        header_row_index: int,
+        data_start_row_index: int,
+        source_id: UUID,
+    ):
+        """Save file analysis metadata for duplicate detection"""
+        uploaded_file = self.uploaded_file_repo.find_by_id(uploaded_file_id)
+
+        from app.services.common import compute_hash
+
+        file_hash = compute_hash(uploaded_file.filename, uploaded_file.content)
+
+        existing_metadata = self.file_analysis_metadata_repo.find_by_hash(file_hash)
+        if not existing_metadata:
+            self.file_analysis_metadata_repo.save(
+                file_hash=file_hash,
+                column_mapping=column_mapping,
+                header_row_index=header_row_index,
+                data_start_row_index=data_start_row_index,
+                source_id=source_id,
+            )
+
+    def _get_unmatched_transaction_ids(
+        self, uploaded_file_id: str, processed_dtos: List[TransactionDTO]
+    ) -> List[UUID]:
+        """Get transaction IDs for DTOs that were not categorized by rules"""
+        # Get all persisted transactions for this uploaded file
+        from app.domain.models.transaction import CategorizationStatus
+
+        # We need access to the transaction repository to get the persisted IDs
+        # For now, let's get unmatched DTOs and then query the database
+        unmatched_descriptions = [
+            dto.normalized_description
+            for dto in processed_dtos
+            if dto.categorization_status == CategorizationStatus.UNCATEGORIZED
+        ]
+
+        if not unmatched_descriptions:
+            return []
+
+        # Query the database for transactions with these descriptions
+        # This is a bit hacky but necessary since DTOs don't have IDs until after persistence
+        transaction_repo = (
+            self.transaction_processing_orchestrator.transaction_repository
+        )
+        all_transactions = transaction_repo.get_by_uploaded_file_id(
+            UUID(uploaded_file_id)
+        )
+
+        unmatched_ids = [
+            t.id
+            for t in all_transactions
+            if t.normalized_description in unmatched_descriptions
+        ]
+
+        return unmatched_ids

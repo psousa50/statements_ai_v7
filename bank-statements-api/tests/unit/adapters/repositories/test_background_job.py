@@ -1,11 +1,12 @@
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from unittest.mock import MagicMock
 
 import pytest
+from sqlalchemy.orm import Session
+
 from app.adapters.repositories.background_job import SQLAlchemyBackgroundJobRepository
 from app.domain.models.background_job import BackgroundJob, JobStatus, JobType
-from sqlalchemy.orm import Session
 
 
 class TestSQLAlchemyBackgroundJobRepository:

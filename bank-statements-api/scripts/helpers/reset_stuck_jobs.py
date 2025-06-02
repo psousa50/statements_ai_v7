@@ -28,9 +28,7 @@ def reset_stuck_jobs():
     with get_dependencies() as (external, internal):
         # Get all IN_PROGRESS jobs
         all_jobs = internal.background_job_repository.get_all()
-        in_progress_jobs = [
-            job for job in all_jobs if job.status == JobStatus.IN_PROGRESS
-        ]
+        in_progress_jobs = [job for job in all_jobs if job.status == JobStatus.IN_PROGRESS]
 
         if not in_progress_jobs:
             print("✅ No IN_PROGRESS jobs found.")
@@ -39,9 +37,7 @@ def reset_stuck_jobs():
         print(f"📋 Found {len(in_progress_jobs)} IN_PROGRESS jobs:")
 
         now = datetime.now(timezone.utc)
-        stuck_threshold = timedelta(
-            minutes=30
-        )  # Consider stuck if running for more than 30 minutes
+        stuck_threshold = timedelta(minutes=30)  # Consider stuck if running for more than 30 minutes
         reset_count = 0
 
         for job in in_progress_jobs:
@@ -54,9 +50,7 @@ def reset_stuck_jobs():
                 running_time = now - job.created_at
                 status = "STUCK (never started)"
 
-            print(
-                f"  🔍 Job {job.id[:8]}... ({job.job_type}) - {status} (running for {running_time})"
-            )
+            print(f"  🔍 Job {job.id[:8]}... ({job.job_type}) - {status} (running for {running_time})")
 
             # Reset stuck jobs
             if running_time > stuck_threshold:
@@ -65,9 +59,7 @@ def reset_stuck_jobs():
                 # Reset job status
                 job.status = JobStatus.PENDING
                 job.started_at = None
-                job.error_message = (
-                    f"Reset from stuck IN_PROGRESS state after {running_time}"
-                )
+                job.error_message = f"Reset from stuck IN_PROGRESS state after {running_time}"
 
                 # Update in database
                 internal.background_job_repository.update(job)

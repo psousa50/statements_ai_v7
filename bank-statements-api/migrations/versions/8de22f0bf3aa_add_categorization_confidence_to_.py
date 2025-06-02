@@ -22,9 +22,7 @@ def upgrade() -> None:
     # Add categorization_confidence column to transactions table
     op.add_column(
         "transactions",
-        sa.Column(
-            "categorization_confidence", sa.Numeric(precision=5, scale=4), nullable=True
-        ),
+        sa.Column("categorization_confidence", sa.Numeric(precision=5, scale=4), nullable=True),
     )
 
 

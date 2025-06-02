@@ -7,10 +7,7 @@ from unittest.mock import MagicMock, Mock
 from app.adapters.repositories.category import SQLAlchemyCategoryRepository
 from app.ai.llm_client import LLMClient
 from app.domain.models.transaction import CategorizationStatus, Transaction
-from app.services.transaction_categorization.llm_transaction_categorizer import (
-    LLMCategorizationResult,
-    LLMTransactionCategorizer,
-)
+from app.services.transaction_categorization.llm_transaction_categorizer import LLMCategorizationResult, LLMTransactionCategorizer
 
 
 class MockLLMClient(LLMClient):
@@ -52,9 +49,7 @@ class TestLLMTransactionCategorizer:
         self.categories = [self.category1, self.category2]
         self.category_repository.get_all.return_value = self.categories
 
-        self.categorizer = LLMTransactionCategorizer(
-            categories_repository=self.category_repository, llm_client=self.llm_client
-        )
+        self.categorizer = LLMTransactionCategorizer(categories_repository=self.category_repository, llm_client=self.llm_client)
 
     def test_init_loads_categories(self) -> None:
         """Test that initialization loads categories from repository"""
@@ -122,9 +117,7 @@ class TestLLMTransactionCategorizer:
     def test_categorize_multiple_transactions_success(self) -> None:
         """Test successful categorization of multiple transactions"""
         # Setup
-        transaction1 = self._create_sample_transaction(
-            description="Grocery store purchase"
-        )
+        transaction1 = self._create_sample_transaction(description="Grocery store purchase")
         transaction2 = self._create_sample_transaction(description="Bus ticket")
 
         llm_response = json.dumps(
@@ -225,10 +218,7 @@ class TestLLMTransactionCategorizer:
         assert result.transaction_id == transaction.id
         assert result.category_id is None
         assert result.status == CategorizationStatus.FAILURE
-        assert (
-            f"Category with ID {non_existent_category_id} not found"
-            in result.error_message
-        )
+        assert f"Category with ID {non_existent_category_id} not found" in result.error_message
 
     def test_categorize_no_matching_transaction_from_llm(self) -> None:
         """Test handling when LLM response doesn't match any transaction"""
@@ -267,9 +257,7 @@ class TestLLMTransactionCategorizer:
         mock_llm_client = Mock()
         mock_llm_client.generate.side_effect = Exception("LLM service unavailable")
 
-        categorizer = LLMTransactionCategorizer(
-            categories_repository=self.category_repository, llm_client=mock_llm_client
-        )
+        categorizer = LLMTransactionCategorizer(categories_repository=self.category_repository, llm_client=mock_llm_client)
 
         # Execute
         results = categorizer.categorize([transaction])
@@ -280,9 +268,7 @@ class TestLLMTransactionCategorizer:
         assert result.transaction_id == transaction.id
         assert result.category_id is None
         assert result.status == CategorizationStatus.FAILURE
-        assert (
-            "LLM categorization error: LLM service unavailable" in result.error_message
-        )
+        assert "LLM categorization error: LLM service unavailable" in result.error_message
 
     def test_categorize_partial_llm_response(self) -> None:
         """Test handling when LLM response has fewer results than transactions"""
@@ -385,9 +371,7 @@ class TestLLMTransactionCategorizer:
         assert result.transaction_id == transaction.id
         assert result.category_id is None
         assert result.status == CategorizationStatus.FAILURE
-        assert (
-            f"Category with ID {category_id_as_int} not found" in result.error_message
-        )
+        assert f"Category with ID {category_id_as_int} not found" in result.error_message
 
     def test_categorize_prompt_generation(self) -> None:
         """Test that categorization generates proper prompt for LLM"""
@@ -411,9 +395,7 @@ class TestLLMTransactionCategorizer:
         assert transaction.description in self.llm_client.last_prompt
         assert "Available Categories" in self.llm_client.last_prompt
 
-    def _create_sample_transaction(
-        self, description: str = "Test transaction"
-    ) -> Transaction:
+    def _create_sample_transaction(self, description: str = "Test transaction") -> Transaction:
         """Helper method to create a sample transaction"""
         transaction = Mock()
         transaction.id = uuid.uuid4()

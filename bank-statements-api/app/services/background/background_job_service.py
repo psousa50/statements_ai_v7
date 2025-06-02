@@ -19,9 +19,7 @@ class BackgroundJobService:
     def __init__(self, repository: BackgroundJobRepository):
         self.repository = repository
 
-    def queue_ai_categorization_job(
-        self, uploaded_file_id: UUID, unmatched_transaction_ids: List[UUID]
-    ) -> BackgroundJob:
+    def queue_ai_categorization_job(self, uploaded_file_id: UUID, unmatched_transaction_ids: List[UUID]) -> BackgroundJob:
         """Queue an AI categorization job for unmatched transactions"""
         if not unmatched_transaction_ids:
             raise ValueError("Cannot queue job with empty transaction list")
@@ -32,9 +30,7 @@ class BackgroundJobService:
             status=JobStatus.PENDING,
             uploaded_file_id=uploaded_file_id,
             progress={
-                "unmatched_transaction_ids": [
-                    str(tid) for tid in unmatched_transaction_ids
-                ],
+                "unmatched_transaction_ids": [str(tid) for tid in unmatched_transaction_ids],
                 "total_transactions": len(unmatched_transaction_ids),
                 "processed_transactions": 0,
                 "current_batch": 0,
@@ -46,9 +42,7 @@ class BackgroundJobService:
 
         # Save to repository
         created_job = self.repository.create(job)
-        logger.info(
-            f"Queued AI categorization job {created_job.id} for {len(unmatched_transaction_ids)} transactions"
-        )
+        logger.info(f"Queued AI categorization job {created_job.id} for {len(unmatched_transaction_ids)} transactions")
 
         return created_job
 
@@ -56,9 +50,7 @@ class BackgroundJobService:
         """Get job status by ID"""
         return self.repository.get_by_id(job_id)
 
-    def update_job_progress(
-        self, job_id: UUID, progress: ProcessingProgress
-    ) -> Optional[BackgroundJob]:
+    def update_job_progress(self, job_id: UUID, progress: ProcessingProgress) -> Optional[BackgroundJob]:
         """Update job progress"""
         job = self.repository.get_by_id(job_id)
         if not job:
@@ -76,15 +68,11 @@ class BackgroundJobService:
         )
 
         if progress.estimated_completion_seconds:
-            job.progress["estimated_completion_seconds"] = (
-                progress.estimated_completion_seconds
-            )
+            job.progress["estimated_completion_seconds"] = progress.estimated_completion_seconds
 
         # Save updated job
         updated_job = self.repository.update(job)
-        logger.debug(
-            f"Updated progress for job {job_id}: {progress.percentage:.1f}% complete"
-        )
+        logger.debug(f"Updated progress for job {job_id}: {progress.percentage:.1f}% complete")
 
         return updated_job
 
@@ -103,9 +91,7 @@ class BackgroundJobService:
 
         return updated_job
 
-    def mark_job_completed(
-        self, job_id: UUID, result: dict = None
-    ) -> Optional[BackgroundJob]:
+    def mark_job_completed(self, job_id: UUID, result: dict = None) -> Optional[BackgroundJob]:
         """Mark job as completed with results"""
         job = self.repository.get_by_id(job_id)
         if not job:
@@ -120,9 +106,7 @@ class BackgroundJobService:
 
         return updated_job
 
-    def mark_job_failed(
-        self, job_id: UUID, error_message: str = None
-    ) -> Optional[BackgroundJob]:
+    def mark_job_failed(self, job_id: UUID, error_message: str = None) -> Optional[BackgroundJob]:
         """Mark job as failed with error message"""
         job = self.repository.get_by_id(job_id)
         if not job:
@@ -154,15 +138,11 @@ class BackgroundJobService:
 
         # Save updated job
         updated_job = self.repository.update(job)
-        logger.info(
-            f"Retrying job {job_id} (attempt {updated_job.retry_count}/{updated_job.max_retries})"
-        )
+        logger.info(f"Retrying job {job_id} (attempt {updated_job.retry_count}/{updated_job.max_retries})")
 
         return updated_job
 
-    def get_background_job_info(
-        self, job_id: UUID, status_url_template: str
-    ) -> Optional[BackgroundJobInfo]:
+    def get_background_job_info(self, job_id: UUID, status_url_template: str) -> Optional[BackgroundJobInfo]:
         """Get background job info for API responses"""
         job = self.repository.get_by_id(job_id)
         if not job:
@@ -173,9 +153,7 @@ class BackgroundJobService:
         remaining_transactions = len(unmatched_ids)
 
         # Build status URL
-        status_url = (
-            status_url_template.format(job_id) if "{}" in status_url_template else None
-        )
+        status_url = status_url_template.format(job_id) if "{}" in status_url_template else None
 
         # Estimate completion time if job is in progress
         estimated_completion_seconds = None
@@ -184,9 +162,7 @@ class BackgroundJobService:
             total = job.progress.get("total_transactions", 0)
             if total > processed:
                 # Simple estimation: assume 0.5 seconds per transaction
-                estimated_completion_seconds = self.estimate_completion_time(
-                    total - processed, 0.5
-                )
+                estimated_completion_seconds = self.estimate_completion_time(total - processed, 0.5)
 
         return BackgroundJobInfo(
             job_id=job_id,
@@ -196,9 +172,7 @@ class BackgroundJobService:
             status_url=status_url,
         )
 
-    def estimate_completion_time(
-        self, remaining_transactions: int, avg_processing_time_per_transaction: float
-    ) -> int:
+    def estimate_completion_time(self, remaining_transactions: int, avg_processing_time_per_transaction: float) -> int:
         """Estimate completion time in seconds"""
         if remaining_transactions <= 0:
             return 0
@@ -215,18 +189,12 @@ class BackgroundJobService:
         total_transactions = job.progress.get("total_transactions", 0)
         processed_transactions = job.progress.get("processed_transactions", 0)
         remaining_transactions = total_transactions - processed_transactions
-        completion_percentage = (
-            (processed_transactions / total_transactions * 100.0)
-            if total_transactions > 0
-            else 0.0
-        )
+        completion_percentage = (processed_transactions / total_transactions * 100.0) if total_transactions > 0 else 0.0
 
         # Estimate completion time if job is in progress
         estimated_completion_seconds = None
         if job.status == JobStatus.IN_PROGRESS and remaining_transactions > 0:
-            estimated_completion_seconds = self.estimate_completion_time(
-                remaining_transactions, 0.5
-            )
+            estimated_completion_seconds = self.estimate_completion_time(remaining_transactions, 0.5)
 
         # Build progress object
         progress_data = {
@@ -242,9 +210,7 @@ class BackgroundJobService:
         if job.status == JobStatus.COMPLETED and job.result:
             result_data = {
                 "total_processed": job.result.get("total_processed", 0),
-                "successfully_categorized": job.result.get(
-                    "successfully_categorized", 0
-                ),
+                "successfully_categorized": job.result.get("successfully_categorized", 0),
                 "failed_categorizations": job.result.get("failed_categorizations", 0),
                 "processing_time_ms": job.result.get("processing_time_ms", 0),
             }

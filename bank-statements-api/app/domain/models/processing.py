@@ -89,3 +89,20 @@ class JobStatusResponse:
     error_message: Optional[str] = None
     started_at: Optional[str] = None
     completed_at: Optional[str] = None
+
+
+@dataclass
+class DTOProcessingResult:
+    """Result of processing transaction DTOs (before persistence)"""
+
+    processed_dtos: List  # List of processed TransactionDTOs
+    total_processed: int
+    rule_based_matches: int
+    unmatched_dto_count: int
+    processing_time_ms: int
+    match_rate_percentage: float
+
+    @property
+    def has_unmatched_transactions(self) -> bool:
+        """Check if there are unmatched transactions requiring AI processing"""
+        return self.unmatched_dto_count > 0
