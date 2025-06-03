@@ -4,11 +4,7 @@ from typing import List, Optional
 from uuid import UUID
 
 from app.domain.dto.statement_processing import TransactionDTO
-from app.domain.models.processing import (
-    BackgroundJobInfo,
-    DTOProcessingResult,
-    SyncCategorizationResult,
-)
+from app.domain.models.processing import BackgroundJobInfo, DTOProcessingResult, SyncCategorizationResult
 from app.domain.models.transaction import CategorizationStatus, Transaction
 from app.ports.repositories.transaction import TransactionRepository
 from app.services.background.background_job_service import BackgroundJobService
@@ -40,9 +36,7 @@ class TransactionProcessingOrchestrator:
         self.background_job_service = background_job_service
         self.transaction_repository = transaction_repository
 
-    def process_transactions(
-        self, uploaded_file_id: UUID, transactions: List[Transaction]
-    ) -> SyncCategorizationResult:
+    def process_transactions(self, uploaded_file_id: UUID, transactions: List[Transaction]) -> SyncCategorizationResult:
         """
         Process transactions with orchestration:
         - Immediate rule-based categorization
@@ -65,18 +59,12 @@ class TransactionProcessingOrchestrator:
 
         # Phase 1: Extract and deduplicate normalized descriptions for rule-based categorization
         normalized_descriptions = [t.normalized_description for t in transactions]
-        unique_normalized_descriptions = list(
-            dict.fromkeys(normalized_descriptions)
-        )  # Preserves order, removes duplicates
+        unique_normalized_descriptions = list(dict.fromkeys(normalized_descriptions))  # Preserves order, removes duplicates
 
-        logger.debug(
-            f"Deduplicated {len(normalized_descriptions)} descriptions to {len(unique_normalized_descriptions)} unique descriptions"
-        )
+        logger.debug(f"Deduplicated {len(normalized_descriptions)} descriptions to {len(unique_normalized_descriptions)} unique descriptions")
 
         # Perform synchronous rule-based categorization on unique descriptions
-        rule_matches = self.rule_based_categorization_service.categorize_batch(
-            unique_normalized_descriptions
-        )
+        rule_matches = self.rule_based_categorization_service.categorize_batch(unique_normalized_descriptions)
 
         # Apply rule-based categorization results to transactions
         matched_transactions = []
@@ -93,9 +81,7 @@ class TransactionProcessingOrchestrator:
                 self.transaction_repository.update(transaction)
 
                 matched_transactions.append(transaction)
-                logger.debug(
-                    f"Rule match: {transaction.normalized_description} -> {category_id}"
-                )
+                logger.debug(f"Rule match: {transaction.normalized_description} -> {category_id}")
             else:
                 # No rule match - transaction remains uncategorized
                 unmatched_transactions.append(transaction)
@@ -104,21 +90,13 @@ class TransactionProcessingOrchestrator:
         # Calculate metrics
         total_processed = len(transactions)
         rule_based_matches = len(matched_transactions)
-        match_rate_percentage = (
-            round((rule_based_matches / total_processed) * 100, 1)
-            if total_processed > 0
-            else 0.0
-        )
+        match_rate_percentage = round((rule_based_matches / total_processed) * 100, 1) if total_processed > 0 else 0.0
         unmatched_transaction_ids = [t.id for t in unmatched_transactions]
 
         # Phase 2: Queue background job for unmatched transactions (if any)
         if unmatched_transactions:
-            logger.info(
-                f"Queuing background job for {len(unmatched_transactions)} unmatched transactions"
-            )
-            self.background_job_service.queue_ai_categorization_job(
-                uploaded_file_id, unmatched_transaction_ids
-            )
+            logger.info(f"Queuing background job for {len(unmatched_transactions)} unmatched transactions")
+            self.background_job_service.queue_ai_categorization_job(uploaded_file_id, unmatched_transaction_ids)
 
         # Calculate final processing time
         processing_time_ms = int(time.time() * 1000) - start_time_ms
@@ -139,9 +117,7 @@ class TransactionProcessingOrchestrator:
 
         return result
 
-    def process_transaction_dtos(
-        self, transaction_dtos: List[TransactionDTO], uploaded_file_id: UUID
-    ) -> DTOProcessingResult:
+    def process_transaction_dtos(self, transaction_dtos: List[TransactionDTO], uploaded_file_id: UUID) -> DTOProcessingResult:
         """
         Process transaction DTOs with rule-based categorization.
         DTOs are processed and enriched but not persisted.
@@ -160,9 +136,7 @@ class TransactionProcessingOrchestrator:
                 match_rate_percentage=0.0,
             )
 
-        logger.info(
-            f"Processing {len(transaction_dtos)} transaction DTOs with orchestrator"
-        )
+        logger.info(f"Processing {len(transaction_dtos)} transaction DTOs with orchestrator")
 
         # Phase 1: Extract and deduplicate normalized descriptions for rule-based categorization
         # For DTOs, we need to create normalized descriptions first
@@ -172,21 +146,13 @@ class TransactionProcessingOrchestrator:
 
             dto.normalized_description = normalize_description(dto.description)
 
-        normalized_descriptions = [
-            dto.normalized_description for dto in transaction_dtos
-        ]
-        unique_normalized_descriptions = list(
-            dict.fromkeys(normalized_descriptions)
-        )  # Preserves order, removes duplicates
+        normalized_descriptions = [dto.normalized_description for dto in transaction_dtos]
+        unique_normalized_descriptions = list(dict.fromkeys(normalized_descriptions))  # Preserves order, removes duplicates
 
-        logger.debug(
-            f"Deduplicated {len(normalized_descriptions)} descriptions to {len(unique_normalized_descriptions)} unique descriptions"
-        )
+        logger.debug(f"Deduplicated {len(normalized_descriptions)} descriptions to {len(unique_normalized_descriptions)} unique descriptions")
 
         # Perform synchronous rule-based categorization on unique descriptions
-        rule_matches = self.rule_based_categorization_service.categorize_batch(
-            unique_normalized_descriptions
-        )
+        rule_matches = self.rule_based_categorization_service.categorize_batch(unique_normalized_descriptions)
 
         # Apply rule-based categorization results to DTOs
         matched_dtos = []
@@ -200,9 +166,7 @@ class TransactionProcessingOrchestrator:
                 dto.categorization_status = CategorizationStatus.CATEGORIZED
 
                 matched_dtos.append(dto)
-                logger.debug(
-                    f"Rule match: {dto.normalized_description} -> {category_id}"
-                )
+                logger.debug(f"Rule match: {dto.normalized_description} -> {category_id}")
             else:
                 # No rule match - DTO remains uncategorized
                 dto.categorization_status = CategorizationStatus.UNCATEGORIZED
@@ -212,18 +176,12 @@ class TransactionProcessingOrchestrator:
         # Calculate metrics
         total_processed = len(transaction_dtos)
         rule_based_matches = len(matched_dtos)
-        match_rate_percentage = (
-            round((rule_based_matches / total_processed) * 100, 1)
-            if total_processed > 0
-            else 0.0
-        )
+        match_rate_percentage = round((rule_based_matches / total_processed) * 100, 1) if total_processed > 0 else 0.0
 
         # Phase 2: Queue background job for unmatched DTOs (if any)
         # Note: We'll need to schedule this for after persistence
         if unmatched_dtos:
-            logger.info(
-                f"Will queue background job for {len(unmatched_dtos)} unmatched DTOs after persistence"
-            )
+            logger.info(f"Will queue background job for {len(unmatched_dtos)} unmatched DTOs after persistence")
             # We can't schedule the job yet because DTOs don't have IDs
             # The job will be scheduled after persistence in the service
 
@@ -247,10 +205,6 @@ class TransactionProcessingOrchestrator:
 
         return result
 
-    def get_background_job_info(
-        self, job_id: UUID, status_url_template: str
-    ) -> Optional[BackgroundJobInfo]:
+    def get_background_job_info(self, job_id: UUID, status_url_template: str) -> Optional[BackgroundJobInfo]:
         """Get background job information for API responses"""
-        return self.background_job_service.get_background_job_info(
-            job_id, status_url_template
-        )
+        return self.background_job_service.get_background_job_info(job_id, status_url_template)

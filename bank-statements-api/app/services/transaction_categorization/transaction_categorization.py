@@ -37,5 +37,8 @@ class TransactionCategorizationService:
         failed_count = len(categorization_results) - successful_count
 
         return BatchCategorizationResult(
-            results=categorization_results, total_processed=len(categorization_results), successful_count=successful_count, failed_count=failed_count
+            results=categorization_results,
+            total_processed=len(categorization_results),
+            successful_count=successful_count,
+            failed_count=failed_count,
         )

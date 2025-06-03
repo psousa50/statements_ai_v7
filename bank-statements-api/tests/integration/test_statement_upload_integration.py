@@ -24,6 +24,7 @@ class TestStatementUploadIntegration:
         file_analysis_metadata_repo = MagicMock()
         transaction_processing_orchestrator = MagicMock()
         statement_persistence_service = MagicMock()
+        background_job_service = MagicMock()
 
         # Mock file and parsing
         uploaded_file = MagicMock()
@@ -59,6 +60,7 @@ class TestStatementUploadIntegration:
             file_analysis_metadata_repo=file_analysis_metadata_repo,
             transaction_processing_orchestrator=transaction_processing_orchestrator,
             statement_persistence_service=statement_persistence_service,
+            background_job_service=background_job_service,
         )
 
         # Test DTO parsing (this should work without import errors)
@@ -93,9 +95,7 @@ class TestStatementUploadIntegration:
         """Test that the orchestrator's DTO processing method works without import errors."""
 
         from app.domain.dto.statement_processing import TransactionDTO
-        from app.services.transaction_processing_orchestrator import (
-            TransactionProcessingOrchestrator,
-        )
+        from app.services.transaction_processing_orchestrator import TransactionProcessingOrchestrator
 
         # Create real orchestrator with mocked dependencies
         rule_based_service = MagicMock()

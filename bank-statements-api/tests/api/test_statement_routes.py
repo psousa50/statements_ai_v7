@@ -2,12 +2,17 @@ from datetime import datetime, timezone
 from io import BytesIO
 from uuid import uuid4
 
-from fastapi.encoders import jsonable_encoder
-
-from app.api.schemas import JobStatusResponse, StatementAnalysisResponse, StatementUploadRequest, StatementUploadResponse
+from app.api.schemas import (
+    JobStatusResponse,
+    StatementAnalysisResponse,
+    StatementUploadRequest,
+    StatementUploadResponse,
+)
 from app.domain.dto.statement_processing import AnalysisResultDTO
 from app.domain.models.background_job import JobStatus
 from app.domain.models.processing import BackgroundJobInfo
+from fastapi.encoders import jsonable_encoder
+
 from tests.api.helpers import build_client, mocked_dependencies
 
 
@@ -19,17 +24,19 @@ class TestStatementRoutes:
         internal_dependencies = mocked_dependencies()
         client = build_client(internal_dependencies)
 
-        internal_dependencies.statement_analyzer_service.analyze.return_value = AnalysisResultDTO(
-            uploaded_file_id=uploaded_file_id,
-            file_type="CSV",
-            column_mapping={
-                "date": "Date",
-                "amount": "Amount",
-                "description": "Description",
-            },
-            header_row_index=0,
-            data_start_row_index=1,
-            sample_data=[["2023-01-01", 100.00, "Test"]],
+        internal_dependencies.statement_analyzer_service.analyze.return_value = (
+            AnalysisResultDTO(
+                uploaded_file_id=uploaded_file_id,
+                file_type="CSV",
+                column_mapping={
+                    "date": "Date",
+                    "amount": "Amount",
+                    "description": "Description",
+                },
+                header_row_index=0,
+                data_start_row_index=1,
+                sample_data=[["2023-01-01", 100.00, "Test"]],
+            )
         )
 
         response = client.post(
@@ -45,14 +52,18 @@ class TestStatementRoutes:
         assert analysis_result.column_mapping["date"] == "Date"
 
         internal_dependencies.statement_analyzer_service.analyze.assert_called_once()
-        args, kwargs = internal_dependencies.statement_analyzer_service.analyze.call_args
+        args, kwargs = (
+            internal_dependencies.statement_analyzer_service.analyze.call_args
+        )
         assert kwargs["filename"] == "test.csv"
         assert kwargs["file_content"] == file_content
 
     def test_analyze_statement_error(self):
         internal_dependencies = mocked_dependencies()
         client = build_client(internal_dependencies)
-        internal_dependencies.statement_analyzer_service.analyze.side_effect = Exception("Test error")
+        internal_dependencies.statement_analyzer_service.analyze.side_effect = (
+            Exception("Test error")
+        )
 
         response = client.post(
             "/api/v1/statements/analyze",
@@ -69,7 +80,9 @@ class TestStatementRoutes:
         source_id = uuid4()
 
         # Mock the new upload service
-        from app.services.statement_processing.statement_upload import StatementUploadResult
+        from app.services.statement_processing.statement_upload import (
+            StatementUploadResult,
+        )
 
         upload_result = StatementUploadResult(
             uploaded_file_id=uploaded_file_id,
@@ -94,7 +107,9 @@ class TestStatementRoutes:
             source_id=str(source_id),
         )
 
-        response = client.post("/api/v1/statements/upload", json=jsonable_encoder(request_data))
+        response = client.post(
+            "/api/v1/statements/upload", json=jsonable_encoder(request_data)
+        )
 
         persistence_result = StatementUploadResponse.model_validate(response.json())
 
@@ -109,14 +124,23 @@ class TestStatementRoutes:
         assert persistence_result.background_job is None
 
         # Verify the service was called with the correct request
-        internal_dependencies.statement_upload_service.upload_and_process.assert_called_once_with(request_data)
+        call_args = (
+            internal_dependencies.statement_upload_service.upload_and_process.call_args
+        )
+        assert (
+            call_args[0][0] == request_data
+        )  # First positional arg should be request_data
+        assert "background_tasks" in call_args[1]  # Should have background_tasks kwarg
+        assert "internal_deps" in call_args[1]  # Should have internal_deps kwarg
 
     def test_upload_statement_error(self):
         internal_dependencies = mocked_dependencies()
         client = build_client(internal_dependencies)
 
         # Mock service failure
-        internal_dependencies.statement_upload_service.upload_and_process.side_effect = Exception("Test error")
+        internal_dependencies.statement_upload_service.upload_and_process.side_effect = Exception(
+            "Test error"
+        )
 
         request_data = StatementUploadRequest(
             uploaded_file_id=str(uuid4()),
@@ -130,7 +154,9 @@ class TestStatementRoutes:
             source_id=str(uuid4()),
         )
 
-        response = client.post("/api/v1/statements/upload", json=jsonable_encoder(request_data))
+        response = client.post(
+            "/api/v1/statements/upload", json=jsonable_encoder(request_data)
+        )
 
         assert response.status_code == 400
         assert "Test error" in response.json()["detail"]
@@ -153,7 +179,9 @@ class TestStatementRoutes:
         )
 
         # Mock the new upload service with background job
-        from app.services.statement_processing.statement_upload import StatementUploadResult
+        from app.services.statement_processing.statement_upload import (
+            StatementUploadResult,
+        )
 
         upload_result = StatementUploadResult(
             uploaded_file_id=uploaded_file_id,
@@ -181,7 +209,9 @@ class TestStatementRoutes:
             source_id=str(source_id),
         )
 
-        response = client.post("/api/v1/statements/upload", json=jsonable_encoder(request_data))
+        response = client.post(
+            "/api/v1/statements/upload", json=jsonable_encoder(request_data)
+        )
 
         upload_result = StatementUploadResponse.model_validate(response.json())
 
@@ -209,7 +239,9 @@ class TestStatementRoutes:
         source_id = uuid4()
 
         # Mock service failure
-        internal_dependencies.statement_upload_service.upload_and_process.side_effect = Exception("Service failed")
+        internal_dependencies.statement_upload_service.upload_and_process.side_effect = Exception(
+            "Service failed"
+        )
 
         request_data = StatementUploadRequest(
             uploaded_file_id=uploaded_file_id,
@@ -223,7 +255,9 @@ class TestStatementRoutes:
             source_id=str(source_id),
         )
 
-        response = client.post("/api/v1/statements/upload", json=jsonable_encoder(request_data))
+        response = client.post(
+            "/api/v1/statements/upload", json=jsonable_encoder(request_data)
+        )
 
         assert response.status_code == 400
         assert "Service failed" in response.json()["detail"]
@@ -257,7 +291,9 @@ class TestJobStatusRoutes:
         }
         internal_dependencies.background_job_service.get_job_status_for_api.return_value = job_status_response
 
-        response = client.get(f"/api/v1/transactions/categorization-jobs/{job_id}/status")
+        response = client.get(
+            f"/api/v1/transactions/categorization-jobs/{job_id}/status"
+        )
 
         status_result = JobStatusResponse.model_validate(response.json())
 
@@ -299,7 +335,9 @@ class TestJobStatusRoutes:
         }
         internal_dependencies.background_job_service.get_job_status_for_api.return_value = job_status_response
 
-        response = client.get(f"/api/v1/transactions/categorization-jobs/{job_id}/status")
+        response = client.get(
+            f"/api/v1/transactions/categorization-jobs/{job_id}/status"
+        )
 
         status_result = JobStatusResponse.model_validate(response.json())
 
@@ -321,7 +359,9 @@ class TestJobStatusRoutes:
         # Mock background job service returning None
         internal_dependencies.background_job_service.get_job_status_for_api.return_value = None
 
-        response = client.get(f"/api/v1/transactions/categorization-jobs/{job_id}/status")
+        response = client.get(
+            f"/api/v1/transactions/categorization-jobs/{job_id}/status"
+        )
 
         assert response.status_code == 404
         assert "not found" in response.json()["detail"].lower()

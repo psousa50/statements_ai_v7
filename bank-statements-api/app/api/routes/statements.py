@@ -2,34 +2,17 @@ import logging
 from typing import Callable, Iterator
 from uuid import UUID
 
-from app.api.schemas import (
-    BackgroundJobInfoResponse,
-    JobStatusResponse,
-    StatementAnalysisResponse,
-    StatementUploadRequest,
-    StatementUploadResponse,
-)
+from fastapi import APIRouter, BackgroundTasks, Depends, FastAPI, File, HTTPException, UploadFile, status
+
+from app.api.schemas import BackgroundJobInfoResponse, JobStatusResponse, StatementAnalysisResponse, StatementUploadRequest, StatementUploadResponse
 from app.core.config import settings
 from app.core.dependencies import InternalDependencies
 from app.logging.utils import log_exception
-from app.workers.job_processor import process_pending_jobs
-from fastapi import (
-    APIRouter,
-    BackgroundTasks,
-    Depends,
-    FastAPI,
-    File,
-    HTTPException,
-    UploadFile,
-    status,
-)
 
 logger = logging.getLogger("app")
 
 
-def register_statement_routes(
-    app: FastAPI, provide_dependencies: Callable[[], Iterator[InternalDependencies]]
-):
+def register_statement_routes(app: FastAPI, provide_dependencies: Callable[[], Iterator[InternalDependencies]]):
     router = APIRouter(prefix="/statements", tags=["statements"])
 
     @router.post("/analyze", response_model=StatementAnalysisResponse)
@@ -58,11 +41,11 @@ def register_statement_routes(
     ):
         """
         Statement upload endpoint with immediate rule-based categorization
-        and background AI processing for unmatched transactions.
+        and immediate background AI processing for unmatched transactions.
         """
         try:
-            # Delegate to service
-            result = internal.statement_upload_service.upload_and_process(upload_data)
+            # Delegate to service with immediate background processing capability
+            result = internal.statement_upload_service.upload_and_process(upload_data, background_tasks=background_tasks, internal_deps=internal)
 
             # Build HTTP response
             response = StatementUploadResponse(
@@ -88,9 +71,6 @@ def register_statement_routes(
                     status_url=result.background_job_info.status_url,
                 )
 
-                # Trigger immediate background job processing
-                background_tasks.add_task(process_pending_jobs, internal)
-
             return response
 
         except Exception as e:
@@ -103,15 +83,11 @@ def register_statement_routes(
     app.include_router(router, prefix=settings.API_V1_STR)
 
 
-def register_transaction_job_routes(
-    app: FastAPI, provide_dependencies: Callable[[], Iterator[InternalDependencies]]
-):
+def register_transaction_job_routes(app: FastAPI, provide_dependencies: Callable[[], Iterator[InternalDependencies]]):
     """Register transaction job status routes for US-21"""
     router = APIRouter(prefix="/transactions", tags=["transactions"])
 
-    @router.get(
-        "/categorization-jobs/{job_id}/status", response_model=JobStatusResponse
-    )
+    @router.get("/categorization-jobs/{job_id}/status", response_model=JobStatusResponse)
     async def get_job_status(
         job_id: UUID,
         internal: InternalDependencies = Depends(provide_dependencies),

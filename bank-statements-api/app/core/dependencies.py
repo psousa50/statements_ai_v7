@@ -1,3 +1,4 @@
+import logging
 from contextlib import contextmanager
 from typing import Generator
 
@@ -27,6 +28,8 @@ from app.services.transaction import TransactionService
 from app.services.transaction_categorization.llm_transaction_categorizer import LLMTransactionCategorizer
 from app.services.transaction_categorization.transaction_categorization import TransactionCategorizationService
 from app.services.transaction_processing_orchestrator import TransactionProcessingOrchestrator
+
+logger = logging.getLogger(__name__)
 
 
 class ExternalDependencies:
@@ -136,6 +139,7 @@ def build_internal_dependencies(external: ExternalDependencies) -> InternalDepen
         file_analysis_metadata_repo=file_analysis_metadata_repo,
         transaction_processing_orchestrator=transaction_processing_orchestrator,
         statement_persistence_service=statement_persistence_service,
+        background_job_service=background_job_service,
     )
 
     return InternalDependencies(

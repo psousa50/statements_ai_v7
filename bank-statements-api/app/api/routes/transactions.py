@@ -20,10 +20,7 @@ def register_transaction_routes(app: FastAPI, provide_dependencies: Callable[[],
     router = APIRouter(prefix="/transactions", tags=["transactions"])
 
     @router.post("", response_model=TransactionResponse, status_code=status.HTTP_201_CREATED)
-    def create_transaction(
-        transaction_data: TransactionCreate,
-        internal: InternalDependencies = Depends(provide_dependencies),
-    ):
+    def create_transaction(transaction_data: TransactionCreate, internal: InternalDependencies = Depends(provide_dependencies)):
         transaction = internal.transaction_service.create_transaction(
             transaction_date=transaction_data.date,
             description=transaction_data.description,
@@ -45,22 +42,13 @@ def register_transaction_routes(app: FastAPI, provide_dependencies: Callable[[],
 
         if status is not None:
             transactions = [t for t in transactions if t.categorization_status == status]
-        return TransactionListResponse(
-            transactions=transactions,
-            total=len(transactions),
-        )
+        return TransactionListResponse(transactions=transactions, total=len(transactions))
 
     @router.get("/{transaction_id}", response_model=TransactionResponse)
-    def get_transaction(
-        transaction_id: UUID,
-        internal: InternalDependencies = Depends(provide_dependencies),
-    ):
+    def get_transaction(transaction_id: UUID, internal: InternalDependencies = Depends(provide_dependencies)):
         transaction = internal.transaction_service.get_transaction(transaction_id)
         if not transaction:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Transaction with ID {transaction_id} not found",
-            )
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Transaction with ID {transaction_id} not found")
         return transaction
 
     @router.put("/{transaction_id}", response_model=TransactionResponse)
@@ -77,55 +65,28 @@ def register_transaction_routes(app: FastAPI, provide_dependencies: Callable[[],
             category_id=transaction_data.category_id,
         )
         if not updated_transaction:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Transaction with ID {transaction_id} not found",
-            )
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Transaction with ID {transaction_id} not found")
         return updated_transaction
 
     @router.delete("/{transaction_id}", status_code=status.HTTP_204_NO_CONTENT)
-    def delete_transaction(
-        transaction_id: UUID,
-        internal: InternalDependencies = Depends(provide_dependencies),
-    ):
+    def delete_transaction(transaction_id: UUID, internal: InternalDependencies = Depends(provide_dependencies)):
         deleted = internal.transaction_service.delete_transaction(transaction_id)
         if not deleted:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Transaction with ID {transaction_id} not found",
-            )
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Transaction with ID {transaction_id} not found")
         return None
 
     @router.put("/{transaction_id}/categorize", response_model=TransactionResponse)
-    def categorize_transaction(
-        transaction_id: UUID,
-        category_id: Optional[UUID] = None,
-        internal: InternalDependencies = Depends(provide_dependencies),
-    ):
-        updated_transaction = internal.transaction_service.categorize_transaction(
-            transaction_id=transaction_id,
-            category_id=category_id,
-        )
+    def categorize_transaction(transaction_id: UUID, category_id: Optional[UUID] = None, internal: InternalDependencies = Depends(provide_dependencies)):
+        updated_transaction = internal.transaction_service.categorize_transaction(transaction_id=transaction_id, category_id=category_id)
         if not updated_transaction:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Transaction with ID {transaction_id} not found",
-            )
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Transaction with ID {transaction_id} not found")
         return updated_transaction
 
     @router.put("/{transaction_id}/mark-failure", response_model=TransactionResponse)
-    def mark_categorization_failure(
-        transaction_id: UUID,
-        internal: InternalDependencies = Depends(provide_dependencies),
-    ):
-        updated_transaction = internal.transaction_service.mark_categorization_failure(
-            transaction_id=transaction_id,
-        )
+    def mark_categorization_failure(transaction_id: UUID, internal: InternalDependencies = Depends(provide_dependencies)):
+        updated_transaction = internal.transaction_service.mark_categorization_failure(transaction_id=transaction_id)
         if not updated_transaction:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Transaction with ID {transaction_id} not found",
-            )
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Transaction with ID {transaction_id} not found")
         return updated_transaction
 
     @router.post("/categorize-batch", response_model=BatchCategorizationResponse)
@@ -154,7 +115,9 @@ def register_transaction_routes(app: FastAPI, provide_dependencies: Callable[[],
                 successful_count=batch_result.successful_count,
                 failed_count=batch_result.failed_count,
                 success=True,
-                message=f"Processed {batch_result.total_processed} transactions: {batch_result.successful_count} categorized, {batch_result.failed_count} failed",
+                message=(
+                    f"Processed {batch_result.total_processed} transactions: {batch_result.successful_count} categorized, {batch_result.failed_count} failed"
+                ),
             )
         except Exception as e:
             return BatchCategorizationResponse(

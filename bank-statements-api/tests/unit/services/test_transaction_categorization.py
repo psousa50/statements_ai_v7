@@ -98,7 +98,12 @@ class TestTransactionCategorizationService:
         # Mock the batch categorizer to return mixed results (one success, one failure)
         mock_categorization_results = [
             CategorizationResult(transaction_id=transaction_id1, category_id=category_id, status=CategorizationStatus.CATEGORIZED),
-            CategorizationResult(transaction_id=transaction_id2, category_id=None, status=CategorizationStatus.FAILURE, error_message="Categorization failed"),
+            CategorizationResult(
+                transaction_id=transaction_id2,
+                category_id=None,
+                status=CategorizationStatus.FAILURE,
+                error_message="Categorization failed",
+            ),
         ]
         self.transaction_categorizer.categorize.return_value = mock_categorization_results
 
