@@ -129,6 +129,7 @@ class StatementUploadRequest(BaseModel):
 class StatementUploadResponse(BaseModel):
     uploaded_file_id: str
     transactions_saved: int
+    duplicated_transactions: int
     success: bool
     message: str
 

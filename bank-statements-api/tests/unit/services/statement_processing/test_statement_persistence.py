@@ -29,7 +29,10 @@ class TestStatementPersistenceService:
         )
 
         transaction_repo = MagicMock()
-        transaction_repo.save_batch.return_value = 2
+        transaction_repo.save_batch.return_value = (
+            2,
+            0,
+        )  # (transactions_saved, duplicated_transactions)
 
         uploaded_file_repo = MagicMock()
         uploaded_file_repo.find_by_id.return_value = UploadedFileDTO(
@@ -80,6 +83,7 @@ class TestStatementPersistenceService:
         assert isinstance(result, PersistenceResultDTO)
         assert result.uploaded_file_id == uploaded_file_id
         assert result.transactions_saved == 2
+        assert result.duplicated_transactions == 0
 
         uploaded_file_repo.find_by_id.assert_called_once_with(uploaded_file_id)
         statement_parser.parse.assert_called_once()

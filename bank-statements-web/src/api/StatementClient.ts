@@ -29,6 +29,7 @@ export interface StatementUploadRequest {
 export interface StatementUploadResponse {
   uploaded_file_id: string
   transactions_saved: number
+  duplicated_transactions: number
   success: boolean
   message: string
 

@@ -74,6 +74,7 @@ class TestStatementRoutes:
         upload_result = StatementUploadResult(
             uploaded_file_id=uploaded_file_id,
             transactions_saved=10,
+            duplicated_transactions=0,
             total_processed=10,
             rule_based_matches=10,
             match_rate_percentage=100.0,
@@ -101,6 +102,7 @@ class TestStatementRoutes:
         assert response.status_code == 200
         assert persistence_result.uploaded_file_id == uploaded_file_id
         assert persistence_result.transactions_saved == 10
+        assert persistence_result.duplicated_transactions == 0
         assert persistence_result.success is True
         assert persistence_result.total_processed == 10
         assert persistence_result.rule_based_matches == 10
@@ -161,6 +163,7 @@ class TestStatementRoutes:
         upload_result = StatementUploadResult(
             uploaded_file_id=uploaded_file_id,
             transactions_saved=10,
+            duplicated_transactions=0,
             total_processed=10,
             rule_based_matches=7,
             match_rate_percentage=70.0,
@@ -191,6 +194,7 @@ class TestStatementRoutes:
         assert response.status_code == 200
         assert upload_result.uploaded_file_id == uploaded_file_id
         assert upload_result.transactions_saved == 10
+        assert upload_result.duplicated_transactions == 0
         assert upload_result.success is True
         assert upload_result.total_processed == 10
         assert upload_result.rule_based_matches == 7

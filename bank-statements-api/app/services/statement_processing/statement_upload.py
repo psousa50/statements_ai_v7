@@ -13,6 +13,7 @@ class StatementUploadResult:
         self,
         uploaded_file_id: str,
         transactions_saved: int,
+        duplicated_transactions: int,
         total_processed: int,
         rule_based_matches: int,
         match_rate_percentage: float,
@@ -21,6 +22,7 @@ class StatementUploadResult:
     ):
         self.uploaded_file_id = uploaded_file_id
         self.transactions_saved = transactions_saved
+        self.duplicated_transactions = duplicated_transactions
         self.total_processed = total_processed
         self.rule_based_matches = rule_based_matches
         self.match_rate_percentage = match_rate_percentage
@@ -128,6 +130,7 @@ class StatementUploadService:
         return StatementUploadResult(
             uploaded_file_id=persistence_result.uploaded_file_id,
             transactions_saved=persistence_result.transactions_saved,
+            duplicated_transactions=persistence_result.duplicated_transactions,
             total_processed=processing_result.total_processed,
             rule_based_matches=processing_result.rule_based_matches,
             match_rate_percentage=processing_result.match_rate_percentage,

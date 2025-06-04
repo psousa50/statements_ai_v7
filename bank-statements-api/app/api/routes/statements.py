@@ -51,9 +51,11 @@ def register_statement_routes(app: FastAPI, provide_dependencies: Callable[[], I
             response = StatementUploadResponse(
                 uploaded_file_id=result.uploaded_file_id,
                 transactions_saved=result.transactions_saved,
+                duplicated_transactions=result.duplicated_transactions,
                 success=True,
                 message=f"Successfully processed {result.total_processed} transactions. "
-                f"{result.rule_based_matches} matched by rules ({result.match_rate_percentage}%).",
+                f"{result.rule_based_matches} matched by rules ({result.match_rate_percentage}%). "
+                f"{result.duplicated_transactions} duplicates found.",
                 total_processed=result.total_processed,
                 rule_based_matches=result.rule_based_matches,
                 match_rate_percentage=result.match_rate_percentage,

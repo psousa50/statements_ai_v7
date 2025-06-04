@@ -44,9 +44,11 @@ class PersistenceResultDTO:
         self,
         uploaded_file_id: str,
         transactions_saved: int,
+        duplicated_transactions: int = 0,
     ):
         self.uploaded_file_id = uploaded_file_id
         self.transactions_saved = transactions_saved
+        self.duplicated_transactions = duplicated_transactions
 
 
 class TransactionDTO:

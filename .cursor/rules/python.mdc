@@ -6,3 +6,5 @@ alwaysApply: true
 - activate Python env with "source .venv/bin/activate" in "bank-statements-api" folder before running any Python related command
 - to run all backend tests: goto bank-statemens-api folder, activate the .venv and run "pytest"
 - all imports must be at the top of the file
+- code lines should be 160 characters long
+

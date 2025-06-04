@@ -51,7 +51,7 @@ class StatementPersistenceService:
             )
             transactions.append(transaction)
 
-        transactions_saved = self.transaction_repo.save_batch(transactions)
+        transactions_saved, duplicated_transactions = self.transaction_repo.save_batch(transactions)
 
         file_hash = compute_hash(uploaded_file.filename, file_content)
         existing_metadata = self.file_analysis_metadata_repo.find_by_hash(file_hash)
@@ -64,7 +64,11 @@ class StatementPersistenceService:
                 source_id=source_id,
             )
 
-        return PersistenceResultDTO(uploaded_file_id=uploaded_file_id, transactions_saved=transactions_saved)
+        return PersistenceResultDTO(
+            uploaded_file_id=uploaded_file_id,
+            transactions_saved=transactions_saved,
+            duplicated_transactions=duplicated_transactions,
+        )
 
     def save_processed_transactions(
         self,
@@ -84,6 +88,10 @@ class StatementPersistenceService:
                 dto.source_id = str(source_id)
 
         # Save the batch of DTOs
-        transactions_saved = self.transaction_repo.save_batch(processed_dtos)
+        transactions_saved, duplicated_transactions = self.transaction_repo.save_batch(processed_dtos)
 
-        return PersistenceResultDTO(uploaded_file_id=uploaded_file_id, transactions_saved=transactions_saved)
+        return PersistenceResultDTO(
+            uploaded_file_id=uploaded_file_id,
+            transactions_saved=transactions_saved,
+            duplicated_transactions=duplicated_transactions,
+        )

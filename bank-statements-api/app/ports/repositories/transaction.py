@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import List, Optional
+from typing import List, Optional, Tuple
 from uuid import UUID
 
 from app.domain.dto.statement_processing import TransactionDTO
@@ -38,15 +38,28 @@ class TransactionRepository(ABC):
         pass
 
     @abstractmethod
-    def save_batch(self, transactions: List[TransactionDTO]) -> int:
+    def save_batch(self, transactions: List[TransactionDTO]) -> Tuple[int, int]:
         """
-        Save a batch of transactions to the database.
+        Save a batch of transactions to the database with deduplication.
 
         Args:
             transactions: List of TransactionDTO objects with date, amount, description
 
         Returns:
-            Number of transactions saved
+            Tuple of (number of transactions saved, number of duplicates found)
+        """
+        pass
+
+    @abstractmethod
+    def find_duplicates(self, transactions: List[TransactionDTO]) -> List[TransactionDTO]:
+        """
+        Find duplicate transactions based on date, description, amount, and source.
+
+        Args:
+            transactions: List of TransactionDTO objects to check for duplicates
+
+        Returns:
+            List of TransactionDTO objects that are duplicates
         """
         pass
 
