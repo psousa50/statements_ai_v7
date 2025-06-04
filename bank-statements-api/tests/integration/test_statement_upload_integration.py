@@ -1,147 +1,288 @@
 """
-Integration tests for statement upload that test the actual service implementation
-without excessive mocking to catch import errors and other runtime issues.
+Integration tests for statement upload that test actual service implementation
+with real component interactions. Only external dependencies like LLM are mocked.
 """
 
+import os
 from unittest.mock import MagicMock
-from uuid import uuid4
+
+import pytest
+from sqlalchemy import create_engine, event
+from sqlalchemy.orm import sessionmaker
 
 from app.api.schemas import StatementUploadRequest
-from app.domain.dto.statement_processing import TransactionDTO
-from app.services.statement_processing.statement_upload import StatementUploadService
+from app.core.dependencies import ExternalDependencies, build_internal_dependencies
+from app.domain.models.source import Source
+from app.domain.models.transaction import Transaction
+from app.domain.models.transaction_categorization import CategorizationSource, TransactionCategorization
+from app.domain.models.uploaded_file import UploadedFile
 
 
+@pytest.fixture
+def db_engine():
+    """Create a test database engine using the DATABASE_URL environment variable."""
+    database_url = os.environ.get("TEST_DATABASE_URL")
+    if not database_url:
+        pytest.fail("TEST_DATABASE_URL environment variable not set")
+
+    engine = create_engine(database_url)
+    yield engine
+
+
+@pytest.fixture
+def db_session(db_engine):
+    connection = db_engine.connect()
+    transaction = connection.begin()
+
+    Session = sessionmaker(bind=connection)
+    session = Session()
+
+    session.begin_nested()
+
+    @event.listens_for(session, "after_transaction_end")
+    def restart_savepoint(session, transaction):
+        if transaction.nested and not transaction._parent.nested:
+            session.begin_nested()
+
+    yield session
+
+    session.close()
+    transaction.rollback()
+    connection.close()
+
+
+@pytest.fixture
+def llm_client():
+    """Mock LLM client for integration tests."""
+    llm_client = MagicMock()
+    # Mock schema detection response
+    llm_client.generate.return_value = """
+    {
+        "column_map": {
+            "date": "Date",
+            "amount": "Amount", 
+            "description": "Description"
+        },
+        "header_row": 0,
+        "start_row": 1
+    }
+    """
+
+    # Mock categorization responses
+    llm_client.categorize_transaction.return_value = {
+        "category": "Food & Dining",
+        "confidence": 0.85,
+    }
+
+    return llm_client
+
+
+@pytest.mark.integration
 class TestStatementUploadIntegration:
-    """Integration tests that use real service implementations to catch runtime errors."""
+    """Integration tests using real service implementations with actual database."""
 
-    def test_upload_service_with_real_dto_processing(self):
-        """Test that DTO processing actually works with real implementations."""
+    def test_complete_statement_upload_flow_with_real_services(self, db_session, llm_client):
+        """Test complete upload flow: analyze → upload → process → persist."""
 
-        # Create real service with minimal mocking
-        statement_parser = MagicMock()
-        transaction_normalizer = MagicMock()
-        uploaded_file_repo = MagicMock()
-        file_analysis_metadata_repo = MagicMock()
-        transaction_processing_orchestrator = MagicMock()
-        statement_persistence_service = MagicMock()
-        background_job_service = MagicMock()
+        # Real CSV content
+        filename = "bank_statement.csv"
+        csv_content = b"""Date,Amount,Description,Balance
+2023-01-01,100.50,Coffee Shop Purchase,1500.50
+2023-01-02,-50.00,ATM Withdrawal,1450.50  
+2023-01-03,2500.00,Salary Deposit,3950.50
+2023-01-04,-25.99,Online Shopping,3924.51"""
 
-        # Mock file and parsing
-        uploaded_file = MagicMock()
-        uploaded_file.content = b"test,content"
-        uploaded_file.file_type = "CSV"
-        uploaded_file_repo.find_by_id.return_value = uploaded_file
+        # Build real dependencies (only LLM is mocked)
+        dependencies = build_internal_dependencies(ExternalDependencies(db=db_session, llm_client=llm_client))
 
-        # Mock dataframe processing
-        import pandas as pd
-
-        statement_parser.parse.return_value = pd.DataFrame(
-            {
-                "Date": ["2023-01-01"],
-                "Amount": [100.0],
-                "Description": ["Test Transaction"],
-            }
+        # Step 1: Real file analysis
+        analysis_result = dependencies.statement_analyzer_service.analyze(
+            filename=filename,
+            file_content=csv_content,
         )
 
-        normalized_df = pd.DataFrame(
-            {
-                "date": ["2023-01-01"],
-                "amount": [100.0],
-                "description": ["Test Transaction"],
-            }
-        )
-        transaction_normalizer.normalize.return_value = normalized_df
+        # Verify real analysis worked
+        assert analysis_result.uploaded_file_id is not None
+        assert analysis_result.file_type == "CSV"
+        assert analysis_result.column_mapping["date"] == "Date"
+        assert analysis_result.column_mapping["amount"] == "Amount"
+        assert analysis_result.column_mapping["description"] == "Description"
+        assert len(analysis_result.sample_data) > 0
 
-        # Create service instance
-        service = StatementUploadService(
-            statement_parser=statement_parser,
-            transaction_normalizer=transaction_normalizer,
-            uploaded_file_repo=uploaded_file_repo,
-            file_analysis_metadata_repo=file_analysis_metadata_repo,
-            transaction_processing_orchestrator=transaction_processing_orchestrator,
-            statement_persistence_service=statement_persistence_service,
-            background_job_service=background_job_service,
-        )
+        # Create a real source
+        source = Source(name="Test Bank")
+        db_session.add(source)
+        db_session.flush()
 
-        # Test DTO parsing (this should work without import errors)
-        request = StatementUploadRequest(
-            uploaded_file_id=str(uuid4()),
-            source_id=str(uuid4()),
-            column_mapping={
-                "date": "Date",
-                "amount": "Amount",
-                "description": "Description",
-            },
-            header_row_index=0,
-            data_start_row_index=1,
+        # Step 2: Real statement upload with processing
+        upload_request = StatementUploadRequest(
+            uploaded_file_id=analysis_result.uploaded_file_id,
+            source_id=str(source.id),
+            column_mapping=analysis_result.column_mapping,
+            header_row_index=analysis_result.header_row_index,
+            data_start_row_index=analysis_result.data_start_row_index,
         )
 
-        # This would catch the import error if it existed
-        dtos = service._parse_to_transaction_dtos(
-            uploaded_file_id=request.uploaded_file_id,
-            column_mapping=request.column_mapping,
-            header_row_index=request.header_row_index,
-            data_start_row_index=request.data_start_row_index,
-            source_id=request.source_id,
+        # Use real upload service
+        upload_result = dependencies.statement_upload_service.upload_and_process(
+            upload_request,
+            background_tasks=MagicMock(),  # Mock FastAPI background tasks
+            internal_deps=dependencies,
         )
 
-        # Verify DTOs were created correctly
-        assert len(dtos) == 1
-        assert isinstance(dtos[0], TransactionDTO)
-        assert dtos[0].description == "Test Transaction"
-        assert dtos[0].amount == 100.0
+        # Verify upload results
+        assert upload_result.uploaded_file_id == analysis_result.uploaded_file_id
+        assert upload_result.transactions_saved == 4
+        assert upload_result.total_processed == 4
+        assert upload_result.processing_time_ms > 0
 
-    def test_orchestrator_dto_processing_with_real_implementation(self):
-        """Test that the orchestrator's DTO processing method works without import errors."""
+        # Step 3: Verify real database persistence
+        uploaded_file_id = analysis_result.uploaded_file_id
 
-        from app.domain.dto.statement_processing import TransactionDTO
-        from app.services.transaction_processing_orchestrator import TransactionProcessingOrchestrator
+        # Check uploaded file was saved
+        uploaded_file = db_session.query(UploadedFile).filter(UploadedFile.id == uploaded_file_id).first()
+        assert uploaded_file is not None
+        assert uploaded_file.filename == filename
+        assert uploaded_file.content == csv_content
 
-        # Create real orchestrator with mocked dependencies
-        rule_based_service = MagicMock()
-        background_job_service = MagicMock()
-        transaction_repository = MagicMock()
+        # Check transactions were actually saved to database
+        transactions = db_session.query(Transaction).filter(Transaction.uploaded_file_id == uploaded_file_id).all()
+        assert len(transactions) == 4
 
-        # Mock rule-based categorization (empty results)
-        rule_based_service.categorize_batch.return_value = {}
+        # Verify specific transaction data
+        amounts = [float(t.amount) for t in transactions]
+        descriptions = [t.description for t in transactions]
 
-        orchestrator = TransactionProcessingOrchestrator(
-            rule_based_categorization_service=rule_based_service,
-            background_job_service=background_job_service,
-            transaction_repository=transaction_repository,
+        assert 100.50 in amounts
+        assert -50.00 in amounts
+        assert 2500.00 in amounts
+        assert -25.99 in amounts
+
+        assert any("Coffee Shop" in desc for desc in descriptions)
+        assert any("ATM" in desc for desc in descriptions)
+        assert any("Salary" in desc for desc in descriptions)
+
+        # Step 4: Verify transaction categorization table
+        categorization_rules = db_session.query(TransactionCategorization).all()
+
+        # Check if any categorization rules were created during processing
+        for rule in categorization_rules:
+            assert rule.category_id is not None
+            assert rule.source in [CategorizationSource.MANUAL, CategorizationSource.AI]
+            assert rule.normalized_description is not None
+            assert len(rule.normalized_description) > 0
+            assert rule.created_at is not None
+
+    def test_upload_with_real_categorization_processing(self, db_session, llm_client):
+        """Test upload with real transaction categorization flow."""
+
+        # CSV with categorizable transactions
+        filename = "transactions.csv"
+        csv_content = b"""Date,Amount,Description
+2023-01-01,-15.50,McDonald's Restaurant
+2023-01-02,-45.00,Uber Ride Downtown
+2023-01-03,-120.00,Grocery Store Purchase"""
+
+        dependencies = build_internal_dependencies(ExternalDependencies(db=db_session, llm_client=llm_client))
+
+        # Analyze file
+        analysis_result = dependencies.statement_analyzer_service.analyze(
+            filename=filename,
+            file_content=csv_content,
         )
 
-        # Create test DTOs
-        test_dtos = [
-            TransactionDTO(
-                date="2023-01-01",
-                amount=100.0,
-                description="Test Transaction 1",
-                uploaded_file_id=str(uuid4()),
-                source_id=str(uuid4()),
-            ),
-            TransactionDTO(
-                date="2023-01-02",
-                amount=200.0,
-                description="Test Transaction 2",
-                uploaded_file_id=str(uuid4()),
-                source_id=str(uuid4()),
-            ),
-        ]
+        # Create source
+        source = Source(name="Credit Card")
+        db_session.add(source)
+        db_session.flush()
 
-        # This would fail with import error if normalize_description import was wrong
-        result = orchestrator.process_transaction_dtos(
-            transaction_dtos=test_dtos,
-            uploaded_file_id=uuid4(),
+        # Upload and process
+        upload_request = StatementUploadRequest(
+            uploaded_file_id=analysis_result.uploaded_file_id,
+            source_id=str(source.id),
+            column_mapping=analysis_result.column_mapping,
+            header_row_index=analysis_result.header_row_index,
+            data_start_row_index=analysis_result.data_start_row_index,
         )
 
-        # Verify processing completed
-        assert result.total_processed == 2
-        assert result.rule_based_matches == 0  # No rules matched
-        assert result.unmatched_dto_count == 2
-        assert len(result.processed_dtos) == 2
+        upload_result = dependencies.statement_upload_service.upload_and_process(upload_request, background_tasks=MagicMock(), internal_deps=dependencies)
 
-        # Verify DTOs have normalized descriptions
-        for dto in result.processed_dtos:
-            assert dto.normalized_description is not None
-            assert isinstance(dto.normalized_description, str)
+        # Verify processing worked
+        assert upload_result.total_processed == 3
+        assert upload_result.transactions_saved == 3
+
+        # Check real database state
+        transactions = db_session.query(Transaction).filter(Transaction.uploaded_file_id == analysis_result.uploaded_file_id).all()
+
+        assert len(transactions) == 3
+        # Verify all transactions have normalized descriptions (processed by real normalizer)
+        assert all(t.normalized_description is not None for t in transactions)
+        assert all(len(t.normalized_description) > 0 for t in transactions)
+
+        # Verify transaction categorization rules
+        categorization_rules = db_session.query(TransactionCategorization).all()
+
+        # For each rule, verify it has proper structure
+        for rule in categorization_rules:
+            assert rule.category_id is not None
+            assert rule.source in [CategorizationSource.MANUAL, CategorizationSource.AI]
+            assert rule.normalized_description is not None
+            assert len(rule.normalized_description) > 0
+            assert rule.created_at is not None
+
+        # Verify transactions have proper categorization status
+        for transaction in transactions:
+            # Transaction should have a categorization status
+            assert hasattr(transaction, "categorization_status")
+            # Should be either UNCATEGORIZED, CATEGORIZED, or FAILURE
+            assert transaction.categorization_status.value in [
+                "UNCATEGORIZED",
+                "CATEGORIZED",
+                "FAILURE",
+            ]
+
+    def test_categorization_source_tracking(self, db_session, llm_client):
+        """Test that categorization sources are properly tracked in the database."""
+
+        filename = "source_test.csv"
+        csv_content = b"""Date,Amount,Description
+2023-01-01,-25.00,Starbucks Coffee Purchase
+2023-01-02,-100.00,Unknown Merchant XYZ"""
+
+        dependencies = build_internal_dependencies(ExternalDependencies(db=db_session, llm_client=llm_client))
+
+        analysis_result = dependencies.statement_analyzer_service.analyze(
+            filename=filename,
+            file_content=csv_content,
+        )
+
+        source = Source(name="Test Card")
+        db_session.add(source)
+        db_session.flush()
+
+        upload_request = StatementUploadRequest(
+            uploaded_file_id=analysis_result.uploaded_file_id,
+            source_id=str(source.id),
+            column_mapping=analysis_result.column_mapping,
+            header_row_index=analysis_result.header_row_index,
+            data_start_row_index=analysis_result.data_start_row_index,
+        )
+
+        dependencies.statement_upload_service.upload_and_process(upload_request, background_tasks=MagicMock(), internal_deps=dependencies)
+
+        # Check categorization rules in database
+        categorization_rules = db_session.query(TransactionCategorization).all()
+
+        # Verify source tracking (if any rules were created)
+        if categorization_rules:
+            # All sources should be valid enum values
+            valid_sources = {CategorizationSource.MANUAL, CategorizationSource.AI}
+            for rule in categorization_rules:
+                assert rule.source in valid_sources, f"Invalid categorization source: {rule.source}"
+
+            # Verify each categorization rule has complete data
+            for rule in categorization_rules:
+                assert rule.category_id is not None
+                assert rule.source is not None
+                assert rule.normalized_description is not None
+                assert rule.created_at is not None
