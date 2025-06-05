@@ -34,11 +34,7 @@ class TransactionService:
             amount=amount,
             category_id=category_id,
             source_id=source_id,
-            categorization_status=(
-                CategorizationStatus.CATEGORIZED
-                if category_id
-                else CategorizationStatus.UNCATEGORIZED
-            ),
+            categorization_status=(CategorizationStatus.CATEGORIZED if category_id else CategorizationStatus.UNCATEGORIZED),
         )
         return self.transaction_repository.create(transaction)
 
@@ -93,11 +89,7 @@ class TransactionService:
 
             # Update category and categorization status
             transaction.category_id = category_id
-            transaction.categorization_status = (
-                CategorizationStatus.CATEGORIZED
-                if category_id
-                else CategorizationStatus.UNCATEGORIZED
-            )
+            transaction.categorization_status = CategorizationStatus.CATEGORIZED if category_id else CategorizationStatus.UNCATEGORIZED
 
             # Update source
             transaction.source_id = source_id  # type: ignore
@@ -109,26 +101,18 @@ class TransactionService:
         """Delete a transaction"""
         return self.transaction_repository.delete(transaction_id)
 
-    def categorize_transaction(
-        self, transaction_id: UUID, category_id: Optional[UUID]
-    ) -> Optional[Transaction]:
+    def categorize_transaction(self, transaction_id: UUID, category_id: Optional[UUID]) -> Optional[Transaction]:
         """Categorize a transaction"""
         transaction = self.transaction_repository.get_by_id(transaction_id)
         if not transaction:
             return None
 
         transaction.category_id = category_id
-        transaction.categorization_status = (
-            CategorizationStatus.CATEGORIZED
-            if category_id
-            else CategorizationStatus.UNCATEGORIZED
-        )
+        transaction.categorization_status = CategorizationStatus.CATEGORIZED if category_id else CategorizationStatus.UNCATEGORIZED
 
         return self.transaction_repository.update(transaction)
 
-    def mark_categorization_failure(
-        self, transaction_id: UUID
-    ) -> Optional[Transaction]:
+    def mark_categorization_failure(self, transaction_id: UUID) -> Optional[Transaction]:
         """Mark a transaction as having failed categorization"""
         transaction = self.transaction_repository.get_by_id(transaction_id)
         if not transaction:

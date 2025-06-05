@@ -82,9 +82,7 @@ class TransactionRepository(ABC):
         pass
 
     @abstractmethod
-    def find_duplicates(
-        self, transactions: List[TransactionDTO]
-    ) -> List[TransactionDTO]:
+    def find_duplicates(self, transactions: List[TransactionDTO]) -> List[TransactionDTO]:
         """
         Find duplicate transactions based on date, description, amount, and source.
 

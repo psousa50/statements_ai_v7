@@ -5,13 +5,14 @@ from decimal import Decimal
 from unittest.mock import MagicMock
 
 import pytest
+from sqlalchemy import create_engine, event
+from sqlalchemy.orm import sessionmaker
+
 from app.core.dependencies import ExternalDependencies, build_internal_dependencies
 from app.domain.dto.statement_processing import TransactionDTO
 from app.domain.models.source import Source
 from app.domain.models.transaction import Transaction
 from app.domain.models.uploaded_file import UploadedFile
-from sqlalchemy import create_engine, event
-from sqlalchemy.orm import sessionmaker
 
 
 @pytest.fixture
@@ -78,9 +79,7 @@ class TestTransactionDeduplicationIntegration:
     def test_transaction_deduplication_end_to_end(self, db_session, llm_client):
         """Test that transaction deduplication works correctly in the complete flow"""
         # Setup dependencies using the same pattern as other integration tests
-        dependencies = build_internal_dependencies(
-            ExternalDependencies(db=db_session, llm_client=llm_client)
-        )
+        dependencies = build_internal_dependencies(ExternalDependencies(db=db_session, llm_client=llm_client))
 
         # Create a test source
         source = Source(name="Test Bank for Deduplication")
@@ -137,26 +136,18 @@ class TestTransactionDeduplicationIntegration:
         ]
 
         # Use the persistence service to save transactions with deduplication
-        persistence_result = (
-            dependencies.statement_persistence_service.save_processed_transactions(
-                processed_dtos=transaction_dtos,
-                source_id=source.id,
-                uploaded_file_id=str(uploaded_file_id),
-            )
+        persistence_result = dependencies.statement_persistence_service.save_processed_transactions(
+            processed_dtos=transaction_dtos,
+            source_id=source.id,
+            uploaded_file_id=str(uploaded_file_id),
         )
 
         # Verify the results
-        assert (
-            persistence_result.transactions_saved == 2
-        )  # Only 2 new transactions saved
+        assert persistence_result.transactions_saved == 2  # Only 2 new transactions saved
         assert persistence_result.duplicated_transactions == 1  # 1 duplicate found
 
         # Verify the database state
-        all_transactions = (
-            db_session.query(Transaction)
-            .filter(Transaction.source_id == source.id)
-            .all()
-        )
+        all_transactions = db_session.query(Transaction).filter(Transaction.source_id == source.id).all()
         assert len(all_transactions) == 3  # 1 existing + 2 new
 
         # Verify the specific transactions
