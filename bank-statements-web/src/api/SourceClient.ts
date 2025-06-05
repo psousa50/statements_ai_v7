@@ -1,6 +1,9 @@
 import axios from 'axios'
 import { Source } from '../types/Transaction'
 
+// Re-export Source type for convenience
+export type { Source }
+
 export interface SourceListResponse {
   sources: Source[]
   total: number

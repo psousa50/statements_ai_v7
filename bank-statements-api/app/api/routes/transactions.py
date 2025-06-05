@@ -30,6 +30,7 @@ def register_transaction_routes(app: FastAPI, provide_dependencies: Callable[[],
             description=transaction_data.description,
             amount=transaction_data.amount,
             category_id=transaction_data.category_id,
+            source_id=transaction_data.source_id,
         )
         return transaction
 

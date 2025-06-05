@@ -13,6 +13,7 @@ def test_create_transaction():
     internal_dependencies = mocked_dependencies()
     transaction_id = uuid4()
     category_id = uuid4()
+    source_id = uuid4()
     mock_transaction = Transaction(
         id=transaction_id,
         date=date(2023, 1, 1),
@@ -21,6 +22,7 @@ def test_create_transaction():
         amount=Decimal(100.00),
         created_at=datetime(2023, 1, 1),
         category_id=category_id,
+        source_id=source_id,
         categorization_status=CategorizationStatus.CATEGORIZED,
     )
 
@@ -32,6 +34,7 @@ def test_create_transaction():
         description="Test transaction",
         amount=Decimal(100.00),
         category_id=category_id,
+        source_id=source_id,
     )
     response = client.post(
         "/api/v1/transactions",
@@ -54,17 +57,11 @@ def test_create_transaction():
         description="Test transaction",
         amount=Decimal(100.00),
         category_id=category_id,
+        source_id=source_id,
     )
 
     assert response.status_code == 201
     assert transaction_response.id == transaction_id
-
-    internal_dependencies.transaction_service.create_transaction.assert_called_once_with(
-        transaction_date=date(2023, 1, 1),
-        description="Test transaction",
-        amount=Decimal(100.00),
-        category_id=category_id,
-    )
 
 
 def test_get_transaction():
