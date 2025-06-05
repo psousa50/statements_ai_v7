@@ -1,4 +1,5 @@
 from datetime import datetime
+from decimal import Decimal
 from typing import List, Optional, Tuple
 from uuid import UUID
 
@@ -6,6 +7,7 @@ from app.common.text_normalization import normalize_description
 from app.domain.dto.statement_processing import TransactionDTO
 from app.domain.models.transaction import CategorizationStatus, Transaction
 from app.ports.repositories.transaction import TransactionRepository
+from sqlalchemy import and_, func, or_
 from sqlalchemy.orm import Session
 
 
@@ -35,6 +37,69 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         return (
             self.db_session.query(Transaction).order_by(Transaction.date.desc()).all()
         )
+
+    def get_paginated(
+        self,
+        page: int = 1,
+        page_size: int = 20,
+        category_ids: Optional[List[UUID]] = None,
+        status: Optional[CategorizationStatus] = None,
+        min_amount: Optional[Decimal] = None,
+        max_amount: Optional[Decimal] = None,
+        description_search: Optional[str] = None,
+        source_id: Optional[UUID] = None,
+    ) -> Tuple[List[Transaction], int]:
+        """Get transactions with pagination and advanced filtering"""
+
+        # Build the base query
+        query = self.db_session.query(Transaction)
+
+        # Apply filters
+        filters = []
+
+        # Multiple category filter
+        if category_ids:
+            filters.append(Transaction.category_id.in_(category_ids))
+
+        # Status filter
+        if status is not None:
+            filters.append(Transaction.categorization_status == status)
+
+        # Amount range filters
+        if min_amount is not None:
+            filters.append(Transaction.amount >= min_amount)
+        if max_amount is not None:
+            filters.append(Transaction.amount <= max_amount)
+
+        # Description search filter (case-insensitive, search in both description and normalized_description)
+        if description_search:
+            search_term = f"%{description_search.lower()}%"
+            filters.append(
+                or_(
+                    func.lower(Transaction.description).like(search_term),
+                    func.lower(Transaction.normalized_description).like(search_term),
+                )
+            )
+
+        # Source filter
+        if source_id is not None:
+            filters.append(Transaction.source_id == source_id)
+
+        if filters:
+            query = query.filter(and_(*filters))
+
+        # Get total count
+        total = query.count()
+
+        # Apply pagination and ordering
+        transactions = (
+            query.order_by(Transaction.date.desc())
+            .offset((page - 1) * page_size)
+            .limit(page_size)
+            .all()
+        )
+
+        return transactions, total
 
     def update(self, transaction: Transaction) -> Transaction:
         self.db_session.commit()

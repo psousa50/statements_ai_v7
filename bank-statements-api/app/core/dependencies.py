@@ -1,6 +1,6 @@
 import logging
 from contextlib import contextmanager
-from typing import Generator
+from typing import Generator, Optional
 
 from sqlalchemy.orm import Session
 
@@ -33,14 +33,12 @@ logger = logging.getLogger(__name__)
 
 
 class ExternalDependencies:
-    def __init__(self, db: Session = SessionLocal(), llm_client: LLMClient = GeminiAI()):
-        self.db = db
-        self.llm_client = llm_client
+    def __init__(self, db: Optional[Session] = None, llm_client: Optional[LLMClient] = None):
+        self.db: Session = db if db is not None else SessionLocal()
+        self.llm_client: LLMClient = llm_client if llm_client is not None else GeminiAI()
 
     def cleanup(self):
-        if self.db is not None:
-            self.db.close()
-            self.db = None
+        self.db.close()
 
 
 class InternalDependencies:
@@ -169,5 +167,5 @@ def get_dependencies() -> Generator[tuple[ExternalDependencies, InternalDependen
 
 
 def provide_dependencies() -> Generator[InternalDependencies, None, None]:
-    with get_dependencies() as (_external, internal):
+    with get_dependencies() as (_, internal):
         yield internal

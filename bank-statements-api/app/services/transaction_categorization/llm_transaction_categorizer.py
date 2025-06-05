@@ -29,16 +29,16 @@ class LLMTransactionCategorizer(TransactionCategorizer):
     ):
         self.categories_repository = categories_repository
         self.llm_client = llm_client
-        self.categories = categories_repository.get_all()
-        self.refresh_rules()
+        self.categories = None
 
     def categorize(self, transactions: List[Transaction]) -> List[CategorizationResult]:
         """Batch categorization using LLM"""
         if not transactions:
             return []
 
-        # Refresh categories to ensure they're attached to the current session
-        self.refresh_rules()
+        # Load categories lazily on first use
+        if self.categories is None:
+            self.categories = self.categories_repository.get_all()
 
         if not self.categories:
             return [

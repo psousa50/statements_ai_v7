@@ -1,26 +1,43 @@
 import { useState, useEffect, useCallback } from 'react'
-import { CategorizationStatus, Transaction, TransactionCreate } from '../../types/Transaction'
+import { CategorizationStatus, Transaction, TransactionCreate, TransactionListResponse } from '../../types/Transaction'
 import { useApi } from '../../api/ApiContext'
+import { TransactionFilters } from '../../api/TransactionClient'
 
 export const useTransactions = () => {
   const api = useApi()
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [loading, setLoading] = useState<boolean>(false)
   const [error, setError] = useState<string | null>(null)
+  const [pagination, setPagination] = useState({
+    page: 1,
+    pageSize: 20,
+    total: 0,
+    totalPages: 0,
+  })
 
-  const fetchTransactions = useCallback(async () => {
-    setLoading(true)
-    setError(null)
-    try {
-      const response = await api.transactions.getAll()
-      setTransactions(response.transactions)
-    } catch (err) {
-      console.error('Error fetching transactions:', err)
-      setError('Failed to fetch transactions. Please try again later.')
-    } finally {
-      setLoading(false)
-    }
-  }, [api.transactions])
+  const fetchTransactions = useCallback(
+    async (filters?: TransactionFilters) => {
+      setLoading(true)
+      setError(null)
+      try {
+        const response: TransactionListResponse = await api.transactions.getAll(filters)
+        setTransactions(response.transactions)
+        setPagination((prev) => ({
+          ...prev,
+          page: filters?.page || 1,
+          pageSize: filters?.page_size || 20,
+          total: response.total,
+          totalPages: Math.ceil(response.total / (filters?.page_size || 20)),
+        }))
+      } catch (err) {
+        console.error('Error fetching transactions:', err)
+        setError('Failed to fetch transactions. Please try again later.')
+      } finally {
+        setLoading(false)
+      }
+    },
+    [api.transactions]
+  )
 
   const addTransaction = useCallback(
     async (transaction: TransactionCreate) => {
@@ -136,6 +153,7 @@ export const useTransactions = () => {
     transactions,
     loading,
     error,
+    pagination,
     fetchTransactions,
     addTransaction,
     updateTransaction,

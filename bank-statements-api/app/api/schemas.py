@@ -71,7 +71,7 @@ class TransactionCreate(TransactionBase):
 
 class TransactionUpdate(TransactionBase):
     category_id: Optional[UUID] = None
-    source_id: Optional[UUID] = None
+    source_id: UUID
 
 
 class TransactionResponse(BaseModel):

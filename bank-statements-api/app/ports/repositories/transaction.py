@@ -1,9 +1,10 @@
 from abc import ABC, abstractmethod
+from decimal import Decimal
 from typing import List, Optional, Tuple
 from uuid import UUID
 
 from app.domain.dto.statement_processing import TransactionDTO
-from app.domain.models.transaction import Transaction
+from app.domain.models.transaction import CategorizationStatus, Transaction
 
 
 class TransactionRepository(ABC):
@@ -25,6 +26,36 @@ class TransactionRepository(ABC):
     @abstractmethod
     def get_all(self) -> List[Transaction]:
         """Get all transactions"""
+        pass
+
+    @abstractmethod
+    def get_paginated(
+        self,
+        page: int = 1,
+        page_size: int = 20,
+        category_ids: Optional[List[UUID]] = None,
+        status: Optional[CategorizationStatus] = None,
+        min_amount: Optional[Decimal] = None,
+        max_amount: Optional[Decimal] = None,
+        description_search: Optional[str] = None,
+        source_id: Optional[UUID] = None,
+    ) -> Tuple[List[Transaction], int]:
+        """
+        Get transactions with pagination and advanced filtering
+
+        Args:
+            page: Page number (1-based)
+            page_size: Number of transactions per page
+            category_ids: Optional list of category IDs to filter by
+            status: Optional status filter
+            min_amount: Optional minimum amount filter
+            max_amount: Optional maximum amount filter
+            description_search: Optional description search filter
+            source_id: Optional source ID to filter by
+
+        Returns:
+            Tuple of (transactions list, total count)
+        """
         pass
 
     @abstractmethod
@@ -51,7 +82,9 @@ class TransactionRepository(ABC):
         pass
 
     @abstractmethod
-    def find_duplicates(self, transactions: List[TransactionDTO]) -> List[TransactionDTO]:
+    def find_duplicates(
+        self, transactions: List[TransactionDTO]
+    ) -> List[TransactionDTO]:
         """
         Find duplicate transactions based on date, description, amount, and source.
 

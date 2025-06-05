@@ -51,11 +51,11 @@ class TestLLMTransactionCategorizer:
 
         self.categorizer = LLMTransactionCategorizer(categories_repository=self.category_repository, llm_client=self.llm_client)
 
-    def test_init_loads_categories(self) -> None:
-        """Test that initialization loads categories from repository"""
+    def test_init_does_not_load_categories(self) -> None:
+        """Test that initialization does not load categories from repository (lazy loading)"""
         # Assert
-        self.category_repository.get_all.assert_called()
-        assert self.categorizer.categories == self.categories
+        self.category_repository.get_all.assert_not_called()
+        assert self.categorizer.categories is None
 
     def test_categorize_empty_transactions_returns_empty_list(self) -> None:
         """Test that categorizing empty transaction list returns empty results"""
@@ -325,8 +325,8 @@ class TestLLMTransactionCategorizer:
         # Assert
         assert result == new_categories
         assert self.categorizer.categories == new_categories
-        # The call count might be higher due to setup - just verify refresh was called
-        assert self.category_repository.get_all.call_count >= 2
+        # Only refresh_rules should call get_all, not initialization
+        assert self.category_repository.get_all.call_count == 1
 
     def test_llm_categorization_result_dataclass(self) -> None:
         """Test LLMCategorizationResult dataclass"""

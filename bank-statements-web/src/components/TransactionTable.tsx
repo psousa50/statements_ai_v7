@@ -1,14 +1,134 @@
 import { format } from 'date-fns'
-import { Category, Transaction } from '../types/Transaction'
+import { useState, useMemo, useCallback, useRef, useEffect } from 'react'
+import { Category, Transaction, Source } from '../types/Transaction'
 
 interface TransactionTableProps {
   transactions: Transaction[]
   categories: Category[]
+  sources: Source[]
   loading: boolean
   onCategorize?: (transactionId: string, categoryId?: string) => void
 }
 
-export const TransactionTable = ({ transactions, categories, loading, onCategorize }: TransactionTableProps) => {
+interface CategoryPickerProps {
+  transaction: Transaction
+  categories: Category[]
+  onCategorize: (transactionId: string, categoryId?: string) => void
+}
+
+const CategoryPicker = ({ transaction, categories, onCategorize }: CategoryPickerProps) => {
+  const [input, setInput] = useState('')
+  const [showSuggestions, setShowSuggestions] = useState(false)
+  const inputRef = useRef<HTMLInputElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  // Get current category
+  const currentCategory = useMemo(() => {
+    return transaction.category_id ? categories.find((c) => c.id === transaction.category_id) : null
+  }, [transaction.category_id, categories])
+
+  // Filter categories based on input
+  const filteredCategories = useMemo(() => {
+    return categories.filter((category) => category.name.toLowerCase().includes(input.toLowerCase()))
+  }, [categories, input])
+
+  // Close suggestions when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setShowSuggestions(false)
+        setInput('')
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  const handleCategorySelect = useCallback(
+    (categoryId: string) => {
+      onCategorize(transaction.id, categoryId)
+      setInput('')
+      setShowSuggestions(false)
+    },
+    [transaction.id, onCategorize]
+  )
+
+  const handleCategoryRemove = useCallback(() => {
+    onCategorize(transaction.id, undefined)
+  }, [transaction.id, onCategorize])
+
+  const handleInputChange = useCallback(
+    (value: string) => {
+      setInput(value)
+      setShowSuggestions(value.length > 0 && filteredCategories.length > 0)
+    },
+    [filteredCategories.length]
+  )
+
+  const handleInputKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === 'Enter' && filteredCategories.length > 0) {
+        e.preventDefault()
+        handleCategorySelect(filteredCategories[0].id)
+      } else if (e.key === 'Escape') {
+        setShowSuggestions(false)
+        setInput('')
+      }
+    },
+    [filteredCategories, handleCategorySelect]
+  )
+
+  return (
+    <div className="transaction-category-picker" ref={containerRef}>
+      <div className="category-picker-container">
+        {currentCategory ? (
+          <span className="current-category-tag">
+            {currentCategory.name}
+            <button onClick={handleCategoryRemove} className="category-remove-btn" type="button">
+              ×
+            </button>
+          </span>
+        ) : (
+          <input
+            ref={inputRef}
+            type="text"
+            value={input}
+            onChange={(e) => handleInputChange(e.target.value)}
+            onKeyDown={handleInputKeyDown}
+            onFocus={() => setShowSuggestions(input.length > 0 && filteredCategories.length > 0)}
+            placeholder="Search category..."
+            className="category-picker-input"
+          />
+        )}
+      </div>
+
+      {showSuggestions && filteredCategories.length > 0 && (
+        <div className="category-picker-suggestions">
+          {filteredCategories.slice(0, 6).map((category) => (
+            <button
+              key={category.id}
+              onClick={() => handleCategorySelect(category.id)}
+              className="category-picker-suggestion"
+              type="button"
+            >
+              {category.parent_id && '  └ '}
+              {category.name}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+export const TransactionTable = ({
+  transactions,
+  categories,
+  sources,
+  loading,
+  onCategorize,
+}: TransactionTableProps) => {
   if (loading) {
     return <div className="loading">Loading transactions...</div>
   }
@@ -32,25 +152,11 @@ export const TransactionTable = ({ transactions, categories, loading, onCategori
     }).format(amount)
   }
 
-  // Helper function to get category name by ID
-  const getCategoryName = (categoryId?: string) => {
-    if (!categoryId) return 'Uncategorized'
-    const category = categories.find((c) => c.id === categoryId)
-    return category ? category.name : 'Unknown Category'
-  }
-
-  // Helper function to get status display text
-  const getStatusDisplay = (status: string) => {
-    switch (status) {
-      case 'UNCATEGORIZED':
-        return 'Uncategorized'
-      case 'categorized':
-        return 'Categorized'
-      case 'failure':
-        return 'Failed'
-      default:
-        return status
-    }
+  // Helper function to get source name by ID
+  const getSourceName = (sourceId?: string) => {
+    if (!sourceId) return 'Unknown'
+    const source = sources.find((s) => s.id === sourceId)
+    return source ? source.name : 'Unknown'
   }
 
   return (
@@ -62,9 +168,8 @@ export const TransactionTable = ({ transactions, categories, loading, onCategori
             <th>Date</th>
             <th>Description</th>
             <th>Amount</th>
-            <th>Category</th>
-            <th>Status</th>
-            {onCategorize && <th>Actions</th>}
+            <th>Source</th>
+            {onCategorize && <th>Category</th>}
           </tr>
         </thead>
         <tbody>
@@ -73,24 +178,10 @@ export const TransactionTable = ({ transactions, categories, loading, onCategori
               <td>{formatDate(transaction.date)}</td>
               <td>{transaction.description}</td>
               <td className={transaction.amount < 0 ? 'negative' : 'positive'}>{formatAmount(transaction.amount)}</td>
-              <td>{getCategoryName(transaction.category_id)}</td>
-              <td>{getStatusDisplay(transaction.categorization_status)}</td>
+              <td>{getSourceName(transaction.source_id)}</td>
               {onCategorize && (
                 <td>
-                  <select
-                    value={transaction.category_id || ''}
-                    onChange={(e) => {
-                      const categoryId = e.target.value || undefined
-                      onCategorize(transaction.id, categoryId)
-                    }}
-                  >
-                    <option value="">-- Select Category --</option>
-                    {categories.map((category) => (
-                      <option key={category.id} value={category.id}>
-                        {category.name}
-                      </option>
-                    ))}
-                  </select>
+                  <CategoryPicker transaction={transaction} categories={categories} onCategorize={onCategorize} />
                 </td>
               )}
             </tr>

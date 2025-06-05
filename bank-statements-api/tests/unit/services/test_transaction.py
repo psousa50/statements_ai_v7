@@ -128,6 +128,7 @@ class TestTransactionService:
             transaction_date=date(2023, 4, 20),
             description="Updated Transaction",
             amount=Decimal("150.75"),
+            source_id=uuid4(),
         )
 
         assert result is None

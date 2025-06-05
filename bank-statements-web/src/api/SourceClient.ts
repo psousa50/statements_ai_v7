@@ -1,9 +1,5 @@
 import axios from 'axios'
-
-export interface Source {
-  id: string
-  name: string
-}
+import { Source } from '../types/Transaction'
 
 export interface SourceListResponse {
   sources: Source[]
@@ -11,18 +7,28 @@ export interface SourceListResponse {
 }
 
 export interface SourceClient {
+  getAll: () => Promise<Source[]>
   getSources: () => Promise<SourceListResponse>
   createSource: (name: string) => Promise<Source>
 }
 
+// Use the VITE_API_URL environment variable for the base URL, or default to '' for local development
+const BASE_URL = import.meta.env.VITE_API_URL || ''
+const API_URL = `${BASE_URL}/api/v1/sources`
+
 export const sourceClient: SourceClient = {
+  getAll: async (): Promise<Source[]> => {
+    const response = await axios.get<{ sources: Source[]; total: number }>(API_URL)
+    return response.data.sources
+  },
+
   getSources: async (): Promise<SourceListResponse> => {
-    const response = await axios.get<SourceListResponse>('/api/v1/sources')
+    const response = await axios.get<{ sources: Source[]; total: number }>(API_URL)
     return response.data
   },
 
   createSource: async (name: string): Promise<Source> => {
-    const response = await axios.post<Source>('/api/v1/sources', { name })
+    const response = await axios.post<Source>(API_URL, { name })
     return response.data
   },
 }

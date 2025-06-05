@@ -6,11 +6,18 @@ export interface Category {
   parent_id?: string
 }
 
+export interface Source {
+  id: string
+  name: string
+  type?: string
+}
+
 export interface Transaction {
   id: string
   date: string
   description: string
   amount: number
+  source_id?: string
   created_at: string
   category_id?: string
   categorization_status: CategorizationStatus
@@ -20,6 +27,7 @@ export interface TransactionCreate {
   date: string
   description: string
   amount: number
+  source_id?: string
   category_id?: string
 }
 
