@@ -11,7 +11,6 @@ export interface SourceListResponse {
 
 export interface SourceClient {
   getAll: () => Promise<Source[]>
-  getSources: () => Promise<SourceListResponse>
   createSource: (name: string) => Promise<Source>
 }
 
@@ -23,11 +22,6 @@ export const sourceClient: SourceClient = {
   getAll: async (): Promise<Source[]> => {
     const response = await axios.get<{ sources: Source[]; total: number }>(API_URL)
     return response.data.sources
-  },
-
-  getSources: async (): Promise<SourceListResponse> => {
-    const response = await axios.get<{ sources: Source[]; total: number }>(API_URL)
-    return response.data
   },
 
   createSource: async (name: string): Promise<Source> => {

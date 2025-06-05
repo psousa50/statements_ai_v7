@@ -34,12 +34,12 @@ export const SourceSelector: React.FC<SourceSelectorProps> = ({ value, onChange 
     const fetchSources = async () => {
       try {
         setLoading(true)
-        const response = await defaultApiClient.sources.getSources()
-        setSources(response.sources)
+        const sources = await defaultApiClient.sources.getAll()
+        setSources(sources)
         
         // If we have sources and no value is selected, select the first one
-        if (response.sources.length > 0 && !value) {
-          onChange(response.sources[0].id)
+        if (sources.length > 0 && !value) {
+          onChange(sources[0].id)
         }
       } catch (error) {
         console.error('Error fetching sources:', error)

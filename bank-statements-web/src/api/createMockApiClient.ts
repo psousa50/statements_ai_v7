@@ -66,11 +66,6 @@ const defaultCategoryClient: CategoryClient = {
 // Default mock source client implementation
 const defaultSourceClient: SourceClient = {
   getAll: () => Promise.resolve([defaultSource]),
-  getSources: () =>
-    Promise.resolve({
-      sources: [defaultSource],
-      total: 1,
-    } as SourceListResponse),
   createSource: () => Promise.resolve(defaultSource),
 }
 
