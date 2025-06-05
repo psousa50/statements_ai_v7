@@ -1,3 +1,4 @@
+from datetime import date
 from decimal import Decimal
 from typing import Callable, Iterator, Optional
 from uuid import UUID
@@ -44,6 +45,8 @@ def register_transaction_routes(app: FastAPI, provide_dependencies: Callable[[],
         max_amount: Optional[Decimal] = Query(None, description="Maximum transaction amount"),
         description_search: Optional[str] = Query(None, description="Search in transaction description"),
         source_id: Optional[UUID] = Query(None, description="Filter by source ID"),
+        start_date: Optional[date] = Query(None, description="Filter transactions from this date"),
+        end_date: Optional[date] = Query(None, description="Filter transactions to this date"),
         internal: InternalDependencies = Depends(provide_dependencies),
     ):
         # Parse category_ids if provided
@@ -63,6 +66,8 @@ def register_transaction_routes(app: FastAPI, provide_dependencies: Callable[[],
             max_amount=max_amount,
             description_search=description_search,
             source_id=source_id,
+            start_date=start_date,
+            end_date=end_date,
         )
         return transactions
 

@@ -15,6 +15,8 @@ export interface TransactionFilters {
   max_amount?: number
   description_search?: string
   source_id?: string
+  start_date?: string
+  end_date?: string
 }
 
 export interface TransactionClient {
@@ -63,6 +65,12 @@ export const transactionClient: TransactionClient = {
     }
     if (filters?.source_id) {
       params.append('source_id', filters.source_id)
+    }
+    if (filters?.start_date) {
+      params.append('start_date', filters.start_date)
+    }
+    if (filters?.end_date) {
+      params.append('end_date', filters.end_date)
     }
 
     const url = params.toString() ? `${API_URL}?${params.toString()}` : API_URL

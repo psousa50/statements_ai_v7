@@ -56,6 +56,8 @@ class TransactionService:
         max_amount: Optional[Decimal] = None,
         description_search: Optional[str] = None,
         source_id: Optional[UUID] = None,
+        start_date: Optional[date] = None,
+        end_date: Optional[date] = None,
     ) -> TransactionListResponse:
         """Get transactions with pagination and advanced filtering"""
         transactions, total = self.transaction_repository.get_paginated(
@@ -67,6 +69,8 @@ class TransactionService:
             max_amount=max_amount,
             description_search=description_search,
             source_id=source_id,
+            start_date=start_date,
+            end_date=end_date,
         )
         return TransactionListResponse(transactions=transactions, total=total)
 

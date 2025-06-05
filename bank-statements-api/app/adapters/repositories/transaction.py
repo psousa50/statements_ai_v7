@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime
 from decimal import Decimal
 from typing import List, Optional, Tuple
 from uuid import UUID
@@ -43,6 +43,8 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         max_amount: Optional[Decimal] = None,
         description_search: Optional[str] = None,
         source_id: Optional[UUID] = None,
+        start_date: Optional[date] = None,
+        end_date: Optional[date] = None,
     ) -> Tuple[List[Transaction], int]:
         """Get transactions with pagination and advanced filtering"""
 
@@ -79,6 +81,12 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         # Source filter
         if source_id is not None:
             filters.append(Transaction.source_id == source_id)
+
+        # Date range filters
+        if start_date is not None:
+            filters.append(Transaction.date >= start_date)
+        if end_date is not None:
+            filters.append(Transaction.date <= end_date)
 
         if filters:
             query = query.filter(and_(*filters))

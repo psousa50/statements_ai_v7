@@ -1,5 +1,7 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react'
+import { DateRangePicker } from 'rsuite'
 import { CategorizationStatus, Category, Source } from '../types/Transaction'
+import 'rsuite/dist/rsuite.min.css'
 
 interface TransactionFiltersProps {
   categories: Category[]
@@ -10,12 +12,29 @@ interface TransactionFiltersProps {
   minAmount?: number
   maxAmount?: number
   descriptionSearch?: string
+  startDate?: string
+  endDate?: string
   onCategoryChange: (categoryIds: string[]) => void
   onStatusChange: (status?: CategorizationStatus) => void
   onSourceChange: (sourceId?: string) => void
   onAmountRangeChange: (minAmount?: number, maxAmount?: number) => void
   onDescriptionSearchChange: (search?: string) => void
+  onDateRangeChange?: (startDate?: string, endDate?: string) => void
   onClearFilters: () => void
+}
+
+const formatDateForInput = (date: Date): string => {
+  // Ensure we're working with a valid date and format it as YYYY-MM-DD
+  const validDate = new Date(date)
+  if (isNaN(validDate.getTime())) {
+    throw new Error('Invalid date provided to formatDateForInput')
+  }
+
+  const year = validDate.getFullYear()
+  const month = String(validDate.getMonth() + 1).padStart(2, '0')
+  const day = String(validDate.getDate()).padStart(2, '0')
+
+  return `${year}-${month}-${day}`
 }
 
 export const TransactionFilters = ({
@@ -27,17 +46,37 @@ export const TransactionFilters = ({
   minAmount,
   maxAmount,
   descriptionSearch,
+  startDate,
+  endDate,
   onCategoryChange,
   onStatusChange,
   onSourceChange,
   onAmountRangeChange,
   onDescriptionSearchChange,
+  onDateRangeChange,
   onClearFilters,
 }: TransactionFiltersProps) => {
   const [categoryInput, setCategoryInput] = useState('')
   const [showSuggestions, setShowSuggestions] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
+
+  // Date range state for RSuite DateRangePicker
+  const [dateRange, setDateRange] = useState<[Date, Date] | null>(() => {
+    if (startDate && endDate) {
+      return [new Date(startDate), new Date(endDate)]
+    }
+    return null
+  })
+
+  // Update local date range when props change
+  useEffect(() => {
+    if (startDate && endDate) {
+      setDateRange([new Date(startDate), new Date(endDate)])
+    } else {
+      setDateRange(null)
+    }
+  }, [startDate, endDate])
 
   // Filter categories based on input and exclude already selected ones
   const availableCategories = useMemo(() => {
@@ -58,12 +97,19 @@ export const TransactionFilters = ({
     minAmount !== undefined ||
     maxAmount !== undefined ||
     descriptionSearch ||
-    selectedSourceId
+    selectedSourceId ||
+    startDate ||
+    endDate
 
-  // Close suggestions when clicking outside
+  // Close suggestions and date picker when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+      // Don't close if clicking inside the date picker dropdown
+      const target = event.target as Node
+      const isDatePickerClick = target && containerRef.current?.contains(target)
+      const isDateRangeClick = target && (target as Element).closest?.('.rs-picker-popup, .date-picker-container')
+
+      if (!isDatePickerClick && !isDateRangeClick) {
         setShowSuggestions(false)
       }
     }
@@ -71,6 +117,91 @@ export const TransactionFilters = ({
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
+
+  const handleDateRangeChange = useCallback(
+    (range: [Date, Date] | null) => {
+      setDateRange(range)
+
+      if (range && range[0] && range[1] && onDateRangeChange) {
+        const startDateStr = formatDateForInput(range[0])
+        const endDateStr = formatDateForInput(range[1])
+        onDateRangeChange(startDateStr, endDateStr)
+      } else if (range === null && onDateRangeChange) {
+        onDateRangeChange(undefined, undefined)
+      }
+    },
+    [onDateRangeChange]
+  )
+
+  // Define predefined ranges for RSuite
+  const predefinedRanges = [
+    {
+      label: 'Today',
+      value: [new Date(), new Date()] as [Date, Date],
+    },
+    {
+      label: 'Yesterday',
+      value: (() => {
+        const yesterday = new Date()
+        yesterday.setDate(yesterday.getDate() - 1)
+        return [yesterday, yesterday] as [Date, Date]
+      })(),
+    },
+    {
+      label: 'Last 7 Days',
+      value: (() => {
+        const end = new Date()
+        const start = new Date()
+        start.setDate(start.getDate() - 6)
+        return [start, end] as [Date, Date]
+      })(),
+    },
+    {
+      label: 'Last 30 Days',
+      value: (() => {
+        const end = new Date()
+        const start = new Date()
+        start.setDate(start.getDate() - 29)
+        return [start, end] as [Date, Date]
+      })(),
+    },
+    {
+      label: 'This Month',
+      value: (() => {
+        const now = new Date()
+        const start = new Date(now.getFullYear(), now.getMonth(), 1)
+        const end = new Date()
+        return [start, end] as [Date, Date]
+      })(),
+    },
+    {
+      label: 'Last Month',
+      value: (() => {
+        const now = new Date()
+        const start = new Date(now.getFullYear(), now.getMonth() - 1, 1)
+        const end = new Date(now.getFullYear(), now.getMonth(), 0)
+        return [start, end] as [Date, Date]
+      })(),
+    },
+    {
+      label: 'This Year',
+      value: (() => {
+        const now = new Date()
+        const start = new Date(now.getFullYear(), 0, 1)
+        const end = new Date()
+        return [start, end] as [Date, Date]
+      })(),
+    },
+    {
+      label: 'Last Year',
+      value: (() => {
+        const now = new Date()
+        const start = new Date(now.getFullYear() - 1, 0, 1)
+        const end = new Date(now.getFullYear() - 1, 11, 31)
+        return [start, end] as [Date, Date]
+      })(),
+    },
+  ]
 
   const handleCategoryAdd = useCallback(
     (categoryId: string) => {
@@ -153,6 +284,27 @@ export const TransactionFilters = ({
             className="search-input"
           />
         </div>
+
+        {/* Date Range */}
+        {onDateRangeChange && (
+          <div className="filter-section">
+            <label className="filter-label">Date Range</label>
+            <div className="date-range-picker" ref={containerRef}>
+              <DateRangePicker
+                value={dateRange}
+                onChange={handleDateRangeChange}
+                ranges={predefinedRanges}
+                placeholder="Select date range"
+                cleanable
+                showOneCalendar={false}
+                format="dd/MM/yyyy"
+                character=" - "
+                size="md"
+                placement="bottomStart"
+              />
+            </div>
+          </div>
+        )}
 
         {/* Amount Range */}
         <div className="filter-section">

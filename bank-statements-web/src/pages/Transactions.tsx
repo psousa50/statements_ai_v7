@@ -19,6 +19,8 @@ export const TransactionsPage = () => {
   const [localDescriptionSearch, setLocalDescriptionSearch] = useState<string>('')
   const [localMinAmount, setLocalMinAmount] = useState<number | undefined>()
   const [localMaxAmount, setLocalMaxAmount] = useState<number | undefined>()
+  const [localStartDate, setLocalStartDate] = useState<string>('')
+  const [localEndDate, setLocalEndDate] = useState<string>('')
 
   const debounceTimeoutRef = useRef<NodeJS.Timeout>()
 
@@ -37,7 +39,7 @@ export const TransactionsPage = () => {
   const loading = transactionsLoading || categoriesLoading || sourcesLoading
   const error = transactionsError || categoriesError || sourcesError
 
-  // Debounced filter update for search and amount inputs
+  // Debounced filter update for search, amount, and date inputs
   useEffect(() => {
     if (debounceTimeoutRef.current) {
       clearTimeout(debounceTimeoutRef.current)
@@ -47,7 +49,9 @@ export const TransactionsPage = () => {
       const needsUpdate =
         localDescriptionSearch !== (filters.description_search || '') ||
         localMinAmount !== filters.min_amount ||
-        localMaxAmount !== filters.max_amount
+        localMaxAmount !== filters.max_amount ||
+        localStartDate !== (filters.start_date || '') ||
+        localEndDate !== (filters.end_date || '')
 
       if (needsUpdate) {
         const updatedFilters = {
@@ -55,6 +59,8 @@ export const TransactionsPage = () => {
           description_search: localDescriptionSearch || undefined,
           min_amount: localMinAmount,
           max_amount: localMaxAmount,
+          start_date: localStartDate || undefined,
+          end_date: localEndDate || undefined,
           page: 1,
         }
         setFilters(updatedFilters)
@@ -67,7 +73,7 @@ export const TransactionsPage = () => {
         clearTimeout(debounceTimeoutRef.current)
       }
     }
-  }, [localDescriptionSearch, localMinAmount, localMaxAmount, filters, fetchTransactions])
+  }, [localDescriptionSearch, localMinAmount, localMaxAmount, localStartDate, localEndDate, filters, fetchTransactions])
 
   const handleFilterChange = useCallback(
     (newFilters: Partial<FilterType>) => {
@@ -128,12 +134,19 @@ export const TransactionsPage = () => {
     setLocalDescriptionSearch(search || '')
   }, [])
 
+  const handleDateRangeFilter = useCallback((startDate?: string, endDate?: string) => {
+    setLocalStartDate(startDate || '')
+    setLocalEndDate(endDate || '')
+  }, [])
+
   const handleClearFilters = useCallback(() => {
     const clearedFilters = { page: 1, page_size: filters.page_size }
     setFilters(clearedFilters)
     setLocalDescriptionSearch('')
     setLocalMinAmount(undefined)
     setLocalMaxAmount(undefined)
+    setLocalStartDate('')
+    setLocalEndDate('')
     fetchTransactions(clearedFilters)
   }, [filters.page_size, fetchTransactions])
 
@@ -169,11 +182,14 @@ export const TransactionsPage = () => {
             minAmount={localMinAmount}
             maxAmount={localMaxAmount}
             descriptionSearch={localDescriptionSearch}
+            startDate={localStartDate}
+            endDate={localEndDate}
             onCategoryChange={handleCategoryFilter}
             onStatusChange={handleStatusFilter}
             onSourceChange={handleSourceFilter}
             onAmountRangeChange={handleAmountRangeFilter}
             onDescriptionSearchChange={handleDescriptionSearchFilter}
+            onDateRangeChange={handleDateRangeFilter}
             onClearFilters={handleClearFilters}
           />
         </div>

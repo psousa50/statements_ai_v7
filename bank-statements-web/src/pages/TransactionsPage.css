@@ -104,7 +104,7 @@
 /* Horizontal filter sections layout */
 .transactions-page .filters-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr 1fr 2fr;
+  grid-template-columns: 1fr 1.5fr 1fr 1fr 1fr 2fr;
   gap: 1.5rem;
 }
 
@@ -170,6 +170,285 @@
   font-weight: 500;
   font-size: 0.875rem;
   white-space: nowrap;
+}
+
+/* Modern Calendar Date Range Picker */
+.transactions-page .date-range-picker {
+  position: relative;
+}
+
+.transactions-page .date-range-button {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background-color: #ffffff !important;
+  font-size: 0.875rem;
+  color: #1f2937 !important;
+  cursor: pointer;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  text-align: left;
+}
+
+.transactions-page .date-range-button:hover {
+  border-color: #9ca3af;
+}
+
+.transactions-page .date-range-button:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.transactions-page .date-range-placeholder {
+  color: #9ca3af;
+}
+
+.transactions-page .date-range-chevron {
+  color: #6b7280;
+  font-size: 0.75rem;
+  transition: transform 0.2s;
+}
+
+.transactions-page .date-range-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 50;
+  background: #ffffff !important;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  margin-top: 0.25rem;
+  overflow: hidden;
+  min-width: 800px;
+}
+
+.transactions-page .date-picker-actions {
+  border-top: 1px solid #e5e7eb;
+  padding: 1rem;
+  text-align: right;
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+.transactions-page .date-clear-button {
+  padding: 0.5rem 1rem;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background: #ffffff !important;
+  color: #6b7280 !important;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.transactions-page .date-clear-button:hover {
+  background: #f9fafb !important;
+  border-color: #9ca3af;
+}
+
+.transactions-page .date-apply-button {
+  padding: 0.5rem 1rem;
+  border: 1px solid #3b82f6;
+  border-radius: 6px;
+  background: #3b82f6 !important;
+  color: #ffffff !important;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.transactions-page .date-apply-button:hover {
+  background: #2563eb !important;
+  border-color: #2563eb;
+}
+
+/* Override react-date-range styles */
+.transactions-page .rdrCalendarWrapper {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.transactions-page .rdrDateRangeWrapper {
+  background: transparent !important;
+}
+
+/* Style the built-in DefinedRange component */
+.transactions-page .rdrDefinedRangesWrapper {
+  flex: 0 0 200px !important;
+  background: #f9fafb !important;
+  border-right: 1px solid #e5e7eb !important;
+  border-radius: 0 !important;
+}
+
+.transactions-page .rdrStaticRanges {
+  border: none !important;
+  background: transparent !important;
+}
+
+.transactions-page .rdrStaticRange {
+  border: none !important;
+  background: transparent !important;
+  margin-bottom: 2px !important;
+}
+
+.transactions-page .rdrStaticRangeLabel {
+  background: transparent !important;
+  color: #374151 !important;
+  font-size: 0.875rem !important;
+  padding: 0.5rem 1rem !important;
+  border-radius: 4px !important;
+  margin: 0 0.5rem !important;
+  transition: all 0.2s !important;
+}
+
+.transactions-page .rdrStaticRangeLabel:hover {
+  background: #e5e7eb !important;
+}
+
+.transactions-page .rdrStaticRangeSelected .rdrStaticRangeLabel {
+  background: #dbeafe !important;
+  color: #1e40af !important;
+}
+
+.transactions-page .rdrInputRanges {
+  border: none !important;
+  background: transparent !important;
+  padding: 0.5rem !important;
+}
+
+.transactions-page .rdrInputRange {
+  background: transparent !important;
+  border: none !important;
+  margin-bottom: 0.5rem !important;
+}
+
+.transactions-page .rdrInputRangeInput {
+  background: #ffffff !important;
+  border: 1px solid #d1d5db !important;
+  border-radius: 4px !important;
+  padding: 0.25rem 0.5rem !important;
+  color: #1f2937 !important;
+  font-size: 0.875rem !important;
+  margin: 0 0.25rem !important;
+}
+
+.transactions-page .rdrDateDisplayWrapper {
+  display: none !important; /* Hide the "days up to today" text */
+}
+
+.transactions-page .rdrMonth {
+  padding: 0 !important;
+  margin: 0 0.5rem !important;
+}
+
+.transactions-page .rdrMonthAndYearWrapper {
+  background: #f9fafb !important;
+  border-radius: 6px !important;
+  padding: 0.5rem !important;
+  margin-bottom: 1rem !important;
+  text-align: center !important;
+}
+
+.transactions-page .rdrMonthAndYearPickers {
+  margin: 0 !important;
+}
+
+.transactions-page .rdrMonthPicker select,
+.transactions-page .rdrYearPicker select {
+  background: #ffffff !important;
+  border: 1px solid #d1d5db !important;
+  border-radius: 4px !important;
+  padding: 0.25rem 0.5rem !important;
+  color: #1f2937 !important;
+  font-size: 0.875rem !important;
+  margin: 0 0.25rem !important;
+}
+
+.transactions-page .rdrNextPrevButton {
+  background: #f3f4f6 !important;
+  border: 1px solid #d1d5db !important;
+  color: #374151 !important;
+}
+
+.transactions-page .rdrNextPrevButton:hover {
+  background: #e5e7eb !important;
+}
+
+.transactions-page .rdrWeekDays {
+  background: #f9fafb !important;
+  border-bottom: 1px solid #e5e7eb !important;
+}
+
+.transactions-page .rdrWeekDay {
+  color: #6b7280 !important;
+  font-weight: 600 !important;
+  font-size: 0.75rem !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+  padding: 0.5rem !important;
+}
+
+.transactions-page .rdrDays {
+  background: transparent !important;
+}
+
+.transactions-page .rdrDay {
+  background: transparent !important;
+  color: #1f2937 !important;
+}
+
+.transactions-page .rdrDayNumber {
+  color: #1f2937 !important;
+  font-weight: 500 !important;
+  font-size: 0.875rem !important;
+}
+
+.transactions-page .rdrDayToday .rdrDayNumber {
+  background: #3b82f6 !important;
+  color: #ffffff !important;
+  font-weight: 600 !important;
+}
+
+.transactions-page .rdrDayInRange {
+  background: #dbeafe !important;
+  color: #1e40af !important;
+}
+
+.transactions-page .rdrDayStartOfRange,
+.transactions-page .rdrDayEndOfRange {
+  background: #dbeafe !important;
+}
+
+.transactions-page .rdrDayStartOfRange .rdrDayNumber,
+.transactions-page .rdrDayEndOfRange .rdrDayNumber {
+  background: #3b82f6 !important;
+  color: #ffffff !important;
+  font-weight: 600 !important;
+}
+
+.transactions-page .rdrDayInPreview {
+  background: #f3f4f6 !important;
+  color: #374151 !important;
+}
+
+.transactions-page .rdrDayHovered .rdrDayNumber {
+  background: #e5e7eb !important;
+  color: #1f2937 !important;
+}
+
+.transactions-page .rdrDayPassive .rdrDayNumber {
+  color: #d1d5db !important;
+}
+
+.transactions-page .rdrDayDisabled .rdrDayNumber {
+  color: #e5e7eb !important;
 }
 
 /* Status Filter */

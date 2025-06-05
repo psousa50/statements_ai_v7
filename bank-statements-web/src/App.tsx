@@ -1,5 +1,6 @@
 import { createBrowserRouter, RouterProvider, createRoutesFromElements, Route } from 'react-router-dom'
 import { TransactionsPage } from './pages/Transactions'
+import { ChartsPage } from './pages/Charts'
 import { Upload } from './pages/Upload'
 import { AppLayout } from './components/layout/AppLayout'
 import { RouterSafeApiProvider } from './api/RouterSafeApiProvider'
@@ -13,6 +14,7 @@ const router = createBrowserRouter([
     children: [
       { index: true, element: <TransactionsPage /> },
       { path: 'transactions', element: <TransactionsPage /> },
+      { path: 'charts', element: <ChartsPage /> },
       { path: 'upload', element: <Upload /> }
     ]
   }

@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from datetime import date
 from decimal import Decimal
 from typing import List, Optional, Tuple
 from uuid import UUID
@@ -39,6 +40,8 @@ class TransactionRepository(ABC):
         max_amount: Optional[Decimal] = None,
         description_search: Optional[str] = None,
         source_id: Optional[UUID] = None,
+        start_date: Optional[date] = None,
+        end_date: Optional[date] = None,
     ) -> Tuple[List[Transaction], int]:
         """
         Get transactions with pagination and advanced filtering
@@ -52,6 +55,8 @@ class TransactionRepository(ABC):
             max_amount: Optional maximum amount filter
             description_search: Optional description search filter
             source_id: Optional source ID to filter by
+            start_date: Optional start date filter (inclusive)
+            end_date: Optional end date filter (inclusive)
 
         Returns:
             Tuple of (transactions list, total count)
