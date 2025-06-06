@@ -161,7 +161,9 @@ class TestTransactionProcessingOrchestrator:
 
         # Verify background job was queued with unmatched transaction ID
         unmatched_transaction_id = sample_transactions[2].id  # The unknown merchant
-        mock_background_job_service.queue_ai_categorization_job.assert_called_once_with(uploaded_file_id, [unmatched_transaction_id])
+        mock_background_job_service.queue_ai_categorization_job.assert_called_once_with(
+            uploaded_file_id, [unmatched_transaction_id]
+        )
 
         # Verify transaction statuses
         assert sample_transactions[0].categorization_status == CategorizationStatus.CATEGORIZED
@@ -202,7 +204,9 @@ class TestTransactionProcessingOrchestrator:
 
         # Verify background job was queued with all transaction IDs
         expected_unmatched_ids = [t.id for t in sample_transactions]
-        mock_background_job_service.queue_ai_categorization_job.assert_called_once_with(uploaded_file_id, expected_unmatched_ids)
+        mock_background_job_service.queue_ai_categorization_job.assert_called_once_with(
+            uploaded_file_id, expected_unmatched_ids
+        )
 
         # Verify all transactions remain uncategorized
         for transaction in sample_transactions:
@@ -345,7 +349,9 @@ class TestTransactionProcessingOrchestrator:
         assert result is None
         mock_background_job_service.get_background_job_info.assert_called_once_with(job_id, "/api/v1/jobs/{}/status")
 
-    def test_process_transactions_deduplication_optimization(self, orchestrator, mock_rule_based_service, mock_background_job_service):
+    def test_process_transactions_deduplication_optimization(
+        self, orchestrator, mock_rule_based_service, mock_background_job_service
+    ):
         """Test that duplicate normalized descriptions are deduplicated before calling rule service"""
         # Arrange
         uploaded_file_id = uuid.uuid4()

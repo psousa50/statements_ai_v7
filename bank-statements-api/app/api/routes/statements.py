@@ -4,7 +4,13 @@ from uuid import UUID
 
 from fastapi import APIRouter, BackgroundTasks, Depends, FastAPI, File, HTTPException, UploadFile, status
 
-from app.api.schemas import BackgroundJobInfoResponse, JobStatusResponse, StatementAnalysisResponse, StatementUploadRequest, StatementUploadResponse
+from app.api.schemas import (
+    BackgroundJobInfoResponse,
+    JobStatusResponse,
+    StatementAnalysisResponse,
+    StatementUploadRequest,
+    StatementUploadResponse,
+)
 from app.core.config import settings
 from app.core.dependencies import InternalDependencies
 from app.logging.utils import log_exception
@@ -45,7 +51,9 @@ def register_statement_routes(app: FastAPI, provide_dependencies: Callable[[], I
         """
         try:
             # Delegate to service with immediate background processing capability
-            result = internal.statement_upload_service.upload_and_process(upload_data, background_tasks=background_tasks, internal_deps=internal)
+            result = internal.statement_upload_service.upload_and_process(
+                upload_data, background_tasks=background_tasks, internal_deps=internal
+            )
 
             # Build HTTP response
             response = StatementUploadResponse(

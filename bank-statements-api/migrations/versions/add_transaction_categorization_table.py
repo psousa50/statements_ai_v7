@@ -41,7 +41,9 @@ def upgrade() -> None:
     )
 
     # Create index on normalized_description for performance
-    op.create_index("ix_transaction_categorization_normalized_description", "transaction_categorization", ["normalized_description"])
+    op.create_index(
+        "ix_transaction_categorization_normalized_description", "transaction_categorization", ["normalized_description"]
+    )
 
 
 def downgrade() -> None:

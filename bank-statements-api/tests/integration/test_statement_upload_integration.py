@@ -205,14 +205,18 @@ class TestStatementUploadIntegration:
             data_start_row_index=analysis_result.data_start_row_index,
         )
 
-        upload_result = dependencies.statement_upload_service.upload_and_process(upload_request, background_tasks=MagicMock(), internal_deps=dependencies)
+        upload_result = dependencies.statement_upload_service.upload_and_process(
+            upload_request, background_tasks=MagicMock(), internal_deps=dependencies
+        )
 
         # Verify processing worked
         assert upload_result.total_processed == 3
         assert upload_result.transactions_saved == 3
 
         # Check real database state
-        transactions = db_session.query(Transaction).filter(Transaction.uploaded_file_id == analysis_result.uploaded_file_id).all()
+        transactions = (
+            db_session.query(Transaction).filter(Transaction.uploaded_file_id == analysis_result.uploaded_file_id).all()
+        )
 
         assert len(transactions) == 3
         # Verify all transactions have normalized descriptions (processed by real normalizer)
@@ -268,7 +272,9 @@ class TestStatementUploadIntegration:
             data_start_row_index=analysis_result.data_start_row_index,
         )
 
-        dependencies.statement_upload_service.upload_and_process(upload_request, background_tasks=MagicMock(), internal_deps=dependencies)
+        dependencies.statement_upload_service.upload_and_process(
+            upload_request, background_tasks=MagicMock(), internal_deps=dependencies
+        )
 
         # Check categorization rules in database
         categorization_rules = db_session.query(TransactionCategorization).all()

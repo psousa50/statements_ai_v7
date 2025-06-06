@@ -7,7 +7,10 @@ from unittest.mock import MagicMock, Mock
 from app.adapters.repositories.category import SQLAlchemyCategoryRepository
 from app.ai.llm_client import LLMClient
 from app.domain.models.transaction import CategorizationStatus, Transaction
-from app.services.transaction_categorization.llm_transaction_categorizer import LLMCategorizationResult, LLMTransactionCategorizer
+from app.services.transaction_categorization.llm_transaction_categorizer import (
+    LLMCategorizationResult,
+    LLMTransactionCategorizer,
+)
 
 
 class MockLLMClient(LLMClient):

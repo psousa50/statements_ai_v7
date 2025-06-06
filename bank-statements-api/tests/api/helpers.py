@@ -46,12 +46,15 @@ def mocked_dependencies(
         statement_analyzer_service=statement_analyzer_service or MagicMock(spec=StatementAnalyzerService),
         statement_persistence_service=statement_persistence_service or MagicMock(spec=StatementPersistenceService),
         statement_upload_service=statement_upload_service or MagicMock(spec=StatementUploadService),
-        transaction_categorization_service=transaction_categorization_service or MagicMock(spec=TransactionCategorizationService),
+        transaction_categorization_service=transaction_categorization_service
+        or MagicMock(spec=TransactionCategorizationService),
         rule_based_categorization_service=rule_based_categorization_service or MagicMock(spec=RuleBasedCategorizationService),
         background_job_service=background_job_service or MagicMock(spec=BackgroundJobService),
         background_job_repository=background_job_repository or MagicMock(spec=SQLAlchemyBackgroundJobRepository),
-        transaction_processing_orchestrator=transaction_processing_orchestrator or MagicMock(spec=TransactionProcessingOrchestrator),
-        transaction_categorization_repository=transaction_categorization_repository or MagicMock(spec=SQLAlchemyTransactionCategorizationRepository),
+        transaction_processing_orchestrator=transaction_processing_orchestrator
+        or MagicMock(spec=TransactionProcessingOrchestrator),
+        transaction_categorization_repository=transaction_categorization_repository
+        or MagicMock(spec=SQLAlchemyTransactionCategorizationRepository),
     )
 
 

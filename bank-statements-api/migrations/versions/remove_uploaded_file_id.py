@@ -29,6 +29,8 @@ def downgrade():
     op.add_column("file_analysis_metadata", sa.Column("uploaded_file_id", postgresql.UUID(), nullable=True))
 
     # Add the foreign key constraint back
-    op.create_foreign_key("file_analysis_metadata_uploaded_file_id_fkey", "file_analysis_metadata", "uploaded_files", ["uploaded_file_id"], ["id"])
+    op.create_foreign_key(
+        "file_analysis_metadata_uploaded_file_id_fkey", "file_analysis_metadata", "uploaded_files", ["uploaded_file_id"], ["id"]
+    )
 
     # Note: This is a lossy migration - when downgrading, the uploaded_file_id values will be NULL

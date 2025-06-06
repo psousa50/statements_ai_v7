@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from typing import List
 
 import pandas as pd
+
 from app.domain.models.category import Category
 from app.domain.models.transaction import Transaction
 
@@ -13,14 +14,10 @@ class Subcategory:
     subcategory_name: str
 
 
-def categorization_prompt(
-    transactions: List[Transaction], categories: List[Category]
-) -> str:
+def categorization_prompt(transactions: List[Transaction], categories: List[Category]) -> str:
     # Provide subcategories (leaf nodes) for more specific categorization
     # Include both subcategories and root categories that don't have subcategories
-    root_categories_with_children = {
-        cat.parent_id for cat in categories if cat.parent_id is not None
-    }
+    root_categories_with_children = {cat.parent_id for cat in categories if cat.parent_id is not None}
 
     expanded_categories = [
         Subcategory(str(cat.id), cat.name)
@@ -28,10 +25,7 @@ def categorization_prompt(
         if cat.parent_id is not None or cat.id not in root_categories_with_children
     ]
 
-    categories_info = [
-        f"{{id: {cat.sub_category_id}, name: {cat.subcategory_name}}}"
-        for cat in expanded_categories
-    ]
+    categories_info = [f"{{id: {cat.sub_category_id}, name: {cat.subcategory_name}}}" for cat in expanded_categories]
 
     transaction_descriptions = [t.description for t in transactions]
 

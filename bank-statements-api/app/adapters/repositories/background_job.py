@@ -34,11 +34,21 @@ class SQLAlchemyBackgroundJobRepository(BackgroundJobRepository):
 
     def get_by_status(self, status: JobStatus) -> List[BackgroundJob]:
         """Get all jobs with a specific status"""
-        return self.db_session.query(BackgroundJob).filter(BackgroundJob.status == status).order_by(BackgroundJob.created_at.desc()).all()
+        return (
+            self.db_session.query(BackgroundJob)
+            .filter(BackgroundJob.status == status)
+            .order_by(BackgroundJob.created_at.desc())
+            .all()
+        )
 
     def get_by_type(self, job_type: JobType) -> List[BackgroundJob]:
         """Get all jobs of a specific type"""
-        return self.db_session.query(BackgroundJob).filter(BackgroundJob.job_type == job_type).order_by(BackgroundJob.created_at.desc()).all()
+        return (
+            self.db_session.query(BackgroundJob)
+            .filter(BackgroundJob.job_type == job_type)
+            .order_by(BackgroundJob.created_at.desc())
+            .all()
+        )
 
     def get_pending_jobs(self, limit: int = 10) -> List[BackgroundJob]:
         """Get pending jobs ordered by creation time"""
@@ -95,7 +105,12 @@ class SQLAlchemyBackgroundJobRepository(BackgroundJobRepository):
 
     def get_jobs_by_uploaded_file_id(self, uploaded_file_id: UUID) -> List[BackgroundJob]:
         """Get all jobs associated with an uploaded file"""
-        return self.db_session.query(BackgroundJob).filter(BackgroundJob.uploaded_file_id == uploaded_file_id).order_by(BackgroundJob.created_at.desc()).all()
+        return (
+            self.db_session.query(BackgroundJob)
+            .filter(BackgroundJob.uploaded_file_id == uploaded_file_id)
+            .order_by(BackgroundJob.created_at.desc())
+            .all()
+        )
 
     def cleanup_completed_jobs(self, days_old: int = 7) -> int:
         """Clean up completed jobs older than specified days"""

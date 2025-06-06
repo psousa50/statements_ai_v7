@@ -45,7 +45,9 @@ class TestStatementAnalyzerService:
 
         uploaded_file_repo = MagicMock()
         uploaded_file_id = str(uuid.uuid4())
-        uploaded_file_repo.save.return_value = UploadedFileDTO(id=uploaded_file_id, filename="test.csv", file_type="CSV", created_at=None)
+        uploaded_file_repo.save.return_value = UploadedFileDTO(
+            id=uploaded_file_id, filename="test.csv", file_type="CSV", created_at=None
+        )
 
         file_analysis_metadata_repo = MagicMock()
         file_analysis_metadata_repo.find_by_hash.return_value = None

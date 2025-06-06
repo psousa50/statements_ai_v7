@@ -93,12 +93,16 @@ class StatementUploadService:
         background_job_info = None
         if processing_result.has_unmatched_transactions:
             # Get the persisted transaction IDs for unmatched transactions
-            unmatched_transaction_ids = self._get_unmatched_transaction_ids(upload_request.uploaded_file_id, processing_result.processed_dtos)
+            unmatched_transaction_ids = self._get_unmatched_transaction_ids(
+                upload_request.uploaded_file_id, processing_result.processed_dtos
+            )
 
             if unmatched_transaction_ids:
                 logger.info(f"Queuing background job for {len(unmatched_transaction_ids)} unmatched transactions")
 
-                background_job = self.background_job_service.queue_ai_categorization_job(UUID(upload_request.uploaded_file_id), unmatched_transaction_ids)
+                background_job = self.background_job_service.queue_ai_categorization_job(
+                    UUID(upload_request.uploaded_file_id), unmatched_transaction_ids
+                )
 
                 # Create background job info for response
                 from app.domain.models.processing import BackgroundJobInfo
@@ -228,7 +232,11 @@ class StatementUploadService:
 
         # We need access to the transaction repository to get the persisted IDs
         # For now, let's get unmatched DTOs and then query the database
-        unmatched_descriptions = [dto.normalized_description for dto in processed_dtos if dto.categorization_status == CategorizationStatus.UNCATEGORIZED]
+        unmatched_descriptions = [
+            dto.normalized_description
+            for dto in processed_dtos
+            if dto.categorization_status == CategorizationStatus.UNCATEGORIZED
+        ]
 
         if not unmatched_descriptions:
             return []

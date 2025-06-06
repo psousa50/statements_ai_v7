@@ -187,7 +187,9 @@ class JobProcessor:
             raise ValueError(f"Transaction {transaction_id} not found")
 
         # Use the categorizer directly since we have a specific transaction
-        categorization_results = self.internal.transaction_categorization_service.transaction_categorizer.categorize([transaction])
+        categorization_results = self.internal.transaction_categorization_service.transaction_categorizer.categorize(
+            [transaction]
+        )
 
         if categorization_results and len(categorization_results) > 0:
             result = categorization_results[0]  # Get the first (and only) result
@@ -205,14 +207,18 @@ class JobProcessor:
                 # Create categorization rule for future use
                 try:
                     # Check if rule already exists to avoid duplicate key errors
-                    existing_rule = self.internal.transaction_categorization_repository.get_rule_by_normalized_description(transaction.normalized_description)
+                    existing_rule = self.internal.transaction_categorization_repository.get_rule_by_normalized_description(
+                        transaction.normalized_description
+                    )
                     if not existing_rule:
                         self.internal.transaction_categorization_repository.create_rule(
                             normalized_description=transaction.normalized_description,
                             category_id=result.category_id,
                             source=CategorizationSource.AI,
                         )
-                        logger.debug(f"Created AI categorization rule: {transaction.normalized_description} -> {result.category_id}")
+                        logger.debug(
+                            f"Created AI categorization rule: {transaction.normalized_description} -> {result.category_id}"
+                        )
                     else:
                         logger.debug(f"Categorization rule already exists for: {transaction.normalized_description}")
                 except Exception as e:
@@ -220,7 +226,8 @@ class JobProcessor:
                     logger.warning(f"Failed to create categorization rule for {transaction.normalized_description}: {e}")
 
                 logger.debug(
-                    f"Categorized transaction {transaction.id} as {result.category_id} " f"(confidence: {result.confidence:.2f})"
+                    f"Categorized transaction {transaction.id} as {result.category_id} "
+                    f"(confidence: {result.confidence:.2f})"
                     if result.confidence
                     else f"Categorized transaction {transaction.id} as {result.category_id}"
                 )

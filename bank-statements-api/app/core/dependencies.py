@@ -94,7 +94,9 @@ def build_internal_dependencies(external: ExternalDependencies) -> InternalDepen
     transaction_service = TransactionService(transaction_repo)
 
     # Create rule-based categorization service with caching enabled
-    rule_based_categorization_service = RuleBasedCategorizationService(repository=transaction_categorization_repo, enable_cache=True)
+    rule_based_categorization_service = RuleBasedCategorizationService(
+        repository=transaction_categorization_repo, enable_cache=True
+    )
 
     # Create background job service
     background_job_service = BackgroundJobService(background_job_repo)

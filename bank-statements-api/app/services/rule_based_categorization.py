@@ -52,7 +52,9 @@ class RuleBasedCategorizationService:
 
                 # Query repository for cache misses
                 if cache_misses:
-                    repository_result = self.repository.get_categories_by_normalized_descriptions(cache_misses, batch_size=batch_size)
+                    repository_result = self.repository.get_categories_by_normalized_descriptions(
+                        cache_misses, batch_size=batch_size
+                    )
 
                     # Update cache and result
                     for desc, category_id in repository_result.items():
@@ -61,14 +63,18 @@ class RuleBasedCategorizationService:
 
             else:
                 # No caching - call repository directly
-                result = self.repository.get_categories_by_normalized_descriptions(normalized_descriptions, batch_size=batch_size)
+                result = self.repository.get_categories_by_normalized_descriptions(
+                    normalized_descriptions, batch_size=batch_size
+                )
 
             # Log statistics
             total_descriptions = len(normalized_descriptions)
             matched = len(result)
             unmatched = total_descriptions - matched
 
-            logger.info(f"Rule-based categorization completed: matched={matched}, unmatched={unmatched}, total={total_descriptions}")
+            logger.info(
+                f"Rule-based categorization completed: matched={matched}, unmatched={unmatched}, total={total_descriptions}"
+            )
 
             return result
 

@@ -61,7 +61,9 @@ class TransactionProcessingOrchestrator:
         normalized_descriptions = [t.normalized_description for t in transactions]
         unique_normalized_descriptions = list(dict.fromkeys(normalized_descriptions))  # Preserves order, removes duplicates
 
-        logger.debug(f"Deduplicated {len(normalized_descriptions)} descriptions to {len(unique_normalized_descriptions)} unique descriptions")
+        logger.debug(
+            f"Deduplicated {len(normalized_descriptions)} descriptions to {len(unique_normalized_descriptions)} unique descriptions"
+        )
 
         # Perform synchronous rule-based categorization on unique descriptions
         rule_matches = self.rule_based_categorization_service.categorize_batch(unique_normalized_descriptions)
@@ -149,7 +151,9 @@ class TransactionProcessingOrchestrator:
         normalized_descriptions = [dto.normalized_description for dto in transaction_dtos]
         unique_normalized_descriptions = list(dict.fromkeys(normalized_descriptions))  # Preserves order, removes duplicates
 
-        logger.debug(f"Deduplicated {len(normalized_descriptions)} descriptions to {len(unique_normalized_descriptions)} unique descriptions")
+        logger.debug(
+            f"Deduplicated {len(normalized_descriptions)} descriptions to {len(unique_normalized_descriptions)} unique descriptions"
+        )
 
         # Perform synchronous rule-based categorization on unique descriptions
         rule_matches = self.rule_based_categorization_service.categorize_batch(unique_normalized_descriptions)

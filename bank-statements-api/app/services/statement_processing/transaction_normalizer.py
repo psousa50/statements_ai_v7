@@ -14,7 +14,10 @@ class TransactionNormalizer:
 
         has_amount = "amount" in column_mapping and column_mapping["amount"]
         has_debit_credit = (
-            "debit_amount" in column_mapping and column_mapping["debit_amount"] and "credit_amount" in column_mapping and column_mapping["credit_amount"]
+            "debit_amount" in column_mapping
+            and column_mapping["debit_amount"]
+            and "credit_amount" in column_mapping
+            and column_mapping["credit_amount"]
         )
 
         if has_amount:
@@ -54,7 +57,9 @@ class TransactionNormalizer:
                 missing_df_columns.append(col_name)
 
         if missing_df_columns:
-            raise ValueError(f"Not enough columns in DataFrame for positional mapping. Missing: {', '.join(missing_df_columns)}")
+            raise ValueError(
+                f"Not enough columns in DataFrame for positional mapping. Missing: {', '.join(missing_df_columns)}"
+            )
 
         result_df["date"] = self._normalize_dates(df[date_col])
 

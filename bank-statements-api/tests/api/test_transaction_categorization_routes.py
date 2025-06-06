@@ -15,11 +15,15 @@ class TestTransactionCategorizationRoutes:
             CategorizationResult(transaction_id=uuid4(), category_id=uuid4(), status=CategorizationStatus.CATEGORIZED),
             CategorizationResult(transaction_id=uuid4(), category_id=uuid4(), status=CategorizationStatus.CATEGORIZED),
         ]
-        mock_batch_result = BatchCategorizationResult(results=mock_results, total_processed=2, successful_count=2, failed_count=0)
+        mock_batch_result = BatchCategorizationResult(
+            results=mock_results, total_processed=2, successful_count=2, failed_count=0
+        )
 
         transaction_categorization_service = MagicMock(spec=TransactionCategorizationService)
         transaction_categorization_service.process_uncategorized_transactions_detailed.return_value = mock_batch_result
-        client = build_client(internal_dependencies=mocked_dependencies(transaction_categorization_service=transaction_categorization_service))
+        client = build_client(
+            internal_dependencies=mocked_dependencies(transaction_categorization_service=transaction_categorization_service)
+        )
 
         response = client.post("/api/v1/transactions/categorize-batch?batch_size=10")
 
@@ -36,7 +40,9 @@ class TestTransactionCategorizationRoutes:
     def test_categorize_transactions_batch_error(self) -> None:
         transaction_categorization_service = MagicMock(spec=TransactionCategorizationService)
         transaction_categorization_service.process_uncategorized_transactions_detailed.side_effect = ValueError("Test error")
-        client = build_client(internal_dependencies=mocked_dependencies(transaction_categorization_service=transaction_categorization_service))
+        client = build_client(
+            internal_dependencies=mocked_dependencies(transaction_categorization_service=transaction_categorization_service)
+        )
 
         response = client.post("/api/v1/transactions/categorize-batch?batch_size=10")
 

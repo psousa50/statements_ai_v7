@@ -16,7 +16,9 @@ class SQLAlchemyTransactionCategorizationRepository(TransactionCategorizationRep
     def __init__(self, db_session: Session):
         self.db_session = db_session
 
-    def get_categories_by_normalized_descriptions(self, normalized_descriptions: List[str], batch_size: int = 100) -> Dict[str, UUID]:
+    def get_categories_by_normalized_descriptions(
+        self, normalized_descriptions: List[str], batch_size: int = 100
+    ) -> Dict[str, UUID]:
         """Get category mappings for normalized descriptions."""
         if not normalized_descriptions:
             return {}
@@ -30,7 +32,11 @@ class SQLAlchemyTransactionCategorizationRepository(TransactionCategorizationRep
             batch = unique_descriptions[i : i + batch_size]
 
             # Query for matching rules in this batch
-            rules = self.db_session.query(TransactionCategorization).filter(TransactionCategorization.normalized_description.in_(batch)).all()
+            rules = (
+                self.db_session.query(TransactionCategorization)
+                .filter(TransactionCategorization.normalized_description.in_(batch))
+                .all()
+            )
 
             # Build result dictionary for this batch
             for rule in rules:
@@ -38,7 +44,9 @@ class SQLAlchemyTransactionCategorizationRepository(TransactionCategorizationRep
 
         return result
 
-    def create_rule(self, normalized_description: str, category_id: UUID, source: CategorizationSource) -> TransactionCategorization:
+    def create_rule(
+        self, normalized_description: str, category_id: UUID, source: CategorizationSource
+    ) -> TransactionCategorization:
         """Create a new categorization rule"""
         rule = TransactionCategorization(normalized_description=normalized_description, category_id=category_id, source=source)
         self.db_session.add(rule)
@@ -48,15 +56,27 @@ class SQLAlchemyTransactionCategorizationRepository(TransactionCategorizationRep
 
     def get_rule_by_normalized_description(self, normalized_description: str) -> Optional[TransactionCategorization]:
         """Get a categorization rule by normalized description"""
-        return self.db_session.query(TransactionCategorization).filter(TransactionCategorization.normalized_description == normalized_description).first()
+        return (
+            self.db_session.query(TransactionCategorization)
+            .filter(TransactionCategorization.normalized_description == normalized_description)
+            .first()
+        )
 
     def get_statistics(self) -> Dict[str, int]:
         """Get repository statistics for monitoring and analytics"""
         total_rules = self.db_session.query(TransactionCategorization).count()
 
-        manual_rules = self.db_session.query(TransactionCategorization).filter(TransactionCategorization.source == CategorizationSource.MANUAL).count()
+        manual_rules = (
+            self.db_session.query(TransactionCategorization)
+            .filter(TransactionCategorization.source == CategorizationSource.MANUAL)
+            .count()
+        )
 
-        ai_rules = self.db_session.query(TransactionCategorization).filter(TransactionCategorization.source == CategorizationSource.AI).count()
+        ai_rules = (
+            self.db_session.query(TransactionCategorization)
+            .filter(TransactionCategorization.source == CategorizationSource.AI)
+            .count()
+        )
 
         return {
             "total_rules": total_rules,

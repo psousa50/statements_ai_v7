@@ -19,7 +19,9 @@ depends_on: Union[str, Sequence[str], None] = None
 
 def upgrade() -> None:
     # Create categorization_status enum type
-    categorization_status = postgresql.ENUM("UNCATEGORIZED", "CATEGORIZED", "FAILURE", name="categorizationstatus", create_type=False)
+    categorization_status = postgresql.ENUM(
+        "UNCATEGORIZED", "CATEGORIZED", "FAILURE", name="categorizationstatus", create_type=False
+    )
     categorization_status.create(op.get_bind())
 
     # Create sources table

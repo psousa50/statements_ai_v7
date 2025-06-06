@@ -66,7 +66,9 @@ class TestRuleBasedCategorizationService:
 
         # Assert
         assert result == {}
-        self.repository.get_categories_by_normalized_descriptions.assert_called_once_with(descriptions, batch_size=custom_batch_size)
+        self.repository.get_categories_by_normalized_descriptions.assert_called_once_with(
+            descriptions, batch_size=custom_batch_size
+        )
 
     def test_categorize_batch_handles_duplicates(self) -> None:
         """Test that duplicate descriptions are handled correctly"""
