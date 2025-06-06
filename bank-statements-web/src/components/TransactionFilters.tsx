@@ -49,7 +49,7 @@ export const TransactionFilters = ({
   startDate,
   endDate,
   onCategoryChange,
-  onStatusChange,
+  onStatusChange: _onStatusChange,
   onSourceChange,
   onAmountRangeChange,
   onDescriptionSearchChange,
@@ -60,7 +60,9 @@ export const TransactionFilters = ({
   const [showSuggestions, setShowSuggestions] = useState(false)
   const [isCollapsed, setIsCollapsed] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
-  const containerRef = useRef<HTMLDivElement>(null)
+  const datePickerRef = useRef<HTMLDivElement>(null)
+  const categoryContainerRef = useRef<HTMLDivElement>(null)
+  const isAddingCategoryRef = useRef(false)
 
   // Date range state for RSuite DateRangePicker
   const [dateRange, setDateRange] = useState<[Date, Date] | null>(() => {
@@ -105,12 +107,13 @@ export const TransactionFilters = ({
   // Close suggestions when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      // Don't close if clicking inside the date picker dropdown
+      // Don't close if clicking inside the date picker dropdown or category container
       const target = event.target as Node
-      const isDatePickerClick = target && containerRef.current?.contains(target)
+      const isDatePickerClick = target && datePickerRef.current?.contains(target)
+      const isCategoryClick = target && categoryContainerRef.current?.contains(target)
       const isDateRangeClick = target && (target as Element).closest?.('.rs-picker-popup, .date-picker-container')
 
-      if (!isDatePickerClick && !isDateRangeClick) {
+      if (!isDatePickerClick && !isDateRangeClick && !isCategoryClick) {
         setShowSuggestions(false)
       }
     }
@@ -206,12 +209,18 @@ export const TransactionFilters = ({
 
   const handleCategoryAdd = useCallback(
     (categoryId: string) => {
+      isAddingCategoryRef.current = true
       if (!selectedCategoryIds.includes(categoryId)) {
         onCategoryChange([...selectedCategoryIds, categoryId])
       }
       setCategoryInput('')
       setShowSuggestions(false)
-      inputRef.current?.focus()
+
+      // Reset the flag after a short delay and refocus
+      setTimeout(() => {
+        isAddingCategoryRef.current = false
+        inputRef.current?.focus()
+      }, 0)
     },
     [selectedCategoryIds, onCategoryChange]
   )
@@ -223,13 +232,11 @@ export const TransactionFilters = ({
     [selectedCategoryIds, onCategoryChange]
   )
 
-  const handleInputChange = useCallback(
-    (value: string) => {
-      setCategoryInput(value)
-      setShowSuggestions(value.length > 0 && availableCategories.length > 0)
-    },
-    [availableCategories.length]
-  )
+  const handleInputChange = useCallback((value: string) => {
+    setCategoryInput(value)
+    // Show suggestions if there's input text - availableCategories will be recalculated
+    setShowSuggestions(value.length > 0)
+  }, [])
 
   const handleInputKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
@@ -320,7 +327,7 @@ export const TransactionFilters = ({
           {onDateRangeChange && (
             <div className="filter-section">
               <label className="filter-label">Date Range</label>
-              <div className="date-range-picker" ref={containerRef}>
+              <div className="date-range-picker" ref={datePickerRef}>
                 <DateRangePicker
                   value={dateRange}
                   onChange={handleDateRangeChange}
@@ -365,7 +372,7 @@ export const TransactionFilters = ({
           <div className="filter-section filter-section-full-width">
             <label className="filter-label">Categories</label>
 
-            <div className="category-tag-input" ref={containerRef}>
+            <div className="category-tag-input" ref={categoryContainerRef}>
               <div className="tag-input-container">
                 {/* Selected Categories Tags */}
                 {selectedCategories.map((category) => (
@@ -388,7 +395,12 @@ export const TransactionFilters = ({
                   value={categoryInput}
                   onChange={(e) => handleInputChange(e.target.value)}
                   onKeyDown={handleInputKeyDown}
-                  onFocus={() => setShowSuggestions(categoryInput.length > 0 && availableCategories.length > 0)}
+                  onFocus={() => {
+                    // Don't show suggestions if we're in the middle of adding a category
+                    if (!isAddingCategoryRef.current && categoryInput.length > 0) {
+                      setShowSuggestions(true)
+                    }
+                  }}
                   placeholder={selectedCategories.length === 0 ? 'Type to add categories...' : 'Add more...'}
                   className="category-input"
                 />
