@@ -1,18 +1,18 @@
 import React, { useState, useEffect } from 'react'
-import { 
-  FormControl, 
-  InputLabel, 
-  Select, 
-  MenuItem, 
-  TextField, 
-  Button, 
-  Dialog, 
-  DialogTitle, 
-  DialogContent, 
+import {
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  TextField,
+  Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
   DialogActions,
   Box,
   Typography,
-  CircularProgress
+  CircularProgress,
 } from '@mui/material'
 import { defaultApiClient } from '../../api/createApiClient'
 import { Source } from '../../api/SourceClient'
@@ -36,7 +36,7 @@ export const SourceSelector: React.FC<SourceSelectorProps> = ({ value, onChange 
         setLoading(true)
         const sources = await defaultApiClient.sources.getAll()
         setSources(sources)
-        
+
         // If we have sources and no value is selected, select the first one
         if (sources.length > 0 && !value) {
           onChange(sources[0].id)
@@ -67,7 +67,7 @@ export const SourceSelector: React.FC<SourceSelectorProps> = ({ value, onChange 
     try {
       setCreatingSource(true)
       const newSource = await defaultApiClient.sources.createSource(newSourceName.trim())
-      setSources(prevSources => [...prevSources, newSource])
+      setSources((prevSources) => [...prevSources, newSource])
       onChange(newSource.id)
       handleCloseDialog()
     } catch (error) {
@@ -88,28 +88,29 @@ export const SourceSelector: React.FC<SourceSelectorProps> = ({ value, onChange 
 
   return (
     <Box sx={{ mb: 2 }}>
-      <FormControl fullWidth>
-        <InputLabel id="source-select-label">Source Bank</InputLabel>
-        <Select
-          labelId="source-select-label"
-          id="source-select"
-          value={value}
-          label="Source Bank"
-          onChange={(e) => onChange(e.target.value)}
-        >
-          {sources.map((source) => (
-            <MenuItem key={source.id} value={source.id}>
-              {source.name}
-            </MenuItem>
-          ))}
-        </Select>
-      </FormControl>
-      
-      <Box sx={{ mt: 1 }}>
-        <Button 
-          variant="outlined" 
-          size="small" 
+      <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}>
+        <FormControl sx={{ flex: 0.7 }}>
+          <InputLabel id="source-select-label">Source Bank</InputLabel>
+          <Select
+            labelId="source-select-label"
+            id="source-select"
+            value={value}
+            label="Source Bank"
+            onChange={(e) => onChange(e.target.value)}
+          >
+            {sources.map((source) => (
+              <MenuItem key={source.id} value={source.id}>
+                {source.name}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+
+        <Button
+          variant="outlined"
+          size="medium"
           onClick={handleOpenDialog}
+          sx={{ minWidth: 'auto', whiteSpace: 'nowrap', mt: 1, flex: 0.3 }}
         >
           Add New Source
         </Button>
@@ -132,11 +133,7 @@ export const SourceSelector: React.FC<SourceSelectorProps> = ({ value, onChange 
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseDialog}>Cancel</Button>
-          <Button 
-            onClick={handleCreateSource} 
-            disabled={!newSourceName.trim() || creatingSource}
-            variant="contained"
-          >
+          <Button onClick={handleCreateSource} disabled={!newSourceName.trim() || creatingSource} variant="contained">
             {creatingSource ? <CircularProgress size={24} /> : 'Create'}
           </Button>
         </DialogActions>
