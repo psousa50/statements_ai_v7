@@ -3,7 +3,6 @@ from dataclasses import dataclass
 from typing import List
 
 import pandas as pd
-
 from app.domain.models.category import Category
 from app.domain.models.transaction import Transaction
 
@@ -14,23 +13,40 @@ class Subcategory:
     subcategory_name: str
 
 
-def categorization_prompt(transactions: List[Transaction], categories: List[Category]) -> str:
-    expanded_categories = [Subcategory(str(cat.id), cat.name) for cat in categories if cat.parent_id is None]
+def categorization_prompt(
+    transactions: List[Transaction], categories: List[Category]
+) -> str:
+    # Provide subcategories (leaf nodes) for more specific categorization
+    # Include both subcategories and root categories that don't have subcategories
+    root_categories_with_children = {
+        cat.parent_id for cat in categories if cat.parent_id is not None
+    }
 
-    categories_info = [f"{{id: {cat.sub_category_id}, name: {cat.subcategory_name}}}" for cat in expanded_categories]
+    expanded_categories = [
+        Subcategory(str(cat.id), cat.name)
+        for cat in categories
+        if cat.parent_id is not None or cat.id not in root_categories_with_children
+    ]
+
+    categories_info = [
+        f"{{id: {cat.sub_category_id}, name: {cat.subcategory_name}}}"
+        for cat in expanded_categories
+    ]
 
     transaction_descriptions = [t.description for t in transactions]
 
     prompt = f"""
-You are a bank transaction categorization assistant. Your task is to categorize the following transaction description into one of the provided categories.
+You are a bank transaction categorization assistant. Your task is to categorize the following transaction descriptions into the most specific and appropriate categories from the provided list.
 
 Transactions: 
-{'\n'.join(transaction_descriptions)}
+{"\n".join(transaction_descriptions)}
 
 Available Categories:
 {json.dumps(categories_info, indent=2)}
 
-Analyze the transaction description and determine the most appropriate category ID from the list above.
+For each transaction, analyze the description and determine the most specific and appropriate category ID from the list above.
+Choose the category that best matches the nature of the transaction.
+
 Return your answer as a JSON object with the following format:
 [
     {{
