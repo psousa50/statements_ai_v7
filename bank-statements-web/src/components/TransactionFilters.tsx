@@ -270,7 +270,7 @@ export const TransactionFilters = ({
       </div>
 
       <div className="filters-grid">
-        {/* Description Search */}
+        {/* Search Description */}
         <div className="filter-section">
           <label htmlFor="description-search" className="filter-label">
             Search Description
@@ -283,6 +283,26 @@ export const TransactionFilters = ({
             placeholder="Search transactions..."
             className="search-input"
           />
+        </div>
+
+        {/* Source Filter */}
+        <div className="filter-section">
+          <label htmlFor="source-filter" className="filter-label">
+            Source
+          </label>
+          <select
+            id="source-filter"
+            value={selectedSourceId || ''}
+            onChange={(e) => onSourceChange(e.target.value || undefined)}
+            className="filter-select"
+          >
+            <option value="">All Sources</option>
+            {sources.map((source) => (
+              <option key={source.id} value={source.id}>
+                {source.name}
+              </option>
+            ))}
+          </select>
         </div>
 
         {/* Date Range */}
@@ -330,46 +350,8 @@ export const TransactionFilters = ({
           </div>
         </div>
 
-        {/* Status Filter */}
-        <div className="filter-section">
-          <label htmlFor="status-filter" className="filter-label">
-            Status
-          </label>
-          <select
-            id="status-filter"
-            value={selectedStatus || ''}
-            onChange={(e) => onStatusChange((e.target.value as CategorizationStatus) || undefined)}
-            className="filter-select"
-          >
-            <option value="">All Statuses</option>
-            <option value="UNCATEGORIZED">Uncategorized</option>
-            <option value="CATEGORIZED">Categorized</option>
-            <option value="FAILURE">Failed</option>
-          </select>
-        </div>
-
-        {/* Source Filter */}
-        <div className="filter-section">
-          <label htmlFor="source-filter" className="filter-label">
-            Source
-          </label>
-          <select
-            id="source-filter"
-            value={selectedSourceId || ''}
-            onChange={(e) => onSourceChange(e.target.value || undefined)}
-            className="filter-select"
-          >
-            <option value="">All Sources</option>
-            {sources.map((source) => (
-              <option key={source.id} value={source.id}>
-                {source.name}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {/* Simple Categories Tag Input */}
-        <div className="filter-section">
+        {/* Categories - Full width */}
+        <div className="filter-section filter-section-full-width">
           <label className="filter-label">Categories</label>
 
           <div className="category-tag-input" ref={containerRef}>
