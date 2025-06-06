@@ -58,6 +58,7 @@ export const TransactionFilters = ({
 }: TransactionFiltersProps) => {
   const [categoryInput, setCategoryInput] = useState('')
   const [showSuggestions, setShowSuggestions] = useState(false)
+  const [isCollapsed, setIsCollapsed] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
 
@@ -101,7 +102,7 @@ export const TransactionFilters = ({
     startDate ||
     endDate
 
-  // Close suggestions and date picker when clicking outside
+  // Close suggestions when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       // Don't close if clicking inside the date picker dropdown
@@ -259,149 +260,160 @@ export const TransactionFilters = ({
   )
 
   return (
-    <div className="transaction-filters-advanced">
+    <div className={`transaction-filters-advanced ${isCollapsed ? 'collapsed' : ''}`}>
       <div className="filter-header">
         <h3>Filters</h3>
-        {hasActiveFilters && (
-          <button onClick={onClearFilters} className="clear-all-button">
-            Clear All
-          </button>
-        )}
-      </div>
-
-      <div className="filters-grid">
-        {/* Search Description */}
-        <div className="filter-section">
-          <label htmlFor="description-search" className="filter-label">
-            Search Description
-          </label>
-          <input
-            id="description-search"
-            type="text"
-            value={descriptionSearch || ''}
-            onChange={(e) => onDescriptionSearchChange(e.target.value || undefined)}
-            placeholder="Search transactions..."
-            className="search-input"
-          />
-        </div>
-
-        {/* Source Filter */}
-        <div className="filter-section">
-          <label htmlFor="source-filter" className="filter-label">
-            Source
-          </label>
-          <select
-            id="source-filter"
-            value={selectedSourceId || ''}
-            onChange={(e) => onSourceChange(e.target.value || undefined)}
-            className="filter-select"
+        <div className="filter-header-actions">
+          {hasActiveFilters && (
+            <button onClick={onClearFilters} className="clear-all-button">
+              Clear All
+            </button>
+          )}
+          <button
+            onClick={() => setIsCollapsed(!isCollapsed)}
+            className="collapse-toggle-button"
+            aria-label={isCollapsed ? 'Expand filters' : 'Collapse filters'}
           >
-            <option value="">All Sources</option>
-            {sources.map((source) => (
-              <option key={source.id} value={source.id}>
-                {source.name}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {/* Date Range */}
-        {onDateRangeChange && (
-          <div className="filter-section">
-            <label className="filter-label">Date Range</label>
-            <div className="date-range-picker" ref={containerRef}>
-              <DateRangePicker
-                value={dateRange}
-                onChange={handleDateRangeChange}
-                ranges={predefinedRanges}
-                placeholder="Select date range"
-                cleanable
-                showOneCalendar={false}
-                format="dd/MM/yyyy"
-                character=" - "
-                size="md"
-                placement="bottomStart"
-              />
-            </div>
-          </div>
-        )}
-
-        {/* Amount Range */}
-        <div className="filter-section">
-          <label className="filter-label">Amount Range</label>
-          <div className="amount-range">
-            <input
-              type="number"
-              value={minAmount ?? ''}
-              onChange={(e) => handleAmountChange('min', e.target.value)}
-              placeholder="Min"
-              className="amount-input"
-              step="0.01"
-            />
-            <span className="amount-separator">to</span>
-            <input
-              type="number"
-              value={maxAmount ?? ''}
-              onChange={(e) => handleAmountChange('max', e.target.value)}
-              placeholder="Max"
-              className="amount-input"
-              step="0.01"
-            />
-          </div>
-        </div>
-
-        {/* Categories - Full width */}
-        <div className="filter-section filter-section-full-width">
-          <label className="filter-label">Categories</label>
-
-          <div className="category-tag-input" ref={containerRef}>
-            <div className="tag-input-container">
-              {/* Selected Categories Tags */}
-              {selectedCategories.map((category) => (
-                <span key={category.id} className="category-tag">
-                  {category.name}
-                  <button
-                    onClick={() => handleCategoryRemove(category.id)}
-                    className="category-tag-remove"
-                    type="button"
-                  >
-                    ×
-                  </button>
-                </span>
-              ))}
-
-              {/* Input Field */}
-              <input
-                ref={inputRef}
-                type="text"
-                value={categoryInput}
-                onChange={(e) => handleInputChange(e.target.value)}
-                onKeyDown={handleInputKeyDown}
-                onFocus={() => setShowSuggestions(categoryInput.length > 0 && availableCategories.length > 0)}
-                placeholder={selectedCategories.length === 0 ? 'Type to add categories...' : 'Add more...'}
-                className="category-input"
-              />
-            </div>
-
-            {/* Suggestions Dropdown */}
-            {showSuggestions && availableCategories.length > 0 && (
-              <div className="category-suggestions">
-                {availableCategories.slice(0, 8).map((category) => (
-                  <button
-                    key={category.id}
-                    onClick={() => handleCategoryAdd(category.id)}
-                    className="category-suggestion"
-                    type="button"
-                  >
-                    {category.parent_id && '  └ '}
-                    {category.name}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+            <span className={`collapse-chevron ${isCollapsed ? 'collapsed' : ''}`}>▼</span>
+          </button>
         </div>
       </div>
+
+      {!isCollapsed && (
+        <div className="filters-grid">
+          {/* Search Description */}
+          <div className="filter-section">
+            <label htmlFor="description-search" className="filter-label">
+              Search Description
+            </label>
+            <input
+              id="description-search"
+              type="text"
+              value={descriptionSearch || ''}
+              onChange={(e) => onDescriptionSearchChange(e.target.value || undefined)}
+              placeholder="Search transactions..."
+              className="search-input"
+            />
+          </div>
+
+          {/* Source Filter */}
+          <div className="filter-section">
+            <label htmlFor="source-filter" className="filter-label">
+              Source
+            </label>
+            <select
+              id="source-filter"
+              value={selectedSourceId || ''}
+              onChange={(e) => onSourceChange(e.target.value || undefined)}
+              className="filter-select"
+            >
+              <option value="">All Sources</option>
+              {sources.map((source) => (
+                <option key={source.id} value={source.id}>
+                  {source.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Date Range */}
+          {onDateRangeChange && (
+            <div className="filter-section">
+              <label className="filter-label">Date Range</label>
+              <div className="date-range-picker" ref={containerRef}>
+                <DateRangePicker
+                  value={dateRange}
+                  onChange={handleDateRangeChange}
+                  ranges={predefinedRanges}
+                  placeholder="Select date range"
+                  cleanable
+                  showOneCalendar={false}
+                  format="dd/MM/yyyy"
+                  character=" - "
+                  size="md"
+                  placement="bottomStart"
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Amount Range */}
+          <div className="filter-section">
+            <label className="filter-label">Amount Range</label>
+            <div className="amount-range">
+              <input
+                type="number"
+                value={minAmount ?? ''}
+                onChange={(e) => handleAmountChange('min', e.target.value)}
+                placeholder="Min"
+                className="amount-input"
+                step="0.01"
+              />
+              <span className="amount-separator">to</span>
+              <input
+                type="number"
+                value={maxAmount ?? ''}
+                onChange={(e) => handleAmountChange('max', e.target.value)}
+                placeholder="Max"
+                className="amount-input"
+                step="0.01"
+              />
+            </div>
+          </div>
+
+          {/* Categories - Full width */}
+          <div className="filter-section filter-section-full-width">
+            <label className="filter-label">Categories</label>
+
+            <div className="category-tag-input" ref={containerRef}>
+              <div className="tag-input-container">
+                {/* Selected Categories Tags */}
+                {selectedCategories.map((category) => (
+                  <span key={category.id} className="category-tag">
+                    {category.name}
+                    <button
+                      onClick={() => handleCategoryRemove(category.id)}
+                      className="category-tag-remove"
+                      type="button"
+                    >
+                      ×
+                    </button>
+                  </span>
+                ))}
+
+                {/* Input Field */}
+                <input
+                  ref={inputRef}
+                  type="text"
+                  value={categoryInput}
+                  onChange={(e) => handleInputChange(e.target.value)}
+                  onKeyDown={handleInputKeyDown}
+                  onFocus={() => setShowSuggestions(categoryInput.length > 0 && availableCategories.length > 0)}
+                  placeholder={selectedCategories.length === 0 ? 'Type to add categories...' : 'Add more...'}
+                  className="category-input"
+                />
+              </div>
+
+              {/* Suggestions Dropdown */}
+              {showSuggestions && availableCategories.length > 0 && (
+                <div className="category-suggestions">
+                  {availableCategories.slice(0, 8).map((category) => (
+                    <button
+                      key={category.id}
+                      onClick={() => handleCategoryAdd(category.id)}
+                      className="category-suggestion"
+                      type="button"
+                    >
+                      {category.parent_id && '  └ '}
+                      {category.name}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

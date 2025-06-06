@@ -59,17 +59,36 @@
 
 .transactions-page .transaction-filters-advanced {
   padding: 1.5rem;
+  transition: padding 0.3s ease;
+}
+
+/* Compact padding when collapsed */
+.transactions-page .transaction-filters-advanced.collapsed {
+  padding: 0.75rem 1.5rem;
 }
 
 .transactions-page .filter-header {
   display: flex;
-  justify-content: flex-start;
+  justify-content: space-between;
   align-items: center;
   margin-bottom: 1.5rem;
   padding-bottom: 1rem;
   border-bottom: 1px solid #e5e7eb;
   flex-wrap: nowrap;
-  min-height: 70px;
+  min-height: 50px;
+  transition: all 0.3s ease;
+}
+
+/* Compact header when collapsed */
+.transactions-page .transaction-filters-advanced.collapsed .filter-header {
+  margin-bottom: 0;
+  padding-bottom: 0.5rem;
+  min-height: 40px;
+}
+
+/* Hide border when collapsed */
+.transactions-page .transaction-filters-advanced.collapsed .filter-header {
+  border-bottom: 1px solid #f3f4f6;
 }
 
 .transactions-page .filter-header h3 {
@@ -78,6 +97,18 @@
   color: #1f2937 !important;
   margin: 0;
   flex-shrink: 0;
+  transition: font-size 0.3s ease;
+}
+
+/* Smaller title when collapsed */
+.transactions-page .transaction-filters-advanced.collapsed .filter-header h3 {
+  font-size: 1.1rem;
+}
+
+.transactions-page .filter-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
 }
 
 .transactions-page .clear-all-button {
@@ -94,20 +125,64 @@
   white-space: nowrap;
   min-width: auto;
   width: auto;
-  margin-left: auto;
 }
 
 .transactions-page .clear-all-button:hover {
   background: #dc2626;
 }
 
-/* Horizontal filter sections layout */
+.transactions-page .collapse-toggle-button {
+  background: #f9fafb;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  padding: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+}
+
+.transactions-page .collapse-toggle-button:hover {
+  background: #f3f4f6;
+  border-color: #9ca3af;
+}
+
+.transactions-page .collapse-chevron {
+  font-size: 0.75rem;
+  color: #6b7280;
+  transition: transform 0.3s ease;
+  transform: rotate(0deg);
+}
+
+.transactions-page .collapse-chevron.collapsed {
+  transform: rotate(-90deg);
+}
+
+/* Add smooth animation for filters grid */
 .transactions-page .filters-grid {
   display: grid;
   grid-template-columns: 1.2fr 1fr 1.8fr 1fr;
   grid-template-rows: auto auto;
   gap: 1.5rem;
   align-items: end;
+  animation: slideDown 0.3s ease-out;
+  overflow: hidden;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    max-height: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    max-height: 500px;
+    transform: translateY(0);
+  }
 }
 
 .transactions-page .filter-section {
