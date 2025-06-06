@@ -1,8 +1,11 @@
 // .eslintrc.js
 module.exports = {
+  env: {
+    node: true,
+  },
   parser: '@typescript-eslint/parser',
   parserOptions: {
-    project: './tsconfig.json',
+    project: './bank-statements-web/tsconfig.json',
     sourceType: 'module',
   },
   plugins: ['@typescript-eslint', 'prettier'],
@@ -16,4 +19,17 @@ module.exports = {
       },
     ],
   },
+  overrides: [
+    {
+      files: ['.eslintrc.cjs'],
+      parser: 'espree',
+      parserOptions: {
+        ecmaVersion: 2020,
+        sourceType: 'script',
+      },
+      env: {
+        node: true,
+      },
+    },
+  ],
 }

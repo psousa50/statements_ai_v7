@@ -17,7 +17,7 @@ This approach provides **immediate user feedback** for known patterns while expe
 
 ## Complete Process Flow
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────────────────────────────┐
 │                           STATEMENT UPLOAD PROCESS                                  │
 ├─────────────────────────────────────────────────────────────────────────────────────┤
@@ -47,7 +47,7 @@ This approach provides **immediate user feedback** for known patterns while expe
 │   └─────────────────────────────────────────────────────────────────────────────┘   │
 │                                                                                     │
 └─────────────────────────────────────────────────────────────────────────────────────┘
-```
+```text
 
 ---
 
@@ -55,7 +55,7 @@ This approach provides **immediate user feedback** for known patterns while expe
 
 ### Step 1: File Upload & Initial Processing
 
-```
+```text
 POST /statements/upload
 │
 ├─► 📁 File Validation
@@ -72,13 +72,13 @@ POST /statements/upload
     ├─ Raw data extraction
     ├─ Data type conversion
     └─ TransactionDTO objects (unpersisted)
-```
+```text
 
 ### Step 2: StatementUploadService Orchestration
 
 The **StatementUploadService** orchestrates the complete upload and processing flow:
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────────┐
 │                    StatementUploadService                       │
 ├─────────────────────────────────────────────────────────────────┤
@@ -119,11 +119,11 @@ The **StatementUploadService** orchestrates the complete upload and processing f
 │   └─ statistics: processed/matched/unmatched counts            │
 │                                                                 │
 └─────────────────────────────────────────────────────────────────┘
-```
+```text
 
 ### Step 3: DTO Processing Detail
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────────┐
 │              TransactionProcessingOrchestrator                  │
 │                   (process_transaction_dtos)                    │
@@ -156,11 +156,11 @@ The **StatementUploadService** orchestrates the complete upload and processing f
 │  ⚠️  NO Database Writes - Pure DTO Processing                   │
 │                                                                 │
 └─────────────────────────────────────────────────────────────────┘
-```
+```text
 
 ### Step 4: Immediate Response
 
-```json
+```textjson
 {
   "immediate_results": {
     "total_processed": 12,
@@ -188,7 +188,7 @@ The **StatementUploadService** orchestrates the complete upload and processing f
     "rules_used": 3
   }
 }
-```
+```text
 
 ---
 
@@ -196,7 +196,7 @@ The **StatementUploadService** orchestrates the complete upload and processing f
 
 ### Background Job Processor Architecture
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────────┐
 │                    Background Job Processor                     │
 ├─────────────────────────────────────────────────────────────────┤
@@ -237,11 +237,11 @@ The **StatementUploadService** orchestrates the complete upload and processing f
 │   └─ Result: final statistics                                   │
 │                                                                 │
 └─────────────────────────────────────────────────────────────────┘
-```
+```text
 
 ### AI Categorization Detail
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────────┐
 │                    _categorize_single_transaction_by_id          │
 ├─────────────────────────────────────────────────────────────────┤
@@ -284,7 +284,7 @@ The **StatementUploadService** orchestrates the complete upload and processing f
 │   └─ Rule creation error: log warning (don't fail transaction) │
 │                                                                 │
 └─────────────────────────────────────────────────────────────────┘
-```
+```text
 
 ---
 
@@ -292,7 +292,7 @@ The **StatementUploadService** orchestrates the complete upload and processing f
 
 ### 1. StatementUploadService
 
-```
+```text
 Responsibilities:
 ├─ Orchestrate complete upload and processing flow
 ├─ Coordinate: parsing → DTO processing → persistence
@@ -306,21 +306,21 @@ Methods:
 ├─ _parse_to_transaction_dtos(...) → List<TransactionDTO>
 ├─ _get_unmatched_transaction_ids(...) → List<UUID>
 └─ _save_file_analysis_metadata(...)
-```
+```text
 
 ### 2. StatementAnalyzerService
 
-```
+```text
 Responsibilities:
 ├─ File format detection
 ├─ Schema analysis (heuristic + LLM)
 ├─ Transaction parsing
 └─ Data validation
-```
+```text
 
 ### 3. TransactionProcessingOrchestrator
 
-```
+```text
 Responsibilities:
 ├─ DTO normalization and processing
 ├─ Rule-based categorization (in memory)
@@ -332,11 +332,11 @@ Methods:
 ├─ process_transactions(transactions) → SyncCategorizationResult (legacy)
 ├─ process_transaction_dtos(dtos) → DTOProcessingResult (new)
 └─ get_background_job_info(...) → BackgroundJobInfo
-```
+```text
 
 ### 4. StatementPersistenceService
 
-```
+```text
 Responsibilities:
 ├─ Traditional file parsing and persistence
 ├─ DTO-based persistence (new)
@@ -347,17 +347,17 @@ Methods:
 ├─ persist(request) → PersistenceResultDTO (legacy)
 ├─ save_processed_transactions(dtos) → PersistenceResultDTO (new)
 └─ File analysis metadata management
-```
+```text
 
 ### 5. RuleBasedCategorizationService
 
-```
+```text
 Responsibilities:
 ├─ Query transaction_categorization table
 ├─ Batch categorization matching
 ├─ Normalized description lookup
 └─ Category mapping
-```
+```text
 
 ---
 
@@ -365,7 +365,7 @@ Responsibilities:
 
 ### New Transaction Flow (DTO-Based)
 
-```sql
+```textsql
 -- Single persistence with all data complete
 INSERT INTO transactions (
   description, 
@@ -401,11 +401,11 @@ INSERT INTO transaction_categorization (
   source = 'AI',
   created_at = NOW()
 );
-```
+```text
 
 ### Performance Benefits
 
-```
+```text
 Old Flow (save→load→update):
 ├─ INSERT transactions (incomplete data)     ~50ms
 ├─ SELECT transactions (reload)              ~20ms  
@@ -416,7 +416,7 @@ New Flow (DTO-based):
 ├─ Process DTOs in memory                    ~15ms
 ├─ INSERT transactions (complete data)       ~50ms
 └─ Total: ~65ms (35% faster)
-```
+```text
 
 ---
 
@@ -424,18 +424,18 @@ New Flow (DTO-based):
 
 ### Cost Optimization Over Time
 
-```
+```text
 Upload Scenario          | Rule Matches | AI Calls | Cost Impact
 -------------------------|--------------|----------|-------------
 First upload (cold)      | 0%          | 100%     | $$ Full cost
 After 5 uploads          | 60%         | 40%      | $$ 40% cost
 After 20 uploads         | 85%         | 15%      | $$ 15% cost
 Mature system (100+)     | 95%         | 5%       | $$ 5% cost
-```
+```text
 
 ### Response Time Targets (Improved)
 
-```
+```text
 Phase                    | Target Time  | Old Performance | New Performance
 -------------------------|--------------|-----------------|------------------
 File upload & parsing    | < 200ms     | ~150ms          | ~150ms
@@ -444,11 +444,11 @@ Database persistence     | < 100ms     | ~100ms (2 ops)  | ~65ms (1 op)
 Total sync response      | < 500ms     | ~450ms          | ~395ms
 AI categorization/tx     | < 2000ms    | ~1500ms         | ~1500ms
 Background job complete  | < 5min      | ~2-3min         | ~2-3min
-```
+```text
 
 ### Architecture Benefits
 
-```
+```text
 Metric                   | Old Architecture | New Architecture | Improvement
 -------------------------|------------------|------------------|-------------
 Database operations      | 2-3 per upload  | 1 per upload     | 50-66% reduction
@@ -456,7 +456,7 @@ Memory efficiency        | Load + process   | Process only     | Lower memory us
 Code complexity          | Route heavy      | Service focused  | Better separation
 Testability              | Route mocking    | Service mocking  | Easier testing
 Error handling           | Distributed      | Centralized      | Better reliability
-```
+```text
 
 ---
 
@@ -464,7 +464,7 @@ Error handling           | Distributed      | Centralized      | Better reliabil
 
 ### StatementUploadResult
 
-```python
+```textpython
 class StatementUploadResult:
     uploaded_file_id: str
     transactions_saved: int
@@ -473,11 +473,11 @@ class StatementUploadResult:
     match_rate_percentage: float
     processing_time_ms: int
     background_job_info: Optional[BackgroundJobInfo]
-```
+```text
 
 ### DTOProcessingResult
 
-```python
+```textpython
 class DTOProcessingResult:
     processed_dtos: List[TransactionDTO]      # All DTOs with enriched data
     total_processed: int
@@ -489,11 +489,11 @@ class DTOProcessingResult:
     @property
     def has_unmatched_transactions(self) -> bool:
         return self.unmatched_dto_count > 0
-```
+```text
 
 ### Enhanced TransactionDTO
 
-```python
+```textpython
 class TransactionDTO:
     # Core transaction data
     date: str
@@ -510,7 +510,7 @@ class TransactionDTO:
     # Database metadata
     id: Optional[str]
     created_at: Optional[datetime]
-```
+```text
 
 ---
 
@@ -518,7 +518,7 @@ class TransactionDTO:
 
 ### Synchronous Phase Errors
 
-```
+```text
 Error Type                | Handling Strategy
 --------------------------|------------------------------------------
 File format invalid       | Immediate 400 error + user feedback
@@ -526,11 +526,11 @@ Schema detection fails    | Fallback to LLM detector
 Parsing errors            | Skip invalid rows + warning
 Database connection       | 500 error + retry suggestion
 Rule query timeout        | Continue without rules + warning
-```
+```text
 
 ### Asynchronous Phase Errors
 
-```
+```text
 Error Type                | Handling Strategy
 --------------------------|------------------------------------------
 LLM API timeout           | Retry with exponential backoff
@@ -539,7 +539,7 @@ Transaction not found     | Log warning + skip (data consistency)
 Database deadlock         | Retry transaction
 Rule creation conflict    | Log warning + continue (duplicate key)
 Job processor crash       | Job remains IN_PROGRESS + manual reset
-```
+```text
 
 ---
 
@@ -547,7 +547,7 @@ Job processor crash       | Job remains IN_PROGRESS + manual reset
 
 ### Key Metrics to Track
 
-```
+```text
 📊 Performance Metrics:
 ├─ Upload response time (sync phase)
 ├─ Background job completion time
@@ -567,11 +567,11 @@ Job processor crash       | Job remains IN_PROGRESS + manual reset
 ├─ Monthly AI spend
 ├─ Cost savings from rules
 └─ ROI on rule creation
-```
+```text
 
 ### Operational Scripts
 
-```bash
+```textbash
 # Monitor system health
 python check_jobs_status.py
 
@@ -580,7 +580,7 @@ python reset_stuck_jobs.py
 
 # Check rule effectiveness
 python check_categorization_rules.py
-```
+```text
 
 ---
 
@@ -623,4 +623,5 @@ python check_categorization_rules.py
 
 ---
 
-This architecture provides a robust, scalable, and cost-effective solution for transaction categorization that improves over time through machine learning and rule accumulation. **The new DTO-based processing eliminates inefficient database operations while maintaining all existing functionality.** 
+This architecture provides a robust, scalable, and cost-effective solution for transaction categorization that improves over time through machine learning and rule accumulation. **The new DTO-based processing eliminates inefficient database operations while maintaining all existing functionality.**
+

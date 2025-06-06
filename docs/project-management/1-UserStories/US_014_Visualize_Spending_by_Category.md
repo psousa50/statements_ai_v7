@@ -14,4 +14,4 @@
 
 **Dependencies:**
 
-- US-11: Categorize Transaction 
+- US-11: Categorize Transaction

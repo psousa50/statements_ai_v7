@@ -2,7 +2,7 @@ import { expect, test } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { TransactionsPage } from '@/pages/Transactions'
 import { ApiProvider } from '@/api/ApiContext'
-import { createMockApiClient } from '@/api/createMockApiClient'
+import { createMockApiClient } from '../createMockApiClient'
 
 test('renders transactions page with mock data', async () => {
   const apiClient = createMockApiClient({

@@ -18,4 +18,4 @@
 
 **Dependencies:**
 
-- US-06: View Transactions 
+- US-06: View Transactions

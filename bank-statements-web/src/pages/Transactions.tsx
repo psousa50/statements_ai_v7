@@ -198,7 +198,7 @@ export const TransactionsPage = () => {
           <div className="transactions-header">
             <div className="transactions-summary">
               <h2>Transaction History</h2>
-              {!loading && <span className="transaction-count">{pagination.total} transactions found</span>}
+              {!loading && <span className="transaction-count">{pagination.total_count} transactions found</span>}
             </div>
           </div>
 
@@ -212,13 +212,13 @@ export const TransactionsPage = () => {
             />
           </div>
 
-          {!loading && pagination.total > 0 && (
+          {!loading && pagination.total_count > 0 && (
             <div className="transactions-pagination">
               <Pagination
-                currentPage={pagination.page}
-                totalPages={pagination.totalPages}
-                totalItems={pagination.total}
-                pageSize={pagination.pageSize}
+                currentPage={pagination.current_page}
+                totalPages={pagination.total_pages}
+                totalItems={pagination.total_count}
+                pageSize={pagination.page_size}
                 onPageChange={handlePageChange}
                 onPageSizeChange={handlePageSizeChange}
               />

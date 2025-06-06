@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from datetime import date
 from decimal import Decimal
-from typing import List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 from uuid import UUID
 
 from app.domain.dto.statement_processing import TransactionDTO
@@ -64,6 +64,36 @@ class TransactionRepository(ABC):
         pass
 
     @abstractmethod
+    def get_category_totals(
+        self,
+        category_ids: Optional[List[UUID]] = None,
+        status: Optional[CategorizationStatus] = None,
+        min_amount: Optional[Decimal] = None,
+        max_amount: Optional[Decimal] = None,
+        description_search: Optional[str] = None,
+        source_id: Optional[UUID] = None,
+        start_date: Optional[date] = None,
+        end_date: Optional[date] = None,
+    ) -> Dict[Optional[UUID], Dict[str, Decimal]]:
+        """
+        Get category totals for chart data with the same filtering options as get_paginated.
+
+        Args:
+            category_ids: Optional list of category IDs to filter by
+            status: Optional status filter
+            min_amount: Optional minimum amount filter
+            max_amount: Optional maximum amount filter
+            description_search: Optional description search filter
+            source_id: Optional source ID to filter by
+            start_date: Optional start date filter (inclusive)
+            end_date: Optional end date filter (inclusive)
+
+        Returns:
+            Dict mapping category_id (or None for uncategorized) to dict with 'total_amount' and 'transaction_count'
+        """
+        pass
+
+    @abstractmethod
     def update(self, transaction: Transaction) -> Transaction:
         """Update a transaction"""
         pass
@@ -87,7 +117,9 @@ class TransactionRepository(ABC):
         pass
 
     @abstractmethod
-    def find_duplicates(self, transactions: List[TransactionDTO]) -> List[TransactionDTO]:
+    def find_duplicates(
+        self, transactions: List[TransactionDTO]
+    ) -> List[TransactionDTO]:
         """
         Find duplicate transactions based on date, description, amount, and source.
 

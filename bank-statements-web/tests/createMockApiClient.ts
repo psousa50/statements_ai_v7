@@ -1,9 +1,9 @@
-import { ApiClient } from './ApiClient'
-import { CategoryClient, CategoryListResponse } from './CategoryClient'
-import { Source, SourceClient, SourceListResponse } from './SourceClient'
-import { SampleData, StatementAnalysisResponse, StatementClient, StatementUploadResponse } from './StatementClient'
-import { TransactionClient } from './TransactionClient'
-import { Category, Transaction, TransactionListResponse } from '../types/Transaction'
+import { ApiClient } from '@/api/ApiClient'
+import { CategoryClient, CategoryListResponse } from '@/api/CategoryClient'
+import { Source, SourceClient } from '@/api/SourceClient'
+import { StatementAnalysisResponse, StatementClient, StatementUploadResponse } from '@/api/StatementClient'
+import { TransactionClient, CategoryTotalsResponse } from '@/api/TransactionClient'
+import { Category, Transaction, TransactionListResponse } from '@/types/Transaction'
 
 // Default mock transaction
 const defaultTransaction: Transaction = {
@@ -34,6 +34,21 @@ const defaultTransactionClient: TransactionClient = {
       transactions: [defaultTransaction],
       total: 1,
     } as TransactionListResponse),
+  getCategoryTotals: () =>
+    Promise.resolve({
+      totals: [
+        {
+          category_id: '1',
+          total_amount: 100,
+          transaction_count: 1,
+        },
+        {
+          category_id: undefined, // uncategorized
+          total_amount: 50,
+          transaction_count: 2,
+        },
+      ],
+    } as CategoryTotalsResponse),
   getById: () => Promise.resolve(defaultTransaction),
   create: () => Promise.resolve(defaultTransaction),
   update: () => Promise.resolve(defaultTransaction),
@@ -83,10 +98,10 @@ const defaultStatementClient: StatementClient = {
       header_row_index: 0,
       data_start_row_index: 1,
       sample_data: [
-        ["Date", "Amount", "Description"],
-        ["2023-01-01", "100", "Sample Transaction"],
-        ["2023-01-02", "200", "Another Transaction"]
-      ]
+        ['Date', 'Amount', 'Description'],
+        ['2023-01-01', '100', 'Sample Transaction'],
+        ['2023-01-02', '200', 'Another Transaction'],
+      ],
     } as StatementAnalysisResponse),
   uploadStatement: (request) =>
     Promise.resolve({

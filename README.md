@@ -16,7 +16,7 @@ This project is a comprehensive implementation of the Bank Statement Analyzer, p
 
 The project follows a service-oriented architecture with a clear separation of concerns:
 
-```
+```text
 ┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
 │                 │     │                 │     │                 │
 │  React Frontend │────▶│  FastAPI Backend│────▶│  PostgreSQL DB  │
@@ -59,44 +59,55 @@ The frontend follows a modular architecture:
 ### Setup
 
 1. Clone the repository
-2. Set up the backend:
-   ```
+1. Set up the backend:
+
+```bash
    cd bank-statements-api
    python -m venv venv
    source venv/bin/activate  # On Windows: venv\Scripts\activate
    pip install -e .
-   ```
-3. Create a PostgreSQL database:
-   ```
+```
+
+1. Create a PostgreSQL database:
+
+```bash
    createdb bank_statements
-   ```
-4. Initialize the database:
-   ```
+```
+
+1. Initialize the database:
+
+```bash
    python -m app.db_init
-   ```
-5. Set up the frontend:
-   ```
+```
+
+1. Set up the frontend:
+
+```bash
    cd ../bank-statements-web
    npm install
-   ```
+```
 
 ### Running the Application
 
 1. Start the backend:
-   ```
+
+```bash
    cd bank-statements-api
    python run.py
-   ```
-2. Start the frontend:
-   ```
+```
+
+1. Start the frontend:
+
+```bash
    cd bank-statements-web
    npm run dev
-   ```
-3. Access the application at http://localhost:5173
+```
+
+1. Access the application at <http://localhost:5173>
 
 ## Project Structure
 
-```
+```bash
 bank-statements-api/       # Backend API
 ├── app/
 │   ├── ai/                # LLM integration for schema detection
@@ -141,6 +152,7 @@ e2e/                      # End-to-end tests
 ## Key Features
 
 ### Statement Processing Architecture
+
 - File type detection (CSV, XLSX)
 - Statement parsing with pandas
 - Schema detection using LLM
@@ -148,17 +160,20 @@ e2e/                      # End-to-end tests
 - Deduplication via file hashing
 
 ### Transaction Categorization
+
 - Hierarchical category system (parent-child relationships)
 - Batch processing of uncategorized transactions
 - API endpoint for triggering categorization
 
 ### File Upload UI
+
 - Drag-and-drop file upload
 - Column mapping customization
 - Source selection
 - Validation and analysis feedback
 
 ### Database Structure
+
 - Transactions table with categorization
 - Categories table with hierarchical structure
 - UploadedFile table for raw file content

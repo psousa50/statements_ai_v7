@@ -1,15 +1,14 @@
 from datetime import date, datetime
 from decimal import Decimal
-from typing import List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 from uuid import UUID
-
-from sqlalchemy import and_, func, or_
-from sqlalchemy.orm import Session
 
 from app.common.text_normalization import normalize_description
 from app.domain.dto.statement_processing import TransactionDTO
 from app.domain.models.transaction import CategorizationStatus, Transaction
 from app.ports.repositories.transaction import TransactionRepository
+from sqlalchemy import and_, func, or_
+from sqlalchemy.orm import Session
 
 
 class SQLAlchemyTransactionRepository(TransactionRepository):
@@ -28,10 +27,16 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         return transaction
 
     def get_by_id(self, transaction_id: UUID) -> Optional[Transaction]:
-        return self.db_session.query(Transaction).filter(Transaction.id == transaction_id).first()
+        return (
+            self.db_session.query(Transaction)
+            .filter(Transaction.id == transaction_id)
+            .first()
+        )
 
     def get_all(self) -> List[Transaction]:
-        return self.db_session.query(Transaction).order_by(Transaction.date.desc()).all()
+        return (
+            self.db_session.query(Transaction).order_by(Transaction.date.desc()).all()
+        )
 
     def get_paginated(
         self,
@@ -95,9 +100,89 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         total = query.count()
 
         # Apply pagination and ordering
-        transactions = query.order_by(Transaction.date.desc()).offset((page - 1) * page_size).limit(page_size).all()
+        transactions = (
+            query.order_by(Transaction.date.desc())
+            .offset((page - 1) * page_size)
+            .limit(page_size)
+            .all()
+        )
 
         return transactions, total
+
+    def get_category_totals(
+        self,
+        category_ids: Optional[List[UUID]] = None,
+        status: Optional[CategorizationStatus] = None,
+        min_amount: Optional[Decimal] = None,
+        max_amount: Optional[Decimal] = None,
+        description_search: Optional[str] = None,
+        source_id: Optional[UUID] = None,
+        start_date: Optional[date] = None,
+        end_date: Optional[date] = None,
+    ) -> Dict[Optional[UUID], Dict[str, Decimal]]:
+        """Get category totals for chart data with the same filtering options as get_paginated"""
+
+        # Build the base query with aggregation
+        query = self.db_session.query(
+            Transaction.category_id,
+            func.sum(func.abs(Transaction.amount)).label("total_amount"),
+            func.count(Transaction.id).label("transaction_count"),
+        )
+
+        # Apply the same filters as get_paginated
+        filters = []
+
+        # Multiple category filter
+        if category_ids:
+            filters.append(Transaction.category_id.in_(category_ids))
+
+        # Status filter
+        if status is not None:
+            filters.append(Transaction.categorization_status == status)
+
+        # Amount range filters
+        if min_amount is not None:
+            filters.append(Transaction.amount >= min_amount)
+        if max_amount is not None:
+            filters.append(Transaction.amount <= max_amount)
+
+        # Description search filter (case-insensitive, search in both description and normalized_description)
+        if description_search:
+            search_term = f"%{description_search.lower()}%"
+            filters.append(
+                or_(
+                    func.lower(Transaction.description).like(search_term),
+                    func.lower(Transaction.normalized_description).like(search_term),
+                )
+            )
+
+        # Source filter
+        if source_id is not None:
+            filters.append(Transaction.source_id == source_id)
+
+        # Date range filters
+        if start_date is not None:
+            filters.append(Transaction.date >= start_date)
+        if end_date is not None:
+            filters.append(Transaction.date <= end_date)
+
+        if filters:
+            query = query.filter(and_(*filters))
+
+        # Group by category_id and execute
+        results = query.group_by(Transaction.category_id).all()
+
+        # Convert to the expected format
+        totals = {}
+        for category_id, total_amount, transaction_count in results:
+            totals[category_id] = {
+                "total_amount": Decimal(str(total_amount))
+                if total_amount
+                else Decimal("0"),
+                "transaction_count": Decimal(str(transaction_count)),
+            }
+
+        return totals
 
     def update(self, transaction: Transaction) -> Transaction:
         self.db_session.commit()
@@ -112,7 +197,9 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
             return True
         return False
 
-    def find_duplicates(self, transactions: List[TransactionDTO]) -> List[TransactionDTO]:
+    def find_duplicates(
+        self, transactions: List[TransactionDTO]
+    ) -> List[TransactionDTO]:
         """
         Find duplicate transactions based on date, description, amount, and source.
         """
@@ -161,7 +248,9 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
             date_val = dup.date
             if isinstance(date_val, str):
                 date_val = datetime.strptime(date_val, "%Y-%m-%d").date()
-            duplicate_tuples.add((date_val, dup.description, float(dup.amount), dup.source_id))
+            duplicate_tuples.add(
+                (date_val, dup.description, float(dup.amount), dup.source_id)
+            )
 
         saved_count = 0
         for transaction_dto in transactions:
@@ -183,7 +272,9 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
                 date=date_val,
                 amount=transaction_dto.amount,
                 description=transaction_dto.description,
-                normalized_description=normalize_description(transaction_dto.description),
+                normalized_description=normalize_description(
+                    transaction_dto.description
+                ),
                 uploaded_file_id=transaction_dto.uploaded_file_id,
             )
 
@@ -199,11 +290,18 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
     def get_oldest_uncategorized(self, limit: int = 10) -> List[Transaction]:
         return (
             self.db_session.query(Transaction)
-            .filter(Transaction.categorization_status == CategorizationStatus.UNCATEGORIZED)
+            .filter(
+                Transaction.categorization_status == CategorizationStatus.UNCATEGORIZED
+            )
             .order_by(Transaction.date.asc())
             .limit(limit)
             .all()
         )
 
     def get_by_uploaded_file_id(self, uploaded_file_id: UUID) -> List[Transaction]:
-        return self.db_session.query(Transaction).filter(Transaction.uploaded_file_id == uploaded_file_id).order_by(Transaction.date.asc()).all()
+        return (
+            self.db_session.query(Transaction)
+            .filter(Transaction.uploaded_file_id == uploaded_file_id)
+            .order_by(Transaction.date.asc())
+            .all()
+        )

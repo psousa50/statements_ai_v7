@@ -3,10 +3,9 @@ from decimal import Decimal
 from typing import Dict, List, Optional, Sequence
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
-
 from app.domain.models.background_job import JobStatus
 from app.domain.models.transaction import CategorizationStatus
+from pydantic import BaseModel, ConfigDict, Field, field_serializer, field_validator
 
 
 class CategoryBase(BaseModel):
@@ -98,6 +97,24 @@ class TransactionResponse(BaseModel):
 class TransactionListResponse(BaseModel):
     transactions: Sequence[TransactionResponse]
     total: int
+
+
+class CategoryTotalResponse(BaseModel):
+    category_id: Optional[UUID] = None
+    total_amount: Decimal
+    transaction_count: int
+
+    model_config = ConfigDict(from_attributes=True)
+
+    @field_serializer("total_amount")
+    def serialize_total_amount(self, value: Decimal) -> float:
+        return float(value)
+
+
+class CategoryTotalsResponse(BaseModel):
+    totals: Sequence[CategoryTotalResponse]
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ColumnMapping(BaseModel):

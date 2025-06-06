@@ -21,6 +21,7 @@ All endpoints follow a consistent error response format:
 ```
 
 HTTP status codes:
+
 - 400: Bad Request - Invalid input
 - 401: Unauthorized - Authentication required
 - 403: Forbidden - Insufficient permissions
@@ -40,10 +41,12 @@ Retrieves a list of all transactions with optional filtering.
 **Endpoint:** `GET /transactions`
 
 **Query Parameters:**
+
 - `category_id` (optional): Filter by category ID
 - `status` (optional): Filter by categorization status (UNCATEGORIZED, CATEGORIZED, FAILURE)
 
 **Response:** 200 OK
+
 ```json
 {
   "transactions": [
@@ -78,9 +81,11 @@ Retrieves a specific transaction by its ID.
 **Endpoint:** `GET /transactions/{transaction_id}`
 
 **Path Parameters:**
+
 - `transaction_id`: UUID of the transaction
 
 **Response:** 200 OK
+
 ```json
 {
   "id": "123e4567-e89b-12d3-a456-426614174000",
@@ -104,6 +109,7 @@ Retrieves a specific transaction by its ID.
 ```
 
 **Error Response:** 404 Not Found
+
 ```json
 {
   "detail": "Transaction with ID 123e4567-e89b-12d3-a456-426614174000 not found"
@@ -117,6 +123,7 @@ Creates a new transaction.
 **Endpoint:** `POST /transactions`
 
 **Request Body:**
+
 ```json
 {
   "date": "2025-05-15",
@@ -127,6 +134,7 @@ Creates a new transaction.
 ```
 
 **Response:** 201 Created
+
 ```json
 {
   "id": "123e4567-e89b-12d3-a456-426614174000",
@@ -153,9 +161,11 @@ Updates an existing transaction.
 **Endpoint:** `PUT /transactions/{transaction_id}`
 
 **Path Parameters:**
+
 - `transaction_id`: UUID of the transaction
 
 **Request Body:**
+
 ```json
 {
   "date": "2025-05-15",
@@ -166,6 +176,7 @@ Updates an existing transaction.
 ```
 
 **Response:** 200 OK
+
 ```json
 {
   "id": "123e4567-e89b-12d3-a456-426614174000",
@@ -186,6 +197,7 @@ Updates an existing transaction.
 ```
 
 **Error Response:** 404 Not Found
+
 ```json
 {
   "detail": "Transaction with ID 123e4567-e89b-12d3-a456-426614174000 not found"
@@ -199,11 +211,13 @@ Deletes a transaction.
 **Endpoint:** `DELETE /transactions/{transaction_id}`
 
 **Path Parameters:**
+
 - `transaction_id`: UUID of the transaction
 
 **Response:** 204 No Content
 
 **Error Response:** 404 Not Found
+
 ```json
 {
   "detail": "Transaction with ID 123e4567-e89b-12d3-a456-426614174000 not found"
@@ -217,12 +231,15 @@ Categorizes a transaction.
 **Endpoint:** `PUT /transactions/{transaction_id}/categorize`
 
 **Path Parameters:**
+
 - `transaction_id`: UUID of the transaction
 
 **Query Parameters:**
+
 - `category_id` (optional): UUID of the category (if null, removes categorization)
 
 **Response:** 200 OK
+
 ```json
 {
   "id": "123e4567-e89b-12d3-a456-426614174000",
@@ -243,6 +260,7 @@ Categorizes a transaction.
 ```
 
 **Error Response:** 404 Not Found
+
 ```json
 {
   "detail": "Transaction with ID 123e4567-e89b-12d3-a456-426614174000 not found"
@@ -256,9 +274,11 @@ Marks a transaction as having failed categorization.
 **Endpoint:** `PUT /transactions/{transaction_id}/mark-failure`
 
 **Path Parameters:**
+
 - `transaction_id`: UUID of the transaction
 
 **Response:** 200 OK
+
 ```json
 {
   "id": "123e4567-e89b-12d3-a456-426614174000",
@@ -275,6 +295,7 @@ Marks a transaction as having failed categorization.
 ```
 
 **Error Response:** 404 Not Found
+
 ```json
 {
   "detail": "Transaction with ID 123e4567-e89b-12d3-a456-426614174000 not found"
@@ -288,9 +309,11 @@ Categorizes a batch of uncategorized transactions.
 **Endpoint:** `POST /transactions/categorize-batch`
 
 **Query Parameters:**
+
 - `batch_size` (optional, default=10): Number of transactions to process (min=1, max=100)
 
 **Response:** 200 OK
+
 ```json
 {
   "categorized_count": 5,
@@ -308,6 +331,7 @@ Retrieves a list of all categories.
 **Endpoint:** `GET /categories`
 
 **Response:** 200 OK
+
 ```json
 {
   "categories": [
@@ -328,6 +352,7 @@ Retrieves a list of all root categories (categories without a parent).
 **Endpoint:** `GET /categories/root`
 
 **Response:** 200 OK
+
 ```json
 {
   "categories": [
@@ -348,9 +373,11 @@ Retrieves a specific category by its ID.
 **Endpoint:** `GET /categories/{category_id}`
 
 **Path Parameters:**
+
 - `category_id`: UUID of the category
 
 **Response:** 200 OK
+
 ```json
 {
   "id": "123e4567-e89b-12d3-a456-426614174001",
@@ -360,6 +387,7 @@ Retrieves a specific category by its ID.
 ```
 
 **Error Response:** 404 Not Found
+
 ```json
 {
   "detail": "Category with ID 123e4567-e89b-12d3-a456-426614174001 not found"
@@ -373,9 +401,11 @@ Retrieves all subcategories for a given parent category.
 **Endpoint:** `GET /categories/{category_id}/subcategories`
 
 **Path Parameters:**
+
 - `category_id`: UUID of the parent category
 
 **Response:** 200 OK
+
 ```json
 {
   "categories": [
@@ -390,6 +420,7 @@ Retrieves all subcategories for a given parent category.
 ```
 
 **Error Response:** 404 Not Found
+
 ```json
 {
   "detail": "Category with ID 123e4567-e89b-12d3-a456-426614174002 not found"
@@ -403,6 +434,7 @@ Creates a new category.
 **Endpoint:** `POST /categories`
 
 **Request Body:**
+
 ```json
 {
   "name": "Groceries",
@@ -411,6 +443,7 @@ Creates a new category.
 ```
 
 **Response:** 201 Created
+
 ```json
 {
   "id": "123e4567-e89b-12d3-a456-426614174001",
@@ -420,6 +453,7 @@ Creates a new category.
 ```
 
 **Error Response:** 400 Bad Request
+
 ```json
 {
   "detail": "Parent category with ID 123e4567-e89b-12d3-a456-426614174002 not found"
@@ -433,9 +467,11 @@ Updates an existing category.
 **Endpoint:** `PUT /categories/{category_id}`
 
 **Path Parameters:**
+
 - `category_id`: UUID of the category
 
 **Request Body:**
+
 ```json
 {
   "name": "Food & Groceries",
@@ -444,6 +480,7 @@ Updates an existing category.
 ```
 
 **Response:** 200 OK
+
 ```json
 {
   "id": "123e4567-e89b-12d3-a456-426614174001",
@@ -453,13 +490,17 @@ Updates an existing category.
 ```
 
 **Error Responses:**
+
 - 404 Not Found
+
 ```json
 {
   "detail": "Category with ID 123e4567-e89b-12d3-a456-426614174001 not found"
 }
 ```
+
 - 400 Bad Request
+
 ```json
 {
   "detail": "Cannot set a category as its own ancestor"
@@ -473,18 +514,23 @@ Deletes a category.
 **Endpoint:** `DELETE /categories/{category_id}`
 
 **Path Parameters:**
+
 - `category_id`: UUID of the category
 
 **Response:** 204 No Content
 
 **Error Responses:**
+
 - 404 Not Found
+
 ```json
 {
   "detail": "Category with ID 123e4567-e89b-12d3-a456-426614174001 not found"
 }
 ```
+
 - 400 Bad Request
+
 ```json
 {
   "detail": "Cannot delete category with associated transactions or subcategories"
@@ -500,6 +546,7 @@ Retrieves a list of all sources.
 **Endpoint:** `GET /sources`
 
 **Response:** 200 OK
+
 ```json
 {
   "sources": [
@@ -519,9 +566,11 @@ Retrieves a specific source by its ID.
 **Endpoint:** `GET /sources/{source_id}`
 
 **Path Parameters:**
+
 - `source_id`: UUID of the source
 
 **Response:** 200 OK
+
 ```json
 {
   "id": "123e4567-e89b-12d3-a456-426614174003",
@@ -530,6 +579,7 @@ Retrieves a specific source by its ID.
 ```
 
 **Error Response:** 404 Not Found
+
 ```json
 {
   "detail": "Source with ID 123e4567-e89b-12d3-a456-426614174003 not found"
@@ -543,6 +593,7 @@ Creates a new source.
 **Endpoint:** `POST /sources`
 
 **Request Body:**
+
 ```json
 {
   "name": "Bank A"
@@ -550,6 +601,7 @@ Creates a new source.
 ```
 
 **Response:** 201 Created
+
 ```json
 {
   "id": "123e4567-e89b-12d3-a456-426614174003",
@@ -558,6 +610,7 @@ Creates a new source.
 ```
 
 **Error Response:** 409 Conflict
+
 ```json
 {
   "detail": "Source with name 'Bank A' already exists"
@@ -571,9 +624,11 @@ Updates an existing source.
 **Endpoint:** `PUT /sources/{source_id}`
 
 **Path Parameters:**
+
 - `source_id`: UUID of the source
 
 **Request Body:**
+
 ```json
 {
   "name": "Bank A - Checking"
@@ -581,6 +636,7 @@ Updates an existing source.
 ```
 
 **Response:** 200 OK
+
 ```json
 {
   "id": "123e4567-e89b-12d3-a456-426614174003",
@@ -589,13 +645,17 @@ Updates an existing source.
 ```
 
 **Error Responses:**
+
 - 404 Not Found
+
 ```json
 {
   "detail": "Source with ID 123e4567-e89b-12d3-a456-426614174003 not found"
 }
 ```
+
 - 409 Conflict
+
 ```json
 {
   "detail": "Source with name 'Bank A - Checking' already exists"
@@ -609,11 +669,13 @@ Deletes a source.
 **Endpoint:** `DELETE /sources/{source_id}`
 
 **Path Parameters:**
+
 - `source_id`: UUID of the source
 
 **Response:** 204 No Content
 
 **Error Response:** 404 Not Found
+
 ```json
 {
   "detail": "Source with ID 123e4567-e89b-12d3-a456-426614174003 not found"
@@ -629,9 +691,11 @@ Analyzes a bank statement file to detect its structure.
 **Endpoint:** `POST /statements/analyze`
 
 **Request Body:** `multipart/form-data`
+
 - `file`: The bank statement file (CSV or XLSX)
 
 **Response:** 200 OK
+
 ```json
 {
   "uploaded_file_id": "123e4567-e89b-12d3-a456-426614174004",
@@ -655,6 +719,7 @@ Analyzes a bank statement file to detect its structure.
 ```
 
 **Error Response:** 400 Bad Request
+
 ```json
 {
   "detail": "Error analyzing file: Unsupported file format"
@@ -668,6 +733,7 @@ Uploads a bank statement for processing and persistence.
 **Endpoint:** `POST /statements/upload`
 
 **Request Body:**
+
 ```json
 {
   "source_id": "123e4567-e89b-12d3-a456-426614174003",
@@ -683,6 +749,7 @@ Uploads a bank statement for processing and persistence.
 ```
 
 **Response:** 200 OK
+
 ```json
 {
   "uploaded_file_id": "123e4567-e89b-12d3-a456-426614174004",
@@ -693,6 +760,7 @@ Uploads a bank statement for processing and persistence.
 ```
 
 **Error Response:** 400 Bad Request
+
 ```json
 {
   "detail": "Error processing statement: Invalid column mapping"

@@ -1,6 +1,6 @@
 from datetime import date
 from decimal import Decimal
-from typing import List, Optional
+from typing import Dict, List, Optional
 from uuid import UUID
 
 from app.api.schemas import TransactionListResponse
@@ -34,7 +34,11 @@ class TransactionService:
             amount=amount,
             category_id=category_id,
             source_id=source_id,
-            categorization_status=(CategorizationStatus.CATEGORIZED if category_id else CategorizationStatus.UNCATEGORIZED),
+            categorization_status=(
+                CategorizationStatus.CATEGORIZED
+                if category_id
+                else CategorizationStatus.UNCATEGORIZED
+            ),
         )
         return self.transaction_repository.create(transaction)
 
@@ -74,6 +78,29 @@ class TransactionService:
         )
         return TransactionListResponse(transactions=transactions, total=total)
 
+    def get_category_totals(
+        self,
+        category_ids: Optional[List[UUID]] = None,
+        status: Optional[CategorizationStatus] = None,
+        min_amount: Optional[Decimal] = None,
+        max_amount: Optional[Decimal] = None,
+        description_search: Optional[str] = None,
+        source_id: Optional[UUID] = None,
+        start_date: Optional[date] = None,
+        end_date: Optional[date] = None,
+    ) -> Dict[Optional[UUID], Dict[str, Decimal]]:
+        """Get category totals for chart data with the same filtering options as get_transactions_paginated"""
+        return self.transaction_repository.get_category_totals(
+            category_ids=category_ids,
+            status=status,
+            min_amount=min_amount,
+            max_amount=max_amount,
+            description_search=description_search,
+            source_id=source_id,
+            start_date=start_date,
+            end_date=end_date,
+        )
+
     def update_transaction(
         self,
         transaction_id: UUID,
@@ -93,7 +120,11 @@ class TransactionService:
 
             # Update category and categorization status
             transaction.category_id = category_id
-            transaction.categorization_status = CategorizationStatus.CATEGORIZED if category_id else CategorizationStatus.UNCATEGORIZED
+            transaction.categorization_status = (
+                CategorizationStatus.CATEGORIZED
+                if category_id
+                else CategorizationStatus.UNCATEGORIZED
+            )
 
             # Update source
             transaction.source_id = source_id  # type: ignore
@@ -105,18 +136,26 @@ class TransactionService:
         """Delete a transaction"""
         return self.transaction_repository.delete(transaction_id)
 
-    def categorize_transaction(self, transaction_id: UUID, category_id: Optional[UUID]) -> Optional[Transaction]:
+    def categorize_transaction(
+        self, transaction_id: UUID, category_id: Optional[UUID]
+    ) -> Optional[Transaction]:
         """Categorize a transaction"""
         transaction = self.transaction_repository.get_by_id(transaction_id)
         if not transaction:
             return None
 
         transaction.category_id = category_id
-        transaction.categorization_status = CategorizationStatus.CATEGORIZED if category_id else CategorizationStatus.UNCATEGORIZED
+        transaction.categorization_status = (
+            CategorizationStatus.CATEGORIZED
+            if category_id
+            else CategorizationStatus.UNCATEGORIZED
+        )
 
         return self.transaction_repository.update(transaction)
 
-    def mark_categorization_failure(self, transaction_id: UUID) -> Optional[Transaction]:
+    def mark_categorization_failure(
+        self, transaction_id: UUID
+    ) -> Optional[Transaction]:
         """Mark a transaction as having failed categorization"""
         transaction = self.transaction_repository.get_by_id(transaction_id)
         if not transaction:
