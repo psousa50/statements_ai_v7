@@ -77,7 +77,12 @@ class StatementAnalyzerService:
         rows_as_lists.append(column_names_row)
 
         for _, row in raw_df.iloc[:10].iterrows():
-            row_as_list = [str(val) if val is not None else "" for val in row.values]
+            row_as_list = []
+            for val in row.values:
+                if pd.isna(val) or val is None:
+                    row_as_list.append("")
+                else:
+                    row_as_list.append(str(val))
             rows_as_lists.append(row_as_list)
 
         return rows_as_lists
