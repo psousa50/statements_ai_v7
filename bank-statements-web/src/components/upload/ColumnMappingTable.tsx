@@ -2,7 +2,6 @@ import React from 'react'
 import {
   Box,
   FormControl,
-  InputLabel,
   MenuItem,
   Paper,
   Select,
@@ -13,10 +12,8 @@ import {
   TableHead,
   TableRow,
   Typography,
-  Tooltip,
   SelectChangeEvent,
 } from '@mui/material'
-import HelpOutlineIcon from '@mui/icons-material/HelpOutline'
 
 interface ColumnMappingTableProps {
   sampleData: string[][]
@@ -107,17 +104,6 @@ export const ColumnMappingTable: React.FC<ColumnMappingTableProps> = ({
       onHeaderRowIndexChange(newHeaderRow)
       onDataStartRowIndexChange(rowIndex)
     }
-  }
-
-  const columnTypeTooltips = {
-    date: 'The date when the transaction occurred',
-    amount: 'The transaction amount (positive for income, negative for expenses)',
-    debit_amount: 'The debit amount (money going out of your account)',
-    credit_amount: 'The credit amount (money coming into your account)',
-    description: 'The transaction description or memo',
-    category: 'The category of the transaction (if available)',
-    balance: 'The account balance after the transaction',
-    ignore: 'This column will be ignored during import',
   }
 
   // Display all rows including the first row with account information
@@ -223,65 +209,23 @@ export const ColumnMappingTable: React.FC<ColumnMappingTableProps> = ({
 
                 return (
                   <TableCell key={columnIndex} sx={{ backgroundColor: '#f5f5f5', padding: '8px' }}>
-                    <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 1 }}>
+                    <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 1, color: '#000000' }}>
                       {columnName}
                     </Typography>
                     <FormControl fullWidth size="small" sx={{ backgroundColor: '#ffffff' }}>
-                      <InputLabel id={`column-type-label-${columnIndex}`}>Type</InputLabel>
                       <Select
                         labelId={`column-type-label-${columnIndex}`}
                         value={getColumnType(columnIndex)}
-                        label="Type"
                         onChange={(e: SelectChangeEvent) => handleColumnTypeChange(columnIndex, e.target.value)}
                       >
-                        <MenuItem value="date">
-                          Date
-                          <Tooltip title={columnTypeTooltips.date}>
-                            <HelpOutlineIcon fontSize="small" sx={{ ml: 1 }} />
-                          </Tooltip>
-                        </MenuItem>
-                        <MenuItem value="amount">
-                          Amount
-                          <Tooltip title={columnTypeTooltips.amount}>
-                            <HelpOutlineIcon fontSize="small" sx={{ ml: 1 }} />
-                          </Tooltip>
-                        </MenuItem>
-                        <MenuItem value="debit_amount">
-                          Debit Amount
-                          <Tooltip title={columnTypeTooltips.debit_amount}>
-                            <HelpOutlineIcon fontSize="small" sx={{ ml: 1 }} />
-                          </Tooltip>
-                        </MenuItem>
-                        <MenuItem value="credit_amount">
-                          Credit Amount
-                          <Tooltip title={columnTypeTooltips.credit_amount}>
-                            <HelpOutlineIcon fontSize="small" sx={{ ml: 1 }} />
-                          </Tooltip>
-                        </MenuItem>
-                        <MenuItem value="description">
-                          Description
-                          <Tooltip title={columnTypeTooltips.description}>
-                            <HelpOutlineIcon fontSize="small" sx={{ ml: 1 }} />
-                          </Tooltip>
-                        </MenuItem>
-                        <MenuItem value="category">
-                          Category
-                          <Tooltip title={columnTypeTooltips.category}>
-                            <HelpOutlineIcon fontSize="small" sx={{ ml: 1 }} />
-                          </Tooltip>
-                        </MenuItem>
-                        <MenuItem value="balance">
-                          Balance
-                          <Tooltip title={columnTypeTooltips.balance}>
-                            <HelpOutlineIcon fontSize="small" sx={{ ml: 1 }} />
-                          </Tooltip>
-                        </MenuItem>
-                        <MenuItem value="ignore">
-                          Ignore
-                          <Tooltip title={columnTypeTooltips.ignore}>
-                            <HelpOutlineIcon fontSize="small" sx={{ ml: 1 }} />
-                          </Tooltip>
-                        </MenuItem>
+                        <MenuItem value="date">Date</MenuItem>
+                        <MenuItem value="amount">Amount</MenuItem>
+                        <MenuItem value="debit_amount">Debit Amount</MenuItem>
+                        <MenuItem value="credit_amount">Credit Amount</MenuItem>
+                        <MenuItem value="description">Description</MenuItem>
+                        <MenuItem value="category">Category</MenuItem>
+                        <MenuItem value="balance">Balance</MenuItem>
+                        <MenuItem value="ignore">Ignore</MenuItem>
                       </Select>
                     </FormControl>
                   </TableCell>
