@@ -2,11 +2,12 @@ import uuid
 from unittest.mock import MagicMock
 
 import pandas as pd
-
 from app.domain.dto.statement_processing import AnalysisResultDTO
 from app.domain.dto.uploaded_file import UploadedFileDTO
 from app.services.schema_detection.llm_schema_detector import ConversionModel
-from app.services.statement_processing.statement_analyzer import StatementAnalyzerService
+from app.services.statement_processing.statement_analyzer import (
+    StatementAnalyzerService,
+)
 
 
 class TestStatementAnalyzerService:
@@ -77,6 +78,15 @@ class TestStatementAnalyzerService:
         assert result.header_row_index == 0
         assert result.data_start_row_index == 1
         assert result.sample_data is not None
+
+        # Test new transaction statistics fields
+        assert result.total_transactions == 2
+        assert result.unique_transactions == 2
+        assert result.duplicate_transactions == 0
+        assert result.date_range == ("2023-01-01", "2023-01-02")
+        assert result.total_amount == -100.0  # 100 + (-200) = -100
+        assert result.total_debit == -200.0  # Only the withdrawal
+        assert result.total_credit == 100.0  # Only the deposit
 
         file_type_detector.detect.assert_called_once_with(file_content)
         statement_parser.parse.assert_called_once_with(file_content, "CSV")

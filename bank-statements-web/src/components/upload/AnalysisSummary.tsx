@@ -1,79 +1,139 @@
 import React from 'react'
-import { Box, Card, CardContent, Typography } from '@mui/material'
-import { SampleData } from '../../api/StatementClient'
+import { Box, Card, CardContent, Typography, Stack, Chip } from '@mui/material'
+import { StatementAnalysisResponse } from '../../api/StatementClient'
 
 interface AnalysisSummaryProps {
-  fileType: string
-  rowCount?: number
-  dateRange?: { start: string; end: string }
-  totalAmount?: number
-  sampleData: string[][]
-  headerRowIndex?: number
-  dataStartRowIndex?: number
+  analysisData: StatementAnalysisResponse
 }
 
-export const AnalysisSummary: React.FC<AnalysisSummaryProps> = ({
-  fileType,
-  rowCount,
-  dateRange,
-  totalAmount,
-  sampleData,
-  headerRowIndex = 0,
-  dataStartRowIndex = 1,
-}) => {
-  // Calculate the actual row count from the sample data if not provided
-  const actualRowCount = rowCount || (sampleData ? sampleData.length : 0)
+export const AnalysisSummary: React.FC<AnalysisSummaryProps> = ({ analysisData }) => {
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'EUR', // You might want to make this configurable
+    }).format(amount)
+  }
+
+  const formatDateRange = (dateRange: [string, string]) => {
+    if (!dateRange[0] || !dateRange[1]) {
+      return 'No valid dates'
+    }
+    if (dateRange[0] === dateRange[1]) {
+      return dateRange[0]
+    }
+    return `${dateRange[0]} to ${dateRange[1]}`
+  }
 
   return (
     <Box sx={{ mb: 4 }}>
       <Typography variant="h6" gutterBottom>
-        Analysis Summary
+        Transaction Analysis Summary
       </Typography>
-      
-      <Box sx={{ 
-        display: 'grid', 
-        gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' }, 
-        gap: 2, 
-        mb: 3 
-      }}>
+
+      {/* All cards in one row */}
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' },
+          gap: 2,
+        }}
+      >
+        {/* File & Date Info */}
         <Card variant="outlined">
           <CardContent>
             <Typography color="textSecondary" gutterBottom>
-              File Type
+              File Information
             </Typography>
-            <Typography variant="h6">{fileType}</Typography>
+            <Stack spacing={1}>
+              <Box display="flex" justifyContent="space-between">
+                <Typography variant="body2">Type:</Typography>
+                <Typography variant="body2" fontWeight="bold">
+                  {analysisData.file_type}
+                </Typography>
+              </Box>
+              <Box display="flex" justifyContent="space-between">
+                <Typography variant="body2">Date Range:</Typography>
+                <Typography variant="body2" fontWeight="bold">
+                  {formatDateRange(analysisData.date_range)}
+                </Typography>
+              </Box>
+            </Stack>
           </CardContent>
         </Card>
-        
+
+        {/* Transaction Counts */}
         <Card variant="outlined">
           <CardContent>
             <Typography color="textSecondary" gutterBottom>
-              Rows
+              Transaction Counts
             </Typography>
-            <Typography variant="h6">{actualRowCount}</Typography>
+            <Stack spacing={1}>
+              <Box display="flex" justifyContent="space-between">
+                <Typography variant="body2">Total:</Typography>
+                <Typography variant="body2" fontWeight="bold">
+                  {analysisData.total_transactions}
+                </Typography>
+              </Box>
+              <Box display="flex" justifyContent="space-between">
+                <Typography variant="body2">Unique:</Typography>
+                <Typography variant="body2" fontWeight="bold">
+                  {analysisData.unique_transactions}
+                </Typography>
+              </Box>
+              <Box display="flex" justifyContent="space-between" alignItems="center">
+                <Chip
+                  size="small"
+                  label="Duplicates"
+                  color={analysisData.duplicate_transactions > 0 ? 'warning' : 'success'}
+                  variant="filled"
+                />
+                <Typography variant="body2" fontWeight="bold">
+                  {analysisData.duplicate_transactions}
+                </Typography>
+              </Box>
+            </Stack>
           </CardContent>
         </Card>
-        
+
+        {/* Amount Summary */}
         <Card variant="outlined">
           <CardContent>
             <Typography color="textSecondary" gutterBottom>
-              Header Row
+              Amount Summary
             </Typography>
-            <Typography variant="h6">{headerRowIndex + 1}</Typography>
-          </CardContent>
-        </Card>
-        
-        <Card variant="outlined">
-          <CardContent>
-            <Typography color="textSecondary" gutterBottom>
-              Data Start Row
-            </Typography>
-            <Typography variant="h6">{dataStartRowIndex + 1}</Typography>
+            <Stack spacing={1}>
+              <Box textAlign="center">
+                <Typography variant="body2" color="textSecondary">
+                  Net Total
+                </Typography>
+                <Typography
+                  variant="h6"
+                  color={analysisData.total_amount >= 0 ? 'success.main' : 'error.main'}
+                  fontWeight="bold"
+                >
+                  {formatCurrency(analysisData.total_amount)}
+                </Typography>
+              </Box>
+              <Box display="flex" justifyContent="space-between">
+                <Typography variant="body2" color="success.main">
+                  Credits:
+                </Typography>
+                <Typography variant="body2" fontWeight="bold" color="success.main">
+                  {formatCurrency(analysisData.total_credit)}
+                </Typography>
+              </Box>
+              <Box display="flex" justifyContent="space-between">
+                <Typography variant="body2" color="error.main">
+                  Debits:
+                </Typography>
+                <Typography variant="body2" fontWeight="bold" color="error.main">
+                  {formatCurrency(Math.abs(analysisData.total_debit))}
+                </Typography>
+              </Box>
+            </Stack>
           </CardContent>
         </Card>
       </Box>
-      
-
     </Box>
   )
 }

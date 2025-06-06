@@ -102,6 +102,13 @@ const defaultStatementClient: StatementClient = {
         ['2023-01-01', '100', 'Sample Transaction'],
         ['2023-01-02', '200', 'Another Transaction'],
       ],
+      total_transactions: 2,
+      unique_transactions: 2,
+      duplicate_transactions: 0,
+      date_range: ['2023-01-01', '2023-01-02'],
+      total_amount: 300,
+      total_debit: 0,
+      total_credit: 300,
     } as StatementAnalysisResponse),
   uploadStatement: (request) =>
     Promise.resolve({

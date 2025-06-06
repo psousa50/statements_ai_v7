@@ -16,6 +16,13 @@ export interface StatementAnalysisResponse {
   header_row_index: number
   data_start_row_index: number
   sample_data: string[][]
+  total_transactions: number
+  unique_transactions: number
+  duplicate_transactions: number
+  date_range: [string, string]
+  total_amount: number
+  total_debit: number
+  total_credit: number
 }
 
 export interface StatementUploadRequest {

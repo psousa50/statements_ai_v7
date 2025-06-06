@@ -1,8 +1,8 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Box, Container, Paper, Snackbar, Typography, Alert, Divider } from '@mui/material'
+import { Box, Container, Paper, Snackbar, Typography, Alert } from '@mui/material'
 import { defaultApiClient } from '../api/createApiClient'
-import { SampleData, StatementAnalysisResponse } from '../api/StatementClient'
+import { StatementAnalysisResponse } from '../api/StatementClient'
 import { FileUploadZone } from '../components/upload/FileUploadZone'
 import { AnalysisSummary } from '../components/upload/AnalysisSummary'
 import { ColumnMappingTable } from '../components/upload/ColumnMappingTable'
@@ -151,12 +151,7 @@ export const Upload: React.FC = () => {
             </>
           ) : (
             <>
-              <AnalysisSummary
-                fileType={analysisResult.file_type}
-                sampleData={analysisResult.sample_data}
-                headerRowIndex={headerRowIndex}
-                dataStartRowIndex={dataStartRowIndex}
-              />
+              <AnalysisSummary analysisData={analysisResult} />
 
               <Paper sx={{ p: 3, mt: 3, mb: 3, bgcolor: '#f8f9fa' }}>
                 <Typography variant="h6" gutterBottom>

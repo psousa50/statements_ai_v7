@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Tuple
 from uuid import UUID
 
 
@@ -13,6 +13,13 @@ class AnalysisResultDTO:
         data_start_row_index: int,
         sample_data: list[list],
         source_id: Optional[str] = None,
+        total_transactions: int = 0,
+        unique_transactions: int = 0,
+        duplicate_transactions: int = 0,
+        date_range: Tuple[str, str] = ("", ""),
+        total_amount: float = 0.0,
+        total_debit: float = 0.0,
+        total_credit: float = 0.0,
     ):
         self.uploaded_file_id = uploaded_file_id
         self.file_type = file_type
@@ -21,6 +28,13 @@ class AnalysisResultDTO:
         self.data_start_row_index = data_start_row_index
         self.sample_data = sample_data
         self.source_id = source_id
+        self.total_transactions = total_transactions
+        self.unique_transactions = unique_transactions
+        self.duplicate_transactions = duplicate_transactions
+        self.date_range = date_range
+        self.total_amount = total_amount
+        self.total_debit = total_debit
+        self.total_credit = total_credit
 
 
 class PersistenceRequestDTO:
@@ -87,6 +101,8 @@ class TransactionDTO:
             source_id=str(entity.source_id) if entity.source_id else None,
             created_at=entity.created_at,
             category_id=entity.category_id,
-            categorization_status=entity.categorization_status.value if entity.categorization_status else None,
+            categorization_status=entity.categorization_status.value
+            if entity.categorization_status
+            else None,
             normalized_description=entity.normalized_description,
         )
