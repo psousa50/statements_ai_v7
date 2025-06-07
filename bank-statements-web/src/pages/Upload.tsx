@@ -151,17 +151,21 @@ export const Upload: React.FC = () => {
             </>
           ) : (
             <>
-              <AnalysisSummary analysisData={analysisResult} />
+              <Box sx={{ display: 'flex', gap: 3, mb: 3, alignItems: 'flex-start' }}>
+                <Paper variant="outlined" sx={{ p: 3, flex: '0 0 300px' }}>
+                  <Typography variant="h6" gutterBottom>
+                    Select Source Bank
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                    Choose the bank or financial institution that issued this statement.
+                  </Typography>
+                  <SourceSelector value={selectedSource} onChange={setSelectedSource} />
+                </Paper>
 
-              <Paper sx={{ p: 3, mt: 3, mb: 3 }}>
-                <Typography variant="h6" gutterBottom>
-                  Select Source Bank
-                </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                  Choose the bank or financial institution that issued this statement.
-                </Typography>
-                <SourceSelector value={selectedSource} onChange={setSelectedSource} />
-              </Paper>
+                <Paper variant="outlined" sx={{ p: 3, flex: 1 }}>
+                  <AnalysisSummary analysisData={analysisResult} />
+                </Paper>
+              </Box>
 
               <ColumnMappingTable
                 sampleData={analysisResult.sample_data}

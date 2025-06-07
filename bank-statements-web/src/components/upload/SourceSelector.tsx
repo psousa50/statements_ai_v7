@@ -88,33 +88,26 @@ export const SourceSelector: React.FC<SourceSelectorProps> = ({ value, onChange 
 
   return (
     <Box sx={{ mb: 2 }}>
-      <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}>
-        <FormControl sx={{ flex: 0.7 }}>
-          <InputLabel id="source-select-label">Source Bank</InputLabel>
-          <Select
-            labelId="source-select-label"
-            id="source-select"
-            value={value}
-            label="Source Bank"
-            onChange={(e) => onChange(e.target.value)}
-          >
-            {sources.map((source) => (
-              <MenuItem key={source.id} value={source.id}>
-                {source.name}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-
-        <Button
-          variant="outlined"
-          size="medium"
-          onClick={handleOpenDialog}
-          sx={{ minWidth: 'auto', whiteSpace: 'nowrap', mt: 1, flex: 0.3 }}
+      <FormControl sx={{ width: '100%', mb: 2 }}>
+        <InputLabel id="source-select-label">Source Bank</InputLabel>
+        <Select
+          labelId="source-select-label"
+          id="source-select"
+          value={value}
+          label="Source Bank"
+          onChange={(e) => onChange(e.target.value)}
         >
-          Add New Source
-        </Button>
-      </Box>
+          {sources.map((source) => (
+            <MenuItem key={source.id} value={source.id}>
+              {source.name}
+            </MenuItem>
+          ))}
+        </Select>
+      </FormControl>
+
+      <Button variant="outlined" size="medium" onClick={handleOpenDialog} sx={{ width: '100%' }}>
+        Add New Source
+      </Button>
 
       <Dialog open={openDialog} onClose={handleCloseDialog}>
         <DialogTitle>Add New Source</DialogTitle>

@@ -25,7 +25,7 @@ export const AnalysisSummary: React.FC<AnalysisSummaryProps> = ({ analysisData }
   }
 
   return (
-    <Box sx={{ mb: 4 }}>
+    <Box>
       <Typography variant="h6" gutterBottom>
         Transaction Analysis Summary
       </Typography>
