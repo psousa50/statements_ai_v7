@@ -186,7 +186,11 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         return False
 
     def find_matching_transactions(
-        self, date: str, description: str, amount: float, source_id: Optional[UUID] = None
+        self,
+        date: str,
+        description: str,
+        amount: float,
+        source_id: Optional[UUID] = None,
     ) -> List[Transaction]:
         """
         Find all transactions that match the given criteria.
