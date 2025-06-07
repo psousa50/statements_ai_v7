@@ -8,23 +8,16 @@
 .transactions-page h1 {
   text-align: center;
   margin-bottom: 2rem;
-  color: #333;
-}
-
-/* Dark mode styles for page title */
-@media (prefers-color-scheme: dark) {
-  .transactions-page h1 {
-    color: rgba(255, 255, 255, 0.87);
-  }
+  color: var(--text-primary);
 }
 
 .error-message {
-  background-color: #f8d7da;
-  color: #721c24;
+  background-color: #fee2e2;
+  color: #dc2626;
   padding: 1rem;
   margin-bottom: 1rem;
   border-radius: 4px;
-  border: 1px solid #f5c6cb;
+  border: 1px solid #fca5a5;
 }
 
 .transactions-container {
@@ -40,39 +33,18 @@
 }
 
 .transaction-form {
-  background-color: #f8f9fa;
+  background-color: var(--bg-tertiary);
   padding: 1.5rem;
   border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 4px var(--shadow-light);
 }
 
 .transaction-form h2 {
   margin-top: 0;
   margin-bottom: 1.5rem;
-  color: #333;
+  color: var(--text-primary);
 }
 
-/* Dark mode styles for transaction form */
-@media (prefers-color-scheme: dark) {
-  .transaction-form {
-    background-color: #333;
-    box-shadow: 0 2px 4px rgba(255, 255, 255, 0.1);
-  }
-
-  .transaction-form h2 {
-    color: rgba(255, 255, 255, 0.87);
-  }
-
-  .form-group label {
-    color: rgba(255, 255, 255, 0.87);
-  }
-
-  .form-group input {
-    background-color: #444;
-    color: rgba(255, 255, 255, 0.87);
-    border-color: #555;
-  }
-}
 
 .form-group {
   margin-bottom: 1rem;
@@ -82,19 +54,22 @@
   display: block;
   margin-bottom: 0.5rem;
   font-weight: bold;
+  color: var(--text-secondary);
 }
 
 .form-group input {
   width: 100%;
   padding: 0.5rem;
-  border: 1px solid #ced4da;
+  border: 1px solid var(--border-secondary);
   border-radius: 4px;
   font-size: 1rem;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
 }
 
 button {
-  background-color: #007bff;
-  color: white;
+  background-color: var(--button-primary);
+  color: var(--bg-primary);
   border: none;
   padding: 0.75rem 1rem;
   border-radius: 4px;
@@ -102,41 +77,31 @@ button {
   font-size: 1rem;
   width: 100%;
   margin-top: 1rem;
+  transition: background-color 0.2s;
 }
 
 button:hover {
-  background-color: #0069d9;
+  background-color: var(--button-primary-hover);
 }
 
 button:disabled {
-  background-color: #6c757d;
+  background-color: var(--button-secondary);
   cursor: not-allowed;
 }
 
 .transaction-table {
-  background-color: white;
+  background-color: var(--bg-primary);
   border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 4px var(--shadow-light);
   padding: 1.5rem;
 }
 
 .transaction-table h2 {
   margin-top: 0;
   margin-bottom: 1.5rem;
-  color: #333;
+  color: var(--text-primary);
 }
 
-/* Dark mode styles for transaction table */
-@media (prefers-color-scheme: dark) {
-  .transaction-table {
-    background-color: #333;
-    box-shadow: 0 2px 4px rgba(255, 255, 255, 0.1);
-  }
-
-  .transaction-table h2 {
-    color: rgba(255, 255, 255, 0.87);
-  }
-}
 
 table {
   width: 100%;
@@ -147,54 +112,34 @@ th,
 td {
   padding: 0.75rem;
   text-align: left;
-  border-bottom: 1px solid #dee2e6;
+  border-bottom: 1px solid var(--border-primary);
+  color: var(--text-primary);
 }
 
 th {
-  background-color: #f8f9fa;
+  background-color: var(--bg-tertiary);
   font-weight: bold;
 }
 
 tr:hover {
-  background-color: #f8f9fa;
+  background-color: var(--bg-tertiary);
 }
 
-/* Dark mode styles for table elements */
-@media (prefers-color-scheme: dark) {
-  th,
-  td {
-    border-bottom: 1px solid #555;
-    color: rgba(255, 255, 255, 0.87);
-  }
-
-  th {
-    background-color: #444;
-  }
-
-  tr:hover {
-    background-color: #444;
-  }
-}
 
 .positive {
-  color: #28a745;
+  color: var(--positive-amount);
+  font-weight: 600;
 }
 
 .negative {
-  color: #dc3545;
+  color: var(--negative-amount);
+  font-weight: 600;
 }
 
 .loading,
 .no-data {
   text-align: center;
   padding: 2rem;
-  color: #6c757d;
+  color: var(--text-muted);
 }
 
-/* Dark mode styles for loading and no-data messages */
-@media (prefers-color-scheme: dark) {
-  .loading,
-  .no-data {
-    color: #adb5bd;
-  }
-}

@@ -1,9 +1,9 @@
-/* Transactions Page Layout - Force Light Theme */
+/* Transactions Page Layout - Uses CSS Variables for Theming */
 .transactions-page {
   margin: 0 auto;
   padding: 2rem;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-  background-color: #f8fafc;
+  background-color: var(--bg-secondary);
   min-height: 100vh;
 }
 
@@ -15,13 +15,13 @@
 .transactions-page .page-header h1 {
   font-size: 2.5rem;
   font-weight: 700;
-  color: #1f2937 !important;
+  color: var(--text-primary);
   margin: 0 0 0.5rem 0;
 }
 
 .transactions-page .page-description {
   font-size: 1.1rem;
-  color: #6b7280;
+  color: var(--text-muted);
   margin: 0;
   max-width: 600px;
   margin: 0 auto;
@@ -45,11 +45,11 @@
 
 /* Filters moved to top - horizontal layout */
 .transactions-page .filters-sidebar {
-  background: #ffffff !important;
-  border: 1px solid #e5e7eb;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-primary);
   border-radius: 12px;
   padding: 0;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 3px var(--shadow-light);
   position: static;
   max-height: none;
   overflow: visible;
@@ -72,7 +72,7 @@
   align-items: center;
   margin-bottom: 1.5rem;
   padding-bottom: 1rem;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid var(--border-primary);
   flex-wrap: nowrap;
   min-height: 50px;
   transition: all 0.3s ease;
@@ -87,13 +87,13 @@
 
 /* Hide border when collapsed */
 .transactions-page .transaction-filters-advanced.collapsed .filter-header {
-  border-bottom: 1px solid #f3f4f6;
+  border-bottom: 1px solid var(--border-secondary);
 }
 
 .transactions-page .filter-header h3 {
   font-size: 1.25rem;
   font-weight: 600;
-  color: #1f2937 !important;
+  color: var(--text-primary);
   margin: 0;
   flex-shrink: 0;
   transition: font-size 0.3s ease;
@@ -112,7 +112,7 @@
 
 .transactions-page .clear-all-button {
   background: #ef4444;
-  color: #ffffff !important;
+  color: #ffffff;
   border: none;
   padding: 0.5rem 1rem;
   border-radius: 6px;
@@ -131,8 +131,8 @@
 }
 
 .transactions-page .collapse-toggle-button {
-  background: #f9fafb;
-  border: 1px solid #d1d5db;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-primary);
   border-radius: 6px;
   padding: 0.5rem;
   cursor: pointer;
@@ -145,13 +145,13 @@
 }
 
 .transactions-page .collapse-toggle-button:hover {
-  background: #f3f4f6;
-  border-color: #9ca3af;
+  background: var(--bg-secondary);
+  border-color: var(--border-secondary);
 }
 
 .transactions-page .collapse-chevron {
   font-size: 0.75rem;
-  color: #6b7280;
+  color: var(--text-muted);
   transition: transform 0.3s ease;
   transform: rotate(0deg);
 }
@@ -197,18 +197,18 @@
   display: block;
   font-size: 0.875rem;
   font-weight: 600;
-  color: #374151 !important;
+  color: var(--text-secondary);
   margin-bottom: 0.5rem;
 }
 
 .transactions-page .search-input {
   width: 100%;
   padding: 0.75rem;
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--border-primary);
   border-radius: 8px;
-  background-color: #ffffff !important;
+  background-color: var(--bg-primary);
   font-size: 0.875rem;
-  color: #1f2937 !important;
+  color: var(--text-primary);
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 
@@ -219,7 +219,7 @@
 }
 
 .transactions-page .search-input::placeholder {
-  color: #9ca3af;
+  color: var(--text-muted);
 }
 
 /* Amount Range - compact horizontal layout */
@@ -232,11 +232,11 @@
 .transactions-page .amount-input {
   flex: 1;
   padding: 0.75rem;
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--border-primary);
   border-radius: 8px;
-  background-color: #ffffff !important;
+  background-color: var(--bg-primary);
   font-size: 0.875rem;
-  color: #1f2937 !important;
+  color: var(--text-primary);
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 
@@ -247,10 +247,214 @@
 }
 
 .transactions-page .amount-separator {
-  color: #6b7280;
+  color: var(--text-muted);
   font-weight: 500;
   font-size: 0.875rem;
   white-space: nowrap;
+}
+
+/* RSuite DateRangePicker Dark Mode Styling - Force override with !important */
+.transactions-page .date-range-picker .rs-picker-default,
+.rs-picker-default.rs-picker-daterange {
+  background-color: var(--bg-primary) !important;
+  border: 1px solid var(--border-primary) !important;
+  color: var(--text-primary) !important;
+}
+
+.transactions-page .date-range-picker .rs-picker-default:hover,
+.rs-picker-default.rs-picker-daterange:hover {
+  border-color: var(--border-secondary) !important;
+}
+
+.transactions-page .date-range-picker .rs-picker-default .rs-picker-toggle,
+.rs-picker-default.rs-picker-daterange .rs-picker-toggle {
+  background-color: var(--bg-primary) !important;
+  color: var(--text-primary) !important;
+  border: none !important;
+}
+
+.transactions-page .date-range-picker .rs-picker-default .rs-picker-toggle:hover,
+.rs-picker-default.rs-picker-daterange .rs-picker-toggle:hover {
+  background-color: var(--bg-tertiary) !important;
+}
+
+.transactions-page .date-range-picker .rs-picker-default .rs-picker-toggle-placeholder,
+.rs-picker-default.rs-picker-daterange .rs-picker-toggle-placeholder {
+  color: var(--text-muted) !important;
+}
+
+.transactions-page .date-range-picker .rs-picker-default .rs-picker-toggle-value,
+.rs-picker-default.rs-picker-daterange .rs-picker-toggle-value {
+  color: var(--text-primary) !important;
+}
+
+.transactions-page .date-range-picker .rs-picker-default .rs-picker-toggle-caret,
+.rs-picker-default.rs-picker-daterange .rs-picker-toggle-caret {
+  color: var(--text-muted) !important;
+}
+
+/* RSuite DateRangePicker Popup Dark Mode - Global selectors with !important */
+.rs-picker-daterange-panel {
+  background-color: var(--bg-primary) !important;
+  border: 1px solid var(--border-primary) !important;
+  box-shadow: 0 4px 6px var(--shadow-light) !important;
+}
+
+.rs-picker-daterange-panel .rs-picker-daterange-header {
+  background-color: var(--bg-tertiary) !important;
+  border-bottom: 1px solid var(--border-primary) !important;
+}
+
+.rs-picker-daterange-panel .rs-picker-daterange-header .rs-picker-daterange-header-title {
+  color: var(--text-primary) !important;
+}
+
+.rs-picker-daterange-panel .rs-picker-daterange-predefined {
+  background-color: var(--bg-tertiary) !important;
+  border-right: 1px solid var(--border-primary) !important;
+}
+
+.rs-picker-daterange-panel .rs-picker-daterange-predefined .rs-picker-daterange-predefined-item {
+  color: var(--text-secondary) !important;
+  background-color: transparent !important;
+  border: none !important;
+  padding: 0.5rem 1rem !important;
+  border-radius: 4px !important;
+  margin: 0.125rem 0.5rem !important;
+  transition: all 0.2s !important;
+}
+
+.rs-picker-daterange-panel .rs-picker-daterange-predefined .rs-picker-daterange-predefined-item:hover {
+  background-color: var(--bg-primary) !important;
+  color: var(--text-primary) !important;
+}
+
+.rs-picker-daterange-panel .rs-picker-daterange-predefined .rs-picker-daterange-predefined-item-active {
+  background-color: var(--bg-accent) !important;
+  color: var(--text-accent) !important;
+}
+
+.rs-picker-daterange-panel .rs-picker-daterange-calendar-single {
+  background-color: var(--bg-primary) !important;
+}
+
+.rs-picker-daterange-panel .rs-calendar {
+  background-color: var(--bg-primary) !important;
+  color: var(--text-primary) !important;
+}
+
+.rs-picker-daterange-panel .rs-calendar-header {
+  background-color: var(--bg-tertiary) !important;
+  border-bottom: 1px solid var(--border-primary) !important;
+}
+
+.rs-picker-daterange-panel .rs-calendar-header-backward,
+.rs-picker-daterange-panel .rs-calendar-header-forward,
+.rs-picker-daterange-panel .rs-calendar-header-month-toolbar,
+.rs-picker-daterange-panel .rs-calendar-header-year-toolbar {
+  background-color: var(--bg-tertiary) !important;
+  border: 1px solid var(--border-primary) !important;
+  color: var(--text-secondary) !important;
+}
+
+.rs-picker-daterange-panel .rs-calendar-header-backward:hover,
+.rs-picker-daterange-panel .rs-calendar-header-forward:hover,
+.rs-picker-daterange-panel .rs-calendar-header-month-toolbar:hover,
+.rs-picker-daterange-panel .rs-calendar-header-year-toolbar:hover {
+  background-color: var(--bg-secondary) !important;
+  color: var(--text-primary) !important;
+}
+
+.rs-picker-daterange-panel .rs-calendar-header-title {
+  color: var(--text-primary) !important;
+}
+
+.rs-picker-daterange-panel .rs-calendar-table {
+  background-color: var(--bg-primary) !important;
+}
+
+.rs-picker-daterange-panel .rs-calendar-table-cell-header {
+  background-color: var(--bg-tertiary) !important;
+  color: var(--text-muted) !important;
+  font-weight: 600 !important;
+  font-size: 0.75rem !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+  border-bottom: 1px solid var(--border-primary) !important;
+}
+
+.rs-picker-daterange-panel .rs-calendar-table-cell {
+  border: 1px solid transparent !important;
+}
+
+.rs-picker-daterange-panel .rs-calendar-table-cell-content {
+  background-color: transparent !important;
+  color: var(--text-primary) !important;
+  border-radius: 4px !important;
+  transition: all 0.2s !important;
+}
+
+.rs-picker-daterange-panel .rs-calendar-table-cell-content:hover {
+  background-color: var(--bg-tertiary) !important;
+  color: var(--text-primary) !important;
+}
+
+.rs-picker-daterange-panel .rs-calendar-table-cell-un-same-month .rs-calendar-table-cell-content {
+  color: var(--text-muted) !important;
+}
+
+.rs-picker-daterange-panel .rs-calendar-table-cell-today .rs-calendar-table-cell-content {
+  background-color: #3b82f6 !important;
+  color: #ffffff !important;
+  font-weight: 600 !important;
+}
+
+.rs-picker-daterange-panel .rs-calendar-table-cell-selected .rs-calendar-table-cell-content {
+  background-color: #3b82f6 !important;
+  color: #ffffff !important;
+  font-weight: 600 !important;
+}
+
+.rs-picker-daterange-panel .rs-calendar-table-cell-in-range .rs-calendar-table-cell-content {
+  background-color: #dbeafe !important;
+  color: #1e40af !important;
+}
+
+.rs-picker-daterange-panel .rs-calendar-table-cell-range-start .rs-calendar-table-cell-content,
+.rs-picker-daterange-panel .rs-calendar-table-cell-range-end .rs-calendar-table-cell-content {
+  background-color: #3b82f6 !important;
+  color: #ffffff !important;
+  font-weight: 600 !important;
+}
+
+.rs-picker-daterange-panel .rs-picker-daterange-toolbar {
+  background-color: var(--bg-tertiary) !important;
+  border-top: 1px solid var(--border-primary) !important;
+  padding: 1rem !important;
+}
+
+.rs-picker-daterange-panel .rs-picker-daterange-toolbar .rs-btn {
+  background-color: var(--bg-primary) !important;
+  border: 1px solid var(--border-primary) !important;
+  color: var(--text-secondary) !important;
+  transition: all 0.2s !important;
+}
+
+.rs-picker-daterange-panel .rs-picker-daterange-toolbar .rs-btn:hover {
+  background-color: var(--bg-tertiary) !important;
+  border-color: var(--border-secondary) !important;
+  color: var(--text-primary) !important;
+}
+
+.rs-picker-daterange-panel .rs-picker-daterange-toolbar .rs-btn-primary {
+  background-color: #3b82f6 !important;
+  border-color: #3b82f6 !important;
+  color: #ffffff !important;
+}
+
+.rs-picker-daterange-panel .rs-picker-daterange-toolbar .rs-btn-primary:hover {
+  background-color: #2563eb !important;
+  border-color: #2563eb !important;
 }
 
 /* Modern Calendar Date Range Picker */
@@ -261,11 +465,11 @@
 .transactions-page .date-range-button {
   width: 100%;
   padding: 0.75rem;
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--border-primary);
   border-radius: 8px;
-  background-color: #ffffff !important;
+  background-color: var(--bg-primary);
   font-size: 0.875rem;
-  color: #1f2937 !important;
+  color: var(--text-primary);
   cursor: pointer;
   transition: border-color 0.2s, box-shadow 0.2s;
   display: flex;
@@ -275,7 +479,7 @@
 }
 
 .transactions-page .date-range-button:hover {
-  border-color: #9ca3af;
+  border-color: var(--border-secondary);
 }
 
 .transactions-page .date-range-button:focus {
@@ -285,11 +489,11 @@
 }
 
 .transactions-page .date-range-placeholder {
-  color: #9ca3af;
+  color: var(--text-muted);
 }
 
 .transactions-page .date-range-chevron {
-  color: #6b7280;
+  color: var(--text-muted);
   font-size: 0.75rem;
   transition: transform 0.2s;
 }
@@ -299,8 +503,8 @@
   top: 100%;
   left: 0;
   z-index: 50;
-  background: #ffffff !important;
-  border: 1px solid #d1d5db;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-primary);
   border-radius: 8px;
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
   margin-top: 0.25rem;
@@ -309,7 +513,7 @@
 }
 
 .transactions-page .date-picker-actions {
-  border-top: 1px solid #e5e7eb;
+  border-top: 1px solid var(--border-primary);
   padding: 1rem;
   text-align: right;
   display: flex;
@@ -319,228 +523,238 @@
 
 .transactions-page .date-clear-button {
   padding: 0.5rem 1rem;
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--border-primary);
   border-radius: 6px;
-  background: #ffffff !important;
-  color: #6b7280 !important;
+  background: var(--bg-primary);
+  color: var(--text-muted);
   font-size: 0.875rem;
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .transactions-page .date-clear-button:hover {
-  background: #f9fafb !important;
-  border-color: #9ca3af;
+  background: var(--bg-tertiary);
+  border-color: var(--border-secondary);
 }
 
 .transactions-page .date-apply-button {
   padding: 0.5rem 1rem;
   border: 1px solid #3b82f6;
   border-radius: 6px;
-  background: #3b82f6 !important;
-  color: #ffffff !important;
+  background: #3b82f6;
+  color: #ffffff;
   font-size: 0.875rem;
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .transactions-page .date-apply-button:hover {
-  background: #2563eb !important;
+  background: #2563eb;
   border-color: #2563eb;
 }
 
-/* Override react-date-range styles */
+/* Override react-date-range styles - Force theme variables */
 .transactions-page .rdrCalendarWrapper {
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-primary);
+  box-shadow: 0 1px 3px var(--shadow-light);
+}
+
+.transactions-page .rdrCalendarWrapper * {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+.transactions-page .rdrDateRangeWrapper * {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
 }
 
 .transactions-page .rdrDateRangeWrapper {
-  background: transparent !important;
+  background: transparent;
 }
 
 /* Style the built-in DefinedRange component */
 .transactions-page .rdrDefinedRangesWrapper {
-  flex: 0 0 200px !important;
-  background: #f9fafb !important;
-  border-right: 1px solid #e5e7eb !important;
-  border-radius: 0 !important;
+  flex: 0 0 200px;
+  background: var(--bg-tertiary);
+  border-right: 1px solid var(--border-primary);
+  border-radius: 0;
 }
 
 .transactions-page .rdrStaticRanges {
-  border: none !important;
-  background: transparent !important;
+  border: none;
+  background: transparent;
 }
 
 .transactions-page .rdrStaticRange {
-  border: none !important;
-  background: transparent !important;
-  margin-bottom: 2px !important;
+  border: none;
+  background: transparent;
+  margin-bottom: 2px;
 }
 
 .transactions-page .rdrStaticRangeLabel {
-  background: transparent !important;
-  color: #374151 !important;
-  font-size: 0.875rem !important;
-  padding: 0.5rem 1rem !important;
-  border-radius: 4px !important;
-  margin: 0 0.5rem !important;
-  transition: all 0.2s !important;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  margin: 0 0.5rem;
+  transition: all 0.2s;
 }
 
 .transactions-page .rdrStaticRangeLabel:hover {
-  background: #e5e7eb !important;
+  background: var(--bg-tertiary);
 }
 
 .transactions-page .rdrStaticRangeSelected .rdrStaticRangeLabel {
-  background: #dbeafe !important;
-  color: #1e40af !important;
+  background: var(--bg-accent);
+  color: var(--text-accent);
 }
 
 .transactions-page .rdrInputRanges {
-  border: none !important;
-  background: transparent !important;
-  padding: 0.5rem !important;
+  border: none;
+  background: transparent;
+  padding: 0.5rem;
 }
 
 .transactions-page .rdrInputRange {
-  background: transparent !important;
-  border: none !important;
-  margin-bottom: 0.5rem !important;
+  background: transparent;
+  border: none;
+  margin-bottom: 0.5rem;
 }
 
 .transactions-page .rdrInputRangeInput {
-  background: #ffffff !important;
-  border: 1px solid #d1d5db !important;
-  border-radius: 4px !important;
-  padding: 0.25rem 0.5rem !important;
-  color: #1f2937 !important;
-  font-size: 0.875rem !important;
-  margin: 0 0.25rem !important;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-secondary);
+  border-radius: 4px;
+  padding: 0.25rem 0.5rem;
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  margin: 0 0.25rem;
 }
 
 .transactions-page .rdrDateDisplayWrapper {
-  display: none !important; /* Hide the "days up to today" text */
+  display: none; /* Hide the "days up to today" text */
 }
 
 .transactions-page .rdrMonth {
-  padding: 0 !important;
-  margin: 0 0.5rem !important;
+  padding: 0;
+  margin: 0 0.5rem;
 }
 
 .transactions-page .rdrMonthAndYearWrapper {
-  background: #f9fafb !important;
-  border-radius: 6px !important;
-  padding: 0.5rem !important;
-  margin-bottom: 1rem !important;
-  text-align: center !important;
+  background: var(--bg-tertiary);
+  border-radius: 6px;
+  padding: 0.5rem;
+  margin-bottom: 1rem;
+  text-align: center;
 }
 
 .transactions-page .rdrMonthAndYearPickers {
-  margin: 0 !important;
+  margin: 0;
 }
 
 .transactions-page .rdrMonthPicker select,
 .transactions-page .rdrYearPicker select {
-  background: #ffffff !important;
-  border: 1px solid #d1d5db !important;
-  border-radius: 4px !important;
-  padding: 0.25rem 0.5rem !important;
-  color: #1f2937 !important;
-  font-size: 0.875rem !important;
-  margin: 0 0.25rem !important;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-secondary);
+  border-radius: 4px;
+  padding: 0.25rem 0.5rem;
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  margin: 0 0.25rem;
 }
 
 .transactions-page .rdrNextPrevButton {
-  background: #f3f4f6 !important;
-  border: 1px solid #d1d5db !important;
-  color: #374151 !important;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-primary);
+  color: var(--text-secondary);
 }
 
 .transactions-page .rdrNextPrevButton:hover {
-  background: #e5e7eb !important;
+  background: var(--bg-secondary);
 }
 
 .transactions-page .rdrWeekDays {
-  background: #f9fafb !important;
-  border-bottom: 1px solid #e5e7eb !important;
+  background: var(--bg-tertiary);
+  border-bottom: 1px solid var(--border-primary);
 }
 
 .transactions-page .rdrWeekDay {
-  color: #6b7280 !important;
-  font-weight: 600 !important;
-  font-size: 0.75rem !important;
-  text-transform: uppercase !important;
-  letter-spacing: 0.05em !important;
-  padding: 0.5rem !important;
+  color: var(--text-muted);
+  font-weight: 600;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.5rem;
 }
 
 .transactions-page .rdrDays {
-  background: transparent !important;
+  background: transparent;
 }
 
 .transactions-page .rdrDay {
-  background: transparent !important;
-  color: #1f2937 !important;
+  background: transparent;
+  color: var(--text-primary);
 }
 
 .transactions-page .rdrDayNumber {
-  color: #1f2937 !important;
-  font-weight: 500 !important;
-  font-size: 0.875rem !important;
+  color: var(--text-primary);
+  font-weight: 500;
+  font-size: 0.875rem;
 }
 
 .transactions-page .rdrDayToday .rdrDayNumber {
-  background: #3b82f6 !important;
-  color: #ffffff !important;
-  font-weight: 600 !important;
+  background: #3b82f6;
+  color: #ffffff;
+  font-weight: 600;
 }
 
 .transactions-page .rdrDayInRange {
-  background: #dbeafe !important;
-  color: #1e40af !important;
+  background: #dbeafe;
+  color: #1e40af;
 }
 
 .transactions-page .rdrDayStartOfRange,
 .transactions-page .rdrDayEndOfRange {
-  background: #dbeafe !important;
+  background: #dbeafe;
 }
 
 .transactions-page .rdrDayStartOfRange .rdrDayNumber,
 .transactions-page .rdrDayEndOfRange .rdrDayNumber {
-  background: #3b82f6 !important;
-  color: #ffffff !important;
-  font-weight: 600 !important;
+  background: #3b82f6;
+  color: #ffffff;
+  font-weight: 600;
 }
 
 .transactions-page .rdrDayInPreview {
-  background: #f3f4f6 !important;
-  color: #374151 !important;
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
 }
 
 .transactions-page .rdrDayHovered .rdrDayNumber {
-  background: #e5e7eb !important;
-  color: #1f2937 !important;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
 }
 
 .transactions-page .rdrDayPassive .rdrDayNumber {
-  color: #d1d5db !important;
+  color: var(--text-muted);
 }
 
 .transactions-page .rdrDayDisabled .rdrDayNumber {
-  color: #e5e7eb !important;
+  color: var(--border-primary);
 }
 
 /* Status Filter */
 .transactions-page .filter-select {
   width: 100%;
   padding: 0.75rem;
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--border-primary);
   border-radius: 8px;
-  background-color: #ffffff !important;
+  background-color: var(--bg-primary);
   font-size: 0.875rem;
-  color: #1f2937 !important;
+  color: var(--text-primary);
   cursor: pointer;
   transition: border-color 0.2s, box-shadow 0.2s;
 }
@@ -559,9 +773,9 @@
 .transactions-page .tag-input-container {
   min-height: 42px;
   padding: 0.5rem;
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--border-primary);
   border-radius: 8px;
-  background-color: #ffffff !important;
+  background-color: var(--bg-primary);
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
@@ -575,31 +789,30 @@
 }
 
 .transactions-page .category-input {
-  border: none;
-  background: none;
-  outline: none;
   flex: 1;
   min-width: 120px;
+  border: none;
+  outline: none;
+  background: transparent;
   font-size: 0.875rem;
-  color: #1f2937 !important;
-  padding: 0.25rem 0;
+  color: var(--text-primary);
 }
 
 .transactions-page .category-input::placeholder {
-  color: #9ca3af;
+  color: var(--text-muted);
 }
 
 .transactions-page .category-tag {
   display: inline-flex;
   align-items: center;
-  background: #eff6ff !important;
-  color: #1e40af !important;
+  background: var(--bg-accent);
+  color: var(--text-accent);
   padding: 0.375rem 0.5rem;
   border-radius: 6px;
   font-size: 0.75rem;
   font-weight: 500;
   gap: 0.375rem;
-  border: 1px solid #bfdbfe;
+  border: 1px solid var(--border-secondary);
   line-height: 1;
   flex-shrink: 0;
 }
@@ -607,7 +820,7 @@
 .transactions-page .category-tag-remove {
   background: none;
   border: none;
-  color: #1e40af !important;
+  color: var(--text-accent);
   font-size: 1.5rem;
   font-weight: bold;
   cursor: pointer;
@@ -625,8 +838,8 @@
 }
 
 .transactions-page .category-tag-remove:hover {
-  background: #dbeafe !important;
-  color: #1d4ed8 !important;
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
 }
 
 .transactions-page .category-suggestions {
@@ -635,8 +848,8 @@
   left: 0;
   right: 0;
   z-index: 50;
-  background: #ffffff !important;
-  border: 1px solid #d1d5db;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-primary);
   border-radius: 8px;
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
   margin-top: 0.25rem;
@@ -650,11 +863,11 @@
   padding: 0.75rem 1rem;
   border: none;
   background: none;
-  color: #1f2937 !important;
+  color: var(--text-primary);
   font-size: 0.875rem;
   cursor: pointer;
   transition: background-color 0.2s;
-  border-bottom: 1px solid #f3f4f6;
+  border-bottom: 1px solid var(--border-secondary);
 }
 
 .transactions-page .category-suggestion:last-child {
@@ -662,12 +875,12 @@
 }
 
 .transactions-page .category-suggestion:hover {
-  background-color: #f9fafb !important;
+  background-color: var(--bg-tertiary);
 }
 
 .transactions-page .category-suggestion:focus {
   outline: none;
-  background-color: #eff6ff !important;
+  background-color: var(--bg-accent);
 }
 
 /* Remove old dropdown and button styles */
@@ -684,22 +897,22 @@
 .transactions-page .category-option-checkbox,
 .transactions-page .category-option-name,
 .transactions-page .no-categories-found {
-  display: none !important;
+  display: none;
 }
 
 /* Main Content */
 .transactions-page .transactions-content {
-  background: #ffffff !important;
-  border: 1px solid #e5e7eb;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-primary);
   border-radius: 12px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 3px var(--shadow-light);
   overflow: hidden;
 }
 
 .transactions-page .transactions-header {
   padding: 1.5rem 2rem;
-  border-bottom: 1px solid #e5e7eb;
-  background-color: #f9fafb !important;
+  border-bottom: 1px solid var(--border-primary);
+  background-color: var(--bg-tertiary);
 }
 
 .transactions-page .transactions-summary {
@@ -711,13 +924,13 @@
 .transactions-page .transactions-summary h2 {
   font-size: 1.5rem;
   font-weight: 600;
-  color: #1f2937 !important;
+  color: var(--text-primary);
   margin: 0;
 }
 
 .transactions-page .transaction-count {
   font-size: 0.875rem;
-  color: #6b7280;
+  color: var(--text-muted);
   font-weight: 500;
 }
 
@@ -725,10 +938,10 @@
   padding: 0;
 }
 
-/* Enhanced Transaction Table - Override dark mode */
+/* Enhanced Transaction Table - Now properly supports dark mode */
 .transactions-page .transaction-table {
   width: 100%;
-  background-color: #ffffff !important;
+  background-color: var(--bg-primary);
 }
 
 .transactions-page .transaction-table h2 {
@@ -739,16 +952,16 @@
   width: 100%;
   border-collapse: collapse;
   font-size: 0.875rem;
-  background-color: #ffffff !important;
+  background-color: var(--bg-primary);
 }
 
 .transactions-page .transaction-table th,
 .transactions-page .transaction-table td {
   padding: 1rem;
   text-align: left;
-  border-bottom: 1px solid #e5e7eb !important;
-  color: #1f2937 !important;
-  background-color: transparent !important;
+  border-bottom: 1px solid var(--border-primary);
+  color: var(--text-primary);
+  background-color: transparent;
 }
 
 .transactions-page .transaction-table th:nth-child(3),
@@ -757,39 +970,39 @@
 }
 
 .transactions-page .transaction-table th {
-  background-color: #f9fafb !important;
+  background-color: var(--bg-tertiary);
   font-weight: 600;
-  color: #374151 !important;
+  color: var(--text-secondary);
   font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
 
 .transactions-page .transaction-table tr:hover {
-  background-color: #f9fafb !important;
+  background-color: var(--bg-tertiary);
 }
 
 .transactions-page .transaction-table tr:hover td {
-  background-color: #f9fafb !important;
+  background-color: var(--bg-tertiary);
 }
 
 .transactions-page .transaction-table .positive {
-  color: #059669 !important;
+  color: var(--positive-amount);
   font-weight: 600;
 }
 
 .transactions-page .transaction-table .negative {
-  color: #dc2626 !important;
+  color: var(--negative-amount);
   font-weight: 600;
 }
 
 .transactions-page .transaction-table select {
   padding: 0.5rem;
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--border-primary);
   border-radius: 6px;
-  background-color: #ffffff !important;
+  background-color: var(--bg-primary);
   font-size: 0.875rem;
-  color: #1f2937 !important;
+  color: var(--text-primary);
   cursor: pointer;
 }
 
@@ -804,9 +1017,9 @@
   justify-content: center;
   align-items: center;
   padding: 4rem 2rem;
-  color: #6b7280 !important;
+  color: var(--text-muted);
   font-size: 1rem;
-  background-color: #ffffff !important;
+  background-color: var(--bg-primary);
 }
 
 .transactions-page .no-data {
@@ -814,17 +1027,17 @@
   justify-content: center;
   align-items: center;
   padding: 4rem 2rem;
-  color: #6b7280 !important;
+  color: var(--text-muted);
   font-size: 1rem;
   text-align: center;
-  background-color: #ffffff !important;
+  background-color: var(--bg-primary);
 }
 
 /* Pagination */
 .transactions-page .transactions-pagination {
   padding: 1.5rem 2rem;
-  border-top: 1px solid #e5e7eb;
-  background-color: #f9fafb !important;
+  border-top: 1px solid var(--border-primary);
+  background-color: var(--bg-tertiary);
 }
 
 .transactions-page .pagination-container {
@@ -840,16 +1053,16 @@
   align-items: center;
   gap: 1rem;
   font-size: 0.875rem;
-  color: #6b7280 !important;
+  color: var(--text-muted);
 }
 
 .transactions-page .page-size-select {
   padding: 0.5rem;
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--border-primary);
   border-radius: 6px;
-  background-color: #ffffff !important;
+  background-color: var(--bg-primary);
   font-size: 0.875rem;
-  color: #1f2937 !important;
+  color: var(--text-primary);
   cursor: pointer;
 }
 
@@ -861,10 +1074,10 @@
 
 .transactions-page .pagination-button {
   padding: 0.5rem 0.75rem;
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--border-primary);
   border-radius: 6px;
-  background-color: #ffffff !important;
-  color: #374151 !important;
+  background-color: var(--bg-primary);
+  color: var(--text-secondary);
   font-size: 0.875rem;
   cursor: pointer;
   transition: all 0.2s;
@@ -873,8 +1086,8 @@
 }
 
 .transactions-page .pagination-button:hover:not(:disabled) {
-  background-color: #f3f4f6 !important;
-  border-color: #9ca3af;
+  background-color: var(--bg-tertiary);
+  border-color: var(--border-secondary);
 }
 
 .transactions-page .pagination-button:disabled {
@@ -883,13 +1096,13 @@
 }
 
 .transactions-page .pagination-button.active {
-  background-color: #3b82f6 !important;
+  background-color: #3b82f6;
   border-color: #3b82f6;
-  color: #ffffff !important;
+  color: #ffffff;
 }
 
 .transactions-page .pagination-button.active:hover {
-  background-color: #2563eb !important;
+  background-color: #2563eb;
   border-color: #2563eb;
 }
 
@@ -946,168 +1159,6 @@
   }
 }
 
-/* Override any dark mode styles specifically */
-@media (prefers-color-scheme: dark) {
-  .transactions-page {
-    background-color: #f8fafc !important;
-  }
-  
-  .transactions-page .page-header h1 {
-    color: #1f2937 !important;
-  }
-  
-  .transactions-page .filters-sidebar {
-    background: #ffffff !important;
-  }
-  
-  .transactions-page .filter-header h3 {
-    color: #1f2937 !important;
-  }
-  
-  .transactions-page .filter-label {
-    color: #374151 !important;
-  }
-  
-  .transactions-page .search-input,
-  .transactions-page .amount-input,
-  .transactions-page .filter-select {
-    background-color: #ffffff !important;
-    color: #1f2937 !important;
-  }
-  
-  .transactions-page .selected-categories {
-    background-color: #ffffff !important;
-  }
-  
-  .transactions-page .category-tag {
-    background: #eff6ff !important;
-    color: #1e40af !important;
-  }
-  
-  .transactions-page .category-tag-remove {
-    color: #1e40af !important;
-  }
-  
-  .transactions-page .category-tag-remove:hover {
-    background: #dbeafe !important;
-  }
-  
-  .transactions-page .add-category-button {
-    background-color: #ffffff !important;
-    color: #374151 !important;
-  }
-  
-  .transactions-page .add-category-button:hover {
-    background-color: #f9fafb !important;
-  }
-  
-  .transactions-page .category-dropdown {
-    background: #ffffff !important;
-  }
-  
-  .transactions-page .category-dropdown-header {
-    background-color: #f9fafb !important;
-  }
-  
-  .transactions-page .category-search-input {
-    background-color: #ffffff !important;
-    color: #1f2937 !important;
-  }
-  
-  .transactions-page .clear-categories-button {
-    color: #ffffff !important;
-  }
-  
-  .transactions-page .category-option:hover {
-    background-color: #f9fafb !important;
-  }
-  
-  .transactions-page .category-option-name {
-    color: #1f2937 !important;
-  }
-  
-  .transactions-page .transactions-content {
-    background: #ffffff !important;
-  }
-  
-  .transactions-page .transactions-header {
-    background-color: #f9fafb !important;
-  }
-  
-  .transactions-page .transactions-summary h2 {
-    color: #1f2937 !important;
-  }
-  
-  .transactions-page .transaction-table {
-    background-color: #ffffff !important;
-  }
-  
-  .transactions-page .transaction-table table {
-    background-color: #ffffff !important;
-  }
-  
-  .transactions-page .transaction-table th,
-  .transactions-page .transaction-table td {
-    color: #1f2937 !important;
-    background-color: transparent !important;
-    border-bottom: 1px solid #e5e7eb !important;
-  }
-  
-  .transactions-page .transaction-table th {
-    background-color: #f9fafb !important;
-    color: #374151 !important;
-  }
-  
-  .transactions-page .transaction-table tr:hover {
-    background-color: #f9fafb !important;
-  }
-  
-  .transactions-page .transaction-table tr:hover td {
-    background-color: #f9fafb !important;
-  }
-  
-  .transactions-page .transaction-table select {
-    background-color: #ffffff !important;
-    color: #1f2937 !important;
-  }
-  
-  .transactions-page .loading,
-  .transactions-page .no-data {
-    color: #6b7280 !important;
-    background-color: #ffffff !important;
-  }
-  
-  .transactions-page .transactions-pagination {
-    background-color: #f9fafb !important;
-  }
-  
-  .transactions-page .pagination-info {
-    color: #6b7280 !important;
-  }
-  
-  .transactions-page .page-size-select {
-    background-color: #ffffff !important;
-    color: #1f2937 !important;
-  }
-  
-  .transactions-page .pagination-button {
-    background-color: #ffffff !important;
-    color: #374151 !important;
-  }
-  
-  .transactions-page .pagination-button:hover:not(:disabled) {
-    background-color: #f3f4f6 !important;
-  }
-  
-  .transactions-page .pagination-button.active {
-    background-color: #3b82f6 !important;
-    color: #ffffff !important;
-  }
-  
-  .transactions-page .pagination-button.active:hover {
-    background-color: #2563eb !important;
-  }
-}
 
 /* Transaction Category Picker */
 .transactions-page .transaction-category-picker {
@@ -1124,14 +1175,14 @@
 .transactions-page .current-category-tag {
   display: inline-flex;
   align-items: center;
-  background: #eff6ff !important;
-  color: #1e40af !important;
+  background: var(--bg-accent);
+  color: var(--text-accent);
   padding: 0.25rem 0.5rem;
   border-radius: 6px;
   font-size: 0.75rem;
   font-weight: 500;
   gap: 0.25rem;
-  border: 1px solid #bfdbfe;
+  border: 1px solid var(--border-secondary);
   line-height: 1;
   max-width: 100%;
 }
@@ -1139,7 +1190,7 @@
 .transactions-page .category-remove-btn {
   background: none;
   border: none;
-  color: #1e40af !important;
+  color: var(--text-accent);
   font-size: 1rem;
   font-weight: bold;
   cursor: pointer;
@@ -1157,17 +1208,17 @@
 }
 
 .transactions-page .category-remove-btn:hover {
-  background: #dbeafe !important;
+  background: var(--bg-tertiary);
 }
 
 .transactions-page .category-picker-input {
   width: 100%;
   padding: 0.5rem;
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--border-primary);
   border-radius: 6px;
-  background-color: #ffffff !important;
+  background-color: var(--bg-primary);
   font-size: 0.75rem;
-  color: #1f2937 !important;
+  color: var(--text-primary);
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 
@@ -1178,7 +1229,7 @@
 }
 
 .transactions-page .category-picker-input::placeholder {
-  color: #9ca3af;
+  color: var(--text-muted);
 }
 
 .transactions-page .category-picker-suggestions {
@@ -1187,8 +1238,8 @@
   left: 0;
   right: 0;
   z-index: 100;
-  background: #ffffff !important;
-  border: 1px solid #d1d5db;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-primary);
   border-radius: 6px;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   margin-top: 0.25rem;
@@ -1202,11 +1253,11 @@
   padding: 0.5rem 0.75rem;
   border: none;
   background: none;
-  color: #1f2937 !important;
+  color: var(--text-primary);
   font-size: 0.75rem;
   cursor: pointer;
   transition: background-color 0.2s;
-  border-bottom: 1px solid #f3f4f6;
+  border-bottom: 1px solid var(--border-secondary);
 }
 
 .transactions-page .category-picker-suggestion:last-child {
@@ -1214,10 +1265,41 @@
 }
 
 .transactions-page .category-picker-suggestion:hover {
-  background-color: #f9fafb !important;
+  background-color: var(--bg-tertiary);
 }
 
 .transactions-page .category-picker-suggestion:focus {
   outline: none;
-  background-color: #eff6ff !important;
+  background-color: var(--bg-accent);
+}
+
+/* Custom Date Picker Dark Mode - Target specific class */
+.custom-date-picker.rs-picker-default,
+.custom-date-picker .rs-picker-toggle {
+  background-color: var(--bg-primary) !important;
+  border: 1px solid var(--border-primary) !important;
+  color: var(--text-primary) !important;
+}
+
+.custom-date-picker .rs-picker-toggle-placeholder {
+  color: var(--text-muted) !important;
+}
+
+.custom-date-picker .rs-picker-toggle-value {
+  color: var(--text-primary) !important;
+}
+
+.custom-date-picker .rs-picker-toggle-caret {
+  color: var(--text-muted) !important;
+}
+
+/* Force inline styles override for the custom date picker */
+.custom-date-picker[style] {
+  background-color: var(--bg-primary) !important;
+  border-color: var(--border-primary) !important;
+}
+
+.custom-date-picker * {
+  background-color: inherit !important;
+  color: inherit !important;
 } 

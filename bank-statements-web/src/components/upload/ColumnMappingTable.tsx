@@ -13,6 +13,7 @@ import {
   TableRow,
   Typography,
   SelectChangeEvent,
+  useTheme,
 } from '@mui/material'
 
 interface ColumnMappingTableProps {
@@ -34,6 +35,8 @@ export const ColumnMappingTable: React.FC<ColumnMappingTableProps> = ({
   onHeaderRowIndexChange,
   onDataStartRowIndexChange,
 }) => {
+  const theme = useTheme()
+
   // Get the number of columns from the sample data
   const columns = React.useMemo(() => {
     if (!sampleData || sampleData.length === 0) return []
@@ -94,43 +97,43 @@ export const ColumnMappingTable: React.FC<ColumnMappingTableProps> = ({
           key={rowIndex}
           sx={{
             backgroundColor: isHeaderRow
-              ? 'rgba(25, 118, 210, 0.3)'
+              ? theme.palette.primary.main + '30'
               : isDataStartRow
-                ? 'rgba(76, 175, 80, 0.3)'
+                ? theme.palette.success.main + '30'
                 : 'inherit',
             fontWeight: isHeaderRow ? 'bold' : 'normal',
-            color: '#000000',
+            color: theme.palette.text.primary,
             // Override any zebra-striping for special rows only
             '&:nth-of-type(odd)': {
               backgroundColor: isHeaderRow
-                ? 'rgba(25, 118, 210, 0.3)'
+                ? theme.palette.primary.main + '30'
                 : isDataStartRow
-                  ? 'rgba(76, 175, 80, 0.3)'
-                  : 'rgba(0, 0, 0, 0.04)',
+                  ? theme.palette.success.main + '30'
+                  : theme.palette.action.hover,
             },
             '&:nth-of-type(even)': {
               backgroundColor: isHeaderRow
-                ? 'rgba(25, 118, 210, 0.3)'
+                ? theme.palette.primary.main + '30'
                 : isDataStartRow
-                  ? 'rgba(76, 175, 80, 0.3)'
-                  : '#ffffff',
+                  ? theme.palette.success.main + '30'
+                  : theme.palette.background.paper,
             },
           }}
         >
           <TableCell
             sx={{
-              color: '#000000',
+              color: theme.palette.text.primary,
               padding: '4px 8px',
               textAlign: 'center',
               cursor: 'pointer',
               fontSize: '0.75rem',
               backgroundColor: isHeaderRow
-                ? 'rgba(25, 118, 210, 0.5)'
+                ? theme.palette.primary.main + '50'
                 : isDataStartRow
-                  ? 'rgba(76, 175, 80, 0.5)'
+                  ? theme.palette.success.main + '50'
                   : 'inherit',
               '&:hover': {
-                backgroundColor: 'rgba(156, 39, 176, 0.2)',
+                backgroundColor: theme.palette.secondary.main + '20',
               },
             }}
             onClick={(e) => {
@@ -167,14 +170,14 @@ export const ColumnMappingTable: React.FC<ColumnMappingTableProps> = ({
               <TableCell
                 key={`${rowIndex}-${cellIndex}`}
                 sx={{
-                  color: '#000000',
+                  color: theme.palette.text.primary,
                   whiteSpace: 'nowrap',
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
                   maxWidth: '200px',
-                  backgroundColor: isAssigned ? 'rgba(144, 202, 249, 0.1)' : 'inherit',
-                  borderLeft: isAssigned ? '2px solid #90caf9' : 'none',
-                  borderRight: isAssigned ? '2px solid #90caf9' : 'none',
+                  backgroundColor: isAssigned ? theme.palette.info.main + '10' : 'inherit',
+                  borderLeft: isAssigned ? `2px solid ${theme.palette.info.main}` : 'none',
+                  borderRight: isAssigned ? `2px solid ${theme.palette.info.main}` : 'none',
                 }}
               >
                 {cellValue || ''}
@@ -203,15 +206,15 @@ export const ColumnMappingTable: React.FC<ColumnMappingTableProps> = ({
           size="small"
           sx={{
             minWidth: 650,
-            backgroundColor: '#ffffff',
+            backgroundColor: theme.palette.background.paper,
           }}
           // Disable the default zebra-striping behavior
           stickyHeader
         >
           <TableHead>
-            <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
-              <TableCell sx={{ backgroundColor: '#f5f5f5', padding: '8px', width: '60px' }}>
-                <Typography variant="body2" sx={{ fontWeight: 'bold', color: '#000000' }}>
+            <TableRow sx={{ backgroundColor: theme.palette.background.default }}>
+              <TableCell sx={{ backgroundColor: theme.palette.background.default, padding: '8px', width: '60px' }}>
+                <Typography variant="body2" sx={{ fontWeight: 'bold', color: theme.palette.text.primary }}>
                   Row
                 </Typography>
               </TableCell>
@@ -229,19 +232,24 @@ export const ColumnMappingTable: React.FC<ColumnMappingTableProps> = ({
                   <TableCell
                     key={columnIndex}
                     sx={{
-                      backgroundColor: isAssigned ? 'rgba(144, 202, 249, 0.3)' : '#f5f5f5',
+                      backgroundColor: isAssigned ? theme.palette.info.main + '30' : theme.palette.background.default,
                       padding: '8px',
-                      border: isAssigned ? '2px solid #90caf9' : '1px solid #e0e0e0',
+                      border: isAssigned
+                        ? `2px solid ${theme.palette.info.main}`
+                        : `1px solid ${theme.palette.divider}`,
                     }}
                   >
-                    <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 1, color: isAssigned ? '#ffffff' : '#000000' }}>
+                    <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 1, color: theme.palette.text.primary }}>
                       {columnName}
                     </Typography>
-                    <FormControl fullWidth size="small" sx={{ backgroundColor: '#ffffff' }}>
+                    <FormControl fullWidth size="small">
                       <Select
                         labelId={`column-type-label-${columnIndex}`}
                         value={columnType}
                         onChange={(e: SelectChangeEvent) => handleColumnTypeChange(columnIndex, e.target.value)}
+                        sx={{
+                          backgroundColor: theme.palette.background.paper,
+                        }}
                       >
                         <MenuItem value="date">Date</MenuItem>
                         <MenuItem value="amount">Amount</MenuItem>

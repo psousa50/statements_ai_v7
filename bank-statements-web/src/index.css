@@ -2,16 +2,53 @@
   font-family: Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
-
   color-scheme: light dark;
-  color: #213547;
-  background-color: #ffffff;
 
+  /* Light theme variables */
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8fafc;
+  --bg-tertiary: #f9fafb;
+  --bg-accent: #eff6ff;
+  --text-primary: #1f2937;
+  --text-secondary: #374151;
+  --text-muted: #6b7280;
+  --text-accent: #1e40af;
+  --border-primary: #e5e7eb;
+  --border-secondary: #d1d5db;
+  --shadow-light: rgba(0, 0, 0, 0.1);
+  --button-primary: #007bff;
+  --button-primary-hover: #0069d9;
+  --button-secondary: #6c757d;
+  --positive-amount: #059669;
+  --negative-amount: #dc2626;
+  
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   -webkit-text-size-adjust: 100%;
+}
+
+/* Dark theme variables */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg-primary: #2a2a2a;
+    --bg-secondary: #1a1a1a;
+    --bg-tertiary: #333333;
+    --bg-accent: #1e3a8a;
+    --text-primary: rgba(255, 255, 255, 0.87);
+    --text-secondary: rgba(255, 255, 255, 0.8);
+    --text-muted: rgba(255, 255, 255, 0.6);
+    --text-accent: #60a5fa;
+    --border-primary: #404040;
+    --border-secondary: #555555;
+    --shadow-light: rgba(255, 255, 255, 0.1);
+    --button-primary: #3b82f6;
+    --button-primary-hover: #2563eb;
+    --button-secondary: #4a5568;
+    --positive-amount: #5aff83;
+    --negative-amount: #ff8080;
+  }
 }
 
 * {
@@ -24,6 +61,51 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+button {
+  background-color: var(--button-primary);
+  color: var(--bg-primary);
+  border: none;
+  padding: 0.75rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background-color 0.2s;
+}
+
+button:hover {
+  background-color: var(--button-primary-hover);
+}
+
+button:disabled {
+  background-color: var(--button-secondary);
+  cursor: not-allowed;
+}
+
+.positive {
+  color: var(--positive-amount);
+  font-weight: 600;
+}
+
+.negative {
+  color: var(--negative-amount);
+  font-weight: 600;
+}
+
+th, td {
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border-primary);
+}
+
+th {
+  background-color: var(--bg-tertiary);
+}
+
+tr:hover {
+  background-color: var(--bg-tertiary);
 }
 
 h1 {
@@ -31,33 +113,35 @@ h1 {
   line-height: 1.1;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    color: rgba(255, 255, 255, 0.87);
-    background-color: #242424;
-  }
-  button {
-    background-color: #1a1a1a;
-  }
-  .positive {
-    color: #5aff83; /* Even brighter green for dark mode */
-    font-weight: bold; /* Make it bold for better visibility */
-  }
-  .negative {
-    color: #ff8080; /* Even brighter red for dark mode */
-    font-weight: bold; /* Make it bold for better visibility */
-  }
-  /* Ensure table text is visible in dark mode */
-  th,
-  td {
-    color: rgba(255, 255, 255, 0.87);
-  }
-  /* Ensure table headers are visible */
-  th {
-    background-color: #333;
-  }
-  /* Ensure table hover effect is visible */
-  tr:hover {
-    background-color: #333;
-  }
+/* Minimal RSuite Dark Mode Fixes */
+
+/* Fix date hover tooltip */
+.rs-calendar-table-cell-content[title]::after,
+.rs-picker-daterange-panel .rs-tooltip,
+.rs-tooltip.rs-tooltip-placement-top {
+  background-color: var(--bg-tertiary) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--border-primary) !important;
 }
+
+/* Fix predefined range button text contrast */
+.rs-theme-dark .rs-picker-daterange-predefined .rs-picker-daterange-predefined-item {
+  color: rgba(255, 255, 255, 0.8) !important;
+}
+
+.rs-theme-dark .rs-picker-daterange-predefined .rs-picker-daterange-predefined-item:hover {
+  color: rgba(255, 255, 255, 0.95) !important;
+  background-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Fix any remaining tooltip positioning */
+.rs-picker-daterange-panel [role="tooltip"] {
+  background-color: var(--bg-tertiary) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border-primary) !important;
+}
+
+
+
+
+

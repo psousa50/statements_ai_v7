@@ -153,7 +153,7 @@ export const Upload: React.FC = () => {
             <>
               <AnalysisSummary analysisData={analysisResult} />
 
-              <Paper sx={{ p: 3, mt: 3, mb: 3, bgcolor: '#f8f9fa' }}>
+              <Paper sx={{ p: 3, mt: 3, mb: 3 }}>
                 <Typography variant="h6" gutterBottom>
                   Select Source Bank
                 </Typography>

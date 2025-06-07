@@ -462,11 +462,27 @@ export const ChartsPage = () => {
                       ]
                     }}
                     labelFormatter={(label: string) => `Category: ${label}`}
+                    contentStyle={{
+                      backgroundColor: 'var(--bg-primary)',
+                      border: '1px solid var(--border-primary)',
+                      borderRadius: '4px',
+                      color: 'var(--text-primary)',
+                      boxShadow: '0 4px 6px var(--shadow-light)',
+                    }}
+                    labelStyle={{
+                      color: 'var(--text-primary)',
+                    }}
+                    itemStyle={{
+                      color: 'var(--text-secondary)',
+                    }}
                   />
                   <Legend
                     formatter={(value: string, entry: unknown) => {
                       const payload = (entry as { payload: ChartData }).payload
                       return `${value} ($${payload.value.toFixed(2)})`
+                    }}
+                    wrapperStyle={{
+                      color: 'var(--text-primary)',
                     }}
                   />
                 </PieChart>
