@@ -9,10 +9,7 @@ export const AppLayout = () => {
   return (
     <Box sx={{ display: 'flex' }}>
       <CssBaseline />
-      <AppBar
-        position="fixed"
-        sx={{ width: `calc(100% - ${drawerWidth}px)`, ml: `${drawerWidth}px` }}
-      >
+      <AppBar position="fixed" sx={{ width: `calc(100% - ${drawerWidth}px)`, ml: `${drawerWidth}px` }}>
         <Toolbar>
           <Typography variant="h6" noWrap component="div">
             Bank Statements App
@@ -41,7 +38,7 @@ export const AppLayout = () => {
       </Drawer>
       <Box
         component="main"
-        sx={{ flexGrow: 1, bgcolor: 'background.default', p: 3, mt: 8 }}
+        sx={{ flexGrow: 1, bgcolor: 'background.default', p: 3, mt: 8, maxWidth: '1600px', mx: 'auto' }}
       >
         <Outlet />
       </Box>
