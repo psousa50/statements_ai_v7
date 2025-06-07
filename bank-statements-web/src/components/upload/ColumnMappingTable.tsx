@@ -82,7 +82,6 @@ export const ColumnMappingTable: React.FC<ColumnMappingTableProps> = ({
     return 'ignore'
   }
 
-
   // Display all rows including the first row with account information
   const renderTableRows = () => {
     return sampleData.map((row, rowIndex) => {
@@ -161,6 +160,9 @@ export const ColumnMappingTable: React.FC<ColumnMappingTableProps> = ({
           {columns.map((_, cellIndex) => {
             // Ensure we don't try to access cells that don't exist in this row
             const cellValue = cellIndex < row.length ? row[cellIndex] : ''
+            const columnType = getColumnType(cellIndex.toString())
+            const isAssigned = columnType !== 'ignore'
+
             return (
               <TableCell
                 key={`${rowIndex}-${cellIndex}`}
@@ -170,6 +172,9 @@ export const ColumnMappingTable: React.FC<ColumnMappingTableProps> = ({
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
                   maxWidth: '200px',
+                  backgroundColor: isAssigned ? 'rgba(144, 202, 249, 0.1)' : 'inherit',
+                  borderLeft: isAssigned ? '2px solid #90caf9' : 'none',
+                  borderRight: isAssigned ? '2px solid #90caf9' : 'none',
                 }}
               >
                 {cellValue || ''}
@@ -188,7 +193,8 @@ export const ColumnMappingTable: React.FC<ColumnMappingTableProps> = ({
       </Typography>
 
       <Typography variant="body2" sx={{ mb: 2, color: 'text.secondary' }}>
-        Click row numbers to set header, right-click for data start: H{headerRowIndex + 1} (blue), D{dataStartRowIndex + 1} (green)
+        Click row numbers to set header, right-click for data start: H{headerRowIndex + 1} (blue), D
+        {dataStartRowIndex + 1} (green)
       </Typography>
 
       {/* Sample Data Table with Column Selectors */}
@@ -216,15 +222,25 @@ export const ColumnMappingTable: React.FC<ColumnMappingTableProps> = ({
                     ? sampleData[headerRowIndex][parseInt(columnIndex)] || `Column ${columnIndex}`
                     : `Column ${columnIndex}`
 
+                const columnType = getColumnType(columnIndex)
+                const isAssigned = columnType !== 'ignore'
+
                 return (
-                  <TableCell key={columnIndex} sx={{ backgroundColor: '#f5f5f5', padding: '8px' }}>
-                    <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 1, color: '#000000' }}>
+                  <TableCell
+                    key={columnIndex}
+                    sx={{
+                      backgroundColor: isAssigned ? 'rgba(144, 202, 249, 0.3)' : '#f5f5f5',
+                      padding: '8px',
+                      border: isAssigned ? '2px solid #90caf9' : '1px solid #e0e0e0',
+                    }}
+                  >
+                    <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 1, color: isAssigned ? '#ffffff' : '#000000' }}>
                       {columnName}
                     </Typography>
                     <FormControl fullWidth size="small" sx={{ backgroundColor: '#ffffff' }}>
                       <Select
                         labelId={`column-type-label-${columnIndex}`}
-                        value={getColumnType(columnIndex)}
+                        value={columnType}
                         onChange={(e: SelectChangeEvent) => handleColumnTypeChange(columnIndex, e.target.value)}
                       >
                         <MenuItem value="date">Date</MenuItem>
