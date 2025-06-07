@@ -99,13 +99,9 @@ class StatementAnalyzerService:
         source_id: Optional[str] = None,
     ) -> dict:
         try:
-            processed_df = process_dataframe(
-                raw_df, header_row_index, data_start_row_index
-            )
+            processed_df = process_dataframe(raw_df, header_row_index, data_start_row_index)
 
-            normalized_df = self.transaction_normalizer.normalize(
-                processed_df, column_mapping
-            )
+            normalized_df = self.transaction_normalizer.normalize(processed_df, column_mapping)
 
             total_transactions = len(normalized_df)
 
@@ -135,12 +131,8 @@ class StatementAnalyzerService:
                     # Split into debit (negative) and credit (positive)
                     debit_amounts = valid_amounts[valid_amounts < 0]
                     credit_amounts = valid_amounts[valid_amounts > 0]
-                    total_debit = (
-                        float(debit_amounts.sum()) if len(debit_amounts) > 0 else 0.0
-                    )
-                    total_credit = (
-                        float(credit_amounts.sum()) if len(credit_amounts) > 0 else 0.0
-                    )
+                    total_debit = float(debit_amounts.sum()) if len(debit_amounts) > 0 else 0.0
+                    total_credit = float(credit_amounts.sum()) if len(credit_amounts) > 0 else 0.0
 
             return {
                 "total_transactions": total_transactions,
@@ -165,22 +157,16 @@ class StatementAnalyzerService:
             }
 
     def _count_duplicates(self, normalized_df, source_id):
-        processed_tx_ids = (
-            set()
-        )  # Track transaction IDs we've already matched as duplicates
+        processed_tx_ids = set()  # Track transaction IDs we've already matched as duplicates
         duplicate_count = 0
 
         for _, row in normalized_df.iterrows():
             source_uuid = None
             if source_id:
-                source_uuid = (
-                    UUID(source_id) if isinstance(source_id, str) else source_id
-                )
+                source_uuid = UUID(source_id) if isinstance(source_id, str) else source_id
 
             matching_transactions = self.transaction_repo.find_matching_transactions(
-                date=row["date"]
-                if isinstance(row["date"], str)
-                else row["date"].strftime("%Y-%m-%d"),
+                date=row["date"] if isinstance(row["date"], str) else row["date"].strftime("%Y-%m-%d"),
                 description=row["description"],
                 amount=float(row["amount"]),
                 source_id=source_uuid,

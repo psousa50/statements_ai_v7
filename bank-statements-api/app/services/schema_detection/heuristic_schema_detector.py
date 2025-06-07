@@ -58,8 +58,6 @@ class HeuristicSchemaDetector(SchemaDetectorProtocol):
         if df.empty:
             raise ValueError("Cannot detect schema from an empty DataFrame")
 
-        row_count = len(df)
-
         start_row = self._infer_data_start_row(df) + 1
         header_row = max(0, start_row - 1)
 
