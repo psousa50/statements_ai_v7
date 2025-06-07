@@ -54,6 +54,10 @@ export const Upload: React.FC = () => {
       setHeaderRowIndex(result.header_row_index)
       setDataStartRowIndex(result.data_start_row_index)
 
+      if (result.source_id) {
+        setSelectedSource(result.source_id)
+      }
+
       setNotification({
         open: true,
         message: 'File analyzed successfully',

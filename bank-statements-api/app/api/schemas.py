@@ -3,10 +3,9 @@ from decimal import Decimal
 from typing import Dict, List, Optional, Sequence, Tuple
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, field_serializer, field_validator
-
 from app.domain.models.background_job import JobStatus
 from app.domain.models.transaction import CategorizationStatus
+from pydantic import BaseModel, ConfigDict, Field, field_serializer, field_validator
 
 
 class CategoryBase(BaseModel):
@@ -132,6 +131,7 @@ class StatementAnalysisResponse(BaseModel):
     header_row_index: int
     data_start_row_index: int
     sample_data: list[list]
+    source_id: Optional[str] = None
     # New transaction statistics fields - now mandatory
     total_transactions: int
     unique_transactions: int
