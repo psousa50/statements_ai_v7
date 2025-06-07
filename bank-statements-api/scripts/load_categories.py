@@ -173,7 +173,9 @@ def main():
         help="Path to the CSV file containing categories (default: data/bankstatements_public_categories.csv)",
     )
     parser.add_argument(
-        "--api-url", default="http://localhost:8000", help="Base URL of the API (default: http://localhost:8000)"
+        "--api-url",
+        default="http://localhost:8000",
+        help="Base URL of the API (default: http://localhost:8000)",
     )
 
     args = parser.parse_args()

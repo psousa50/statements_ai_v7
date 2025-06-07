@@ -45,7 +45,10 @@ class TestStatementRoutes:
         assert analysis_result.column_mapping["date"] == "Date"
 
         internal_dependencies.statement_analyzer_service.analyze.assert_called_once()
-        args, kwargs = internal_dependencies.statement_analyzer_service.analyze.call_args
+        (
+            args,
+            kwargs,
+        ) = internal_dependencies.statement_analyzer_service.analyze.call_args
         assert kwargs["filename"] == "test.csv"
         assert kwargs["file_content"] == file_content
 

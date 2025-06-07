@@ -117,19 +117,6 @@ class TransactionRepository(ABC):
         pass
 
     @abstractmethod
-    def find_duplicates(self, transactions: List[TransactionDTO]) -> List[TransactionDTO]:
-        """
-        Find duplicate transactions based on date, description, amount, and source.
-
-        Args:
-            transactions: List of TransactionDTO objects to check for duplicates
-
-        Returns:
-            List of TransactionDTO objects that are duplicates
-        """
-        pass
-
-    @abstractmethod
     def get_oldest_uncategorized(self, limit: int = 10) -> List[Transaction]:
         """
         Get the oldest uncategorized transactions
@@ -152,5 +139,23 @@ class TransactionRepository(ABC):
 
         Returns:
             List of transactions from the uploaded file
+        """
+        pass
+
+    @abstractmethod
+    def find_matching_transactions(
+        self, date: str, description: str, amount: float, source_id: Optional[UUID] = None
+    ) -> List[Transaction]:
+        """
+        Find all transactions that match the given criteria.
+
+        Args:
+            date: Transaction date in YYYY-MM-DD format
+            description: Transaction description
+            amount: Transaction amount
+            source_id: Optional source ID filter
+
+        Returns:
+            List of matching transactions from the database
         """
         pass

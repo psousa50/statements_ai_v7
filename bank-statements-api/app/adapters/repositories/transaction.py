@@ -185,86 +185,89 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
             return True
         return False
 
-    def find_duplicates(self, transactions: List[TransactionDTO]) -> List[TransactionDTO]:
+    def find_matching_transactions(
+        self, date: str, description: str, amount: float, source_id: Optional[UUID] = None
+    ) -> List[Transaction]:
         """
-        Find duplicate transactions based on date, description, amount, and source.
+        Find all transactions that match the given criteria.
         """
-        if not transactions:
-            return []
+        # Convert date string to date object
+        date_val = datetime.strptime(date, "%Y-%m-%d").date()
 
-        duplicates = []
+        # Convert amount to Decimal
+        amount_val = Decimal(str(amount))
 
-        for transaction_dto in transactions:
-            # Convert source_id to UUID only if it's not already a UUID
-            if transaction_dto.source_id:
-                if isinstance(transaction_dto.source_id, UUID):
-                    source_uuid = transaction_dto.source_id
-                else:
-                    source_uuid = UUID(transaction_dto.source_id)
-            else:
-                source_uuid = None
+        # Normalize the description for comparison
+        normalized_desc = normalize_description(description)
 
-            existing = (
-                self.db_session.query(Transaction)
-                .filter(
-                    Transaction.date == transaction_dto.date,
-                    Transaction.description == transaction_dto.description,
-                    Transaction.amount == transaction_dto.amount,
-                    Transaction.source_id == source_uuid,
-                )
-                .first()
-            )
+        # Build query
+        query = self.db_session.query(Transaction).filter(
+            Transaction.date == date_val,
+            Transaction.normalized_description == normalized_desc,
+            Transaction.amount == amount_val,
+        )
 
-            if existing:
-                duplicates.append(transaction_dto)
+        # Add source filter if provided
+        if source_id is not None:
+            query = query.filter(Transaction.source_id == source_id)
 
-        return duplicates
+        return query.all()
 
     def save_batch(self, transactions: List[TransactionDTO]) -> Tuple[int, int]:
         """
         Save a batch of transactions to the database with deduplication.
         """
-        # Find duplicates before saving
-        duplicates = self.find_duplicates(transactions)
-        duplicates_count = len(duplicates)
-
-        # Create a set of duplicate transactions for efficient lookup
-        duplicate_tuples = set()
-        for dup in duplicates:
-            date_val = dup.date
-            if isinstance(date_val, str):
-                date_val = datetime.strptime(date_val, "%Y-%m-%d").date()
-            duplicate_tuples.add((date_val, dup.description, float(dup.amount), dup.source_id))
-
         saved_count = 0
+        duplicates_count = 0
+        processed_tx_ids = set()  # Track transaction IDs we've already matched
+
         for transaction_dto in transactions:
-            date_val = transaction_dto.date
-            if isinstance(date_val, str):
-                date_val = datetime.strptime(date_val, "%Y-%m-%d").date()
-
-            # Check if this transaction is a duplicate
-            transaction_tuple = (
-                date_val,
-                transaction_dto.description,
-                float(transaction_dto.amount),
-                transaction_dto.source_id,
-            )
-            if transaction_tuple in duplicate_tuples:
-                continue  # Skip duplicate transactions
-
-            transaction = Transaction(
-                date=date_val,
-                amount=transaction_dto.amount,
-                description=transaction_dto.description,
-                normalized_description=normalize_description(transaction_dto.description),
-                uploaded_file_id=transaction_dto.uploaded_file_id,
-            )
-
+            # Convert source_id to UUID if provided
+            source_uuid = None
             if transaction_dto.source_id:
-                transaction.source_id = transaction_dto.source_id
+                if isinstance(transaction_dto.source_id, UUID):
+                    source_uuid = transaction_dto.source_id
+                else:
+                    source_uuid = UUID(transaction_dto.source_id)
 
-            self.db_session.add(transaction)
-            saved_count += 1
+            # Find matching transactions in database
+            matching_transactions = self.find_matching_transactions(
+                date=transaction_dto.date
+                if isinstance(transaction_dto.date, str)
+                else transaction_dto.date.strftime("%Y-%m-%d"),
+                description=transaction_dto.description,
+                amount=float(transaction_dto.amount),
+                source_id=source_uuid,
+            )
+
+            # Check if any matching transaction hasn't been marked as duplicate yet
+            found_unused_duplicate = False
+            for match in matching_transactions:
+                if match.id not in processed_tx_ids:
+                    processed_tx_ids.add(match.id)
+                    found_unused_duplicate = True
+                    duplicates_count += 1
+                    break
+
+            # If no unused duplicate found, save as new transaction
+            if not found_unused_duplicate:
+                date_val = transaction_dto.date
+                if isinstance(date_val, str):
+                    date_val = datetime.strptime(date_val, "%Y-%m-%d").date()
+
+                transaction = Transaction(
+                    date=date_val,
+                    amount=transaction_dto.amount,
+                    description=transaction_dto.description,
+                    normalized_description=normalize_description(transaction_dto.description),
+                    uploaded_file_id=UUID(transaction_dto.uploaded_file_id),
+                )
+
+                if source_uuid:
+                    transaction.source_id = source_uuid
+
+                self.db_session.add(transaction)
+                saved_count += 1
 
         self.db_session.commit()
         return saved_count, duplicates_count

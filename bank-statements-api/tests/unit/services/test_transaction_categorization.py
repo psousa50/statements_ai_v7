@@ -50,15 +50,22 @@ class TestTransactionCategorizationService:
         transaction2.id = transaction_id2
         transaction2.categorization_status = CategorizationStatus.UNCATEGORIZED
 
-        self.transaction_repository.get_oldest_uncategorized.return_value = [transaction1, transaction2]
+        self.transaction_repository.get_oldest_uncategorized.return_value = [
+            transaction1,
+            transaction2,
+        ]
 
         # Mock the batch categorizer to return successful results
         mock_categorization_results = [
             CategorizationResult(
-                transaction_id=transaction_id1, category_id=category_id, status=CategorizationStatus.CATEGORIZED
+                transaction_id=transaction_id1,
+                category_id=category_id,
+                status=CategorizationStatus.CATEGORIZED,
             ),
             CategorizationResult(
-                transaction_id=transaction_id2, category_id=category_id, status=CategorizationStatus.CATEGORIZED
+                transaction_id=transaction_id2,
+                category_id=category_id,
+                status=CategorizationStatus.CATEGORIZED,
             ),
         ]
         self.transaction_categorizer.categorize.return_value = mock_categorization_results
@@ -97,12 +104,17 @@ class TestTransactionCategorizationService:
         transaction2.id = transaction_id2
         transaction2.categorization_status = CategorizationStatus.UNCATEGORIZED
 
-        self.transaction_repository.get_oldest_uncategorized.return_value = [transaction1, transaction2]
+        self.transaction_repository.get_oldest_uncategorized.return_value = [
+            transaction1,
+            transaction2,
+        ]
 
         # Mock the batch categorizer to return mixed results (one success, one failure)
         mock_categorization_results = [
             CategorizationResult(
-                transaction_id=transaction_id1, category_id=category_id, status=CategorizationStatus.CATEGORIZED
+                transaction_id=transaction_id1,
+                category_id=category_id,
+                status=CategorizationStatus.CATEGORIZED,
             ),
             CategorizationResult(
                 transaction_id=transaction_id2,

@@ -22,7 +22,11 @@ def upgrade() -> None:
     op.add_column("transactions", sa.Column("normalized_description", sa.String(), nullable=False))
 
     # Create index for normalized_description
-    op.create_index("ix_transactions_normalized_description", "transactions", ["normalized_description"])
+    op.create_index(
+        "ix_transactions_normalized_description",
+        "transactions",
+        ["normalized_description"],
+    )
 
 
 def downgrade() -> None:

@@ -29,7 +29,10 @@ class TransactionCategorizationRepository(ABC):
 
     @abstractmethod
     def create_rule(
-        self, normalized_description: str, category_id: UUID, source: CategorizationSource
+        self,
+        normalized_description: str,
+        category_id: UUID,
+        source: CategorizationSource,
     ) -> TransactionCategorization:
         """Create a new categorization rule"""
         pass

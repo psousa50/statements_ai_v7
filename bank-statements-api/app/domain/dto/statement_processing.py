@@ -101,8 +101,6 @@ class TransactionDTO:
             source_id=str(entity.source_id) if entity.source_id else None,
             created_at=entity.created_at,
             category_id=entity.category_id,
-            categorization_status=entity.categorization_status.value
-            if entity.categorization_status
-            else None,
+            categorization_status=entity.categorization_status.value if entity.categorization_status else None,
             normalized_description=entity.normalized_description,
         )

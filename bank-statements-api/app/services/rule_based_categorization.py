@@ -15,7 +15,11 @@ class RuleBasedCategorizationService:
     Implements caching and batch processing for optimal performance.
     """
 
-    def __init__(self, repository: TransactionCategorizationRepository, enable_cache: bool = False):
+    def __init__(
+        self,
+        repository: TransactionCategorizationRepository,
+        enable_cache: bool = False,
+    ):
         self.repository = repository
         self.enable_cache = enable_cache
         self._cache_hits = 0

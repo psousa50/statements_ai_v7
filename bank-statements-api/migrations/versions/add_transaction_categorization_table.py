@@ -42,13 +42,18 @@ def upgrade() -> None:
 
     # Create index on normalized_description for performance
     op.create_index(
-        "ix_transaction_categorization_normalized_description", "transaction_categorization", ["normalized_description"]
+        "ix_transaction_categorization_normalized_description",
+        "transaction_categorization",
+        ["normalized_description"],
     )
 
 
 def downgrade() -> None:
     # Drop index first
-    op.drop_index("ix_transaction_categorization_normalized_description", table_name="transaction_categorization")
+    op.drop_index(
+        "ix_transaction_categorization_normalized_description",
+        table_name="transaction_categorization",
+    )
 
     # Drop table
     op.drop_table("transaction_categorization")

@@ -53,7 +53,7 @@ class StatementPersistenceService:
 
         transactions_saved, duplicated_transactions = self.transaction_repo.save_batch(transactions)
 
-        file_hash = compute_hash(uploaded_file.filename, file_content)
+        file_hash = compute_hash(file_type, raw_df)
         existing_metadata = self.file_analysis_metadata_repo.find_by_hash(file_hash)
         if not existing_metadata:
             self.file_analysis_metadata_repo.save(

@@ -1,5 +1,6 @@
 import logging
-from typing import Optional, Tuple
+from typing import Optional
+from uuid import UUID
 
 import pandas as pd
 
@@ -20,6 +21,7 @@ class StatementAnalyzerService:
         transaction_normalizer,
         uploaded_file_repo,
         file_analysis_metadata_repo,
+        transaction_repo,
     ):
         self.file_type_detector = file_type_detector
         self.statement_parser = statement_parser
@@ -27,21 +29,23 @@ class StatementAnalyzerService:
         self.transaction_normalizer = transaction_normalizer
         self.uploaded_file_repo = uploaded_file_repo
         self.file_analysis_metadata_repo = file_analysis_metadata_repo
+        self.transaction_repo = transaction_repo
 
     def analyze(self, filename: str, file_content: bytes) -> AnalysisResultDTO:
-        file_hash = compute_hash(filename, file_content)
+        file_type = self.file_type_detector.detect(file_content)
+        raw_df = self.statement_parser.parse(file_content, file_type)
+
+        file_hash = compute_hash(file_type, raw_df)
+        print(f"File hash: {file_hash}")
         existing_metadata = self.file_analysis_metadata_repo.find_by_hash(file_hash)
 
-        file_type = self.file_type_detector.detect(file_content)
         if existing_metadata:
-            raw_df = self.statement_parser.parse(file_content, file_type)
             conversion_model = ConversionModel(
                 column_map=existing_metadata.column_mapping,
                 header_row=existing_metadata.header_row_index,
                 start_row=existing_metadata.data_start_row_index,
             )
         else:
-            raw_df = self.statement_parser.parse(file_content, file_type)
             conversion_model = self.schema_detector.detect_schema(raw_df)
 
         saved_file = self.uploaded_file_repo.save(filename, file_content, file_type)
@@ -49,12 +53,12 @@ class StatementAnalyzerService:
 
         sample_data = self._generate_sample_data(raw_df)
 
-        # Calculate transaction statistics from the normalized data
         transaction_stats = self._calculate_transaction_statistics(
             raw_df,
             conversion_model.column_map,
             conversion_model.header_row,
             conversion_model.start_row,
+            existing_metadata.source_id if existing_metadata else None,
         )
 
         source_id = existing_metadata.source_id if existing_metadata else None
@@ -93,33 +97,18 @@ class StatementAnalyzerService:
         column_mapping: dict,
         header_row_index: int,
         data_start_row_index: int,
+        source_id: Optional[str] = None,
     ) -> dict:
-        """
-        Calculate transaction statistics from the raw dataframe.
-
-        Returns:
-            Dictionary with transaction statistics including totals, duplicates, date range, and amounts
-        """
         try:
-            # Process the dataframe the same way as during upload
-            processed_df = process_dataframe(
-                raw_df, header_row_index, data_start_row_index
-            )
+            processed_df = process_dataframe(raw_df, header_row_index, data_start_row_index)
 
-            # Normalize the data to get proper transaction format
-            normalized_df = self.transaction_normalizer.normalize(
-                processed_df, column_mapping
-            )
+            normalized_df = self.transaction_normalizer.normalize(processed_df, column_mapping)
 
-            # Calculate basic statistics
             total_transactions = len(normalized_df)
 
-            # Calculate unique transactions based on date, amount, and description
-            unique_df = normalized_df.drop_duplicates(
-                subset=["date", "amount", "description"]
-            )
-            unique_transactions = len(unique_df)
-            duplicate_transactions = total_transactions - unique_transactions
+            duplicate_transactions = self._count_duplicates(normalized_df, source_id)
+
+            unique_transactions = total_transactions - duplicate_transactions
 
             # Calculate date range
             date_range = ("", "")
@@ -143,12 +132,8 @@ class StatementAnalyzerService:
                     # Split into debit (negative) and credit (positive)
                     debit_amounts = valid_amounts[valid_amounts < 0]
                     credit_amounts = valid_amounts[valid_amounts > 0]
-                    total_debit = (
-                        float(debit_amounts.sum()) if len(debit_amounts) > 0 else 0.0
-                    )
-                    total_credit = (
-                        float(credit_amounts.sum()) if len(credit_amounts) > 0 else 0.0
-                    )
+                    total_debit = float(debit_amounts.sum()) if len(debit_amounts) > 0 else 0.0
+                    total_credit = float(credit_amounts.sum()) if len(credit_amounts) > 0 else 0.0
 
             return {
                 "total_transactions": total_transactions,
@@ -171,3 +156,27 @@ class StatementAnalyzerService:
                 "total_debit": 0.0,
                 "total_credit": 0.0,
             }
+
+    def _count_duplicates(self, normalized_df, source_id):
+        processed_tx_ids = set()  # Track transaction IDs we've already matched as duplicates
+        duplicate_count = 0
+
+        for _, row in normalized_df.iterrows():
+            source_uuid = None
+            if source_id:
+                source_uuid = UUID(source_id) if isinstance(source_id, str) else source_id
+
+            matching_transactions = self.transaction_repo.find_matching_transactions(
+                date=row["date"] if isinstance(row["date"], str) else row["date"].strftime("%Y-%m-%d"),
+                description=row["description"],
+                amount=float(row["amount"]),
+                source_id=source_uuid,
+            )
+
+            for match in matching_transactions:
+                if match.id not in processed_tx_ids:
+                    processed_tx_ids.add(match.id)
+                    duplicate_count += 1
+                    break  # Only count one duplicate per file transaction
+
+        return duplicate_count

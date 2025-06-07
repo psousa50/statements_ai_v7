@@ -93,15 +93,12 @@ def build_internal_dependencies(external: ExternalDependencies) -> InternalDepen
     source_service = SourceService(source_repo)
     transaction_service = TransactionService(transaction_repo)
 
-    # Create rule-based categorization service with caching enabled
     rule_based_categorization_service = RuleBasedCategorizationService(
         repository=transaction_categorization_repo, enable_cache=True
     )
 
-    # Create background job service
     background_job_service = BackgroundJobService(background_job_repo)
 
-    # Create transaction processing orchestrator
     transaction_processing_orchestrator = TransactionProcessingOrchestrator(
         rule_based_categorization_service=rule_based_categorization_service,
         background_job_service=background_job_service,
@@ -122,6 +119,7 @@ def build_internal_dependencies(external: ExternalDependencies) -> InternalDepen
         transaction_normalizer=transaction_normalizer,
         uploaded_file_repo=uploaded_file_repo,
         file_analysis_metadata_repo=file_analysis_metadata_repo,
+        transaction_repo=transaction_repo,
     )
 
     statement_persistence_service = StatementPersistenceService(

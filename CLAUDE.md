@@ -108,3 +108,4 @@ When adding new features, follow existing patterns:
 
 - During development, the backend is always running with hot reload, so changes are reflected immediately.
 - When changing a behaviour, make sure you update the relevant tests to maintain coverage.
+- use the same format for the code as the rest of the codebase.

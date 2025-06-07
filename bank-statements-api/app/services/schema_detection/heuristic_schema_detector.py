@@ -61,7 +61,6 @@ class HeuristicSchemaDetector(SchemaDetectorProtocol):
         row_count = len(df)
 
         start_row = self._infer_data_start_row(df) + 1
-        start_row = min(start_row, row_count - 1)
         header_row = max(0, start_row - 1)
 
         if header_row == 0:
@@ -69,7 +68,7 @@ class HeuristicSchemaDetector(SchemaDetectorProtocol):
         else:
             header = df.iloc[header_row - 1].astype(str).tolist()
 
-        data_df = df.iloc[start_row:].reset_index(drop=True).copy()
+        data_df = df.iloc[start_row - 1 :].reset_index(drop=True).copy()
         data_df.columns = header
 
         column_map = self._infer_standard_columns(data_df)

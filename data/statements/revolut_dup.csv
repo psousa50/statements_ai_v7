@@ -1,0 +1,3 @@
+Type,Product,date,Completed Date,description,amount,Fee,Currency,State,Balance
+CARD_PAYMENT,Current,2023-06-12 18:46:45,2023-06-15 10:06:25,Airbnb,-1420.11,0,EUR,COMPLETED,560.16
+CARD_PAYMENT,Current,2023-06-12 18:46:45,2023-06-15 10:06:25,Airbnb,-1420.11,0,EUR,COMPLETED,560.16

@@ -45,10 +45,17 @@ class SQLAlchemyTransactionCategorizationRepository(TransactionCategorizationRep
         return result
 
     def create_rule(
-        self, normalized_description: str, category_id: UUID, source: CategorizationSource
+        self,
+        normalized_description: str,
+        category_id: UUID,
+        source: CategorizationSource,
     ) -> TransactionCategorization:
         """Create a new categorization rule"""
-        rule = TransactionCategorization(normalized_description=normalized_description, category_id=category_id, source=source)
+        rule = TransactionCategorization(
+            normalized_description=normalized_description,
+            category_id=category_id,
+            source=source,
+        )
         self.db_session.add(rule)
         self.db_session.commit()
         self.db_session.refresh(rule)
