@@ -77,8 +77,8 @@ export const Upload: React.FC = () => {
     const hasAmount = !!columnMapping.amount
     const hasDebitAndCredit = !!columnMapping.debit_amount && !!columnMapping.credit_amount
 
-    return !!columnMapping.date && (hasAmount || hasDebitAndCredit) && !!columnMapping.description
-  }, [columnMapping])
+    return !!columnMapping.date && (hasAmount || hasDebitAndCredit) && !!columnMapping.description && !!selectedSource
+  }, [columnMapping, selectedSource])
 
   // Handle finalize upload
   const handleFinalize = async () => {
@@ -177,7 +177,11 @@ export const Upload: React.FC = () => {
                 onDataStartRowIndexChange={setDataStartRowIndex}
               />
 
-              <ValidationMessages columnMapping={columnMapping} sampleData={analysisResult.sample_data} />
+              <ValidationMessages
+                columnMapping={columnMapping}
+                sampleData={analysisResult.sample_data}
+                selectedSource={selectedSource}
+              />
 
               <UploadFooter
                 isValid={isValid}
