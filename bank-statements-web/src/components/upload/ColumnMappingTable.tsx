@@ -82,29 +82,6 @@ export const ColumnMappingTable: React.FC<ColumnMappingTableProps> = ({
     return 'ignore'
   }
 
-  const handleRowClick = (rowIndex: number) => {
-    // Regular click to select header row
-    if (rowIndex < dataStartRowIndex) {
-      onHeaderRowIndexChange(rowIndex)
-    } else {
-      // If clicking on or after data start row, adjust data start row
-      onHeaderRowIndexChange(rowIndex)
-      const newDataStartRow = Math.min(rowIndex + 1, sampleData.length - 1)
-      onDataStartRowIndexChange(newDataStartRow)
-    }
-  }
-
-  const handleRowDoubleClick = (rowIndex: number) => {
-    // Double-click to select data start row
-    if (rowIndex > headerRowIndex) {
-      onDataStartRowIndexChange(rowIndex)
-    } else {
-      // If double-clicking on or before header row, adjust header row first
-      const newHeaderRow = Math.max(0, rowIndex - 1)
-      onHeaderRowIndexChange(newHeaderRow)
-      onDataStartRowIndexChange(rowIndex)
-    }
-  }
 
   // Display all rows including the first row with account information
   const renderTableRows = () => {
@@ -116,9 +93,6 @@ export const ColumnMappingTable: React.FC<ColumnMappingTableProps> = ({
       return (
         <TableRow
           key={rowIndex}
-          hover
-          onClick={() => handleRowClick(rowIndex)}
-          onDoubleClick={() => handleRowDoubleClick(rowIndex)}
           sx={{
             backgroundColor: isHeaderRow
               ? 'rgba(25, 118, 210, 0.3)'
@@ -127,7 +101,6 @@ export const ColumnMappingTable: React.FC<ColumnMappingTableProps> = ({
                 : 'inherit',
             fontWeight: isHeaderRow ? 'bold' : 'normal',
             color: '#000000',
-            cursor: 'pointer',
             // Override any zebra-striping for special rows only
             '&:nth-of-type(odd)': {
               backgroundColor: isHeaderRow
@@ -143,16 +116,48 @@ export const ColumnMappingTable: React.FC<ColumnMappingTableProps> = ({
                   ? 'rgba(76, 175, 80, 0.3)'
                   : '#ffffff',
             },
-            // Hover styles must come after zebra-striping to override them
-            '&:hover': {
-              backgroundColor: isHeaderRow
-                ? '#bbdefb !important'
-                : isDataStartRow
-                  ? '#c8e6c9 !important'
-                  : 'rgba(156, 39, 176, 0.1) !important',
-            },
           }}
         >
+          <TableCell
+            sx={{
+              color: '#000000',
+              padding: '4px 8px',
+              textAlign: 'center',
+              cursor: 'pointer',
+              fontSize: '0.75rem',
+              backgroundColor: isHeaderRow
+                ? 'rgba(25, 118, 210, 0.5)'
+                : isDataStartRow
+                  ? 'rgba(76, 175, 80, 0.5)'
+                  : 'inherit',
+              '&:hover': {
+                backgroundColor: 'rgba(156, 39, 176, 0.2)',
+              },
+            }}
+            onClick={(e) => {
+              e.stopPropagation()
+              // Regular click for header row
+              onHeaderRowIndexChange(rowIndex)
+              // If new header is at or after current data start, adjust data start
+              if (rowIndex >= dataStartRowIndex) {
+                const newDataStartRow = Math.min(rowIndex + 1, sampleData.length - 1)
+                onDataStartRowIndexChange(newDataStartRow)
+              }
+            }}
+            onContextMenu={(e) => {
+              e.preventDefault()
+              e.stopPropagation()
+              // Right-click for data start row
+              onDataStartRowIndexChange(rowIndex)
+              // If new data start is at or before current header, adjust header
+              if (rowIndex <= headerRowIndex) {
+                const newHeaderRow = Math.max(0, rowIndex - 1)
+                onHeaderRowIndexChange(newHeaderRow)
+              }
+            }}
+          >
+            {rowIndex + 1}
+          </TableCell>
           {columns.map((_, cellIndex) => {
             // Ensure we don't try to access cells that don't exist in this row
             const cellValue = cellIndex < row.length ? row[cellIndex] : ''
@@ -182,9 +187,8 @@ export const ColumnMappingTable: React.FC<ColumnMappingTableProps> = ({
         Column Mapping
       </Typography>
 
-      <Typography variant="body2" sx={{ mb: 3, color: 'text.secondary' }}>
-        Click on rows to select header row, double-click to select data start row: Header Row {headerRowIndex} (blue),
-        Data Start Row {dataStartRowIndex} (green).
+      <Typography variant="body2" sx={{ mb: 2, color: 'text.secondary' }}>
+        Click row numbers to set header, right-click for data start: H{headerRowIndex + 1} (blue), D{dataStartRowIndex + 1} (green)
       </Typography>
 
       {/* Sample Data Table with Column Selectors */}
@@ -200,6 +204,11 @@ export const ColumnMappingTable: React.FC<ColumnMappingTableProps> = ({
         >
           <TableHead>
             <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
+              <TableCell sx={{ backgroundColor: '#f5f5f5', padding: '8px', width: '60px' }}>
+                <Typography variant="body2" sx={{ fontWeight: 'bold', color: '#000000' }}>
+                  Row
+                </Typography>
+              </TableCell>
               {columns.map((columnIndex) => {
                 // Get the column name from the header row using props value, not metadata
                 const columnName =
