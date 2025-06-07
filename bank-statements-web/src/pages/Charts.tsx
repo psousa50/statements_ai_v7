@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react'
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts'
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts'
 import { useCategoryTotals } from '../services/hooks/useTransactions'
 import { useCategories } from '../services/hooks/useCategories'
 import { useSources } from '../services/hooks/useSources'
@@ -24,6 +24,8 @@ interface LabelProps {
   innerRadius: number
   outerRadius: number
   percent: number
+  name: string
+  value: number
 }
 
 const COLORS = [
@@ -331,26 +333,60 @@ export const ChartsPage = () => {
     setSelectedRootCategory(null)
   }, [])
 
-  const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }: LabelProps) => {
+  const renderCustomizedLabel = ({
+    cx,
+    cy,
+    midAngle,
+    innerRadius: _innerRadius,
+    outerRadius,
+    percent,
+    name,
+    value,
+  }: LabelProps) => {
     const RADIAN = Math.PI / 180
-    const radius = innerRadius + (outerRadius - innerRadius) * 0.5
+    // Position labels outside the pie chart
+    const radius = outerRadius + 30
     const x = cx + radius * Math.cos(-midAngle * RADIAN)
     const y = cy + radius * Math.sin(-midAngle * RADIAN)
 
-    if (percent < 0.05) return null // Don't show labels for slices less than 5%
+    if (percent < 0.03) return null // Don't show labels for slices less than 3%
+
+    const isRightSide = x > cx
+    const textAnchor = isRightSide ? 'start' : 'end'
 
     return (
-      <text
-        x={x}
-        y={y}
-        fill="white"
-        textAnchor={x > cx ? 'start' : 'end'}
-        dominantBaseline="central"
-        fontSize={12}
-        fontWeight="bold"
-      >
-        {`${(percent * 100).toFixed(0)}%`}
-      </text>
+      <g>
+        {/* Draw a line from the pie slice to the label */}
+        <path
+          d={`M${cx + (outerRadius + 5) * Math.cos(-midAngle * RADIAN)},${cy + (outerRadius + 5) * Math.sin(-midAngle * RADIAN)}L${cx + (outerRadius + 25) * Math.cos(-midAngle * RADIAN)},${cy + (outerRadius + 25) * Math.sin(-midAngle * RADIAN)}`}
+          stroke="var(--text-secondary)"
+          strokeWidth={1}
+          fill="none"
+        />
+        {/* Category name */}
+        <text
+          x={x}
+          y={y - 8}
+          fill="var(--text-primary)"
+          textAnchor={textAnchor}
+          dominantBaseline="central"
+          fontSize={12}
+          fontWeight="bold"
+        >
+          {name}
+        </text>
+        {/* Amount and percentage */}
+        <text
+          x={x}
+          y={y + 8}
+          fill="var(--text-secondary)"
+          textAnchor={textAnchor}
+          dominantBaseline="central"
+          fontSize={10}
+        >
+          ${value.toFixed(0)} ({(percent * 100).toFixed(1)}%)
+        </text>
+      </g>
     )
   }
 
@@ -474,15 +510,6 @@ export const ChartsPage = () => {
                     }}
                     itemStyle={{
                       color: 'var(--text-secondary)',
-                    }}
-                  />
-                  <Legend
-                    formatter={(value: string, entry: unknown) => {
-                      const payload = (entry as { payload: ChartData }).payload
-                      return `${value} ($${payload.value.toFixed(2)})`
-                    }}
-                    wrapperStyle={{
-                      color: 'var(--text-primary)',
                     }}
                   />
                 </PieChart>
