@@ -165,12 +165,21 @@ export const ColumnMappingTable: React.FC<ColumnMappingTableProps> = ({
             const cellValue = cellIndex < row.length ? row[cellIndex] : ''
             const columnType = getColumnType(cellIndex.toString())
             const isAssigned = columnType !== 'ignore'
+            const isAmountColumn = ['amount', 'credit_amount', 'debit_amount'].includes(columnType)
+
+            // Determine color for amount columns based on positive/negative value
+            const getAmountColor = () => {
+              if (!isAmountColumn || !cellValue) return theme.palette.text.primary
+              const numValue = parseFloat(cellValue.toString().replace(/[^-\d.]/g, ''))
+              if (isNaN(numValue)) return theme.palette.text.primary
+              return numValue < 0 ? theme.palette.error.main : theme.palette.success.main
+            }
 
             return (
               <TableCell
                 key={`${rowIndex}-${cellIndex}`}
                 sx={{
-                  color: theme.palette.text.primary,
+                  color: isAmountColumn ? getAmountColor() : theme.palette.text.primary,
                   whiteSpace: 'nowrap',
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
@@ -178,6 +187,7 @@ export const ColumnMappingTable: React.FC<ColumnMappingTableProps> = ({
                   backgroundColor: isAssigned ? theme.palette.info.main + '10' : 'inherit',
                   borderLeft: isAssigned ? `2px solid ${theme.palette.info.main}` : 'none',
                   borderRight: isAssigned ? `2px solid ${theme.palette.info.main}` : 'none',
+                  textAlign: isAmountColumn ? 'right' : 'left',
                 }}
               >
                 {cellValue || ''}
