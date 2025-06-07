@@ -252,12 +252,10 @@ export const ColumnMappingTable: React.FC<ColumnMappingTableProps> = ({
                         }}
                       >
                         <MenuItem value="date">Date</MenuItem>
+                        <MenuItem value="description">Description</MenuItem>
                         <MenuItem value="amount">Amount</MenuItem>
                         <MenuItem value="debit_amount">Debit Amount</MenuItem>
                         <MenuItem value="credit_amount">Credit Amount</MenuItem>
-                        <MenuItem value="description">Description</MenuItem>
-                        <MenuItem value="category">Category</MenuItem>
-                        <MenuItem value="balance">Balance</MenuItem>
                         <MenuItem value="ignore">Ignore</MenuItem>
                       </Select>
                     </FormControl>
