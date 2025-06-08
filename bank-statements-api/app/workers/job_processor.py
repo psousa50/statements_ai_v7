@@ -62,7 +62,9 @@ class JobProcessor:
         logger.info(f"Job processor completed. Processed {processed_count} jobs.")
         return processed_count
 
-    async def _process_single_job_by_id(self, job_id: UUID, job_type: JobType, job_progress: dict) -> None:
+    async def _process_single_job_by_id(
+        self, job_id: UUID, job_type: JobType, job_progress: dict
+    ) -> None:
         """Process a single background job based on its type using job ID"""
 
         if job_type == JobType.AI_CATEGORIZATION:
@@ -70,7 +72,9 @@ class JobProcessor:
         else:
             raise ValueError(f"Unknown job type: {job_type}")
 
-    async def _process_ai_categorization_job_by_id(self, job_id: UUID, job_progress: dict) -> None:
+    async def _process_ai_categorization_job_by_id(
+        self, job_id: UUID, job_progress: dict
+    ) -> None:
         """
         Process an AI categorization job using job ID.
 
@@ -80,7 +84,9 @@ class JobProcessor:
 
         try:
             # Extract transaction IDs from job progress
-            unmatched_transaction_ids = job_progress.get("unmatched_transaction_ids", [])
+            unmatched_transaction_ids = job_progress.get(
+                "unmatched_transaction_ids", []
+            )
             if not unmatched_transaction_ids:
                 raise ValueError("No unmatched transaction IDs found in job progress")
 
@@ -89,15 +95,20 @@ class JobProcessor:
 
             # Verify transactions exist (but don't hold onto the objects)
             total_transactions = len(transaction_ids)
-            logger.info(f"Processing {total_transactions} transactions for AI categorization")
+            logger.info(
+                f"Processing {total_transactions} transactions for AI categorization"
+            )
 
             # Process transactions in batches using IDs
             total_processed = 0
             successful_categorizations = 0
             failed_categorizations = 0
 
-            batch_size = 5  # Process 5 transactions at a time
-            batches = [transaction_ids[i : i + batch_size] for i in range(0, len(transaction_ids), batch_size)]
+            batch_size = 20  # Process 5 transactions at a time
+            batches = [
+                transaction_ids[i : i + batch_size]
+                for i in range(0, len(transaction_ids), batch_size)
+            ]
 
             for batch_idx, batch_ids in enumerate(batches):
                 # Update progress
@@ -108,18 +119,22 @@ class JobProcessor:
                     total_transactions=total_transactions,
                     phase="AI_CATEGORIZING",
                 )
-                self.internal.background_job_service.update_job_progress(job_id, progress)
+                self.internal.background_job_service.update_job_progress(
+                    job_id, progress
+                )
 
-                # Process batch by ID
-                for transaction_id in batch_ids:
-                    try:
-                        await self._categorize_single_transaction_by_id(transaction_id)
-                        successful_categorizations += 1
-                    except Exception as e:
-                        logger.warning(f"Failed to categorize transaction {transaction_id}: {e}")
-                        failed_categorizations += 1
-
-                    total_processed += 1
+                # Process entire batch at once
+                try:
+                    batch_results = await self._categorize_transaction_batch_by_ids(
+                        batch_ids
+                    )
+                    successful_categorizations += batch_results["successful"]
+                    failed_categorizations += batch_results["failed"]
+                    total_processed += len(batch_ids)
+                except Exception as e:
+                    logger.warning(f"Failed to categorize batch: {e}")
+                    failed_categorizations += len(batch_ids)
+                    total_processed += len(batch_ids)
 
                 # Small delay between batches to avoid overwhelming the system
                 await asyncio.sleep(0.1)
@@ -178,11 +193,192 @@ class JobProcessor:
         job_id = job.id
         self._mark_job_failed_by_id(job_id, error_message)
 
+    async def _categorize_transaction_batch_by_ids(
+        self, transaction_ids: List[UUID]
+    ) -> dict:
+        """
+        Categorize a batch of transactions using AI.
+
+        Returns:
+            Dict with 'successful' and 'failed' counts
+        """
+        # Fetch all transactions in the batch
+        transactions = self._get_transactions_by_ids(transaction_ids)
+
+        if not transactions:
+            logger.warning(f"No transactions found for batch: {transaction_ids}")
+            return {"successful": 0, "failed": len(transaction_ids)}
+
+        # If some transactions weren't found, log the discrepancy
+        if len(transactions) != len(transaction_ids):
+            logger.warning(
+                f"Expected {len(transaction_ids)} transactions, but found {len(transactions)}"
+            )
+
+        try:
+            # Call the categorizer with the entire batch
+            categorization_results = self.internal.transaction_categorization_service.transaction_categorizer.categorize(
+                transactions
+            )
+
+            successful_count = 0
+            failed_count = 0
+
+            # Process results for each transaction
+            for i, transaction in enumerate(transactions):
+                try:
+                    if i < len(categorization_results):
+                        result = categorization_results[i]
+
+                        if (
+                            result.status == CategorizationStatus.CATEGORIZED
+                            and result.category_id
+                        ):
+                            # Fetch fresh transaction from database to ensure it's attached to session
+                            fresh_transaction = self.internal.transaction_service.transaction_repository.get_by_id(
+                                transaction.id
+                            )
+                            if not fresh_transaction:
+                                logger.warning(
+                                    f"Transaction {transaction.id} not found when trying to update"
+                                )
+                                failed_count += 1
+                                continue
+
+                            # Update transaction with categorization result
+                            fresh_transaction.category_id = result.category_id
+                            fresh_transaction.categorization_status = result.status
+                            if result.confidence:
+                                fresh_transaction.categorization_confidence = (
+                                    result.confidence
+                                )
+
+                            # Save to database
+                            self.internal.transaction_service.transaction_repository.update(
+                                fresh_transaction
+                            )
+
+                            # Create categorization rule for future use
+                            try:
+                                # Check if rule already exists to avoid duplicate key errors
+                                existing_rule = self.internal.transaction_categorization_repository.get_rule_by_normalized_description(
+                                    fresh_transaction.normalized_description
+                                )
+                                if not existing_rule:
+                                    self.internal.transaction_categorization_repository.create_rule(
+                                        normalized_description=fresh_transaction.normalized_description,
+                                        category_id=result.category_id,
+                                        source=CategorizationSource.AI,
+                                    )
+                                    logger.debug(
+                                        f"Created AI categorization rule: {fresh_transaction.normalized_description} -> {result.category_id}"
+                                    )
+                                else:
+                                    logger.debug(
+                                        f"Categorization rule already exists for: {fresh_transaction.normalized_description}"
+                                    )
+                            except Exception as e:
+                                # Don't fail the transaction categorization if rule creation fails
+                                logger.warning(
+                                    f"Failed to create categorization rule for {fresh_transaction.normalized_description}: {e}"
+                                )
+
+                            successful_count += 1
+                            logger.debug(
+                                f"Categorized transaction {fresh_transaction.id} as {result.category_id} "
+                                f"(confidence: {result.confidence:.2f})"
+                                if result.confidence
+                                else f"Categorized transaction {fresh_transaction.id} as {result.category_id}"
+                            )
+                        else:
+                            # Fetch fresh transaction to ensure it's attached to session
+                            fresh_transaction = self.internal.transaction_service.transaction_repository.get_by_id(
+                                transaction.id
+                            )
+                            if fresh_transaction:
+                                # Mark transaction as failed categorization
+                                fresh_transaction.categorization_status = (
+                                    CategorizationStatus.FAILURE
+                                )
+                                self.internal.transaction_service.transaction_repository.update(
+                                    fresh_transaction
+                                )
+                            failed_count += 1
+                            logger.warning(
+                                f"AI categorization failed for transaction {transaction.id}: {result.error_message}"
+                            )
+                    else:
+                        # No result for this transaction - fetch fresh transaction to ensure session attachment
+                        fresh_transaction = self.internal.transaction_service.transaction_repository.get_by_id(
+                            transaction.id
+                        )
+                        if fresh_transaction:
+                            fresh_transaction.categorization_status = (
+                                CategorizationStatus.FAILURE
+                            )
+                            self.internal.transaction_service.transaction_repository.update(
+                                fresh_transaction
+                            )
+                        failed_count += 1
+                        logger.warning(
+                            f"AI categorization failed for transaction {transaction.id}: No result returned"
+                        )
+
+                except Exception as e:
+                    # Mark transaction as failed categorization - fetch fresh transaction to ensure session attachment
+                    fresh_transaction = self.internal.transaction_service.transaction_repository.get_by_id(
+                        transaction.id
+                    )
+                    if fresh_transaction:
+                        fresh_transaction.categorization_status = (
+                            CategorizationStatus.FAILURE
+                        )
+                        self.internal.transaction_service.transaction_repository.update(
+                            fresh_transaction
+                        )
+                    failed_count += 1
+                    logger.warning(
+                        f"Failed to process categorization result for transaction {transaction.id}: {e}"
+                    )
+
+            # Account for any transactions that weren't found
+            failed_count += len(transaction_ids) - len(transactions)
+
+            return {"successful": successful_count, "failed": failed_count}
+
+        except Exception as e:
+            logger.error(
+                f"Batch categorization failed for {len(transactions)} transactions: {e}"
+            )
+            # Mark all transactions as failed - fetch fresh transactions to ensure session attachment
+            for transaction in transactions:
+                try:
+                    fresh_transaction = self.internal.transaction_service.transaction_repository.get_by_id(
+                        transaction.id
+                    )
+                    if fresh_transaction:
+                        fresh_transaction.categorization_status = (
+                            CategorizationStatus.FAILURE
+                        )
+                        self.internal.transaction_service.transaction_repository.update(
+                            fresh_transaction
+                        )
+                except Exception as update_error:
+                    logger.error(
+                        f"Failed to mark transaction {transaction.id} as failed: {update_error}"
+                    )
+
+            return {"successful": 0, "failed": len(transaction_ids)}
+
     async def _categorize_single_transaction_by_id(self, transaction_id: UUID) -> None:
         """Categorize a single transaction using AI by fetching fresh transaction"""
 
         # Fetch fresh transaction from database
-        transaction = self.internal.transaction_service.transaction_repository.get_by_id(transaction_id)
+        transaction = (
+            self.internal.transaction_service.transaction_repository.get_by_id(
+                transaction_id
+            )
+        )
         if not transaction:
             raise ValueError(f"Transaction {transaction_id} not found")
 
@@ -202,7 +398,9 @@ class JobProcessor:
                     transaction.categorization_confidence = result.confidence
 
                 # Save to database
-                self.internal.transaction_service.transaction_repository.update(transaction)
+                self.internal.transaction_service.transaction_repository.update(
+                    transaction
+                )
 
                 # Create categorization rule for future use
                 try:
@@ -220,10 +418,14 @@ class JobProcessor:
                             f"Created AI categorization rule: {transaction.normalized_description} -> {result.category_id}"
                         )
                     else:
-                        logger.debug(f"Categorization rule already exists for: {transaction.normalized_description}")
+                        logger.debug(
+                            f"Categorization rule already exists for: {transaction.normalized_description}"
+                        )
                 except Exception as e:
                     # Don't fail the transaction categorization if rule creation fails
-                    logger.warning(f"Failed to create categorization rule for {transaction.normalized_description}: {e}")
+                    logger.warning(
+                        f"Failed to create categorization rule for {transaction.normalized_description}: {e}"
+                    )
 
                 logger.debug(
                     f"Categorized transaction {transaction.id} as {result.category_id} "
@@ -232,13 +434,19 @@ class JobProcessor:
                     else f"Categorized transaction {transaction.id} as {result.category_id}"
                 )
             else:
-                logger.warning(f"AI categorization failed for transaction {transaction.id}: {result.error_message}")
+                logger.warning(
+                    f"AI categorization failed for transaction {transaction.id}: {result.error_message}"
+                )
                 # Mark transaction as failed categorization
                 transaction.categorization_status = CategorizationStatus.FAILURE
-                self.internal.transaction_service.transaction_repository.update(transaction)
+                self.internal.transaction_service.transaction_repository.update(
+                    transaction
+                )
                 raise ValueError(f"AI categorization failed: {result.error_message}")
         else:
-            logger.warning(f"AI categorization failed for transaction {transaction.id}: No results returned")
+            logger.warning(
+                f"AI categorization failed for transaction {transaction.id}: No results returned"
+            )
             # Mark transaction as failed categorization
             transaction.categorization_status = CategorizationStatus.FAILURE
             self.internal.transaction_service.transaction_repository.update(transaction)
@@ -250,11 +458,17 @@ class JobProcessor:
         # Use the ID-based method to avoid session issues
         await self._categorize_single_transaction_by_id(transaction.id)
 
-    def _get_transactions_by_ids(self, transaction_ids: List[UUID]) -> List[Transaction]:
+    def _get_transactions_by_ids(
+        self, transaction_ids: List[UUID]
+    ) -> List[Transaction]:
         """Get transactions by their IDs"""
         transactions = []
         for transaction_id in transaction_ids:
-            transaction = self.internal.transaction_service.transaction_repository.get_by_id(transaction_id)
+            transaction = (
+                self.internal.transaction_service.transaction_repository.get_by_id(
+                    transaction_id
+                )
+            )
             if transaction:
                 transactions.append(transaction)
         return transactions
