@@ -44,13 +44,13 @@ class TestLLMSchemaDetector:
 
         result = detector.detect_schema(df)
 
-        assert result.column_map == {
+        assert result.column_mapping == {
             "date": "Date",
             "amount": "Amount",
             "description": "Description",
         }
-        assert result.header_row == 0
-        assert result.start_row == 1
+        assert result.header_row_index == 0
+        assert result.data_start_row_index == 1
         assert llm_client.last_prompt is not None
 
     def test_detect_schema_with_fenced_json(self):
@@ -80,13 +80,13 @@ class TestLLMSchemaDetector:
 
         result = detector.detect_schema(df)
 
-        assert result.column_map == {
+        assert result.column_mapping == {
             "date": "Transaction Date",
             "amount": "Value (EUR)",
             "description": "Transaction Details",
         }
-        assert result.header_row == 2
-        assert result.start_row == 3
+        assert result.header_row_index == 2
+        assert result.data_start_row_index == 3
 
     def test_invalid_llm_response(self):
         llm_response = "This is not valid JSON"

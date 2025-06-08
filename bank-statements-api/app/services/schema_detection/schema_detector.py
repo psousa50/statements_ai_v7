@@ -6,9 +6,9 @@ import pandas as pd
 
 @dataclass
 class ConversionModel:
-    column_map: Dict[str, str]
-    header_row: int
-    start_row: int
+    column_mapping: Dict[str, str]
+    header_row_index: int
+    data_start_row_index: int
 
 
 class SchemaDetectorProtocol:

@@ -72,9 +72,9 @@ class HeuristicSchemaDetector(SchemaDetectorProtocol):
         column_map = self._infer_standard_columns(data_df)
 
         return ConversionModel(
-            column_map=column_map,
-            header_row=header_row,
-            start_row=start_row,
+            column_mapping=column_map,
+            header_row_index=header_row,
+            data_start_row_index=start_row,
         )
 
     def _infer_data_start_row(self, df: pd.DataFrame) -> int:

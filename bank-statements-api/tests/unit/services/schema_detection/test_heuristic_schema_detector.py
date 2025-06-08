@@ -26,9 +26,9 @@ class TestHeuristicSchemaDetector:
         data = pd.read_csv(io.StringIO(content))
         conversion_model = detector.detect_schema(data)
 
-        assert conversion_model.header_row == 0
-        assert conversion_model.start_row == 1
-        assert conversion_model.column_map == {
+        assert conversion_model.header_row_index == 0
+        assert conversion_model.data_start_row_index == 1
+        assert conversion_model.column_mapping == {
             "date": "Date",
             "description": "Description",
             "amount": "Amount",
@@ -46,9 +46,9 @@ class TestHeuristicSchemaDetector:
         data = pd.read_csv(io.StringIO(content))
         conversion_model = detector.detect_schema(data)
 
-        assert conversion_model.header_row == 1
-        assert conversion_model.start_row == 2
-        assert conversion_model.column_map == {
+        assert conversion_model.header_row_index == 1
+        assert conversion_model.data_start_row_index == 2
+        assert conversion_model.column_mapping == {
             "date": "Data",
             "description": "Descricao",
             "amount": "Valor",
@@ -65,9 +65,9 @@ class TestHeuristicSchemaDetector:
         data = pd.read_csv(io.StringIO(content))
         conversion_model = detector.detect_schema(data)
 
-        assert conversion_model.header_row == 0
-        assert conversion_model.start_row == 1
-        assert conversion_model.column_map == {
+        assert conversion_model.header_row_index == 0
+        assert conversion_model.data_start_row_index == 1
+        assert conversion_model.column_mapping == {
             "date": "Data",
             "description": "Descricao",
             "amount": "Valor",
@@ -92,9 +92,9 @@ class TestHeuristicSchemaDetector:
         data = pd.read_csv(io.StringIO(content))
         conversion_model = detector.detect_schema(data)
 
-        assert conversion_model.header_row == 7
-        assert conversion_model.start_row == 8
-        assert conversion_model.column_map == {
+        assert conversion_model.header_row_index == 7
+        assert conversion_model.data_start_row_index == 8
+        assert conversion_model.column_mapping == {
             "date": "Data Lanc.",
             "description": "Descrição",
             "amount": "Valor",

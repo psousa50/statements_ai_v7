@@ -40,9 +40,9 @@ class StatementAnalyzerService:
 
         if existing_metadata:
             conversion_model = ConversionModel(
-                column_map=existing_metadata.column_mapping,
-                header_row=existing_metadata.header_row_index,
-                start_row=existing_metadata.data_start_row_index,
+                column_mapping=existing_metadata.column_mapping,
+                header_row_index=existing_metadata.header_row_index,
+                data_start_row_index=existing_metadata.data_start_row_index,
             )
         else:
             conversion_model = self.schema_detector.detect_schema(raw_df)
@@ -54,9 +54,9 @@ class StatementAnalyzerService:
 
         transaction_stats = self._calculate_transaction_statistics(
             raw_df,
-            conversion_model.column_map,
-            conversion_model.header_row,
-            conversion_model.start_row,
+            conversion_model.column_mapping,
+            conversion_model.header_row_index,
+            conversion_model.data_start_row_index,
             existing_metadata.source_id if existing_metadata else None,
         )
 
@@ -65,9 +65,9 @@ class StatementAnalyzerService:
         return AnalysisResultDTO(
             uploaded_file_id=uploaded_file_id,
             file_type=file_type,
-            column_mapping=conversion_model.column_map,
-            header_row_index=conversion_model.header_row,
-            data_start_row_index=conversion_model.start_row,
+            column_mapping=conversion_model.column_mapping,
+            header_row_index=conversion_model.header_row_index,
+            data_start_row_index=conversion_model.data_start_row_index,
             sample_data=sample_data,
             source_id=source_id,
             **transaction_stats,  # Unpack the statistics dictionary

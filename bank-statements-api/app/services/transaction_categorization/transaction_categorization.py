@@ -16,16 +16,13 @@ class TransactionCategorizationService:
         self.transaction_categorizer: TransactionCategorizer = transaction_categorizer
 
     def process_uncategorized_transactions_detailed(self, batch_size: int = 10) -> BatchCategorizationResult:
-        """Process uncategorized transactions using the new batch interface with detailed results"""
         transactions: List[Transaction] = self.transaction_repository.get_oldest_uncategorized(limit=batch_size)
 
         if not transactions:
             return BatchCategorizationResult(results=[], total_processed=0, successful_count=0, failed_count=0)
 
-        # Use the new batch categorization interface
         categorization_results: List[CategorizationResult] = self.transaction_categorizer.categorize(transactions)
 
-        # Update transactions based on categorization results
         for result in categorization_results:
             transaction = next((t for t in transactions if t.id == result.transaction_id), None)
             if transaction:

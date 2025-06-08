@@ -65,7 +65,7 @@ def schema_detection_prompt(df: pd.DataFrame) -> str:
 From this bank statement excerpt, extract the column map and header information in the following format:
 
 {{
-  "column_map": {{
+  "column_mapping": {{
     "date": "<column name for date>",
     "description": "<column name for description>",
     "amount": "<column name for amount>",
@@ -74,15 +74,15 @@ From this bank statement excerpt, extract the column map and header information 
     "currency": "<column name for currency>",
     "balance": "<column name for balance>"
   }},
-  "header_row": <0-based index of the header row>,
-  "start_row": <0-based index of the first row of actual transaction data>
+  "header_row_index": <0-based index of the header row>,
+  "data_start_row_index": <0-based index of the first row of actual transaction data>
 }}
 
 Guidelines:
 	•	Only use actual column names from the transaction table header row (not metadata or sample values).
 	•	If a field is missing (e.g. no currency column), set its value to an empty string: "".
-	•	header_row is the 0-based index of the row where the column headers (like "Date", "Description", etc.) appear.
-	•	start_row is the 0-based index of the first row after the header that contains actual transaction data.
+	•	header_row_index is the 0-based index of the row where the column headers (like "Date", "Description", etc.) appear.
+	•	data_start_row_index is the 0-based index of the first row after the header that contains actual transaction data.
 	•	Do not guess or generate column names—only use what's present in the header row.
 	•	Only output valid JSON matching the format above. No explanations. No extra text.
 	•	Transaction rows contain actual dates and amounts; ignore rows that have empty fields, labels, or static information.
@@ -109,8 +109,8 @@ Transaction Date,Value Date,Details,Amount,Balance
     "currency": "",
     "balance": "Balance"
   }},
-  "header_row": 4,
-  "start_row": 5
+  "header_row_index": 4,
+  "data_start_row_index": 5
 }}
 
 

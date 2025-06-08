@@ -25,13 +25,13 @@ class TestStatementAnalyzerService:
 
         schema_detector = MagicMock()
         schema_detector.detect_schema.return_value = ConversionModel(
-            column_map={
+            column_mapping={
                 "date": "Date",
                 "amount": "Amount",
                 "description": "Description",
             },
-            header_row=0,
-            start_row=1,
+            header_row_index=0,
+            data_start_row_index=1,
         )
 
         transaction_normalizer = MagicMock()
@@ -114,13 +114,13 @@ class TestStatementAnalyzerService:
 
         schema_detector = MagicMock()
         schema_detector.detect_schema.return_value = ConversionModel(
-            column_map={
+            column_mapping={
                 "date": "Date",
                 "amount": "Amount",
                 "description": "Description",
             },
-            header_row=0,
-            start_row=1,
+            header_row_index=0,
+            data_start_row_index=1,
         )
 
         transaction_normalizer = MagicMock()
@@ -204,13 +204,13 @@ class TestStatementAnalyzerService:
 
         schema_detector = MagicMock()
         schema_detector.detect_schema.return_value = ConversionModel(
-            column_map={
+            column_mapping={
                 "date": "Date",
                 "amount": "Amount",
                 "description": "Description",
             },
-            header_row=0,
-            start_row=1,
+            header_row_index=0,
+            data_start_row_index=1,
         )
 
         transaction_normalizer = MagicMock()
@@ -299,13 +299,13 @@ class TestStatementAnalyzerService:
 
         schema_detector = MagicMock()
         schema_detector.detect_schema.return_value = ConversionModel(
-            column_map={
+            column_mapping={
                 "date": "Date",
                 "amount": "Amount",
                 "description": "Description",
             },
-            header_row=0,
-            start_row=1,
+            header_row_index=0,
+            data_start_row_index=1,
         )
 
         transaction_normalizer = MagicMock()
@@ -379,13 +379,13 @@ class TestStatementAnalyzerService:
 
         schema_detector = MagicMock()
         schema_detector.detect_schema.return_value = ConversionModel(
-            column_map={
+            column_mapping={
                 "date": "Date",
                 "amount": "Amount",
                 "description": "Description",
             },
-            header_row=0,
-            start_row=1,
+            header_row_index=0,
+            data_start_row_index=1,
         )
 
         transaction_normalizer = MagicMock()
@@ -441,13 +441,13 @@ class TestStatementAnalyzerService:
         statement_parser = MagicMock()
         schema_detector = MagicMock()
         schema_detector.detect_schema.return_value = ConversionModel(
-            column_map={
+            column_mapping={
                 "date": "Date",
                 "amount": "Amount",
                 "description": "Description",
             },
-            header_row=0,
-            start_row=1,
+            header_row_index=0,
+            data_start_row_index=1,
         )
 
         transaction_normalizer = MagicMock()
