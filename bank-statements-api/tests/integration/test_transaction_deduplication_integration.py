@@ -55,7 +55,7 @@ def llm_client():
     # Mock schema detection response
     llm_client.generate.return_value = """
     {
-        "column_map": {
+        "column_mapping": {
             "date": "Date",
             "amount": "Amount", 
             "description": "Description"

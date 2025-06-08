@@ -55,13 +55,13 @@ def llm_client():
     llm_client = MagicMock()
     llm_client.generate.return_value = """
     {
-        "column_map": {
+        "column_mapping": {
             "date": "Data",
             "amount": "Valor",
             "description": "Descricao"
         },
-        "header_row": 1,
-        "start_row": 3
+        "header_row_index": 1,
+        "data_start_row_index": 3
     }
     """
     return llm_client

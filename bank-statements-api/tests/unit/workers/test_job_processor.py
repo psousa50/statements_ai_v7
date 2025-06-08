@@ -4,7 +4,7 @@ from uuid import uuid4
 import pytest
 
 from app.domain.models.background_job import BackgroundJob, JobStatus, JobType
-from app.domain.models.transaction import CategorizationStatus, Transaction
+from app.domain.models.transaction import Transaction
 from app.workers.job_processor import JobProcessor, process_pending_jobs
 
 
@@ -91,18 +91,29 @@ class TestJobProcessor:
             None,
         ]
 
-        # Mock transaction retrieval
-        def mock_get_by_id(transaction_id):
-            return next((t for t in sample_transactions if t.id == transaction_id), None)
+        # Mock the new batch categorization method
+        async def mock_categorize_batch_by_ids(transaction_ids, progress_callback=None, batch_size=20):
+            if progress_callback:
+                # Simulate progress callback
+                from app.domain.models.processing import ProcessingProgress
 
-        mock_internal.transaction_service.transaction_repository.get_by_id.side_effect = mock_get_by_id
+                progress = ProcessingProgress(
+                    current_batch=1,
+                    total_batches=1,
+                    processed_transactions=len(transaction_ids),
+                    total_transactions=len(transaction_ids),
+                    phase="AI_CATEGORIZING",
+                )
+                progress_callback(progress)
 
-        # Mock AI categorization
-        mock_result = Mock()
-        mock_result.status = CategorizationStatus.CATEGORIZED
-        mock_result.category_id = uuid4()
-        mock_result.confidence = 0.85
-        mock_internal.transaction_categorization_service.transaction_categorizer.categorize.return_value = [mock_result]
+            return {
+                "total_processed": len(transaction_ids),
+                "successfully_categorized": len(transaction_ids),
+                "failed_categorizations": 0,
+                "processing_time_ms": 100,
+            }
+
+        mock_internal.transaction_categorization_service.categorize_batch_by_ids = mock_categorize_batch_by_ids
 
         # Execute
         result = await job_processor.process_pending_jobs()
@@ -120,108 +131,50 @@ class TestJobProcessor:
             None,
         ]
 
-        # Mock failure - no transactions found
-        mock_internal.transaction_service.transaction_repository.get_by_id.return_value = None
+        # Mock failure - no transactions found exception
+        async def mock_categorize_batch_by_ids_failure(transaction_ids, progress_callback=None, batch_size=20):
+            raise ValueError("No unmatched transaction IDs found in job progress")
+
+        mock_internal.transaction_categorization_service.categorize_batch_by_ids = mock_categorize_batch_by_ids_failure
 
         # Execute
         result = await job_processor.process_pending_jobs()
 
         # Assert
         assert result == 1  # Job was processed (though it failed)
-        # Since transactions don't exist, the job should complete successfully with warnings
-        # but not be marked as failed - this is the new behavior
-
-    @pytest.mark.asyncio
-    async def test_categorize_single_transaction_success(self, job_processor, mock_internal, sample_transactions):
-        """Test successful categorization of a single transaction"""
-        # Setup
-        transaction = sample_transactions[0]
-        mock_result = Mock()
-        mock_result.status = CategorizationStatus.CATEGORIZED
-        mock_result.category_id = uuid4()
-        mock_result.confidence = 0.92
-
-        # Mock transaction retrieval
-        mock_internal.transaction_service.transaction_repository.get_by_id.return_value = transaction
-
-        # Mock the transaction_categorizer.categorize method
-        mock_internal.transaction_categorization_service.transaction_categorizer.categorize.return_value = [mock_result]
-
-        # Mock the rule checking to return None (no existing rule)
-        mock_internal.transaction_categorization_repository.get_rule_by_normalized_description.return_value = None
-
-        # Execute - use the new method with ID
-        await job_processor._categorize_single_transaction_by_id(transaction.id)
-
-        # Assert - verify transaction was updated via repository
-        mock_internal.transaction_service.transaction_repository.update.assert_called_once()
-        # Verify categorization rule was created
-        mock_internal.transaction_categorization_repository.create_rule.assert_called_once()
-
-    @pytest.mark.asyncio
-    async def test_categorize_single_transaction_failure(self, job_processor, mock_internal, sample_transactions):
-        """Test handling of AI categorization failure"""
-        # Setup
-        transaction = sample_transactions[0]
-        mock_internal.transaction_service.transaction_repository.get_by_id.return_value = transaction
-
-        # Mock empty results to trigger failure
-        mock_internal.transaction_categorization_service.transaction_categorizer.categorize.return_value = []
-
-        # Execute & Assert - the new method should raise an exception for failures
-        with pytest.raises(ValueError, match="AI categorization returned no results"):
-            await job_processor._categorize_single_transaction_by_id(transaction.id)
-
-        # Verify transaction repository was called to mark the transaction as failed
-        mock_internal.transaction_service.transaction_repository.update.assert_called_once()
-
-    def test_get_transactions_by_ids(self, job_processor, mock_internal, sample_transactions):
-        """Test retrieving transactions by their IDs"""
-        # Setup
-        transaction_ids = [t.id for t in sample_transactions]
-
-        def mock_get_by_id(transaction_id):
-            return next((t for t in sample_transactions if t.id == transaction_id), None)
-
-        mock_internal.transaction_service.transaction_repository.get_by_id.side_effect = mock_get_by_id
-
-        # Execute
-        result = job_processor._get_transactions_by_ids(transaction_ids)
-
-        # Assert
-        assert len(result) == len(sample_transactions)
-        assert all(t in sample_transactions for t in result)
-
-    def test_get_transactions_by_ids_missing(self, job_processor, mock_internal):
-        """Test retrieving transactions when some don't exist"""
-        # Setup
-        transaction_ids = [uuid4(), uuid4(), uuid4()]
-        mock_internal.transaction_service.transaction_repository.get_by_id.return_value = None
-
-        # Execute
-        result = job_processor._get_transactions_by_ids(transaction_ids)
-
-        # Assert
-        assert len(result) == 0
+        # Job should be marked as failed due to the exception
+        mock_internal.background_job_service.mark_job_failed.assert_called_once()
 
     @pytest.mark.asyncio
     async def test_ai_categorization_job_progress_updates(self, job_processor, mock_internal, sample_job, sample_transactions):
         """Test that progress updates are sent during AI categorization"""
 
-        # Setup
-        def mock_get_by_id(transaction_id):
-            return next((t for t in sample_transactions if t.id == transaction_id), None)
+        # Mock the new batch categorization method with progress callback
+        async def mock_categorize_batch_by_ids(transaction_ids, progress_callback=None, batch_size=20):
+            if progress_callback:
+                # Simulate progress callback
+                from app.domain.models.processing import ProcessingProgress
 
-        mock_internal.transaction_service.transaction_repository.get_by_id.side_effect = mock_get_by_id
+                progress = ProcessingProgress(
+                    current_batch=1,
+                    total_batches=1,
+                    processed_transactions=len(transaction_ids),
+                    total_transactions=len(transaction_ids),
+                    phase="AI_CATEGORIZING",
+                )
+                progress_callback(progress)
 
-        mock_result = Mock()
-        mock_result.status = CategorizationStatus.CATEGORIZED
-        mock_result.category_id = uuid4()
-        mock_result.confidence = 0.85
-        mock_internal.transaction_categorization_service.transaction_categorizer.categorize.return_value = [mock_result]
+            return {
+                "total_processed": len(transaction_ids),
+                "successfully_categorized": len(transaction_ids),
+                "failed_categorizations": 0,
+                "processing_time_ms": 100,
+            }
+
+        mock_internal.transaction_categorization_service.categorize_batch_by_ids = mock_categorize_batch_by_ids
 
         # Execute
-        await job_processor._process_ai_categorization_job(sample_job)
+        await job_processor._process_ai_categorization_job_by_id(sample_job.id, sample_job.progress)
 
         # Assert
         mock_internal.background_job_service.update_job_progress.assert_called()

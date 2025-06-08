@@ -69,10 +69,10 @@ class HeuristicSchemaDetector(SchemaDetectorProtocol):
         data_df = df.iloc[start_row - 1 :].reset_index(drop=True).copy()
         data_df.columns = header
 
-        column_map = self._infer_standard_columns(data_df)
+        column_mapping = self._infer_standard_columns(data_df)
 
         return ConversionModel(
-            column_mapping=column_map,
+            column_mapping=column_mapping,
             header_row_index=header_row,
             data_start_row_index=start_row,
         )

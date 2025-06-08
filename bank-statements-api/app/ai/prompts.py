@@ -100,7 +100,7 @@ Transaction Date,Value Date,Details,Amount,Balance
 ---------------------------------------------------------
 
 {{
-  "column_map": {{
+  "column_mapping": {{
     "date": "Transaction Date",
     "description": "Details",
     "amount": "Amount",

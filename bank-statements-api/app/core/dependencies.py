@@ -110,6 +110,7 @@ def build_internal_dependencies(external: ExternalDependencies) -> InternalDepen
     transaction_categorization_service = TransactionCategorizationService(
         transaction_repository=transaction_repo,
         transaction_categorizer=transaction_categorizer,
+        transaction_categorization_repository=transaction_categorization_repo,
     )
 
     statement_analyzer_service = StatementAnalyzerService(

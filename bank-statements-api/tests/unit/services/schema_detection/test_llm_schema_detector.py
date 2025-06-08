@@ -22,13 +22,13 @@ class TestLLMSchemaDetector:
     def test_detect_schema_with_llm(self):
         llm_response = """
         {
-            "column_map": {
+            "column_mapping": {
                 "date": "Date",
                 "amount": "Amount",
                 "description": "Description"
             },
-            "header_row": 0,
-            "start_row": 1
+            "header_row_index": 0,
+            "data_start_row_index": 1
         }
         """
         llm_client = MockLLMClient(llm_response)
@@ -57,13 +57,13 @@ class TestLLMSchemaDetector:
         llm_response = """
         ```json
         {
-            "column_map": {
+            "column_mapping": {
                 "date": "Transaction Date",
                 "amount": "Value (EUR)",
                 "description": "Transaction Details"
             },
-            "header_row": 2,
-            "start_row": 3
+            "header_row_index": 2,
+            "data_start_row_index": 3
         }
         ```
         """

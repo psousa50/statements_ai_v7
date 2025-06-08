@@ -6,6 +6,7 @@ from app.domain.models.categorization import BatchCategorizationResult, Categori
 from app.domain.models.transaction import CategorizationStatus
 from app.ports.categorizers.transaction_categorizer import TransactionCategorizer
 from app.ports.repositories.transaction import TransactionRepository
+from app.ports.repositories.transaction_categorization import TransactionCategorizationRepository
 from app.services.transaction_categorization.transaction_categorization import TransactionCategorizationService
 
 
@@ -13,9 +14,13 @@ class TestTransactionCategorizationService:
     def setup_method(self) -> None:
         self.transaction_repository: TransactionRepository = MagicMock(spec=TransactionRepository)
         self.transaction_categorizer: TransactionCategorizer = MagicMock(spec=TransactionCategorizer)
+        self.transaction_categorization_repository: TransactionCategorizationRepository = MagicMock(
+            spec=TransactionCategorizationRepository
+        )
         self.service = TransactionCategorizationService(
             transaction_repository=self.transaction_repository,
             transaction_categorizer=self.transaction_categorizer,
+            transaction_categorization_repository=self.transaction_categorization_repository,
         )
 
     def test_process_uncategorized_transactions_detailed_empty(self) -> None:
