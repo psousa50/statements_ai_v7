@@ -4,6 +4,7 @@ import { List, ListItem, ListItemButton, ListItemIcon, ListItemText } from '@mui
 import DashboardIcon from '@mui/icons-material/Dashboard'
 import UploadFileIcon from '@mui/icons-material/UploadFile'
 import BarChartIcon from '@mui/icons-material/BarChart'
+import CategoryIcon from '@mui/icons-material/Category'
 
 export const AppNavigation: React.FC = () => {
   const location = useLocation()
@@ -20,6 +21,19 @@ export const AppNavigation: React.FC = () => {
             <DashboardIcon />
           </ListItemIcon>
           <ListItemText primary="Transactions" />
+        </ListItemButton>
+      </ListItem>
+      
+      <ListItem disablePadding>
+        <ListItemButton
+          component={RouterLink}
+          to="/categorizations"
+          selected={location.pathname === '/categorizations'}
+        >
+          <ListItemIcon>
+            <CategoryIcon />
+          </ListItemIcon>
+          <ListItemText primary="Categorizations" />
         </ListItemButton>
       </ListItem>
       

@@ -3,7 +3,14 @@ import { CategoryClient, CategoryListResponse } from '@/api/CategoryClient'
 import { Source, SourceClient } from '@/api/SourceClient'
 import { StatementAnalysisResponse, StatementClient, StatementUploadResponse } from '@/api/StatementClient'
 import { TransactionClient, CategoryTotalsResponse } from '@/api/TransactionClient'
+import { TransactionCategorizationClient } from '@/api/TransactionCategorizationClient'
 import { Category, Transaction, TransactionListResponse } from '@/types/Transaction'
+import { 
+  TransactionCategorization, 
+  TransactionCategorizationListResponse,
+  TransactionCategorizationStats,
+  CategorizationSource
+} from '@/types/TransactionCategorization'
 
 // Default mock transaction
 const defaultTransaction: Transaction = {
@@ -25,6 +32,18 @@ const defaultCategory: Category = {
 const defaultSource: Source = {
   id: '1',
   name: 'Sample Bank',
+}
+
+// Default mock transaction categorization
+const defaultTransactionCategorization: TransactionCategorization = {
+  id: '1',
+  normalized_description: 'walmart',
+  category_id: '1',
+  source: CategorizationSource.AI,
+  created_at: '2023-01-01T00:00:00Z',
+  updated_at: '2023-01-01T00:00:00Z',
+  category: defaultCategory,
+  transaction_count: 5,
 }
 
 // Default mock transaction client implementation
@@ -84,6 +103,34 @@ const defaultSourceClient: SourceClient = {
   createSource: () => Promise.resolve(defaultSource),
 }
 
+// Default mock transaction categorization client implementation
+const defaultTransactionCategorizationClient: TransactionCategorizationClient = {
+  getAll: () =>
+    Promise.resolve({
+      categorizations: [defaultTransactionCategorization],
+      total: 1,
+    } as TransactionCategorizationListResponse),
+  getStats: () =>
+    Promise.resolve({
+      summary: {
+        total_rules: 1,
+        manual_rules: 0,
+        ai_rules: 1,
+        total_transactions_categorized: 5,
+        transactions_with_manual_rules: 0,
+        transactions_with_ai_rules: 5,
+      },
+      category_usage: [],
+      top_rules_by_usage: [],
+      unused_rules: [],
+    } as TransactionCategorizationStats),
+  getById: () => Promise.resolve(defaultTransactionCategorization),
+  create: () => Promise.resolve(defaultTransactionCategorization),
+  update: () => Promise.resolve(defaultTransactionCategorization),
+  delete: () => Promise.resolve(),
+  cleanupUnused: () => Promise.resolve({ deleted_count: 0, message: 'No unused rules found' }),
+}
+
 // Default mock statement client implementation
 const defaultStatementClient: StatementClient = {
   analyzeStatement: () =>
@@ -131,10 +178,14 @@ type StatementClientOverrides = Partial<{
 type SourceClientOverrides = Partial<{
   [K in keyof SourceClient]: SourceClient[K]
 }>
+type TransactionCategorizationClientOverrides = Partial<{
+  [K in keyof TransactionCategorizationClient]: TransactionCategorizationClient[K]
+}>
 
 // Type for partial overrides of the API client
 interface ApiClientOverrides {
   transactions?: TransactionClientOverrides
+  transactionCategorizations?: TransactionCategorizationClientOverrides
   categories?: CategoryClientOverrides
   statements?: StatementClientOverrides
   sources?: SourceClientOverrides
@@ -146,6 +197,10 @@ export const createMockApiClient = (overrides: ApiClientOverrides = {}): ApiClie
     transactions: {
       ...defaultTransactionClient,
       ...overrides.transactions,
+    },
+    transactionCategorizations: {
+      ...defaultTransactionCategorizationClient,
+      ...overrides.transactionCategorizations,
     },
     categories: {
       ...defaultCategoryClient,

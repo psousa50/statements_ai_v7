@@ -832,77 +832,20 @@
   background-color: var(--bg-primary);
 }
 
-/* Pagination */
+/* Pagination Container - Page Specific Layout */
 .transactions-page .transactions-pagination {
   padding: 1.5rem 2rem;
   border-top: 1px solid var(--border-primary);
   background-color: var(--bg-tertiary);
 }
 
+/* Override pagination container for transactions page layout */
 .transactions-page .pagination-container {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: row !important;
+  justify-content: space-between !important;
+  align-items: center !important;
   flex-wrap: wrap;
   gap: 1rem;
-}
-
-.transactions-page .pagination-info {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  font-size: 0.875rem;
-  color: var(--text-muted);
-}
-
-.transactions-page .page-size-select {
-  padding: 0.5rem;
-  border: 1px solid var(--border-primary);
-  border-radius: 6px;
-  background-color: var(--bg-primary);
-  font-size: 0.875rem;
-  color: var(--text-primary);
-  cursor: pointer;
-}
-
-.transactions-page .pagination-controls {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.transactions-page .pagination-button {
-  padding: 0.5rem 0.75rem;
-  border: 1px solid var(--border-primary);
-  border-radius: 6px;
-  background-color: var(--bg-primary);
-  color: var(--text-secondary);
-  font-size: 0.875rem;
-  cursor: pointer;
-  transition: all 0.2s;
-  min-width: 40px;
-  text-align: center;
-}
-
-.transactions-page .pagination-button:hover:not(:disabled) {
-  background-color: var(--bg-tertiary);
-  border-color: var(--border-secondary);
-}
-
-.transactions-page .pagination-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.transactions-page .pagination-button.active {
-  background-color: #3b82f6;
-  border-color: #3b82f6;
-  color: #ffffff;
-}
-
-.transactions-page .pagination-button.active:hover {
-  background-color: #2563eb;
-  border-color: #2563eb;
 }
 
 /* Responsive Design */
@@ -949,12 +892,8 @@
   }
   
   .transactions-page .pagination-container {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  
-  .transactions-page .pagination-controls {
-    justify-content: center;
+    flex-direction: column !important;
+    align-items: stretch !important;
   }
 }
 

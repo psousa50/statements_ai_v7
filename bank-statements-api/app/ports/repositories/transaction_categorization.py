@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 from uuid import UUID
 
 from app.domain.models.transaction_categorization import CategorizationSource, TransactionCategorization
@@ -45,4 +45,54 @@ class TransactionCategorizationRepository(ABC):
     @abstractmethod
     def get_statistics(self) -> Dict[str, int]:
         """Get repository statistics for monitoring and analytics"""
+        pass
+
+    @abstractmethod
+    def get_rules_paginated(
+        self,
+        page: int = 1,
+        page_size: int = 20,
+        description_search: Optional[str] = None,
+        category_ids: Optional[List[str]] = None,
+        source: Optional[CategorizationSource] = None,
+    ) -> Tuple[List[TransactionCategorization], int]:
+        """
+        Get paginated categorization rules with filtering.
+
+        Args:
+            page: Page number (1-based)
+            page_size: Number of rules per page
+            description_search: Filter by normalized description
+            category_ids: Filter by category IDs
+            source: Filter by categorization source
+
+        Returns:
+            Tuple of (rules_list, total_count)
+        """
+        pass
+
+    @abstractmethod
+    def get_rule_by_id(self, rule_id: UUID) -> Optional[TransactionCategorization]:
+        """Get a categorization rule by ID"""
+        pass
+
+    @abstractmethod
+    def update_rule(
+        self,
+        rule_id: UUID,
+        normalized_description: str,
+        category_id: UUID,
+        source: CategorizationSource,
+    ) -> Optional[TransactionCategorization]:
+        """Update an existing categorization rule"""
+        pass
+
+    @abstractmethod
+    def delete_rule(self, rule_id: UUID) -> bool:
+        """Delete a categorization rule"""
+        pass
+
+    @abstractmethod
+    def get_enhanced_statistics(self) -> Dict:
+        """Get enhanced statistics with category usage and transaction counts"""
         pass

@@ -27,6 +27,7 @@ from app.services.statement_processing.transaction_normalizer import Transaction
 from app.services.transaction import TransactionService
 from app.services.transaction_categorization.llm_transaction_categorizer import LLMTransactionCategorizer
 from app.services.transaction_categorization.transaction_categorization import TransactionCategorizationService
+from app.services.transaction_categorization_management import TransactionCategorizationManagementService
 from app.services.transaction_processing_orchestrator import TransactionProcessingOrchestrator
 
 logger = logging.getLogger(__name__)
@@ -51,6 +52,7 @@ class InternalDependencies:
         statement_persistence_service: StatementPersistenceService,
         statement_upload_service: StatementUploadService,
         transaction_categorization_service: TransactionCategorizationService,
+        transaction_categorization_management_service: TransactionCategorizationManagementService,
         rule_based_categorization_service: RuleBasedCategorizationService,
         background_job_service: BackgroundJobService,
         background_job_repository: SQLAlchemyBackgroundJobRepository,
@@ -64,6 +66,7 @@ class InternalDependencies:
         self.statement_persistence_service = statement_persistence_service
         self.statement_upload_service = statement_upload_service
         self.transaction_categorization_service = transaction_categorization_service
+        self.transaction_categorization_management_service = transaction_categorization_management_service
         self.rule_based_categorization_service = rule_based_categorization_service
         self.background_job_service = background_job_service
         self.background_job_repository = background_job_repository
@@ -113,6 +116,10 @@ def build_internal_dependencies(external: ExternalDependencies) -> InternalDepen
         transaction_categorization_repository=transaction_categorization_repo,
     )
 
+    transaction_categorization_management_service = TransactionCategorizationManagementService(
+        repository=transaction_categorization_repo,
+    )
+
     statement_analyzer_service = StatementAnalyzerService(
         file_type_detector=file_type_detector,
         statement_parser=statement_parser,
@@ -149,6 +156,7 @@ def build_internal_dependencies(external: ExternalDependencies) -> InternalDepen
         statement_persistence_service=statement_persistence_service,
         statement_upload_service=statement_upload_service,
         transaction_categorization_service=transaction_categorization_service,
+        transaction_categorization_management_service=transaction_categorization_management_service,
         rule_based_categorization_service=rule_based_categorization_service,
         background_job_service=background_job_service,
         background_job_repository=background_job_repo,
@@ -170,3 +178,5 @@ def get_dependencies() -> Generator[tuple[ExternalDependencies, InternalDependen
 def provide_dependencies() -> Generator[InternalDependencies, None, None]:
     with get_dependencies() as (_, internal):
         yield internal
+
+

@@ -1,3 +1,5 @@
+import './Pagination.css'
+
 interface PaginationProps {
   currentPage: number
   totalPages: number
@@ -63,7 +65,7 @@ export const Pagination = ({
 
       <div className="pagination-controls">
         <button onClick={() => onPageChange(currentPage - 1)} disabled={currentPage <= 1} className="pagination-button">
-          Previous
+          ←
         </button>
 
         {getPageNumbers().map((page) => (
@@ -81,7 +83,7 @@ export const Pagination = ({
           disabled={currentPage >= totalPages}
           className="pagination-button"
         >
-          Next
+          →
         </button>
       </div>
     </div>

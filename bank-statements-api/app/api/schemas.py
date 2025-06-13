@@ -7,6 +7,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_serializer, field_valid
 
 from app.domain.models.background_job import JobStatus
 from app.domain.models.transaction import CategorizationStatus
+from app.domain.models.transaction_categorization import CategorizationSource
 
 
 class CategoryBase(BaseModel):
@@ -248,5 +249,47 @@ class JobResultResponse(BaseModel):
     successfully_categorized: int
     failed_categorizations: int
     processing_time_ms: int
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+# Transaction Categorization API Schemas
+class TransactionCategorizationBase(BaseModel):
+    normalized_description: str = Field(..., min_length=2, max_length=255)
+    category_id: UUID
+    source: CategorizationSource
+
+
+class TransactionCategorizationCreate(TransactionCategorizationBase):
+    pass
+
+
+class TransactionCategorizationUpdate(TransactionCategorizationBase):
+    pass
+
+
+class TransactionCategorizationResponse(BaseModel):
+    id: UUID
+    normalized_description: str
+    category_id: UUID
+    source: CategorizationSource
+    created_at: datetime
+    updated_at: datetime
+    category: Optional[CategoryResponse] = None
+    transaction_count: Optional[int] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class TransactionCategorizationListResponse(BaseModel):
+    categorizations: Sequence[TransactionCategorizationResponse]
+    total: int
+
+
+class TransactionCategorizationStatsResponse(BaseModel):
+    summary: Dict[str, int]
+    category_usage: List[Dict]
+    top_rules_by_usage: List[Dict]
+    unused_rules: List[Dict]
 
     model_config = ConfigDict(from_attributes=True)

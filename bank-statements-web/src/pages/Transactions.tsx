@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useTransactions } from '../services/hooks/useTransactions'
 import { useCategories } from '../services/hooks/useCategories'
 import { useSources } from '../services/hooks/useSources'
@@ -10,17 +11,47 @@ import { TransactionFilters as FilterType } from '../api/TransactionClient'
 import './TransactionsPage.css'
 
 export const TransactionsPage = () => {
-  const [filters, setFilters] = useState<FilterType>({
-    page: 1,
-    page_size: 20,
-  })
+  const [searchParams] = useSearchParams()
 
-  // Local state for debounced inputs
-  const [localDescriptionSearch, setLocalDescriptionSearch] = useState<string>('')
-  const [localMinAmount, setLocalMinAmount] = useState<number | undefined>()
-  const [localMaxAmount, setLocalMaxAmount] = useState<number | undefined>()
-  const [localStartDate, setLocalStartDate] = useState<string>('')
-  const [localEndDate, setLocalEndDate] = useState<string>('')
+  // Initialize filters from URL parameters
+  const getInitialFilters = (): FilterType => {
+    const urlDescriptionSearch = searchParams.get('description_search')
+    const urlMinAmount = searchParams.get('min_amount')
+    const urlMaxAmount = searchParams.get('max_amount')
+    const urlStartDate = searchParams.get('start_date')
+    const urlEndDate = searchParams.get('end_date')
+    const urlStatus = searchParams.get('status')
+    const urlSourceId = searchParams.get('source_id')
+    const urlCategoryIds = searchParams.get('category_ids')
+
+    return {
+      page: 1,
+      page_size: 20,
+      description_search: urlDescriptionSearch || undefined,
+      min_amount: urlMinAmount ? parseFloat(urlMinAmount) : undefined,
+      max_amount: urlMaxAmount ? parseFloat(urlMaxAmount) : undefined,
+      start_date: urlStartDate || undefined,
+      end_date: urlEndDate || undefined,
+      status: (urlStatus as CategorizationStatus) || undefined,
+      source_id: urlSourceId || undefined,
+      category_ids: urlCategoryIds ? urlCategoryIds.split(',') : undefined,
+    }
+  }
+
+  const [filters, setFilters] = useState<FilterType>(getInitialFilters())
+
+  // Local state for debounced inputs - initialize from URL params
+  const [localDescriptionSearch, setLocalDescriptionSearch] = useState<string>(
+    searchParams.get('description_search') || ''
+  )
+  const [localMinAmount, setLocalMinAmount] = useState<number | undefined>(
+    searchParams.get('min_amount') ? parseFloat(searchParams.get('min_amount')!) : undefined
+  )
+  const [localMaxAmount, setLocalMaxAmount] = useState<number | undefined>(
+    searchParams.get('max_amount') ? parseFloat(searchParams.get('max_amount')!) : undefined
+  )
+  const [localStartDate, setLocalStartDate] = useState<string>(searchParams.get('start_date') || '')
+  const [localEndDate, setLocalEndDate] = useState<string>(searchParams.get('end_date') || '')
 
   const debounceTimeoutRef = useRef<NodeJS.Timeout>()
 
@@ -38,6 +69,11 @@ export const TransactionsPage = () => {
 
   const loading = transactionsLoading || categoriesLoading || sourcesLoading
   const error = transactionsError || categoriesError || sourcesError
+
+  // Load data on mount with initial filters from URL
+  useEffect(() => {
+    fetchTransactions(filters)
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Debounced filter update for search, amount, and date inputs
   useEffect(() => {
