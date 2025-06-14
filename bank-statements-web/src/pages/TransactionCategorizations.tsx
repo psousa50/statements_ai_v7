@@ -157,11 +157,14 @@ export const TransactionCategorizationsPage = () => {
     }
   }
 
-  const handleViewTransactions = useCallback((description: string) => {
-    const searchParams = new URLSearchParams()
-    searchParams.set('description_search', description)
-    navigate(`/transactions?${searchParams.toString()}`)
-  }, [navigate])
+  const handleViewTransactions = useCallback(
+    (description: string) => {
+      const searchParams = new URLSearchParams()
+      searchParams.set('description_search', description)
+      navigate(`/transactions?${searchParams.toString()}`)
+    },
+    [navigate]
+  )
 
   return (
     <div className="transaction-categorizations-page">
