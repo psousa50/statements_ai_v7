@@ -40,6 +40,12 @@ export const transactionCategorizationClient: TransactionCategorizationClient = 
     if (filters?.source) {
       params.append('source', filters.source)
     }
+    if (filters?.sort_field) {
+      params.append('sort_field', filters.sort_field)
+    }
+    if (filters?.sort_direction) {
+      params.append('sort_direction', filters.sort_direction)
+    }
 
     const url = params.toString() ? `${API_URL}?${params.toString()}` : API_URL
     const response = await axios.get<TransactionCategorizationListResponse>(url)

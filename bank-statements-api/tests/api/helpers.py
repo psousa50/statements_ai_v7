@@ -17,6 +17,7 @@ from app.services.statement_processing.statement_persistence import StatementPer
 from app.services.statement_processing.statement_upload import StatementUploadService
 from app.services.transaction import TransactionService
 from app.services.transaction_categorization.transaction_categorization import TransactionCategorizationService
+from app.services.transaction_categorization_management import TransactionCategorizationManagementService
 from app.services.transaction_processing_orchestrator import TransactionProcessingOrchestrator
 
 
@@ -28,6 +29,7 @@ def mocked_dependencies(
     statement_persistence_service: StatementPersistenceService = None,
     statement_upload_service: StatementUploadService = None,
     transaction_categorization_service: TransactionCategorizationService = None,
+    transaction_categorization_management_service: TransactionCategorizationManagementService = None,
     rule_based_categorization_service: RuleBasedCategorizationService = None,
     background_job_service: BackgroundJobService = None,
     background_job_repository: SQLAlchemyBackgroundJobRepository = None,
@@ -48,6 +50,8 @@ def mocked_dependencies(
         statement_upload_service=statement_upload_service or MagicMock(spec=StatementUploadService),
         transaction_categorization_service=transaction_categorization_service
         or MagicMock(spec=TransactionCategorizationService),
+        transaction_categorization_management_service=transaction_categorization_management_service
+        or MagicMock(spec=TransactionCategorizationManagementService),
         rule_based_categorization_service=rule_based_categorization_service or MagicMock(spec=RuleBasedCategorizationService),
         background_job_service=background_job_service or MagicMock(spec=BackgroundJobService),
         background_job_repository=background_job_repository or MagicMock(spec=SQLAlchemyBackgroundJobRepository),

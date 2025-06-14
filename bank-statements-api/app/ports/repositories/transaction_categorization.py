@@ -55,9 +55,11 @@ class TransactionCategorizationRepository(ABC):
         description_search: Optional[str] = None,
         category_ids: Optional[List[str]] = None,
         source: Optional[CategorizationSource] = None,
+        sort_field: Optional[str] = None,
+        sort_direction: Optional[str] = None,
     ) -> Tuple[List[TransactionCategorization], int]:
         """
-        Get paginated categorization rules with filtering.
+        Get paginated categorization rules with filtering and sorting.
 
         Args:
             page: Page number (1-based)
@@ -65,6 +67,8 @@ class TransactionCategorizationRepository(ABC):
             description_search: Filter by normalized description
             category_ids: Filter by category IDs
             source: Filter by categorization source
+            sort_field: Field to sort by (normalized_description, category, usage, source, created_at)
+            sort_direction: Sort direction (asc or desc)
 
         Returns:
             Tuple of (rules_list, total_count)

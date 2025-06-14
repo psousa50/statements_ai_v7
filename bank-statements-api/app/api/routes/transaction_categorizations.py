@@ -27,16 +27,22 @@ def register_transaction_categorization_routes(
         description_search: Optional[str] = Query(None, description="Search in normalized descriptions"),
         category_ids: Optional[List[str]] = Query(None, description="Filter by category IDs"),
         source: Optional[CategorizationSource] = Query(None, description="Filter by categorization source"),
+        sort_field: Optional[str] = Query(
+            None, description="Field to sort by (normalized_description, category, usage, source, created_at)"
+        ),
+        sort_direction: Optional[str] = Query(None, description="Sort direction (asc or desc)"),
         internal: InternalDependencies = Depends(provide_dependencies),
     ):
         """
-        Get paginated list of transaction categorization rules with filtering.
+        Get paginated list of transaction categorization rules with filtering and sorting.
 
         - **page**: Page number (1-based)
         - **page_size**: Number of rules per page (max 100)
         - **description_search**: Search term for normalized descriptions
         - **category_ids**: List of category IDs to filter by
         - **source**: Filter by categorization source (MANUAL or AI)
+        - **sort_field**: Field to sort by (normalized_description, category, usage, source, created_at)
+        - **sort_direction**: Sort direction (asc or desc)
         """
         try:
             rules, total = internal.transaction_categorization_management_service.get_rules_paginated(
@@ -45,6 +51,8 @@ def register_transaction_categorization_routes(
                 description_search=description_search,
                 category_ids=category_ids,
                 source=source,
+                sort_field=sort_field,
+                sort_direction=sort_direction,
             )
 
             # Convert to response format with transaction counts

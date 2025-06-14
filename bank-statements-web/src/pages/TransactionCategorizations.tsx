@@ -8,6 +8,8 @@ import { Pagination } from '../components/Pagination'
 import {
   CategorizationSource,
   TransactionCategorizationFilters as FilterType,
+  SortField,
+  SortDirection,
 } from '../types/TransactionCategorization'
 import './TransactionCategorizationsPage.css'
 
@@ -126,6 +128,28 @@ export const TransactionCategorizationsPage = () => {
     setLocalDescriptionSearch('')
     fetchCategorizations(clearedFilters)
   }, [filters.page_size, fetchCategorizations])
+
+  const handleSort = useCallback(
+    (field: SortField) => {
+      let newDirection: SortDirection = 'asc'
+      
+      // If clicking the same field, toggle direction
+      if (filters.sort_field === field) {
+        newDirection = filters.sort_direction === 'asc' ? 'desc' : 'asc'
+      }
+      
+      const updatedFilters = {
+        ...filters,
+        sort_field: field,
+        sort_direction: newDirection,
+        page: 1, // Reset to first page when sorting
+      }
+      
+      setFilters(updatedFilters)
+      fetchCategorizations(updatedFilters)
+    },
+    [filters, fetchCategorizations]
+  )
 
   const handleDeleteCategorization = async (id: string) => {
     try {
@@ -255,8 +279,11 @@ export const TransactionCategorizationsPage = () => {
             categorizations={categorizations || []}
             categories={categories || []}
             loading={loading}
+            sortField={filters.sort_field}
+            sortDirection={filters.sort_direction}
             onDelete={handleDeleteCategorization}
             onViewTransactions={handleViewTransactions}
+            onSort={handleSort}
           />
         </div>
 

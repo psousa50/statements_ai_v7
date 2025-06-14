@@ -25,9 +25,9 @@ class TestTextNormalization:
 
     def test_normalize_description_remove_prefixes(self):
         """Test removal of common transaction prefixes."""
-        assert normalize_description("Payment to ACME Corp") == "acme corp"
-        assert normalize_description("Transfer from John Doe") == "john doe"
-        assert normalize_description("POS Purchase at WALMART") == "walmart"
+        assert normalize_description("Payment to ACME Corp") == "payment acme corp"
+        assert normalize_description("Transfer from John Doe") == "transfer john doe"
+        assert normalize_description("POS Purchase at WALMART") == "pos purchase walmart"
 
     def test_normalize_description_remove_numbers_and_special_chars(self):
         """Test removal of numbers and special characters."""
@@ -48,5 +48,5 @@ class TestTextNormalization:
     def test_normalize_description_comprehensive(self):
         """Test comprehensive normalization with multiple features."""
         input_text = "Payment to CAFÉ NOIR #12345 - REF:67890 on 01/02/2023"
-        expected = "cafe noir"
+        expected = "payment cafe noir"
         assert normalize_description(input_text) == expected

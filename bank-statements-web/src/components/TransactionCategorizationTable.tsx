@@ -1,14 +1,17 @@
 import { useState } from 'react'
 import { Category } from '../types/Transaction'
-import { TransactionCategorization, CategorizationSource } from '../types/TransactionCategorization'
+import { TransactionCategorization, CategorizationSource, SortField, SortDirection } from '../types/TransactionCategorization'
 
 interface TransactionCategorizationTableProps {
   categorizations: TransactionCategorization[]
   categories: Category[]
   loading: boolean
+  sortField?: SortField
+  sortDirection?: SortDirection
   onEdit?: (categorization: TransactionCategorization) => void
   onDelete?: (id: string) => void
   onViewTransactions?: (description: string) => void
+  onSort?: (field: SortField) => void
 }
 
 const formatDate = (dateString: string): string => {
@@ -45,13 +48,52 @@ const getUsageIndicator = (transactionCount?: number): JSX.Element => {
   }
 }
 
+const SortableHeader = ({ 
+  field, 
+  children, 
+  currentSortField, 
+  currentSortDirection, 
+  onSort 
+}: { 
+  field: SortField
+  children: React.ReactNode
+  currentSortField?: SortField
+  currentSortDirection?: SortDirection
+  onSort?: (field: SortField) => void
+}) => {
+  const isActive = currentSortField === field
+  const direction = isActive ? currentSortDirection : undefined
+  
+  return (
+    <th 
+      className={`sortable-header ${isActive ? 'active' : ''}`}
+      onClick={() => onSort?.(field)}
+      style={{ cursor: onSort ? 'pointer' : 'default' }}
+    >
+      <div className="header-content">
+        <span>{children}</span>
+        {onSort && (
+          <span className="sort-indicator">
+            {isActive && direction === 'asc' && '↑'}
+            {isActive && direction === 'desc' && '↓'}
+            {!isActive && '⇅'}
+          </span>
+        )}
+      </div>
+    </th>
+  )
+}
+
 export const TransactionCategorizationTable = ({
   categorizations,
   categories,
   loading,
+  sortField,
+  sortDirection,
   onEdit,
   onDelete,
   onViewTransactions,
+  onSort,
 }: TransactionCategorizationTableProps) => {
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set())
 
@@ -90,11 +132,46 @@ export const TransactionCategorizationTable = ({
       <table className="categorization-table">
         <thead>
           <tr>
-            <th className="col-description">Description</th>
-            <th className="col-category">Category</th>
-            <th className="col-usage">Usage</th>
-            <th className="col-source">Source</th>
-            <th className="col-created">Created</th>
+            <SortableHeader
+              field="normalized_description"
+              currentSortField={sortField}
+              currentSortDirection={sortDirection}
+              onSort={onSort}
+            >
+              Description
+            </SortableHeader>
+            <SortableHeader
+              field="category"
+              currentSortField={sortField}
+              currentSortDirection={sortDirection}
+              onSort={onSort}
+            >
+              Category
+            </SortableHeader>
+            <SortableHeader
+              field="usage"
+              currentSortField={sortField}
+              currentSortDirection={sortDirection}
+              onSort={onSort}
+            >
+              Usage
+            </SortableHeader>
+            <SortableHeader
+              field="source"
+              currentSortField={sortField}
+              currentSortDirection={sortDirection}
+              onSort={onSort}
+            >
+              Source
+            </SortableHeader>
+            <SortableHeader
+              field="created_at"
+              currentSortField={sortField}
+              currentSortDirection={sortDirection}
+              onSort={onSort}
+            >
+              Created
+            </SortableHeader>
             <th className="col-actions">Actions</th>
           </tr>
         </thead>

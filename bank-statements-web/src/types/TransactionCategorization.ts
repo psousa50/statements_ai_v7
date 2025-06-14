@@ -33,12 +33,17 @@ export interface TransactionCategorizationListResponse {
   total: number
 }
 
+export type SortField = 'normalized_description' | 'category' | 'usage' | 'source' | 'created_at'
+export type SortDirection = 'asc' | 'desc'
+
 export interface TransactionCategorizationFilters {
   page?: number
   page_size?: number
   description_search?: string
   category_ids?: string[]
   source?: CategorizationSource
+  sort_field?: SortField
+  sort_direction?: SortDirection
 }
 
 export interface CategoryUsage {

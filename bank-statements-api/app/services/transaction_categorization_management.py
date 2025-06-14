@@ -21,9 +21,11 @@ class TransactionCategorizationManagementService:
         description_search: Optional[str] = None,
         category_ids: Optional[List[str]] = None,
         source: Optional[CategorizationSource] = None,
+        sort_field: Optional[str] = None,
+        sort_direction: Optional[str] = None,
     ) -> Tuple[List[TransactionCategorization], int]:
         """
-        Get paginated categorization rules with filtering and business logic validation.
+        Get paginated categorization rules with filtering, sorting and business logic validation.
 
         Args:
             page: Page number (1-based)
@@ -31,6 +33,8 @@ class TransactionCategorizationManagementService:
             description_search: Filter by normalized description
             category_ids: Filter by category IDs
             source: Filter by categorization source
+            sort_field: Field to sort by (normalized_description, category, usage, source, created_at)
+            sort_direction: Sort direction (asc or desc)
 
         Returns:
             Tuple of (rules_list, total_count)
@@ -44,12 +48,25 @@ class TransactionCategorizationManagementService:
             if len(description_search) < 2:  # Minimum search length
                 description_search = None
 
+        # Validate sort parameters
+        if sort_field:
+            valid_sort_fields = {"normalized_description", "category", "usage", "source", "created_at"}
+            if sort_field not in valid_sort_fields:
+                sort_field = "created_at"  # Default to created_at for invalid fields
+
+        if sort_direction:
+            sort_direction = sort_direction.lower()
+            if sort_direction not in {"asc", "desc"}:
+                sort_direction = "desc"  # Default to desc for invalid directions
+
         return self.repository.get_rules_paginated(
             page=page,
             page_size=page_size,
             description_search=description_search,
             category_ids=category_ids,
             source=source,
+            sort_field=sort_field,
+            sort_direction=sort_direction,
         )
 
     def get_rule_by_id(self, rule_id: UUID) -> Optional[TransactionCategorization]:

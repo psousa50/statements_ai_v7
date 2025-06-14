@@ -101,6 +101,8 @@ class SQLAlchemyTransactionCategorizationRepository(TransactionCategorizationRep
         description_search: Optional[str] = None,
         category_ids: Optional[List[str]] = None,
         source: Optional[CategorizationSource] = None,
+        sort_field: Optional[str] = None,
+        sort_direction: Optional[str] = None,
     ) -> Tuple[List[TransactionCategorization], int]:
         """Get paginated categorization rules with filtering."""
         # Create a subquery to get transaction counts for each rule
@@ -114,12 +116,14 @@ class SQLAlchemyTransactionCategorizationRepository(TransactionCategorizationRep
         )
 
         # Main query with joins
+
         query = (
             self.db_session.query(
                 TransactionCategorization,
                 func.coalesce(transaction_count_subquery.c.transaction_count, 0).label("transaction_count"),
             )
             .outerjoin(transaction_count_subquery, TransactionCategorization.id == transaction_count_subquery.c.rule_id)
+            .outerjoin(Category, TransactionCategorization.category_id == Category.id)
             .options(joinedload(TransactionCategorization.category))
         )
 
@@ -138,9 +142,13 @@ class SQLAlchemyTransactionCategorizationRepository(TransactionCategorizationRep
         # Get total count before pagination
         total_count = query.count()
 
+        # Apply sorting
+        order_clause = self._get_order_clause(sort_field, sort_direction, transaction_count_subquery)
+        query = query.order_by(order_clause)
+
         # Apply pagination
         offset = (page - 1) * page_size
-        results = query.order_by(TransactionCategorization.created_at.desc()).offset(offset).limit(page_size).all()
+        results = query.offset(offset).limit(page_size).all()
 
         # Extract rules and add transaction counts
         rules = []
@@ -150,6 +158,42 @@ class SQLAlchemyTransactionCategorizationRepository(TransactionCategorizationRep
             rules.append(rule)
 
         return rules, total_count
+
+    def _get_order_clause(self, sort_field: Optional[str], sort_direction: Optional[str], transaction_count_subquery):
+        """Build the ORDER BY clause based on sort parameters."""
+        # Default sorting
+        if not sort_field:
+            return TransactionCategorization.created_at.desc()
+
+        # Validate sort direction
+        direction = sort_direction.lower() if sort_direction else "desc"
+        if direction not in ["asc", "desc"]:
+            direction = "desc"
+
+        # Map sort fields to database columns
+        if sort_field == "normalized_description":
+            column = TransactionCategorization.normalized_description
+        elif sort_field == "category":
+            # Sort by category name (requires join)
+            from app.domain.models.category import Category
+
+            column = Category.name
+        elif sort_field == "usage":
+            # Sort by transaction count from subquery
+            column = func.coalesce(transaction_count_subquery.c.transaction_count, 0)
+        elif sort_field == "source":
+            column = TransactionCategorization.source
+        elif sort_field == "created_at":
+            column = TransactionCategorization.created_at
+        else:
+            # Default to created_at for unknown fields
+            column = TransactionCategorization.created_at
+
+        # Apply direction
+        if direction == "asc":
+            return column.asc()
+        else:
+            return column.desc()
 
     def get_rule_by_id(self, rule_id: UUID) -> Optional[TransactionCategorization]:
         """Get a categorization rule by ID"""
