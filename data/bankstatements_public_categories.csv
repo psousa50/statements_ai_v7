@@ -11,14 +11,16 @@ Utilities: Trash / Recycling
 Utilities: Internet
 Utilities: Cable / TV
 Utilities: Mobile Phone
-Transportation: Car Payment / Lease
-Transportation: Fuel
-Transportation: Car Insurance
-Transportation: Car Maintenance / Repairs
+Car: Payment / Lease
+Car: Fuel
+Car: Electrical / Charging
+Car: Insurance
+Car: Maintenance / Repairs
 Transportation: Public Transit / Train / Bus
 Transportation: Ride-Sharing / Taxi
 Food & Dining: Groceries
 Food & Dining: Restaurants / Dining Out
+Food & Dining: Takeout / Delivery
 Food & Dining: Coffee Shops
 Food & Dining: Snacks / Fast Food
 Personal Care: Gym / Fitness
@@ -36,6 +38,10 @@ Insurance (Non-Health): Travel Insurance
 Debt & Financial: Loans
 Debt & Financial: Credit Card Payments
 Debt & Financial: Bank Fees / Service Charges
+Debt & Financial: Investment Contributions
+Debt & Financial: Savings Contributions
+Debt & Financial: Retirement Contributions
+Debt & Financial: Other Financial Transactions
 Shopping: Clothing / Accessories
 Shopping: Electronics / Gadgets
 Shopping: Household Supplies
