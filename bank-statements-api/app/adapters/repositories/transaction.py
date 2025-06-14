@@ -236,9 +236,9 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
 
             # Find matching transactions in database
             matching_transactions = self.find_matching_transactions(
-                date=transaction_dto.date
-                if isinstance(transaction_dto.date, str)
-                else transaction_dto.date.strftime("%Y-%m-%d"),
+                date=(
+                    transaction_dto.date if isinstance(transaction_dto.date, str) else transaction_dto.date.strftime("%Y-%m-%d")
+                ),
                 description=transaction_dto.description,
                 amount=float(transaction_dto.amount),
                 source_id=source_uuid,

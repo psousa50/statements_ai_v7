@@ -53,6 +53,10 @@ class LLMTransactionCategorizer(TransactionCategorizer):
 
         try:
             prompt = categorization_prompt(transactions, self.categories)
+            logger_content.debug(
+                prompt,
+                extra={"prefix": "llm_transaction_categorizer.prompt", "ext": "json"},
+            )
             response = self.llm_client.generate(prompt)
             logger_content.debug(
                 response,
