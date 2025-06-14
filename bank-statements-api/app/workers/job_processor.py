@@ -55,9 +55,7 @@ class JobProcessor:
         logger.info(f"Job processor completed. Processed {processed_count} jobs.")
         return processed_count
 
-    async def _process_single_job_by_id(
-        self, job_id: UUID, job_type: JobType, job_progress: dict
-    ) -> None:
+    async def _process_single_job_by_id(self, job_id: UUID, job_type: JobType, job_progress: dict) -> None:
         """Process a single background job based on its type using job ID"""
 
         if job_type == JobType.AI_CATEGORIZATION:
@@ -65,9 +63,7 @@ class JobProcessor:
         else:
             raise ValueError(f"Unknown job type: {job_type}")
 
-    async def _process_ai_categorization_job_by_id(
-        self, job_id: UUID, job_progress: dict
-    ) -> None:
+    async def _process_ai_categorization_job_by_id(self, job_id: UUID, job_progress: dict) -> None:
         """
         Process an AI categorization job using job ID.
 
@@ -75,9 +71,7 @@ class JobProcessor:
         """
         try:
             # Extract transaction IDs from job progress
-            unmatched_transaction_ids = job_progress.get(
-                "unmatched_transaction_ids", []
-            )
+            unmatched_transaction_ids = job_progress.get("unmatched_transaction_ids", [])
             if not unmatched_transaction_ids:
                 raise ValueError("No unmatched transaction IDs found in job progress")
 
@@ -87,9 +81,7 @@ class JobProcessor:
             # Delegate to the specialized categorization service
             result = await self.internal.transaction_categorization_service.categorize_batch_by_ids(
                 transaction_ids,
-                progress_callback=lambda progress: self.internal.background_job_service.update_job_progress(
-                    job_id, progress
-                ),
+                progress_callback=lambda progress: self.internal.background_job_service.update_job_progress(job_id, progress),
                 batch_size=20,
             )
 

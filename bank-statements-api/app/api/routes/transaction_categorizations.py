@@ -15,7 +15,9 @@ from app.core.dependencies import InternalDependencies
 from app.domain.models.transaction_categorization import CategorizationSource
 
 
-def register_transaction_categorization_routes(app: FastAPI, provide_dependencies: Callable[[], Iterator[InternalDependencies]]):
+def register_transaction_categorization_routes(
+    app: FastAPI, provide_dependencies: Callable[[], Iterator[InternalDependencies]]
+):
     router = APIRouter(prefix="/transaction-categorizations", tags=["Transaction Categorizations"])
 
     @router.get("/", response_model=TransactionCategorizationListResponse)
@@ -29,7 +31,7 @@ def register_transaction_categorization_routes(app: FastAPI, provide_dependencie
     ):
         """
         Get paginated list of transaction categorization rules with filtering.
-        
+
         - **page**: Page number (1-based)
         - **page_size**: Number of rules per page (max 100)
         - **description_search**: Search term for normalized descriptions
@@ -56,7 +58,7 @@ def register_transaction_categorization_routes(app: FastAPI, provide_dependencie
                     created_at=rule.created_at,
                     updated_at=rule.updated_at,
                     category=rule.category,
-                    transaction_count=getattr(rule, 'transaction_count', 0),
+                    transaction_count=getattr(rule, "transaction_count", 0),
                 )
                 rule_responses.append(rule_response)
 
@@ -76,7 +78,7 @@ def register_transaction_categorization_routes(app: FastAPI, provide_dependencie
     ):
         """
         Get enhanced statistics for transaction categorization rules.
-        
+
         Returns comprehensive statistics including:
         - Summary counts (total rules, manual vs AI, transaction coverage)
         - Category usage breakdown
@@ -122,7 +124,7 @@ def register_transaction_categorization_routes(app: FastAPI, provide_dependencie
     ):
         """
         Create a new transaction categorization rule.
-        
+
         - **normalized_description**: The normalized transaction description pattern
         - **category_id**: The category to assign to matching transactions
         - **source**: The source of this rule (MANUAL or AI)
@@ -167,7 +169,7 @@ def register_transaction_categorization_routes(app: FastAPI, provide_dependencie
     ):
         """
         Update an existing transaction categorization rule.
-        
+
         - **normalized_description**: The normalized transaction description pattern
         - **category_id**: The category to assign to matching transactions
         - **source**: The source of this rule (MANUAL or AI)
@@ -230,10 +232,10 @@ def register_transaction_categorization_routes(app: FastAPI, provide_dependencie
     ):
         """
         Delete all categorization rules that are not being used by any transactions.
-        
+
         This is a bulk operation that removes rules with zero transaction matches,
         helping to clean up unused categorization patterns.
-        
+
         Returns the number of rules that were deleted.
         """
         try:

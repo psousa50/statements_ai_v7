@@ -24,26 +24,26 @@ class TransactionCategorizationManagementService:
     ) -> Tuple[List[TransactionCategorization], int]:
         """
         Get paginated categorization rules with filtering and business logic validation.
-        
+
         Args:
             page: Page number (1-based)
             page_size: Number of rules per page (max 100)
             description_search: Filter by normalized description
             category_ids: Filter by category IDs
             source: Filter by categorization source
-            
+
         Returns:
             Tuple of (rules_list, total_count)
         """
         # Validate and sanitize inputs
         page = max(1, page)
         page_size = min(max(1, page_size), 100)  # Limit page size to prevent performance issues
-        
+
         if description_search:
             description_search = description_search.strip()
             if len(description_search) < 2:  # Minimum search length
                 description_search = None
-                
+
         return self.repository.get_rules_paginated(
             page=page,
             page_size=page_size,
@@ -64,15 +64,15 @@ class TransactionCategorizationManagementService:
     ) -> TransactionCategorization:
         """
         Create a new categorization rule with business logic validation.
-        
+
         Args:
             normalized_description: The normalized transaction description
             category_id: The category to assign to this rule
             source: The source of the categorization (MANUAL or AI)
-            
+
         Returns:
             The created TransactionCategorization
-            
+
         Raises:
             ValueError: If validation fails
         """
@@ -80,7 +80,7 @@ class TransactionCategorizationManagementService:
         normalized_description = normalized_description.strip().lower()
         if not normalized_description:
             raise ValueError("Normalized description cannot be empty")
-            
+
         if len(normalized_description) < 2:
             raise ValueError("Normalized description must be at least 2 characters")
 
@@ -104,16 +104,16 @@ class TransactionCategorizationManagementService:
     ) -> Optional[TransactionCategorization]:
         """
         Update an existing categorization rule with business logic validation.
-        
+
         Args:
             rule_id: The ID of the rule to update
             normalized_description: The new normalized transaction description
             category_id: The new category to assign to this rule
             source: The new source of the categorization
-            
+
         Returns:
             The updated TransactionCategorization or None if not found
-            
+
         Raises:
             ValueError: If validation fails
         """
@@ -121,7 +121,7 @@ class TransactionCategorizationManagementService:
         normalized_description = normalized_description.strip().lower()
         if not normalized_description:
             raise ValueError("Normalized description cannot be empty")
-            
+
         if len(normalized_description) < 2:
             raise ValueError("Normalized description must be at least 2 characters")
 
@@ -140,10 +140,10 @@ class TransactionCategorizationManagementService:
     def delete_rule(self, rule_id: UUID) -> bool:
         """
         Delete a categorization rule.
-        
+
         Args:
             rule_id: The ID of the rule to delete
-            
+
         Returns:
             True if the rule was deleted, False if it didn't exist
         """
@@ -160,17 +160,17 @@ class TransactionCategorizationManagementService:
     def bulk_delete_unused_rules(self) -> int:
         """
         Delete all rules that are not being used by any transactions.
-        
+
         Returns:
             Number of rules deleted
         """
         stats = self.get_enhanced_statistics()
         unused_rules = stats.get("unused_rules", [])
-        
+
         deleted_count = 0
         for rule in unused_rules:
             rule_id = UUID(rule["rule_id"])
             if self.repository.delete_rule(rule_id):
                 deleted_count += 1
-                
+
         return deleted_count

@@ -178,5 +178,3 @@ def get_dependencies() -> Generator[tuple[ExternalDependencies, InternalDependen
 def provide_dependencies() -> Generator[InternalDependencies, None, None]:
     with get_dependencies() as (_, internal):
         yield internal
-
-

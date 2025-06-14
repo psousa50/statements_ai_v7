@@ -1,7 +1,7 @@
 from typing import Dict, List, Optional, Tuple
 from uuid import UUID
 
-from sqlalchemy import and_, func, case
+from sqlalchemy import case, func
 from sqlalchemy.orm import Session, joinedload
 
 from app.domain.models.category import Category
@@ -106,8 +106,7 @@ class SQLAlchemyTransactionCategorizationRepository(TransactionCategorizationRep
         # Create a subquery to get transaction counts for each rule
         transaction_count_subquery = (
             self.db_session.query(
-                TransactionCategorization.id.label('rule_id'),
-                func.count(Transaction.id).label('transaction_count')
+                TransactionCategorization.id.label("rule_id"), func.count(Transaction.id).label("transaction_count")
             )
             .outerjoin(Transaction, Transaction.normalized_description == TransactionCategorization.normalized_description)
             .group_by(TransactionCategorization.id)
@@ -118,7 +117,7 @@ class SQLAlchemyTransactionCategorizationRepository(TransactionCategorizationRep
         query = (
             self.db_session.query(
                 TransactionCategorization,
-                func.coalesce(transaction_count_subquery.c.transaction_count, 0).label('transaction_count')
+                func.coalesce(transaction_count_subquery.c.transaction_count, 0).label("transaction_count"),
             )
             .outerjoin(transaction_count_subquery, TransactionCategorization.id == transaction_count_subquery.c.rule_id)
             .options(joinedload(TransactionCategorization.category))
@@ -176,7 +175,7 @@ class SQLAlchemyTransactionCategorizationRepository(TransactionCategorizationRep
         rule.normalized_description = normalized_description
         rule.category_id = category_id
         rule.source = source
-        
+
         self.db_session.commit()
         self.db_session.refresh(rule)
         return rule
@@ -199,20 +198,29 @@ class SQLAlchemyTransactionCategorizationRepository(TransactionCategorizationRep
         # Count transactions categorized by rules
         total_transactions_categorized = (
             self.db_session.query(func.count(Transaction.id))
-            .join(TransactionCategorization, Transaction.normalized_description == TransactionCategorization.normalized_description)
+            .join(
+                TransactionCategorization,
+                Transaction.normalized_description == TransactionCategorization.normalized_description,
+            )
             .scalar()
         )
 
         transactions_with_manual_rules = (
             self.db_session.query(func.count(Transaction.id))
-            .join(TransactionCategorization, Transaction.normalized_description == TransactionCategorization.normalized_description)
+            .join(
+                TransactionCategorization,
+                Transaction.normalized_description == TransactionCategorization.normalized_description,
+            )
             .filter(TransactionCategorization.source == CategorizationSource.MANUAL)
             .scalar()
         )
 
         transactions_with_ai_rules = (
             self.db_session.query(func.count(Transaction.id))
-            .join(TransactionCategorization, Transaction.normalized_description == TransactionCategorization.normalized_description)
+            .join(
+                TransactionCategorization,
+                Transaction.normalized_description == TransactionCategorization.normalized_description,
+            )
             .filter(TransactionCategorization.source == CategorizationSource.AI)
             .scalar()
         )
@@ -224,18 +232,10 @@ class SQLAlchemyTransactionCategorizationRepository(TransactionCategorizationRep
                 Category.name.label("category_name"),
                 func.count(TransactionCategorization.id).label("rule_count"),
                 func.count(Transaction.id).label("transaction_count"),
-                func.sum(
-                    case(
-                        (TransactionCategorization.source == CategorizationSource.MANUAL, 1),
-                        else_=0
-                    )
-                ).label("manual_rules"),
-                func.sum(
-                    case(
-                        (TransactionCategorization.source == CategorizationSource.AI, 1),
-                        else_=0
-                    )
-                ).label("ai_rules"),
+                func.sum(case((TransactionCategorization.source == CategorizationSource.MANUAL, 1), else_=0)).label(
+                    "manual_rules"
+                ),
+                func.sum(case((TransactionCategorization.source == CategorizationSource.AI, 1), else_=0)).label("ai_rules"),
             )
             .join(Category, TransactionCategorization.category_id == Category.id)
             .outerjoin(Transaction, Transaction.normalized_description == TransactionCategorization.normalized_description)
