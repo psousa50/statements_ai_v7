@@ -2,6 +2,7 @@
 Utility functions for text normalization.
 Used for normalizing transaction descriptions to improve matching and categorization.
 """
+
 import re
 import unicodedata
 
@@ -32,30 +33,9 @@ def normalize_description(description: str) -> str:
     # Remove accents/diacritics
     text = unicodedata.normalize("NFKD", text).encode("ASCII", "ignore").decode("utf-8")
 
-    # Remove common transaction prefixes/suffixes and payment references
-    prefixes_to_remove = [
-        "payment to ",
-        "payment from ",
-        "transfer to ",
-        "transfer from ",
-        "pos purchase at ",
-        "purchase at ",
-        "withdrawal at ",
-        "deposit at ",
-        "debit card purchase at ",
-        "credit card payment to ",
-    ]
-
-    for prefix in prefixes_to_remove:
-        if text.startswith(prefix):
-            text = text[len(prefix) :]
-
-    # Special case for 'Transaction ID' pattern
-    text = re.sub(r"transaction\s+id.*", "transaction", text, flags=re.IGNORECASE)
-
     # Remove reference numbers, dates, and transaction IDs
     # This pattern matches common formats like REF123456, #123456, 01/02/2023
-    text = re.sub(r"(ref|reference|#|id|date)[:\s]*[\w\d\-\/\.]+", "", text, flags=re.IGNORECASE)
+    text = re.sub(r"\b(ref|reference|#|id|date)\b[:\s]*[\w\d\-\/\.]+", "", text, flags=re.IGNORECASE)
 
     # Remove common date patterns
     text = re.sub(r"\b\d{1,2}[/\-]\d{1,2}[/\-]\d{2,4}\b", "", text)
