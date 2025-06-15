@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts'
 import { useCategoryTotals } from '../services/hooks/useTransactions'
 import { useCategories } from '../services/hooks/useCategories'
@@ -47,6 +48,7 @@ const COLORS = [
 ]
 
 export const ChartsPage = () => {
+  const navigate = useNavigate()
   const [filters, setFilters] = useState<Omit<FilterType, 'page' | 'page_size'>>({})
   const [chartType, setChartType] = useState<'root' | 'sub'>('root')
   const [selectedRootCategory, setSelectedRootCategory] = useState<string | null>(null)
@@ -323,9 +325,31 @@ export const ChartsPage = () => {
       if (chartType === 'root' && data.id !== 'uncategorized') {
         setSelectedRootCategory(data.id)
         setChartType('sub')
+      } else if (chartType === 'sub') {
+        // Navigate to transactions page with current filters plus the selected category
+        const params = new URLSearchParams()
+        
+        // Add current filters
+        if (filters.description_search) params.set('description_search', filters.description_search)
+        if (filters.min_amount !== undefined) params.set('min_amount', filters.min_amount.toString())
+        if (filters.max_amount !== undefined) params.set('max_amount', filters.max_amount.toString())
+        if (filters.start_date) params.set('start_date', filters.start_date)
+        if (filters.end_date) params.set('end_date', filters.end_date)
+        if (filters.status) params.set('status', filters.status)
+        if (filters.source_id) params.set('source_id', filters.source_id)
+        
+        // Add category filter - for sub-categories, use the specific category ID
+        if (data.id !== 'uncategorized' && data.id !== 'other') {
+          params.set('category_ids', data.id)
+        } else if (data.id === 'uncategorized') {
+          // For uncategorized, we need to filter by status instead
+          params.set('status', 'UNCATEGORIZED')
+        }
+        
+        navigate(`/transactions?${params.toString()}`)
       }
     },
-    [chartType]
+    [chartType, filters, navigate]
   )
 
   const handleBackToRoot = useCallback(() => {
@@ -483,7 +507,7 @@ export const ChartsPage = () => {
                     fill="#8884d8"
                     dataKey="value"
                     onClick={handleChartClick}
-                    style={{ cursor: chartType === 'root' ? 'pointer' : 'default' }}
+                    style={{ cursor: 'pointer' }}
                   >
                     {chartData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
@@ -517,11 +541,13 @@ export const ChartsPage = () => {
             )}
           </div>
 
-          {chartType === 'root' && (
-            <div className="chart-help">
+          <div className="chart-help">
+            {chartType === 'root' ? (
               <p>💡 Click on any category slice to see its subcategories breakdown</p>
-            </div>
-          )}
+            ) : (
+              <p>💡 Click on any subcategory slice to view its transactions</p>
+            )}
+          </div>
         </div>
       </div>
     </div>
