@@ -1,6 +1,7 @@
 import { createBrowserRouter, RouterProvider, createRoutesFromElements, Route } from 'react-router-dom'
 import { TransactionsPage } from './pages/Transactions'
 import { TransactionCategorizationsPage } from './pages/TransactionCategorizations'
+import { CategoriesPage } from './pages/Categories'
 import { ChartsPage } from './pages/Charts'
 import { Upload } from './pages/Upload'
 import { AppLayout } from './components/layout/AppLayout'
@@ -16,6 +17,7 @@ const router = createBrowserRouter([
       { index: true, element: <TransactionsPage /> },
       { path: 'transactions', element: <TransactionsPage /> },
       { path: 'categorizations', element: <TransactionCategorizationsPage /> },
+      { path: 'categories', element: <CategoriesPage /> },
       { path: 'charts', element: <ChartsPage /> },
       { path: 'upload', element: <Upload /> }
     ]

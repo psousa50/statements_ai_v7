@@ -314,6 +314,7 @@ export const TransactionFilters = ({
             <CategorySelector
               categories={categories}
               selectedCategoryIds={selectedCategoryIds}
+              onCategoryChange={() => {}} // Not used in multiple mode
               onCategoryIdsChange={onCategoryChange}
               placeholder="Type to add categories..."
               multiple={true}
