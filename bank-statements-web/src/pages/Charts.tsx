@@ -328,7 +328,7 @@ export const ChartsPage = () => {
       } else if (chartType === 'sub') {
         // Navigate to transactions page with current filters plus the selected category
         const params = new URLSearchParams()
-        
+
         // Add current filters
         if (filters.description_search) params.set('description_search', filters.description_search)
         if (filters.min_amount !== undefined) params.set('min_amount', filters.min_amount.toString())
@@ -337,7 +337,7 @@ export const ChartsPage = () => {
         if (filters.end_date) params.set('end_date', filters.end_date)
         if (filters.status) params.set('status', filters.status)
         if (filters.source_id) params.set('source_id', filters.source_id)
-        
+
         // Add category filter - for sub-categories, use the specific category ID
         if (data.id !== 'uncategorized' && data.id !== 'other') {
           params.set('category_ids', data.id)
@@ -345,7 +345,7 @@ export const ChartsPage = () => {
           // For uncategorized, we need to filter by status instead
           params.set('status', 'UNCATEGORIZED')
         }
-        
+
         navigate(`/transactions?${params.toString()}`)
       }
     },
@@ -373,7 +373,7 @@ export const ChartsPage = () => {
     const x = cx + radius * Math.cos(-midAngle * RADIAN)
     const y = cy + radius * Math.sin(-midAngle * RADIAN)
 
-    if (percent < 0.03) return null // Don't show labels for slices less than 3%
+    if (percent < 0.01) return null // Don't show labels for slices less than 1%
 
     const isRightSide = x > cx
     const textAnchor = isRightSide ? 'start' : 'end'

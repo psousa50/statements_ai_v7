@@ -170,6 +170,18 @@
   background: transparent;
 }
 
+/* Pie chart label styling */
+.chart-container text {
+  font-family: inherit;
+  pointer-events: none;
+}
+
+.chart-container .recharts-pie-label-text {
+  font-size: 12px;
+  font-weight: 500;
+  fill: var(--text-primary);
+}
+
 /* Charts page inherits transaction page styles since it uses the same CSS classes */
 
 /* Responsive design */
