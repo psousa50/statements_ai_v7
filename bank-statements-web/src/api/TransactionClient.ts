@@ -29,6 +29,16 @@ export interface CategoryTotalsResponse {
   totals: CategoryTotal[]
 }
 
+export interface BulkUpdateTransactionsRequest {
+  normalized_description: string
+  category_id?: string
+}
+
+export interface BulkUpdateTransactionsResponse {
+  updated_count: number
+  message: string
+}
+
 export interface TransactionClient {
   getAll(filters?: TransactionFilters): Promise<TransactionListResponse>
   getCategoryTotals(filters?: Omit<TransactionFilters, 'page' | 'page_size'>): Promise<CategoryTotalsResponse>
@@ -36,6 +46,7 @@ export interface TransactionClient {
   create(transaction: TransactionCreate): Promise<Transaction>
   update(id: string, transaction: TransactionCreate): Promise<Transaction>
   delete(id: string): Promise<void>
+  bulkUpdateCategory(request: BulkUpdateTransactionsRequest): Promise<BulkUpdateTransactionsResponse>
 }
 
 export interface SourceClient {
@@ -139,6 +150,11 @@ export const transactionClient: TransactionClient = {
 
   async delete(id: string) {
     await axios.delete(`${API_URL}/${id}`)
+  },
+
+  async bulkUpdateCategory(request: BulkUpdateTransactionsRequest) {
+    const response = await axios.put<BulkUpdateTransactionsResponse>(`${API_URL}/bulk-update-category`, request)
+    return response.data
   },
 }
 

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import React, { useState } from 'react'
 import { Category } from '../types/Transaction'
 import { TransactionCategorization, CategorizationSource, SortField, SortDirection } from '../types/TransactionCategorization'
 
@@ -177,9 +177,8 @@ export const TransactionCategorizationTable = ({
         </thead>
         <tbody>
           {categorizations.map((categorization) => (
-            <>
+            <React.Fragment key={categorization.id}>
               <tr
-                key={categorization.id}
                 className={`categorization-row ${expandedRows.has(categorization.id) ? 'expanded' : ''}`}
                 onClick={() => toggleRowExpansion(categorization.id)}
               >
@@ -258,7 +257,7 @@ export const TransactionCategorizationTable = ({
                   </td>
                 </tr>
               )}
-            </>
+            </React.Fragment>
           ))}
         </tbody>
       </table>

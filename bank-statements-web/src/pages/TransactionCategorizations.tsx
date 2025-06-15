@@ -2,23 +2,30 @@ import { useState, useCallback, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTransactionCategorizations } from '../services/hooks/useTransactionCategorizations'
 import { useCategories } from '../services/hooks/useCategories'
+import { useApi } from '../api/ApiContext'
 import { TransactionCategorizationTable } from '../components/TransactionCategorizationTable'
 import { TransactionCategorizationFilters } from '../components/TransactionCategorizationFilters'
+import { EditCategorizationModal } from '../components/EditCategorizationModal'
+import { Toast, ToastProps } from '../components/Toast'
 import { Pagination } from '../components/Pagination'
 import {
   CategorizationSource,
   TransactionCategorizationFilters as FilterType,
   SortField,
   SortDirection,
+  TransactionCategorization,
 } from '../types/TransactionCategorization'
 import './TransactionCategorizationsPage.css'
 
 export const TransactionCategorizationsPage = () => {
   const navigate = useNavigate()
+  const api = useApi()
   const [filters, setFilters] = useState<FilterType>({
     page: 1,
     page_size: 20,
   })
+  const [editingCategorization, setEditingCategorization] = useState<TransactionCategorization | null>(null)
+  const [toast, setToast] = useState<Omit<ToastProps, 'onClose'> | null>(null)
 
   // Local state for debounced inputs
   const [localDescriptionSearch, setLocalDescriptionSearch] = useState<string>('')
@@ -34,6 +41,7 @@ export const TransactionCategorizationsPage = () => {
     fetchCategorizations,
     fetchStats,
     deleteCategorization,
+    updateCategorization,
     cleanupUnusedRules,
   } = useTransactionCategorizations()
 
@@ -132,19 +140,19 @@ export const TransactionCategorizationsPage = () => {
   const handleSort = useCallback(
     (field: SortField) => {
       let newDirection: SortDirection = 'asc'
-      
+
       // If clicking the same field, toggle direction
       if (filters.sort_field === field) {
         newDirection = filters.sort_direction === 'asc' ? 'desc' : 'asc'
       }
-      
+
       const updatedFilters = {
         ...filters,
         sort_field: field,
         sort_direction: newDirection,
         page: 1, // Reset to first page when sorting
       }
-      
+
       setFilters(updatedFilters)
       fetchCategorizations(updatedFilters)
     },
@@ -188,6 +196,75 @@ export const TransactionCategorizationsPage = () => {
       navigate(`/transactions?${searchParams.toString()}`)
     },
     [navigate]
+  )
+
+  const handleEditCategorization = useCallback((categorization: TransactionCategorization) => {
+    setEditingCategorization(categorization)
+  }, [])
+
+  const handleCloseToast = useCallback(() => {
+    setToast(null)
+  }, [])
+
+  const handleSaveEdit = useCallback(
+    async (
+      id: string,
+      updates: {
+        normalized_description: string
+        category_id: string
+        source: CategorizationSource
+      },
+      applyToAllSame: boolean
+    ) => {
+      try {
+        // Validate that we have a valid category_id
+        if (!updates.category_id || updates.category_id === '') {
+          throw new Error('Category is required')
+        }
+        
+        await updateCategorization(id, updates)
+
+        // Check if we need to perform bulk update (only if category actually changed)
+        const oldCategoryId = editingCategorization?.category_id || ''
+        const newCategoryId = updates.category_id || ''
+        const categoryActuallyChanged = newCategoryId !== oldCategoryId
+        
+        if (applyToAllSame && categoryActuallyChanged) {
+          // Perform bulk update for all transactions with same description
+          const normalizedDesc = editingCategorization?.normalized_description || ''
+          const bulkUpdateRequest = {
+            normalized_description: normalizedDesc,
+            category_id: updates.category_id && updates.category_id !== '' ? updates.category_id : undefined,
+          }
+          
+          // Validate the request before sending
+          if (normalizedDesc.length < 2) {
+            throw new Error('Normalized description is too short for bulk update')
+          }
+          
+          const bulkUpdateResult = await api.transactions.bulkUpdateCategory(bulkUpdateRequest)
+          
+          // Show success toast
+          setToast({
+            message: `Successfully updated ${bulkUpdateResult.updated_count} transactions`,
+            type: 'success'
+          })
+        }
+
+        // Refresh data
+        fetchCategorizations(filters)
+        fetchStats()
+        setEditingCategorization(null)
+      } catch (error) {
+        console.error('Failed to update categorization:', error)
+        setToast({
+          message: 'Failed to update categorization. Please try again.',
+          type: 'error'
+        })
+        // Don't re-throw the error to prevent modal from staying open
+      }
+    },
+    [updateCategorization, editingCategorization, fetchCategorizations, fetchStats, filters]
   )
 
   return (
@@ -281,6 +358,7 @@ export const TransactionCategorizationsPage = () => {
             loading={loading}
             sortField={filters.sort_field}
             sortDirection={filters.sort_direction}
+            onEdit={handleEditCategorization}
             onDelete={handleDeleteCategorization}
             onViewTransactions={handleViewTransactions}
             onSort={handleSort}
@@ -300,6 +378,22 @@ export const TransactionCategorizationsPage = () => {
           </div>
         )}
       </div>
+
+      <EditCategorizationModal
+        categorization={editingCategorization}
+        categories={categories || []}
+        isOpen={!!editingCategorization}
+        onClose={() => setEditingCategorization(null)}
+        onSave={handleSaveEdit}
+      />
+
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={handleCloseToast}
+        />
+      )}
     </div>
   )
 }

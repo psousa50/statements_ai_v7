@@ -292,3 +292,21 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
             .order_by(Transaction.date.asc())
             .all()
         )
+
+    def bulk_update_category_by_normalized_description(self, normalized_description: str, category_id: Optional[UUID]) -> int:
+        """
+        Update the category for all transactions with the given normalized description.
+        """
+        query = self.db_session.query(Transaction).filter(Transaction.normalized_description == normalized_description)
+
+        # Update the category_id and categorization_status for all matching transactions
+        update_values = {
+            "category_id": category_id,
+            "categorization_status": (CategorizationStatus.CATEGORIZED if category_id else CategorizationStatus.UNCATEGORIZED),
+        }
+
+        # Execute bulk update
+        updated_count = query.update(update_values)
+        self.db_session.commit()
+
+        return updated_count

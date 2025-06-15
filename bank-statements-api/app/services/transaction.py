@@ -152,3 +152,7 @@ class TransactionService:
         transaction.categorization_status = CategorizationStatus.FAILURE
 
         return self.transaction_repository.update(transaction)
+
+    def bulk_update_category_by_normalized_description(self, normalized_description: str, category_id: Optional[UUID]) -> int:
+        """Update the category for all transactions with the given normalized description"""
+        return self.transaction_repository.bulk_update_category_by_normalized_description(normalized_description, category_id)

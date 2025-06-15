@@ -62,16 +62,6 @@ const ThemedApp = () => {
       root.style.setProperty('--positive-amount', '#059669')
       root.style.setProperty('--negative-amount', '#dc2626')
     }
-
-    console.log('Theme updated to:', prefersDarkMode ? 'DARK' : 'LIGHT')
-    console.log('Body classes:', body.classList.toString())
-
-    // Debug: Log CSS variable values
-    console.log('CSS Variables:', {
-      bgPrimary: root.style.getPropertyValue('--bg-primary'),
-      bgSecondary: root.style.getPropertyValue('--bg-secondary'),
-      textPrimary: root.style.getPropertyValue('--text-primary'),
-    })
   }, [prefersDarkMode])
 
   const theme = React.useMemo(

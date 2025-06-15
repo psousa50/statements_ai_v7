@@ -293,3 +293,13 @@ class TransactionCategorizationStatsResponse(BaseModel):
     unused_rules: List[Dict]
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class BulkUpdateTransactionsRequest(BaseModel):
+    normalized_description: str
+    category_id: Optional[str] = None
+
+
+class BulkUpdateTransactionsResponse(BaseModel):
+    updated_count: int
+    message: str

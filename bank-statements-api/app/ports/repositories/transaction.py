@@ -159,3 +159,17 @@ class TransactionRepository(ABC):
             List of matching transactions from the database
         """
         pass
+
+    @abstractmethod
+    def bulk_update_category_by_normalized_description(self, normalized_description: str, category_id: Optional[UUID]) -> int:
+        """
+        Update the category for all transactions with the given normalized description.
+
+        Args:
+            normalized_description: The normalized description to match
+            category_id: The new category ID to assign (or None to uncategorize)
+
+        Returns:
+            Number of transactions updated
+        """
+        pass

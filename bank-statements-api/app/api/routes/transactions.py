@@ -7,6 +7,8 @@ from fastapi import APIRouter, Depends, FastAPI, HTTPException, Query, status
 
 from app.api.schemas import (
     BatchCategorizationResponse,
+    BulkUpdateTransactionsRequest,
+    BulkUpdateTransactionsResponse,
     CategorizationResultResponse,
     CategoryTotalResponse,
     CategoryTotalsResponse,
@@ -116,6 +118,40 @@ def register_transaction_routes(app: FastAPI, provide_dependencies: Callable[[],
         ]
 
         return CategoryTotalsResponse(totals=totals)
+
+    # Bulk update route - MUST be defined before /{transaction_id} routes to avoid path conflicts
+    @router.put("/bulk-update-category", response_model=BulkUpdateTransactionsResponse)
+    def bulk_update_transaction_category(
+        request: BulkUpdateTransactionsRequest,
+        internal: InternalDependencies = Depends(provide_dependencies),
+    ):
+        """
+        Update the category for all transactions with the given normalized description
+        """
+        try:
+            # Convert category_id string to UUID if provided
+            category_uuid = None
+            if request.category_id:
+                try:
+                    category_uuid = UUID(request.category_id)
+                except ValueError:
+                    raise HTTPException(
+                        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                        detail=f"Invalid UUID format for category_id: {request.category_id}"
+                    )
+            
+            updated_count = internal.transaction_service.bulk_update_category_by_normalized_description(
+                normalized_description=request.normalized_description, category_id=category_uuid
+            )
+
+            action = "categorized" if request.category_id else "uncategorized"
+            message = f"Successfully {action} {updated_count} transactions with description '{request.normalized_description}'"
+
+            return BulkUpdateTransactionsResponse(updated_count=updated_count, message=message)
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Error updating transactions: {str(e)}"
+            )
 
     @router.get("/{transaction_id}", response_model=TransactionResponse)
     def get_transaction(
