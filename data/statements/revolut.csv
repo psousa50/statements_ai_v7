@@ -1,4 +1,4 @@
-Type,Product,date,Completed Date,description,amount,Fee,Currency,State,Balance
+Type,Product,Started Date,Completed Date,Description,Amount,Fee,Currency,State,Balance
 TOPUP,Current,2019-02-21 11:00:48,,Auth *4190,1,0,EUR,REVERTED,
 TOPUP,Current,2019-02-21 11:01:06,2019-02-21 11:01:14,Top-Up by *4190,10,0,EUR,COMPLETED,10
 TOPUP,Current,2019-02-21 11:45:21,,Auth *1071,1,0,EUR,REVERTED,
