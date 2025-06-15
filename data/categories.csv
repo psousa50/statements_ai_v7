@@ -1,18 +1,74 @@
-Income,Salary / Wages | Bonuses | Interest / Dividends | Other Income
-Housing,Rent | Mortgage | Home Maintenance / Repairs | Property Tax | HOA Fees | Furniture / Appliances
-Utilities,Electricity | Gas / Heating | Water / Sewer | Trash / Recycling | Internet | Cable / TV | Mobile Phone
-Transportation,Car Payment / Lease | Fuel | Car Insurance | Car Maintenance / Repairs | Public Transit / Train / Bus | Ride-Sharing / Taxi
-Food & Dining,Groceries | Restaurants / Dining Out | Coffee Shops | Snacks / Fast Food
-Personal Care,Gym / Fitness | Salon / Hair / Spa | Cosmetics / Toiletries
-Health & Medical,Doctor / Clinic | Dental | Pharmacy | Health Insurance | Therapy / Counseling
-Insurance (Non-Health),Life Insurance | Home Insurance | Auto Insurance | Travel Insurance
-Debt & Financial,Loans | Credit Card Payments | Bank Fees / Service Charges
-Shopping,Clothing / Accessories | Electronics / Gadgets | Household Supplies | Online Shopping
-Entertainment,Movies / Concerts / Shows | Streaming Services | Books / Magazines | Games / Apps
-Subscriptions,Memberships | News / Magazines | Software / SaaS
-Travel,Flights / Train Tickets | Accommodation | Rental Car / Taxis | Travel Activities / Tours
-Family & Children,Childcare / Babysitting | Education / Tuition | School Supplies | Activities / Sports
-Pets,Pet Food & Supplies | Vet / Pet Insurance | Grooming
-Gifts & Donations,Gift Purchases | Charitable Donations | Religious Donations
-Taxes,Income Tax | Property Tax | Other Taxes / Tax Preparation
-Miscellaneous,One-time / Surprise Expenses | Other
+Housing: Rent
+Housing: Mortgage
+Housing: Home Maintenance / Repairs
+Housing: Property Tax
+Housing: HOA Fees
+Housing: Furniture / Appliances
+Utilities: Electricity
+Utilities: Gas / Heating
+Utilities: Water / Sewer
+Utilities: Trash / Recycling
+Utilities: Internet
+Utilities: Cable / TV
+Utilities: Mobile Phone
+Car: Payment / Lease
+Car: Fuel
+Car: Electrical / Charging
+Car: Insurance
+Car: Maintenance / Repairs
+Transportation: Public Transit / Train / Bus
+Transportation: Ride-Sharing / Taxi
+Food & Dining: Groceries
+Food & Dining: Restaurants / Dining Out
+Food & Dining: Takeout / Delivery
+Food & Dining: Coffee Shops
+Food & Dining: Snacks / Fast Food
+Personal Care: Gym / Fitness
+Personal Care: Salon / Hair / Spa
+Personal Care: Cosmetics / Toiletries
+Health & Medical: Doctor / Clinic
+Health & Medical: Dental
+Health & Medical: Pharmacy
+Health & Medical: Health Insurance
+Health & Medical: Therapy / Counseling
+Insurance (Non-Health): Life Insurance
+Insurance (Non-Health): Home Insurance
+Insurance (Non-Health): Auto Insurance
+Insurance (Non-Health): Travel Insurance
+Debt & Financial: Loans
+Debt & Financial: Credit Card Payments
+Debt & Financial: Bank Fees / Service Charges
+Debt & Financial: Investment Contributions
+Debt & Financial: Savings Contributions
+Debt & Financial: Retirement Contributions
+Debt & Financial: Other Financial Transactions
+Shopping: Clothing / Accessories
+Shopping: Electronics / Gadgets
+Shopping: Household Supplies
+Shopping: Online Shopping
+Entertainment: Movies / Concerts / Shows
+Entertainment: Streaming Services
+Entertainment: Books / Magazines
+Entertainment: Games / Apps
+Subscriptions: Memberships
+Subscriptions: News / Magazines
+Subscriptions: Software / SaaS
+Travel: Flights / Train Tickets
+Travel: Accommodation
+Travel: Rental Car / Taxis
+Travel: Travel Activities / Tours
+Family & Children: Childcare / Babysitting
+Family & Children: Education / Tuition
+Family & Children: School Supplies
+Family & Children: Activities / Sports
+Pets: Pet Food & Supplies
+Pets: Vet / Pet Insurance
+Pets: Grooming
+Gifts & Donations: Gift Purchases
+Gifts & Donations: Charitable Donations
+Gifts & Donations: Religious Donations
+Taxes: Income Tax
+Taxes: Property Tax
+Taxes: Other Taxes / Tax Preparation
+Miscellaneous: One-time / Surprise Expenses
+Miscellaneous: Other
