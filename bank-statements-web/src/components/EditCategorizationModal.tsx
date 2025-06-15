@@ -100,21 +100,18 @@ export const EditCategorizationModal = ({
 
           <div className="form-group">
             <label className="checkbox-label">
-              <input 
-                type="checkbox" 
-                checked={applyToAllSame} 
+              <input
+                type="checkbox"
+                checked={applyToAllSame}
                 onChange={(e) => setApplyToAllSame(e.target.checked)}
                 disabled={!categoryChanged}
               />
               <div className="checkbox-content">
-                <span className="checkbox-text">
-                  Apply new category to all matching transactions
-                </span>
+                <span className="checkbox-text">Apply new category to all matching transactions</span>
                 <span className="checkbox-description">
-                  {categoryChanged 
+                  {categoryChanged
                     ? `This will update the category for all existing transactions that match "${categorization.normalized_description}"`
-                    : "Change the category to enable this option"
-                  }
+                    : 'Change the category to enable this option'}
                 </span>
               </div>
             </label>

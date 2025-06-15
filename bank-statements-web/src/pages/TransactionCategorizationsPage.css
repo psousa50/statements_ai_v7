@@ -690,7 +690,7 @@
   font-size: 0.875rem;
 }
 
-.form-group input,
+.form-group input:not(.category-input),
 .form-group select {
   width: 100%;
   padding: 10px 12px;
@@ -701,6 +701,13 @@
   color: var(--text-primary);
   transition: border-color 0.2s;
   box-sizing: border-box;
+}
+
+/* Ensure CategorySelector inside form-group doesn't get form styling */
+.form-group .category-selector {
+  border: none !important;
+  padding: 0 !important;
+  background: transparent !important;
 }
 
 .form-group input:focus,
@@ -807,25 +814,7 @@
   cursor: not-allowed;
 }
 
-/* Category Selector Styles */
-.category-selector {
-  position: relative;
-  width: 100%;
-}
-
-.category-selector-input-container {
-  width: 100%;
-  border: 1px solid var(--border-secondary);
-  border-radius: 6px;
-  background: var(--bg-primary);
-  transition: border-color 0.2s;
-  box-sizing: border-box;
-}
-
-.category-selector-input-container:focus-within {
-  border-color: var(--text-accent);
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-}
+/* Category Selector Styles - Removed duplicate styling, using CategorySelector.css instead */
 
 .selected-category {
   display: flex;

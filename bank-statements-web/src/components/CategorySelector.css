@@ -1,0 +1,164 @@
+/* Category Selector Styles - Enhanced for single and multiple selection */
+
+.category-selector {
+  position: relative;
+  width: 100%;
+}
+
+.category-selector-input-container {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 12px;
+  border: 1px solid var(--border-primary);
+  border-radius: 4px;
+  background: var(--bg-primary);
+  min-height: 40px;
+  cursor: text;
+}
+
+/* Fix double border when CategorySelector is inside a form-group */
+.form-group .category-selector-input-container {
+  border: 1px solid var(--border-secondary) !important;
+  border-radius: 6px !important;
+  padding: 10px 12px !important;
+  min-height: auto !important;
+}
+
+.form-group .category-selector-input-container:focus-within {
+  border-color: var(--text-accent) !important;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1) !important;
+}
+
+.category-selector-input-container:focus-within {
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 2px var(--accent-primary-20);
+}
+
+/* Category tags for multiple selection - Use consistent light blue design */
+.category-selector .category-tag {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px !important;
+  background: #eff6ff !important;
+  color: #1e40af !important;
+  border-radius: 4px !important;
+  font-size: 12px !important;
+  font-weight: 500;
+  white-space: nowrap;
+  border: 1px solid rgba(30, 64, 175, 0.2) !important;
+}
+
+.category-selector .category-tag-remove {
+  background: none !important;
+  border: none !important;
+  color: #1e40af !important;
+  font-size: 14px !important;
+  font-weight: bold;
+  cursor: pointer;
+  padding: 0;
+  margin: 0;
+  line-height: 1;
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.8;
+}
+
+.category-selector .category-tag-remove:hover {
+  opacity: 1 !important;
+  color: #1d4ed8 !important;
+  background: rgba(30, 64, 175, 0.1) !important;
+}
+
+/* Input field */
+.category-input {
+  border: none;
+  outline: none;
+  background: transparent;
+  flex: 1;
+  min-width: 120px;
+  font-size: 14px;
+  color: var(--text-primary);
+  padding: 0;
+}
+
+.category-input::placeholder {
+  color: var(--text-secondary);
+}
+
+/* Clear button */
+.category-clear-button {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 18px;
+  cursor: pointer;
+  padding: 2px;
+  border-radius: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+}
+
+.category-clear-button:hover {
+  color: var(--text-primary);
+  background: var(--bg-secondary);
+}
+
+/* Suggestions dropdown */
+.category-suggestions {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-primary);
+  border-top: none;
+  border-bottom-left-radius: 4px;
+  border-bottom-right-radius: 4px;
+  box-shadow: 0 4px 6px var(--shadow-light);
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.category-suggestion {
+  display: block;
+  width: 100%;
+  padding: 8px 12px;
+  border: none;
+  background: none;
+  text-align: left;
+  font-size: 14px;
+  color: var(--text-primary);
+  cursor: pointer;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.category-suggestion:hover {
+  background: var(--bg-hover);
+}
+
+.category-suggestion:last-child {
+  border-bottom: none;
+}
+
+.no-suggestions {
+  padding: 8px 12px;
+  color: var(--text-secondary);
+  font-size: 14px;
+  text-align: center;
+}
+
+/* Multiple mode specific styles */
+.category-selector.multiple .category-input {
+  min-width: 80px;
+}

@@ -1,6 +1,7 @@
-import { useState, useMemo, useCallback, useRef, useEffect } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 import { DateRangePicker } from 'rsuite'
 import { CategorizationStatus, Category, Source } from '../types/Transaction'
+import { CategorySelector } from './CategorySelector'
 import 'rsuite/dist/rsuite.min.css'
 
 interface TransactionFiltersProps {
@@ -56,13 +57,8 @@ export const TransactionFilters = ({
   onDateRangeChange,
   onClearFilters,
 }: TransactionFiltersProps) => {
-  const [categoryInput, setCategoryInput] = useState('')
-  const [showSuggestions, setShowSuggestions] = useState(false)
   const [isCollapsed, setIsCollapsed] = useState(false)
-  const inputRef = useRef<HTMLInputElement>(null)
   const datePickerRef = useRef<HTMLDivElement>(null)
-  const categoryContainerRef = useRef<HTMLDivElement>(null)
-  const isAddingCategoryRef = useRef(false)
 
   // Date range state for RSuite DateRangePicker
   const [dateRange, setDateRange] = useState<[Date, Date] | null>(() => {
@@ -81,19 +77,6 @@ export const TransactionFilters = ({
     }
   }, [startDate, endDate])
 
-  // Filter categories based on input and exclude already selected ones
-  const availableCategories = useMemo(() => {
-    return categories.filter(
-      (category) =>
-        !selectedCategoryIds.includes(category.id) && category.name.toLowerCase().includes(categoryInput.toLowerCase())
-    )
-  }, [categories, selectedCategoryIds, categoryInput])
-
-  // Get selected category objects
-  const selectedCategories = useMemo(() => {
-    return categories.filter((cat) => selectedCategoryIds.includes(cat.id))
-  }, [categories, selectedCategoryIds])
-
   const hasActiveFilters =
     selectedCategoryIds.length > 0 ||
     selectedStatus ||
@@ -103,24 +86,6 @@ export const TransactionFilters = ({
     selectedSourceId ||
     startDate ||
     endDate
-
-  // Close suggestions when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      // Don't close if clicking inside the date picker dropdown or category container
-      const target = event.target as Node
-      const isDatePickerClick = target && datePickerRef.current?.contains(target)
-      const isCategoryClick = target && categoryContainerRef.current?.contains(target)
-      const isDateRangeClick = target && (target as Element).closest?.('.rs-picker-popup, .date-picker-container')
-
-      if (!isDatePickerClick && !isDateRangeClick && !isCategoryClick) {
-        setShowSuggestions(false)
-      }
-    }
-
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
 
   const handleDateRangeChange = useCallback(
     (range: [Date, Date] | null) => {
@@ -207,52 +172,6 @@ export const TransactionFilters = ({
     },
   ]
 
-  const handleCategoryAdd = useCallback(
-    (categoryId: string) => {
-      isAddingCategoryRef.current = true
-      if (!selectedCategoryIds.includes(categoryId)) {
-        onCategoryChange([...selectedCategoryIds, categoryId])
-      }
-      setCategoryInput('')
-      setShowSuggestions(false)
-
-      // Reset the flag after a short delay and refocus
-      setTimeout(() => {
-        isAddingCategoryRef.current = false
-        inputRef.current?.focus()
-      }, 0)
-    },
-    [selectedCategoryIds, onCategoryChange]
-  )
-
-  const handleCategoryRemove = useCallback(
-    (categoryId: string) => {
-      onCategoryChange(selectedCategoryIds.filter((id) => id !== categoryId))
-    },
-    [selectedCategoryIds, onCategoryChange]
-  )
-
-  const handleInputChange = useCallback((value: string) => {
-    setCategoryInput(value)
-    // Show suggestions if there's input text - availableCategories will be recalculated
-    setShowSuggestions(value.length > 0)
-  }, [])
-
-  const handleInputKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
-      if (e.key === 'Enter' && availableCategories.length > 0) {
-        e.preventDefault()
-        handleCategoryAdd(availableCategories[0].id)
-      } else if (e.key === 'Escape') {
-        setShowSuggestions(false)
-        setCategoryInput('')
-      } else if (e.key === 'Backspace' && categoryInput === '' && selectedCategories.length > 0) {
-        // Remove last selected category when backspacing on empty input
-        handleCategoryRemove(selectedCategories[selectedCategories.length - 1].id)
-      }
-    },
-    [availableCategories, categoryInput, selectedCategories, handleCategoryAdd, handleCategoryRemove]
-  )
 
   const handleAmountChange = useCallback(
     (field: 'min' | 'max', value: string) => {
@@ -303,6 +222,23 @@ export const TransactionFilters = ({
             />
           </div>
 
+          {/* Status Filter */}
+          <div className="filter-section">
+            <label htmlFor="status-filter" className="filter-label">
+              Status
+            </label>
+            <select
+              id="status-filter"
+              value={selectedStatus || ''}
+              onChange={(e) => _onStatusChange((e.target.value as CategorizationStatus) || undefined)}
+              className="filter-select"
+            >
+              <option value="">All Statuses</option>
+              <option value="CATEGORIZED">Categorized</option>
+              <option value="UNCATEGORIZED">Uncategorized</option>
+            </select>
+          </div>
+
           {/* Source Filter */}
           <div className="filter-section">
             <label htmlFor="source-filter" className="filter-label">
@@ -324,9 +260,9 @@ export const TransactionFilters = ({
           </div>
 
           {/* Date Range */}
-          {onDateRangeChange && (
-            <div className="filter-section">
-              <label className="filter-label">Date Range</label>
+          <div className="filter-section">
+            <label className="filter-label">Date Range</label>
+            {onDateRangeChange ? (
               <div className="date-range-picker" ref={datePickerRef}>
                 <DateRangePicker
                   value={dateRange}
@@ -341,8 +277,12 @@ export const TransactionFilters = ({
                   placement="bottomStart"
                 />
               </div>
-            </div>
-          )}
+            ) : (
+              <div className="filter-placeholder" style={{ padding: '8px', color: 'var(--text-secondary)', fontStyle: 'italic' }}>
+                Not available
+              </div>
+            )}
+          </div>
 
           {/* Amount Range */}
           <div className="filter-section">
@@ -371,58 +311,14 @@ export const TransactionFilters = ({
           {/* Categories - Full width */}
           <div className="filter-section filter-section-full-width">
             <label className="filter-label">Categories</label>
-
-            <div className="category-tag-input" ref={categoryContainerRef}>
-              <div className="tag-input-container">
-                {/* Selected Categories Tags */}
-                {selectedCategories.map((category) => (
-                  <span key={category.id} className="category-tag">
-                    {category.name}
-                    <button
-                      onClick={() => handleCategoryRemove(category.id)}
-                      className="category-tag-remove"
-                      type="button"
-                    >
-                      ×
-                    </button>
-                  </span>
-                ))}
-
-                {/* Input Field */}
-                <input
-                  ref={inputRef}
-                  type="text"
-                  value={categoryInput}
-                  onChange={(e) => handleInputChange(e.target.value)}
-                  onKeyDown={handleInputKeyDown}
-                  onFocus={() => {
-                    // Don't show suggestions if we're in the middle of adding a category
-                    if (!isAddingCategoryRef.current && categoryInput.length > 0) {
-                      setShowSuggestions(true)
-                    }
-                  }}
-                  placeholder={selectedCategories.length === 0 ? 'Type to add categories...' : 'Add more...'}
-                  className="category-input"
-                />
-              </div>
-
-              {/* Suggestions Dropdown */}
-              {showSuggestions && availableCategories.length > 0 && (
-                <div className="category-suggestions">
-                  {availableCategories.slice(0, 8).map((category) => (
-                    <button
-                      key={category.id}
-                      onClick={() => handleCategoryAdd(category.id)}
-                      className="category-suggestion"
-                      type="button"
-                    >
-                      {category.parent_id && '  └ '}
-                      {category.name}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
+            <CategorySelector
+              categories={categories}
+              selectedCategoryIds={selectedCategoryIds}
+              onCategoryIdsChange={onCategoryChange}
+              placeholder="Type to add categories..."
+              multiple={true}
+              allowClear={false}
+            />
           </div>
         </div>
       )}
