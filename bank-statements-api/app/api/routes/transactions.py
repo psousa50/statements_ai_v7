@@ -137,9 +137,9 @@ def register_transaction_routes(app: FastAPI, provide_dependencies: Callable[[],
                 except ValueError:
                     raise HTTPException(
                         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                        detail=f"Invalid UUID format for category_id: {request.category_id}"
+                        detail=f"Invalid UUID format for category_id: {request.category_id}",
                     )
-            
+
             updated_count = internal.transaction_service.bulk_update_category_by_normalized_description(
                 normalized_description=request.normalized_description, category_id=category_uuid
             )
