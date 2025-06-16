@@ -149,6 +149,54 @@
   padding: 16px;
 }
 
+.category-tree-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--border-primary);
+}
+
+.expand-collapse-controls {
+  display: flex;
+  gap: 8px;
+}
+
+.control-button {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-secondary);
+  border-radius: 4px;
+  padding: 6px 12px;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.control-button:hover:not(:disabled) {
+  background: var(--bg-tertiary);
+  border-color: var(--text-accent);
+}
+
+.control-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: var(--bg-secondary);
+  border-color: var(--border-secondary);
+}
+
+.expand-status {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.category-tree-content {
+  /* No additional styles needed - inherits from existing styles */
+}
+
 .category-tree-node {
   margin-bottom: 8px;
 }
@@ -641,5 +689,19 @@
   .category-children {
     margin-left: 12px;
     padding-left: 12px;
+  }
+
+  .category-tree-controls {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .expand-collapse-controls {
+    justify-content: center;
+  }
+
+  .expand-status {
+    text-align: center;
   }
 }

@@ -26,14 +26,18 @@ export const CategoriesPage = () => {
     deleteCategory,
   } = useCategories()
 
-  // Filter categories based on search term
-  const filteredCategories = categories.filter(category =>
-    category.name.toLowerCase().includes(searchTerm.toLowerCase())
-  )
+  // Filter and sort categories based on search term
+  const filteredCategories = categories
+    .filter(category =>
+      category.name.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+    .sort((a, b) => a.name.localeCompare(b.name))
 
-  const filteredRootCategories = rootCategories.filter(category =>
-    category.name.toLowerCase().includes(searchTerm.toLowerCase())
-  )
+  const filteredRootCategories = rootCategories
+    .filter(category =>
+      category.name.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+    .sort((a, b) => a.name.localeCompare(b.name))
 
   const handleCreateCategory = useCallback((parentId?: string) => {
     setSelectedParentId(parentId)

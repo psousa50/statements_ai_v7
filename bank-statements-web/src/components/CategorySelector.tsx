@@ -52,8 +52,12 @@ export const CategorySelector = ({
       })
     }
 
-    if (!categoryInput) return availableCategories
-    return availableCategories.filter((category) => category.name.toLowerCase().includes(categoryInput.toLowerCase()))
+    const filtered = !categoryInput
+      ? availableCategories
+      : availableCategories.filter((category) => category.name.toLowerCase().includes(categoryInput.toLowerCase()))
+
+    // Sort categories alphabetically
+    return filtered.sort((a, b) => a.name.localeCompare(b.name))
   }, [categories, categoryInput, multiple, selectedCategoryIds])
 
   // Get category hierarchy display name

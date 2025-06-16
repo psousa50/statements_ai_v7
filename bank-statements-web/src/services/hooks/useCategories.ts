@@ -14,7 +14,7 @@ export const useCategories = () => {
     setError(null)
     try {
       const response = await api.categories.getAll()
-      setCategories(response.categories)
+      setCategories(response.categories.sort((a, b) => a.name.localeCompare(b.name)))
     } catch (err) {
       console.error('Error fetching categories:', err)
       setError('Failed to fetch categories. Please try again later.')
@@ -28,7 +28,7 @@ export const useCategories = () => {
     setError(null)
     try {
       const response = await api.categories.getRootCategories()
-      setRootCategories(response.categories)
+      setRootCategories(response.categories.sort((a, b) => a.name.localeCompare(b.name)))
     } catch (err) {
       console.error('Error fetching root categories:', err)
       setError('Failed to fetch root categories. Please try again later.')
@@ -43,7 +43,7 @@ export const useCategories = () => {
       setError(null)
       try {
         const response = await api.categories.getSubcategories(parentId)
-        return response.categories
+        return response.categories.sort((a, b) => a.name.localeCompare(b.name))
       } catch (err) {
         console.error('Error fetching subcategories:', err)
         setError('Failed to fetch subcategories. Please try again later.')
@@ -64,9 +64,9 @@ export const useCategories = () => {
           name,
           parent_id: parentId,
         })
-        setCategories((prev) => [...prev, newCategory])
+        setCategories((prev) => [...prev, newCategory].sort((a, b) => a.name.localeCompare(b.name)))
         if (!parentId) {
-          setRootCategories((prev) => [...prev, newCategory])
+          setRootCategories((prev) => [...prev, newCategory].sort((a, b) => a.name.localeCompare(b.name)))
         }
         return newCategory
       } catch (err) {
@@ -89,18 +89,22 @@ export const useCategories = () => {
           name,
           parent_id: parentId,
         })
-        setCategories((prev) => prev.map((category) => (category.id === id ? updatedCategory : category)))
+        setCategories((prev) => prev.map((category) => (category.id === id ? updatedCategory : category)).sort((a, b) => a.name.localeCompare(b.name)))
         setRootCategories((prev) => {
+          let updated
           // If the category was a root category and now has a parent, remove it from root categories
           if (parentId && !prev.find((c) => c.id === id)?.parent_id) {
-            return prev.filter((category) => category.id !== id)
+            updated = prev.filter((category) => category.id !== id)
           }
           // If the category was not a root category and now has no parent, add it to root categories
-          if (!parentId && prev.find((c) => c.id === id)?.parent_id) {
-            return [...prev, updatedCategory]
+          else if (!parentId && prev.find((c) => c.id === id)?.parent_id) {
+            updated = [...prev, updatedCategory]
           }
           // Otherwise, just update it if it's in the root categories
-          return prev.map((category) => (category.id === id ? updatedCategory : category))
+          else {
+            updated = prev.map((category) => (category.id === id ? updatedCategory : category))
+          }
+          return updated.sort((a, b) => a.name.localeCompare(b.name))
         })
         return updatedCategory
       } catch (err) {
