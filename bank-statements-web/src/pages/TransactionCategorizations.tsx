@@ -6,6 +6,7 @@ import { useApi } from '../api/ApiContext'
 import { TransactionCategorizationTable } from '../components/TransactionCategorizationTable'
 import { TransactionCategorizationFilters } from '../components/TransactionCategorizationFilters'
 import { EditCategorizationModal } from '../components/EditCategorizationModal'
+import { CreateCategorizationModal } from '../components/CreateCategorizationModal'
 import { Toast, ToastProps } from '../components/Toast'
 import { Pagination } from '../components/Pagination'
 import {
@@ -25,6 +26,7 @@ export const TransactionCategorizationsPage = () => {
     page_size: 20,
   })
   const [editingCategorization, setEditingCategorization] = useState<TransactionCategorization | null>(null)
+  const [isCreatingCategorization, setIsCreatingCategorization] = useState(false)
   const [toast, setToast] = useState<Omit<ToastProps, 'onClose'> | null>(null)
 
   // Local state for debounced inputs
@@ -40,6 +42,7 @@ export const TransactionCategorizationsPage = () => {
     pagination,
     fetchCategorizations,
     fetchStats,
+    createCategorization,
     deleteCategorization,
     updateCategorization,
     cleanupUnusedRules,
@@ -202,9 +205,40 @@ export const TransactionCategorizationsPage = () => {
     setEditingCategorization(categorization)
   }, [])
 
+  const handleCreateCategorization = useCallback(() => {
+    setIsCreatingCategorization(true)
+  }, [])
+
   const handleCloseToast = useCallback(() => {
     setToast(null)
   }, [])
+
+  const handleSaveCreate = useCallback(
+    async (data: { normalized_description: string; category_id: string; source: CategorizationSource }) => {
+      try {
+        await createCategorization(data)
+
+        // Show success toast
+        setToast({
+          message: 'Successfully created new categorization rule',
+          type: 'success',
+        })
+
+        // Refresh data
+        fetchCategorizations(filters)
+        fetchStats()
+        setIsCreatingCategorization(false)
+      } catch (error) {
+        console.error('Failed to create categorization:', error)
+        setToast({
+          message: 'Failed to create categorization rule. Please try again.',
+          type: 'error',
+        })
+        // Don't re-throw the error to prevent modal from staying open
+      }
+    },
+    [createCategorization, fetchCategorizations, fetchStats, filters]
+  )
 
   const handleSaveEdit = useCallback(
     async (
@@ -221,14 +255,14 @@ export const TransactionCategorizationsPage = () => {
         if (!updates.category_id || updates.category_id === '') {
           throw new Error('Category is required')
         }
-        
+
         await updateCategorization(id, updates)
 
         // Check if we need to perform bulk update (only if category actually changed)
         const oldCategoryId = editingCategorization?.category_id || ''
         const newCategoryId = updates.category_id || ''
         const categoryActuallyChanged = newCategoryId !== oldCategoryId
-        
+
         if (applyToAllSame && categoryActuallyChanged) {
           // Perform bulk update for all transactions with same description
           const normalizedDesc = editingCategorization?.normalized_description || ''
@@ -236,18 +270,18 @@ export const TransactionCategorizationsPage = () => {
             normalized_description: normalizedDesc,
             category_id: updates.category_id && updates.category_id !== '' ? updates.category_id : undefined,
           }
-          
+
           // Validate the request before sending
           if (normalizedDesc.length < 2) {
             throw new Error('Normalized description is too short for bulk update')
           }
-          
+
           const bulkUpdateResult = await api.transactions.bulkUpdateCategory(bulkUpdateRequest)
-          
+
           // Show success toast
           setToast({
             message: `Successfully updated ${bulkUpdateResult.updated_count} transactions`,
-            type: 'success'
+            type: 'success',
           })
         }
 
@@ -259,7 +293,7 @@ export const TransactionCategorizationsPage = () => {
         console.error('Failed to update categorization:', error)
         setToast({
           message: 'Failed to update categorization. Please try again.',
-          type: 'error'
+          type: 'error',
         })
         // Don't re-throw the error to prevent modal from staying open
       }
@@ -323,6 +357,13 @@ export const TransactionCategorizationsPage = () => {
           </div>
 
           <div className="categorizations-actions">
+            <button
+              onClick={handleCreateCategorization}
+              className="create-button"
+              title="Create new categorization rule"
+            >
+              ➕ Create New Rule
+            </button>
             {stats && stats.unused_rules.length > 0 && (
               <button
                 onClick={handleCleanupUnused}
@@ -387,13 +428,14 @@ export const TransactionCategorizationsPage = () => {
         onSave={handleSaveEdit}
       />
 
-      {toast && (
-        <Toast
-          message={toast.message}
-          type={toast.type}
-          onClose={handleCloseToast}
-        />
-      )}
+      <CreateCategorizationModal
+        categories={categories || []}
+        isOpen={isCreatingCategorization}
+        onClose={() => setIsCreatingCategorization(false)}
+        onSave={handleSaveCreate}
+      />
+
+      {toast && <Toast message={toast.message} type={toast.type} onClose={handleCloseToast} />}
     </div>
   )
 }

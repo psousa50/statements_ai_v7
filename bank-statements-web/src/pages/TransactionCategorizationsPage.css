@@ -250,6 +250,29 @@
   flex-wrap: wrap;
 }
 
+.create-button {
+  background: #059669;
+  border: 1px solid #047857;
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: white;
+  font-weight: 500;
+}
+
+.create-button:hover {
+  background: #047857;
+  border-color: #065f46;
+}
+
+.create-button:disabled {
+  background: #9ca3af;
+  border-color: #6b7280;
+  cursor: not-allowed;
+}
+
 .cleanup-button,
 .refresh-button {
   background: var(--bg-secondary);
@@ -703,18 +726,26 @@
   box-sizing: border-box;
 }
 
-/* Ensure CategorySelector inside form-group doesn't get form styling */
-.form-group .category-selector {
-  border: none !important;
-  padding: 0 !important;
-  background: transparent !important;
-}
-
 .form-group input:focus,
 .form-group select:focus {
   outline: none;
   border-color: var(--text-accent);
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.form-help-text {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 4px;
+  font-style: italic;
+  line-height: 1.3;
+}
+
+/* Ensure CategorySelector inside form-group doesn't get form styling */
+.form-group .category-selector {
+  border: none !important;
+  padding: 0 !important;
+  background: transparent !important;
 }
 
 .checkbox-label {
