@@ -30,6 +30,16 @@ class TransactionRepository(ABC):
         pass
 
     @abstractmethod
+    def get_all_by_source_and_date_range(
+        self,
+        source_id: UUID,
+        end_date: date,
+        start_date: Optional[date] = None,
+    ) -> List[Transaction]:
+        """Get all transactions for a source within a date range"""
+        pass
+
+    @abstractmethod
     def get_paginated(
         self,
         page: int = 1,
@@ -144,7 +154,11 @@ class TransactionRepository(ABC):
 
     @abstractmethod
     def find_matching_transactions(
-        self, date: str, description: str, amount: float, source_id: Optional[UUID] = None
+        self,
+        date: str,
+        description: str,
+        amount: float,
+        source_id: Optional[UUID] = None,
     ) -> List[Transaction]:
         """
         Find all transactions that match the given criteria.
@@ -161,7 +175,9 @@ class TransactionRepository(ABC):
         pass
 
     @abstractmethod
-    def bulk_update_category_by_normalized_description(self, normalized_description: str, category_id: Optional[UUID]) -> int:
+    def bulk_update_category_by_normalized_description(
+        self, normalized_description: str, category_id: Optional[UUID]
+    ) -> int:
         """
         Update the category for all transactions with the given normalized description.
 

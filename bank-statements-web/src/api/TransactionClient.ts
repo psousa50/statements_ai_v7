@@ -17,6 +17,7 @@ export interface TransactionFilters {
   source_id?: string
   start_date?: string
   end_date?: string
+  include_running_balance?: boolean
 }
 
 export interface CategoryTotal {
@@ -93,6 +94,9 @@ export const transactionClient: TransactionClient = {
     }
     if (filters?.end_date) {
       params.append('end_date', filters.end_date)
+    }
+    if (filters?.include_running_balance) {
+      params.append('include_running_balance', 'true')
     }
 
     const url = params.toString() ? `${API_URL}?${params.toString()}` : API_URL

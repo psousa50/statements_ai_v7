@@ -1,14 +1,14 @@
 from datetime import datetime, timezone
+from decimal import Decimal
 from enum import Enum
+from typing import Optional
 from uuid import uuid4
 
-from sqlalchemy import Column, Date, DateTime
+from app.core.database import Base
+from sqlalchemy import Column, Date, DateTime, ForeignKey, Numeric, String
 from sqlalchemy import Enum as SQLAlchemyEnum
-from sqlalchemy import ForeignKey, Numeric, String
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
-
-from app.core.database import Base
 
 
 class CategorizationStatus(str, Enum):
@@ -25,9 +25,13 @@ class Transaction(Base):
     description = Column(String, nullable=False)
     normalized_description = Column(String, nullable=False, index=True)
     amount = Column(Numeric(precision=10, scale=2), nullable=False)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
+    created_at = Column(
+        DateTime, default=lambda: datetime.now(timezone.utc), nullable=False
+    )
 
-    uploaded_file_id = Column(UUID(as_uuid=True), ForeignKey("uploaded_files.id"), nullable=True)
+    uploaded_file_id = Column(
+        UUID(as_uuid=True), ForeignKey("uploaded_files.id"), nullable=True
+    )
     uploaded_file = relationship("UploadedFile")
 
     category_id = Column(UUID(as_uuid=True), ForeignKey("categories.id"), nullable=True)
@@ -43,6 +47,20 @@ class Transaction(Base):
     )
 
     categorization_confidence = Column(Numeric(precision=5, scale=4), nullable=True)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._running_balance: Optional[Decimal] = None
+
+    @property
+    def running_balance(self) -> Optional[Decimal]:
+        """Get the running balance for this transaction"""
+        return self._running_balance
+
+    @running_balance.setter
+    def running_balance(self, value: Optional[Decimal]):
+        """Set the running balance for this transaction"""
+        self._running_balance = value
 
     def mark_categorized(self):
         """Mark the transaction as categorized"""

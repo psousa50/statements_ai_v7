@@ -3,13 +3,12 @@ from decimal import Decimal
 from typing import Dict, List, Optional, Tuple
 from uuid import UUID
 
-from sqlalchemy import and_, func, or_
-from sqlalchemy.orm import Session
-
 from app.common.text_normalization import normalize_description
 from app.domain.dto.statement_processing import TransactionDTO
 from app.domain.models.transaction import CategorizationStatus, Transaction
 from app.ports.repositories.transaction import TransactionRepository
+from sqlalchemy import and_, func, or_
+from sqlalchemy.orm import Session
 
 
 class SQLAlchemyTransactionRepository(TransactionRepository):
@@ -32,6 +31,24 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
 
     def get_all(self) -> List[Transaction]:
         return self.db_session.query(Transaction).order_by(Transaction.date.desc()).all()
+
+    def get_all_by_source_and_date_range(
+        self,
+        source_id: UUID,
+        end_date: date,
+        start_date: Optional[date] = None,
+    ) -> List[Transaction]:
+        """Get all transactions for a source within a date range"""
+        query = self.db_session.query(Transaction).filter(
+            Transaction.source_id == source_id,
+            Transaction.date <= end_date,
+        )
+
+        if start_date:
+            query = query.filter(Transaction.date >= start_date)
+
+        # Order by date and created_at for consistent ordering
+        return query.order_by(Transaction.date.asc(), Transaction.created_at.asc()).all()
 
     def get_paginated(
         self,

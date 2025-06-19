@@ -3,11 +3,10 @@ from decimal import Decimal
 from typing import Dict, List, Optional, Sequence, Tuple
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, field_serializer, field_validator
-
 from app.domain.models.background_job import JobStatus
 from app.domain.models.transaction import CategorizationStatus
 from app.domain.models.transaction_categorization import CategorizationSource
+from pydantic import BaseModel, ConfigDict, Field, field_serializer, field_validator
 
 
 class CategoryBase(BaseModel):
@@ -85,6 +84,7 @@ class TransactionResponse(BaseModel):
     category_id: Optional[UUID] = None
     source_id: Optional[UUID] = None
     categorization_status: CategorizationStatus
+    running_balance: Optional[Decimal] = None
 
     model_config = ConfigDict(from_attributes=True)
 

@@ -4,8 +4,8 @@ from unittest.mock import MagicMock
 from uuid import uuid4
 
 import pytest
-
 from app.domain.models.transaction import Transaction
+from app.ports.repositories.initial_balance import InitialBalanceRepository
 from app.ports.repositories.transaction import TransactionRepository
 from app.services.transaction import TransactionService
 
@@ -17,8 +17,13 @@ class TestTransactionService:
         return repository
 
     @pytest.fixture
-    def service(self, mock_repository):
-        return TransactionService(mock_repository)
+    def mock_initial_balance_repository(self):
+        repository = MagicMock(spec=InitialBalanceRepository)
+        return repository
+
+    @pytest.fixture
+    def service(self, mock_repository, mock_initial_balance_repository):
+        return TransactionService(mock_repository, mock_initial_balance_repository)
 
     @pytest.fixture
     def sample_transaction(self):

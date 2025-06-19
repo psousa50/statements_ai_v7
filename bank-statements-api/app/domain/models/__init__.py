@@ -2,6 +2,7 @@
 from .background_job import BackgroundJob, JobStatus, JobType
 from .categorization import BatchCategorizationResult, CategorizationResult
 from .category import Category
+from .initial_balance import InitialBalance
 from .processing import (
     AsyncCategorizationResult,
     BackgroundJobInfo,
@@ -24,6 +25,8 @@ __all__ = [
     # Categorization
     "BatchCategorizationResult",
     "CategorizationResult",
+    # Initial Balance
+    "InitialBalance",
     # Processing
     "AsyncCategorizationResult",
     "BackgroundJobInfo",

@@ -21,6 +21,7 @@ export interface Transaction {
   created_at: string
   category_id?: string
   categorization_status: CategorizationStatus
+  running_balance?: number
 }
 
 export interface TransactionCreate {

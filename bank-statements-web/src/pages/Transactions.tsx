@@ -39,6 +39,7 @@ export const TransactionsPage = () => {
   }
 
   const [filters, setFilters] = useState<FilterType>(getInitialFilters())
+  const [includeRunningBalance, setIncludeRunningBalance] = useState(false)
 
   // Local state for debounced inputs - initialize from URL params
   const [localDescriptionSearch, setLocalDescriptionSearch] = useState<string>(
@@ -70,10 +71,25 @@ export const TransactionsPage = () => {
   const loading = transactionsLoading || categoriesLoading || sourcesLoading
   const error = transactionsError || categoriesError || sourcesError
 
+  // Auto-enable/disable running balance based on source filter
+  useEffect(() => {
+    if (filters.source_id) {
+      // Source is selected, allow running balance
+      if (!includeRunningBalance) {
+        setIncludeRunningBalance(true) // Auto-enable when source is selected
+      }
+    } else {
+      // No source selected, disable running balance
+      if (includeRunningBalance) {
+        setIncludeRunningBalance(false) // Auto-disable when no source
+      }
+    }
+  }, [filters.source_id])
+
   // Load data on mount with initial filters from URL
   useEffect(() => {
-    fetchTransactions(filters)
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+    fetchTransactions({ ...filters, include_running_balance: includeRunningBalance && !!filters.source_id })
+  }, [fetchTransactions, filters, includeRunningBalance])
 
   // Debounced filter update for search, amount, and date inputs
   useEffect(() => {
@@ -98,6 +114,7 @@ export const TransactionsPage = () => {
           start_date: localStartDate || undefined,
           end_date: localEndDate || undefined,
           page: 1,
+          include_running_balance: includeRunningBalance && !!filters.source_id,
         }
         setFilters(updatedFilters)
         fetchTransactions(updatedFilters)
@@ -109,33 +126,56 @@ export const TransactionsPage = () => {
         clearTimeout(debounceTimeoutRef.current)
       }
     }
-  }, [localDescriptionSearch, localMinAmount, localMaxAmount, localStartDate, localEndDate, filters, fetchTransactions])
+  }, [
+    localDescriptionSearch,
+    localMinAmount,
+    localMaxAmount,
+    localStartDate,
+    localEndDate,
+    filters,
+    fetchTransactions,
+    includeRunningBalance,
+  ])
 
   const handleFilterChange = useCallback(
     (newFilters: Partial<FilterType>) => {
-      const updatedFilters = { ...filters, ...newFilters, page: 1 } // Reset to first page when filters change
+      const updatedFilters = {
+        ...filters,
+        ...newFilters,
+        page: 1,
+        include_running_balance: includeRunningBalance && !!newFilters.source_id,
+      } // Reset to first page when filters change
       setFilters(updatedFilters)
       fetchTransactions(updatedFilters)
     },
-    [filters, fetchTransactions]
+    [filters, fetchTransactions, includeRunningBalance]
   )
 
   const handlePageChange = useCallback(
     (page: number) => {
-      const updatedFilters = { ...filters, page }
+      const updatedFilters = {
+        ...filters,
+        page,
+        include_running_balance: includeRunningBalance && !!filters.source_id,
+      }
       setFilters(updatedFilters)
       fetchTransactions(updatedFilters)
     },
-    [filters, fetchTransactions]
+    [filters, fetchTransactions, includeRunningBalance]
   )
 
   const handlePageSizeChange = useCallback(
     (page_size: number) => {
-      const updatedFilters = { ...filters, page_size, page: 1 }
+      const updatedFilters = {
+        ...filters,
+        page_size,
+        page: 1,
+        include_running_balance: includeRunningBalance && !!filters.source_id,
+      }
       setFilters(updatedFilters)
       fetchTransactions(updatedFilters)
     },
-    [filters, fetchTransactions]
+    [filters, fetchTransactions, includeRunningBalance]
   )
 
   // Immediate updates (no debouncing needed)
@@ -176,7 +216,11 @@ export const TransactionsPage = () => {
   }, [])
 
   const handleClearFilters = useCallback(() => {
-    const clearedFilters = { page: 1, page_size: filters.page_size }
+    const clearedFilters = {
+      page: 1,
+      page_size: filters.page_size,
+      include_running_balance: includeRunningBalance && !!filters.source_id,
+    }
     setFilters(clearedFilters)
     setLocalDescriptionSearch('')
     setLocalMinAmount(undefined)
@@ -184,12 +228,12 @@ export const TransactionsPage = () => {
     setLocalStartDate('')
     setLocalEndDate('')
     fetchTransactions(clearedFilters)
-  }, [filters.page_size, fetchTransactions])
+  }, [filters.page_size, fetchTransactions, includeRunningBalance, filters.source_id])
 
   const handleCategorizeTransaction = async (transactionId: string, categoryId?: string) => {
     await categorizeTransaction(transactionId, categoryId)
     // Refresh the current page after categorization
-    fetchTransactions(filters)
+    fetchTransactions({ ...filters, include_running_balance: includeRunningBalance && !!filters.source_id })
   }
 
   return (
@@ -235,6 +279,22 @@ export const TransactionsPage = () => {
             <div className="transactions-summary">
               <h2>Transaction History</h2>
               {!loading && <span className="transaction-count">{pagination.total_count} transactions found</span>}
+            </div>
+            <div className="transactions-controls">
+              {filters.source_id ? (
+                <label className="running-balance-toggle">
+                  <input
+                    type="checkbox"
+                    checked={includeRunningBalance}
+                    onChange={(e) => setIncludeRunningBalance(e.target.checked)}
+                  />
+                  Show Running Balance
+                </label>
+              ) : (
+                <div className="running-balance-disabled">
+                  <span className="info-text">Select a source to enable running balance</span>
+                </div>
+              )}
             </div>
           </div>
 

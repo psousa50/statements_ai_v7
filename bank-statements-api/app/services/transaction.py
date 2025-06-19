@@ -6,6 +6,7 @@ from uuid import UUID
 from app.api.schemas import TransactionListResponse
 from app.common.text_normalization import normalize_description
 from app.domain.models.transaction import CategorizationStatus, Transaction
+from app.ports.repositories.initial_balance import InitialBalanceRepository
 from app.ports.repositories.transaction import TransactionRepository
 
 
@@ -15,8 +16,13 @@ class TransactionService:
     Contains business logic and uses the repository port.
     """
 
-    def __init__(self, transaction_repository: TransactionRepository):
+    def __init__(
+        self,
+        transaction_repository: TransactionRepository,
+        initial_balance_repository: InitialBalanceRepository,
+    ):
         self.transaction_repository = transaction_repository
+        self.initial_balance_repository = initial_balance_repository
 
     def create_transaction(
         self,
@@ -34,7 +40,11 @@ class TransactionService:
             amount=amount,
             category_id=category_id,
             source_id=source_id,
-            categorization_status=(CategorizationStatus.CATEGORIZED if category_id else CategorizationStatus.UNCATEGORIZED),
+            categorization_status=(
+                CategorizationStatus.CATEGORIZED
+                if category_id
+                else CategorizationStatus.UNCATEGORIZED
+            ),
         )
         return self.transaction_repository.create(transaction)
 
@@ -58,6 +68,7 @@ class TransactionService:
         source_id: Optional[UUID] = None,
         start_date: Optional[date] = None,
         end_date: Optional[date] = None,
+        include_running_balance: bool = False,
     ) -> TransactionListResponse:
         """Get transactions with pagination and advanced filtering"""
         transactions, total = self.transaction_repository.get_paginated(
@@ -72,7 +83,59 @@ class TransactionService:
             start_date=start_date,
             end_date=end_date,
         )
+
+        # Calculate running balance if requested and source is specified
+        if include_running_balance and source_id is not None:
+            self._add_running_balance_to_transactions(transactions, source_id)
+
         return TransactionListResponse(transactions=transactions, total=total)
+
+    def _add_running_balance_to_transactions(
+        self, transactions: List[Transaction], source_id: UUID
+    ):
+        """Add running balance to transactions for a specific source"""
+        if not transactions:
+            return
+
+        # Get the latest date from the current page of transactions
+        latest_date = max(t.date for t in transactions)
+
+        # Get all transactions up to the latest date for accurate running balance
+        all_transactions = self.transaction_repository.get_all_by_source_and_date_range(
+            source_id=source_id, end_date=latest_date
+        )
+
+        # Get the earliest transaction date
+        earliest_date = min(t.date for t in all_transactions)
+
+        # Get the latest initial balance before the earliest transaction date
+        latest_balance = self.initial_balance_repository.get_latest_by_source_and_date(
+            source_id=source_id, before_date=earliest_date
+        )
+
+        # For the first transactions of a source, start from 0 if no initial balance exists
+        starting_balance = Decimal("0.00")
+        if latest_balance and latest_balance.balance_date <= earliest_date:
+            starting_balance = latest_balance.balance_amount
+
+        # Sort all transactions by date and then by created_at (for consistent ordering of same-date transactions)
+        sorted_transactions = sorted(
+            all_transactions, key=lambda x: (x.date, x.created_at)
+        )
+
+        # Calculate running balance for all transactions
+        balances = {}  # Keep track of running balance for each transaction
+        current_balance = starting_balance
+        for transaction in sorted_transactions:
+            current_balance += transaction.amount
+            balances[transaction.id] = current_balance
+
+        # Update running balance only for transactions in the current page
+        for transaction in transactions:
+            transaction.running_balance = balances.get(transaction.id)
+
+        # Re-sort by date and created_at in reverse order (newest first) to match existing behavior
+        transactions.sort(key=lambda x: (x.date, x.created_at), reverse=True)
 
     def get_category_totals(
         self,
@@ -117,7 +180,9 @@ class TransactionService:
             # Update category and categorization status
             transaction.category_id = category_id
             transaction.categorization_status = (
-                CategorizationStatus.CATEGORIZED if category_id else CategorizationStatus.UNCATEGORIZED
+                CategorizationStatus.CATEGORIZED
+                if category_id
+                else CategorizationStatus.UNCATEGORIZED
             )
 
             # Update source
@@ -130,7 +195,9 @@ class TransactionService:
         """Delete a transaction"""
         return self.transaction_repository.delete(transaction_id)
 
-    def categorize_transaction(self, transaction_id: UUID, category_id: Optional[UUID]) -> Optional[Transaction]:
+    def categorize_transaction(
+        self, transaction_id: UUID, category_id: Optional[UUID]
+    ) -> Optional[Transaction]:
         """Categorize a transaction"""
         transaction = self.transaction_repository.get_by_id(transaction_id)
         if not transaction:
@@ -138,12 +205,16 @@ class TransactionService:
 
         transaction.category_id = category_id
         transaction.categorization_status = (
-            CategorizationStatus.CATEGORIZED if category_id else CategorizationStatus.UNCATEGORIZED
+            CategorizationStatus.CATEGORIZED
+            if category_id
+            else CategorizationStatus.UNCATEGORIZED
         )
 
         return self.transaction_repository.update(transaction)
 
-    def mark_categorization_failure(self, transaction_id: UUID) -> Optional[Transaction]:
+    def mark_categorization_failure(
+        self, transaction_id: UUID
+    ) -> Optional[Transaction]:
         """Mark a transaction as having failed categorization"""
         transaction = self.transaction_repository.get_by_id(transaction_id)
         if not transaction:
@@ -153,6 +224,12 @@ class TransactionService:
 
         return self.transaction_repository.update(transaction)
 
-    def bulk_update_category_by_normalized_description(self, normalized_description: str, category_id: Optional[UUID]) -> int:
+    def bulk_update_category_by_normalized_description(
+        self, normalized_description: str, category_id: Optional[UUID]
+    ) -> int:
         """Update the category for all transactions with the given normalized description"""
-        return self.transaction_repository.bulk_update_category_by_normalized_description(normalized_description, category_id)
+        return (
+            self.transaction_repository.bulk_update_category_by_normalized_description(
+                normalized_description, category_id
+            )
+        )

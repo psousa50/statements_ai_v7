@@ -129,6 +129,9 @@ export const TransactionTable = ({
   loading,
   onCategorize,
 }: TransactionTableProps) => {
+  // Check if any transaction has running balance
+  const hasRunningBalance = transactions.some((t) => t.running_balance !== undefined)
+
   if (loading) {
     return <div className="loading">Loading transactions...</div>
   }
@@ -168,6 +171,7 @@ export const TransactionTable = ({
             <th>Date</th>
             <th>Description</th>
             <th>Amount</th>
+            {hasRunningBalance && <th>Running Balance</th>}
             <th>Source</th>
             {onCategorize && <th>Category</th>}
           </tr>
@@ -178,6 +182,11 @@ export const TransactionTable = ({
               <td>{formatDate(transaction.date)}</td>
               <td>{transaction.description}</td>
               <td className={transaction.amount < 0 ? 'negative' : 'positive'}>{formatAmount(transaction.amount)}</td>
+              {hasRunningBalance && (
+                <td className="running-balance">
+                  {transaction.running_balance !== undefined ? formatAmount(transaction.running_balance) : '-'}
+                </td>
+              )}
               <td>{getSourceName(transaction.source_id)}</td>
               {onCategorize && (
                 <td>

@@ -1039,4 +1039,41 @@
 .custom-date-picker * {
   background-color: inherit !important;
   color: inherit !important;
+}
+
+.transactions-page .transaction-table .running-balance {
+  text-align: right;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.transactions-page .running-balance-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.transactions-page .running-balance-toggle input[type="checkbox"] {
+  margin: 0;
+}
+
+.transactions-page .running-balance-disabled {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+
+.transactions-page .info-text {
+  font-style: italic;
+}
+
+.transactions-page .transactions-controls {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
 } 
