@@ -19,9 +19,7 @@ class InitialBalanceRepository(ABC):
         pass
 
     @abstractmethod
-    def get_by_source_and_date(
-        self, source_id: UUID, balance_date: date
-    ) -> Optional[InitialBalance]:
+    def get_by_source_and_date(self, source_id: UUID, balance_date: date) -> Optional[InitialBalance]:
         """Get initial balance by source ID and date"""
         pass
 
@@ -31,9 +29,7 @@ class InitialBalanceRepository(ABC):
         pass
 
     @abstractmethod
-    def get_latest_by_source_and_date(
-        self, source_id: UUID, before_date: date
-    ) -> Optional[InitialBalance]:
+    def get_latest_by_source_and_date(self, source_id: UUID, before_date: date) -> Optional[InitialBalance]:
         """Get the latest initial balance for a source before a specific date"""
         pass
 

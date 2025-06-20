@@ -78,20 +78,16 @@ class StatementUploadService:
         )
 
         # Step 2: Process transaction DTOs (categorization, background job setup)
-        processing_result = (
-            self.transaction_processing_orchestrator.process_transaction_dtos(
-                transaction_dtos=transaction_dtos,
-                uploaded_file_id=UUID(upload_request.uploaded_file_id),
-            )
+        processing_result = self.transaction_processing_orchestrator.process_transaction_dtos(
+            transaction_dtos=transaction_dtos,
+            uploaded_file_id=UUID(upload_request.uploaded_file_id),
         )
 
         # Step 3: Save processed transactions with all data complete
-        persistence_result = (
-            self.statement_persistence_service.save_processed_transactions(
-                processed_dtos=processing_result.processed_dtos,
-                source_id=UUID(upload_request.source_id),
-                uploaded_file_id=upload_request.uploaded_file_id,
-            )
+        persistence_result = self.statement_persistence_service.save_processed_transactions(
+            processed_dtos=processing_result.processed_dtos,
+            source_id=UUID(upload_request.source_id),
+            uploaded_file_id=upload_request.uploaded_file_id,
         )
 
         # Step 3.5: Schedule background job for unmatched transactions (after persistence)
@@ -103,14 +99,10 @@ class StatementUploadService:
             )
 
             if unmatched_transaction_ids:
-                logger.info(
-                    f"Queuing background job for {len(unmatched_transaction_ids)} unmatched transactions"
-                )
+                logger.info(f"Queuing background job for {len(unmatched_transaction_ids)} unmatched transactions")
 
-                background_job = (
-                    self.background_job_service.queue_ai_categorization_job(
-                        UUID(upload_request.uploaded_file_id), unmatched_transaction_ids
-                    )
+                background_job = self.background_job_service.queue_ai_categorization_job(
+                    UUID(upload_request.uploaded_file_id), unmatched_transaction_ids
                 )
 
                 # Create background job info for response
@@ -120,8 +112,7 @@ class StatementUploadService:
                     job_id=background_job.id,
                     status=background_job.status,
                     remaining_transactions=len(unmatched_transaction_ids),
-                    estimated_completion_seconds=len(unmatched_transaction_ids)
-                    * 2,  # Rough estimate
+                    estimated_completion_seconds=len(unmatched_transaction_ids) * 2,  # Rough estimate
                     status_url=f"/api/v1/transactions/categorization-jobs/{background_job.id}/status",
                 )
 
@@ -129,9 +120,7 @@ class StatementUploadService:
                 if background_tasks and internal_deps:
                     self._trigger_immediate_processing(background_tasks, internal_deps)
                 else:
-                    logger.info(
-                        f"Background job {background_job.id} queued for cron processing"
-                    )
+                    logger.info(f"Background job {background_job.id} queued for cron processing")
 
         # Step 5: Save file analysis metadata for future duplicate detection
         self._save_file_analysis_metadata(
@@ -196,9 +185,7 @@ class StatementUploadService:
         processed_df = process_dataframe(raw_df, header_row_index, data_start_row_index)
 
         # Normalize columns
-        normalized_df = self.transaction_normalizer.normalize(
-            processed_df, column_mapping
-        )
+        normalized_df = self.transaction_normalizer.normalize(processed_df, column_mapping)
 
         # Convert to DTOs
         transaction_dtos = []
@@ -231,9 +218,7 @@ class StatementUploadService:
         from app.services.common import compute_hash
 
         # Parse the file to get the dataframe for hash computation
-        raw_df = self.statement_parser.parse(
-            uploaded_file.content, uploaded_file.file_type
-        )
+        raw_df = self.statement_parser.parse(uploaded_file.content, uploaded_file.file_type)
         file_hash = compute_hash(uploaded_file.file_type, raw_df)
 
         existing_metadata = self.file_analysis_metadata_repo.find_by_hash(file_hash)
@@ -246,9 +231,7 @@ class StatementUploadService:
                 source_id=source_id,
             )
 
-    def _get_unmatched_transaction_ids(
-        self, uploaded_file_id: str, processed_dtos: List[TransactionDTO]
-    ) -> List[UUID]:
+    def _get_unmatched_transaction_ids(self, uploaded_file_id: str, processed_dtos: List[TransactionDTO]) -> List[UUID]:
         """Get transaction IDs for DTOs that were not categorized by rules"""
         # Get all persisted transactions for this uploaded file
         from app.domain.models.transaction import CategorizationStatus
@@ -266,17 +249,9 @@ class StatementUploadService:
 
         # Query the database for transactions with these descriptions
         # This is a bit hacky but necessary since DTOs don't have IDs until after persistence
-        transaction_repo = (
-            self.transaction_processing_orchestrator.transaction_repository
-        )
-        all_transactions = transaction_repo.get_by_uploaded_file_id(
-            UUID(uploaded_file_id)
-        )
+        transaction_repo = self.transaction_processing_orchestrator.transaction_repository
+        all_transactions = transaction_repo.get_by_uploaded_file_id(UUID(uploaded_file_id))
 
-        unmatched_ids = [
-            t.id
-            for t in all_transactions
-            if t.normalized_description in unmatched_descriptions
-        ]
+        unmatched_ids = [t.id for t in all_transactions if t.normalized_description in unmatched_descriptions]
 
         return unmatched_ids

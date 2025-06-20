@@ -11,9 +11,7 @@ class InitialBalanceService:
     def __init__(self, initial_balance_repository: InitialBalanceRepository):
         self.initial_balance_repository = initial_balance_repository
 
-    def create_initial_balance(
-        self, source_id: UUID, balance_date: date, balance_amount: Decimal
-    ) -> InitialBalance:
+    def create_initial_balance(self, source_id: UUID, balance_date: date, balance_amount: Decimal) -> InitialBalance:
         """Create a new initial balance for a source"""
         initial_balance = InitialBalance(
             source_id=source_id,
@@ -30,13 +28,9 @@ class InitialBalanceService:
         """Get all initial balances for a source"""
         return self.initial_balance_repository.get_all_by_source(source_id)
 
-    def get_balance_by_date(
-        self, source_id: UUID, balance_date: date
-    ) -> Optional[InitialBalance]:
+    def get_balance_by_date(self, source_id: UUID, balance_date: date) -> Optional[InitialBalance]:
         """Get initial balance for a specific date"""
-        return self.initial_balance_repository.get_by_source_and_date(
-            source_id, balance_date
-        )
+        return self.initial_balance_repository.get_by_source_and_date(source_id, balance_date)
 
     def update_initial_balance(
         self, initial_balance_id: UUID, balance_date: date, balance_amount: Decimal

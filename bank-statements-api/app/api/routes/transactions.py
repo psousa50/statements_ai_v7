@@ -3,6 +3,8 @@ from decimal import Decimal
 from typing import Callable, Iterator, Optional
 from uuid import UUID
 
+from fastapi import APIRouter, Depends, FastAPI, HTTPException, Query, status
+
 from app.api.schemas import (
     BatchCategorizationResponse,
     BulkUpdateTransactionsRequest,
@@ -18,22 +20,15 @@ from app.api.schemas import (
 from app.core.config import settings
 from app.core.dependencies import InternalDependencies
 from app.domain.models.transaction import CategorizationStatus
-from fastapi import APIRouter, Depends, FastAPI, HTTPException, Query, status
 
 
-def register_transaction_routes(
-    app: FastAPI, provide_dependencies: Callable[[], Iterator[InternalDependencies]]
-):
+def register_transaction_routes(app: FastAPI, provide_dependencies: Callable[[], Iterator[InternalDependencies]]):
     router = APIRouter(prefix="/transactions", tags=["transactions"])
 
-    @router.post(
-        "", response_model=TransactionResponse, status_code=status.HTTP_201_CREATED
-    )
+    @router.post("", response_model=TransactionResponse, status_code=status.HTTP_201_CREATED)
     def create_transaction(
         transaction_data: TransactionCreateRequest,
-        after_transaction_id: Optional[UUID] = Query(
-            None, description="Insert after this transaction ID for ordering"
-        ),
+        after_transaction_id: Optional[UUID] = Query(None, description="Insert after this transaction ID for ordering"),
         internal: InternalDependencies = Depends(provide_dependencies),
     ):
         """
@@ -50,53 +45,27 @@ def register_transaction_routes(
     @router.get("", response_model=TransactionListResponse)
     def get_transactions(
         page: int = Query(1, ge=1, description="Page number (1-based)"),
-        page_size: int = Query(
-            20, ge=1, le=100, description="Number of transactions per page"
-        ),
-        category_ids: Optional[str] = Query(
-            None, description="Comma-separated list of category IDs"
-        ),
-        status: Optional[CategorizationStatus] = Query(
-            None, description="Filter by categorization status"
-        ),
-        min_amount: Optional[Decimal] = Query(
-            None, description="Minimum transaction amount"
-        ),
-        max_amount: Optional[Decimal] = Query(
-            None, description="Maximum transaction amount"
-        ),
-        description_search: Optional[str] = Query(
-            None, description="Search in transaction description"
-        ),
+        page_size: int = Query(20, ge=1, le=100, description="Number of transactions per page"),
+        category_ids: Optional[str] = Query(None, description="Comma-separated list of category IDs"),
+        status: Optional[CategorizationStatus] = Query(None, description="Filter by categorization status"),
+        min_amount: Optional[Decimal] = Query(None, description="Minimum transaction amount"),
+        max_amount: Optional[Decimal] = Query(None, description="Maximum transaction amount"),
+        description_search: Optional[str] = Query(None, description="Search in transaction description"),
         source_id: Optional[UUID] = Query(None, description="Filter by source ID"),
-        start_date: Optional[date] = Query(
-            None, description="Filter transactions from this date"
-        ),
-        end_date: Optional[date] = Query(
-            None, description="Filter transactions to this date"
-        ),
-        include_running_balance: bool = Query(
-            False, description="Include running balance in response"
-        ),
-        sort_field: Optional[str] = Query(
-            None, description="Field to sort by (date, amount, description, created_at)"
-        ),
-        sort_direction: Optional[str] = Query(
-            None, description="Sort direction (asc, desc)"
-        ),
+        start_date: Optional[date] = Query(None, description="Filter transactions from this date"),
+        end_date: Optional[date] = Query(None, description="Filter transactions to this date"),
+        include_running_balance: bool = Query(False, description="Include running balance in response"),
+        sort_field: Optional[str] = Query(None, description="Field to sort by (date, amount, description, created_at)"),
+        sort_direction: Optional[str] = Query(None, description="Sort direction (asc, desc)"),
         internal: InternalDependencies = Depends(provide_dependencies),
     ):
         # Parse category_ids if provided
         parsed_category_ids = None
         if category_ids:
             try:
-                parsed_category_ids = [
-                    UUID(cid.strip()) for cid in category_ids.split(",") if cid.strip()
-                ]
+                parsed_category_ids = [UUID(cid.strip()) for cid in category_ids.split(",") if cid.strip()]
             except ValueError:
-                raise HTTPException(
-                    status_code=400, detail="Invalid category IDs format"
-                )
+                raise HTTPException(status_code=400, detail="Invalid category IDs format")
 
         transactions = internal.transaction_service.get_transactions_paginated(
             page=page,
@@ -117,28 +86,14 @@ def register_transaction_routes(
 
     @router.get("/category-totals", response_model=CategoryTotalsResponse)
     def get_category_totals(
-        category_ids: Optional[str] = Query(
-            None, description="Comma-separated list of category IDs"
-        ),
-        status: Optional[CategorizationStatus] = Query(
-            None, description="Filter by categorization status"
-        ),
-        min_amount: Optional[Decimal] = Query(
-            None, description="Minimum transaction amount"
-        ),
-        max_amount: Optional[Decimal] = Query(
-            None, description="Maximum transaction amount"
-        ),
-        description_search: Optional[str] = Query(
-            None, description="Search in transaction description"
-        ),
+        category_ids: Optional[str] = Query(None, description="Comma-separated list of category IDs"),
+        status: Optional[CategorizationStatus] = Query(None, description="Filter by categorization status"),
+        min_amount: Optional[Decimal] = Query(None, description="Minimum transaction amount"),
+        max_amount: Optional[Decimal] = Query(None, description="Maximum transaction amount"),
+        description_search: Optional[str] = Query(None, description="Search in transaction description"),
         source_id: Optional[UUID] = Query(None, description="Filter by source ID"),
-        start_date: Optional[date] = Query(
-            None, description="Filter transactions from this date"
-        ),
-        end_date: Optional[date] = Query(
-            None, description="Filter transactions to this date"
-        ),
+        start_date: Optional[date] = Query(None, description="Filter transactions from this date"),
+        end_date: Optional[date] = Query(None, description="Filter transactions to this date"),
         internal: InternalDependencies = Depends(provide_dependencies),
     ):
         """Get aggregated totals per category for chart data. Uses the same filtering options as get_transactions."""
@@ -146,13 +101,9 @@ def register_transaction_routes(
         parsed_category_ids = None
         if category_ids:
             try:
-                parsed_category_ids = [
-                    UUID(cid.strip()) for cid in category_ids.split(",") if cid.strip()
-                ]
+                parsed_category_ids = [UUID(cid.strip()) for cid in category_ids.split(",") if cid.strip()]
             except ValueError:
-                raise HTTPException(
-                    status_code=400, detail="Invalid category IDs format"
-                )
+                raise HTTPException(status_code=400, detail="Invalid category IDs format")
 
         totals_dict = internal.transaction_service.get_category_totals(
             category_ids=parsed_category_ids,
@@ -206,9 +157,7 @@ def register_transaction_routes(
             action = "categorized" if request.category_id else "uncategorized"
             message = f"Successfully {action} {updated_count} transactions with description '{request.normalized_description}'"
 
-            return BulkUpdateTransactionsResponse(
-                updated_count=updated_count, message=message
-            )
+            return BulkUpdateTransactionsResponse(updated_count=updated_count, message=message)
         except Exception as e:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -283,9 +232,7 @@ def register_transaction_routes(
         transaction_id: UUID,
         internal: InternalDependencies = Depends(provide_dependencies),
     ):
-        updated_transaction = internal.transaction_service.mark_categorization_failure(
-            transaction_id=transaction_id
-        )
+        updated_transaction = internal.transaction_service.mark_categorization_failure(transaction_id=transaction_id)
         if not updated_transaction:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -295,9 +242,7 @@ def register_transaction_routes(
 
     @router.post("/categorize-batch", response_model=BatchCategorizationResponse)
     def categorize_transactions_batch(
-        batch_size: int = Query(
-            10, gt=0, le=100, description="Number of transactions to process"
-        ),
+        batch_size: int = Query(10, gt=0, le=100, description="Number of transactions to process"),
         internal: InternalDependencies = Depends(provide_dependencies),
     ):
         try:

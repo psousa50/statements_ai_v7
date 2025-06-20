@@ -2,6 +2,8 @@ import logging
 from typing import Callable, Iterator
 from uuid import UUID
 
+from fastapi import APIRouter, BackgroundTasks, Depends, FastAPI, File, HTTPException, UploadFile, status
+
 from app.api.schemas import (
     BackgroundJobInfoResponse,
     JobStatusResponse,
@@ -12,23 +14,11 @@ from app.api.schemas import (
 from app.core.config import settings
 from app.core.dependencies import InternalDependencies
 from app.logging.utils import log_exception
-from fastapi import (
-    APIRouter,
-    BackgroundTasks,
-    Depends,
-    FastAPI,
-    File,
-    HTTPException,
-    UploadFile,
-    status,
-)
 
 logger = logging.getLogger("app")
 
 
-def register_statement_routes(
-    app: FastAPI, provide_dependencies: Callable[[], Iterator[InternalDependencies]]
-):
+def register_statement_routes(app: FastAPI, provide_dependencies: Callable[[], Iterator[InternalDependencies]]):
     router = APIRouter(prefix="/statements", tags=["statements"])
 
     @router.post("/analyze", response_model=StatementAnalysisResponse)
@@ -103,15 +93,11 @@ def register_statement_routes(
     app.include_router(router, prefix=settings.API_V1_STR)
 
 
-def register_transaction_job_routes(
-    app: FastAPI, provide_dependencies: Callable[[], Iterator[InternalDependencies]]
-):
+def register_transaction_job_routes(app: FastAPI, provide_dependencies: Callable[[], Iterator[InternalDependencies]]):
     """Register transaction job status routes for US-21"""
     router = APIRouter(prefix="/transactions", tags=["transactions"])
 
-    @router.get(
-        "/categorization-jobs/{job_id}/status", response_model=JobStatusResponse
-    )
+    @router.get("/categorization-jobs/{job_id}/status", response_model=JobStatusResponse)
     async def get_job_status(
         job_id: UUID,
         internal: InternalDependencies = Depends(provide_dependencies),

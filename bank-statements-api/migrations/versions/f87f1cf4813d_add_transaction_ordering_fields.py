@@ -21,9 +21,7 @@ depends_on: Union[str, Sequence[str], None] = None
 
 def upgrade() -> None:
     # Create source_type enum type
-    source_type = postgresql.ENUM(
-        "upload", "manual", name="sourcetype", create_type=False
-    )
+    source_type = postgresql.ENUM("upload", "manual", name="sourcetype", create_type=False)
     source_type.create(op.get_bind())
 
     # Add new columns to transactions table
@@ -38,9 +36,7 @@ def upgrade() -> None:
     )
     op.add_column(
         "transactions",
-        sa.Column(
-            "manual_position_after", postgresql.UUID(as_uuid=True), nullable=True
-        ),
+        sa.Column("manual_position_after", postgresql.UUID(as_uuid=True), nullable=True),
     )
 
     # Add foreign key constraint for manual_position_after
@@ -73,9 +69,7 @@ def downgrade() -> None:
     op.drop_index("ix_transactions_sort_index", table_name="transactions")
 
     # Drop foreign key constraint
-    op.drop_constraint(
-        "fk_transactions_manual_position_after", "transactions", type_="foreignkey"
-    )
+    op.drop_constraint("fk_transactions_manual_position_after", "transactions", type_="foreignkey")
 
     # Drop columns
     op.drop_column("transactions", "manual_position_after")

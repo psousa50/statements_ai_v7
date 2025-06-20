@@ -3,13 +3,14 @@ from decimal import Decimal
 from typing import Dict, List, Optional, Sequence, Tuple
 from uuid import UUID
 
+from pydantic import BaseModel, ConfigDict, Field, field_serializer, field_validator
+
 from app.domain.models.background_job import JobStatus
 from app.domain.models.category import Category
 from app.domain.models.processing import BackgroundJobInfo
 from app.domain.models.source import Source
 from app.domain.models.transaction import CategorizationStatus, SourceType
 from app.domain.models.transaction_categorization import CategorizationSource
-from pydantic import BaseModel, ConfigDict, Field, field_serializer, field_validator
 
 
 class CategoryBase(BaseModel):

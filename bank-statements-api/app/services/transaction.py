@@ -40,11 +40,7 @@ class TransactionService:
             amount=amount,
             category_id=category_id,
             source_id=source_id,
-            categorization_status=(
-                CategorizationStatus.CATEGORIZED
-                if category_id
-                else CategorizationStatus.UNCATEGORIZED
-            ),
+            categorization_status=(CategorizationStatus.CATEGORIZED if category_id else CategorizationStatus.UNCATEGORIZED),
         )
         return self.transaction_repository.create(transaction)
 
@@ -123,9 +119,7 @@ class TransactionService:
             total_pages=total_pages,
         )
 
-    def _add_running_balance_to_transactions(
-        self, transactions: List[Transaction], source_id: UUID
-    ):
+    def _add_running_balance_to_transactions(self, transactions: List[Transaction], source_id: UUID):
         """Add running balance to transactions for a specific source"""
         if not transactions:
             return
@@ -152,9 +146,7 @@ class TransactionService:
             starting_balance = latest_balance.balance_amount
 
         # Sort all transactions by date and then by created_at (for consistent ordering of same-date transactions)
-        sorted_transactions = sorted(
-            all_transactions, key=lambda x: (x.date, x.created_at)
-        )
+        sorted_transactions = sorted(all_transactions, key=lambda x: (x.date, x.created_at))
 
         # Calculate running balance for all transactions
         balances = {}  # Keep track of running balance for each transaction
@@ -213,9 +205,7 @@ class TransactionService:
             # Update category and categorization status
             transaction.category_id = category_id
             transaction.categorization_status = (
-                CategorizationStatus.CATEGORIZED
-                if category_id
-                else CategorizationStatus.UNCATEGORIZED
+                CategorizationStatus.CATEGORIZED if category_id else CategorizationStatus.UNCATEGORIZED
             )
 
             # Update source
@@ -228,9 +218,7 @@ class TransactionService:
         """Delete a transaction"""
         return self.transaction_repository.delete(transaction_id)
 
-    def categorize_transaction(
-        self, transaction_id: UUID, category_id: Optional[UUID]
-    ) -> Optional[Transaction]:
+    def categorize_transaction(self, transaction_id: UUID, category_id: Optional[UUID]) -> Optional[Transaction]:
         """Categorize a transaction"""
         transaction = self.transaction_repository.get_by_id(transaction_id)
         if not transaction:
@@ -238,16 +226,12 @@ class TransactionService:
 
         transaction.category_id = category_id
         transaction.categorization_status = (
-            CategorizationStatus.CATEGORIZED
-            if category_id
-            else CategorizationStatus.UNCATEGORIZED
+            CategorizationStatus.CATEGORIZED if category_id else CategorizationStatus.UNCATEGORIZED
         )
 
         return self.transaction_repository.update(transaction)
 
-    def mark_categorization_failure(
-        self, transaction_id: UUID
-    ) -> Optional[Transaction]:
+    def mark_categorization_failure(self, transaction_id: UUID) -> Optional[Transaction]:
         """Mark a transaction as having failed categorization"""
         transaction = self.transaction_repository.get_by_id(transaction_id)
         if not transaction:
@@ -257,12 +241,6 @@ class TransactionService:
 
         return self.transaction_repository.update(transaction)
 
-    def bulk_update_category_by_normalized_description(
-        self, normalized_description: str, category_id: Optional[UUID]
-    ) -> int:
+    def bulk_update_category_by_normalized_description(self, normalized_description: str, category_id: Optional[UUID]) -> int:
         """Update the category for all transactions with the given normalized description"""
-        return (
-            self.transaction_repository.bulk_update_category_by_normalized_description(
-                normalized_description, category_id
-            )
-        )
+        return self.transaction_repository.bulk_update_category_by_normalized_description(normalized_description, category_id)

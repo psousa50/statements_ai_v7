@@ -4,11 +4,13 @@ from enum import Enum
 from typing import Optional
 from uuid import uuid4
 
-from app.core.database import Base
-from sqlalchemy import Column, Date, DateTime, ForeignKey, Integer, Numeric, String
+from sqlalchemy import Column, Date, DateTime
 from sqlalchemy import Enum as SQLAlchemyEnum
+from sqlalchemy import ForeignKey, Integer, Numeric, String
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
+
+from app.core.database import Base
 
 
 class CategorizationStatus(str, Enum):
@@ -30,13 +32,9 @@ class Transaction(Base):
     description = Column(String, nullable=False)
     normalized_description = Column(String, nullable=False, index=True)
     amount = Column(Numeric(precision=10, scale=2), nullable=False)
-    created_at = Column(
-        DateTime, default=lambda: datetime.now(timezone.utc), nullable=False
-    )
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
 
-    uploaded_file_id = Column(
-        UUID(as_uuid=True), ForeignKey("uploaded_files.id"), nullable=True
-    )
+    uploaded_file_id = Column(UUID(as_uuid=True), ForeignKey("uploaded_files.id"), nullable=True)
     uploaded_file = relationship("UploadedFile")
 
     category_id = Column(UUID(as_uuid=True), ForeignKey("categories.id"), nullable=True)
@@ -61,9 +59,7 @@ class Transaction(Base):
         default=SourceType.UPLOAD,
         nullable=False,
     )
-    manual_position_after = Column(
-        UUID(as_uuid=True), ForeignKey("transactions.id"), nullable=True
-    )
+    manual_position_after = Column(UUID(as_uuid=True), ForeignKey("transactions.id"), nullable=True)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

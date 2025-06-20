@@ -27,19 +27,11 @@ def upgrade() -> None:
         sa.Column("source_id", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("balance_date", sa.Date(), nullable=False),
         sa.Column("balance_amount", sa.Numeric(precision=10, scale=2), nullable=False),
-        sa.Column(
-            "created_at", sa.DateTime(), nullable=False, server_default=sa.text("now()")
-        ),
-        sa.Column(
-            "updated_at", sa.DateTime(), nullable=False, server_default=sa.text("now()")
-        ),
-        sa.ForeignKeyConstraint(
-            ["source_id"], ["sources.id"], name="initial_balances_source_id_fkey"
-        ),
+        sa.Column("created_at", sa.DateTime(), nullable=False, server_default=sa.text("now()")),
+        sa.Column("updated_at", sa.DateTime(), nullable=False, server_default=sa.text("now()")),
+        sa.ForeignKeyConstraint(["source_id"], ["sources.id"], name="initial_balances_source_id_fkey"),
         sa.PrimaryKeyConstraint("id", name="initial_balances_pkey"),
-        sa.UniqueConstraint(
-            "source_id", "balance_date", name="uq_initial_balance_source_date"
-        ),
+        sa.UniqueConstraint("source_id", "balance_date", name="uq_initial_balance_source_date"),
     )
 
 

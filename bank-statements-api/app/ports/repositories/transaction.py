@@ -179,9 +179,7 @@ class TransactionRepository(ABC):
         pass
 
     @abstractmethod
-    def bulk_update_category_by_normalized_description(
-        self, normalized_description: str, category_id: Optional[UUID]
-    ) -> int:
+    def bulk_update_category_by_normalized_description(self, normalized_description: str, category_id: Optional[UUID]) -> int:
         """
         Update the category for all transactions with the given normalized description.
 

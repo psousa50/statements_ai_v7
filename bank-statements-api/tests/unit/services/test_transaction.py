@@ -4,6 +4,7 @@ from unittest.mock import MagicMock
 from uuid import uuid4
 
 import pytest
+
 from app.domain.models.transaction import Transaction
 from app.ports.repositories.initial_balance import InitialBalanceRepository
 from app.ports.repositories.transaction import TransactionRepository

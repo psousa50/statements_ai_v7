@@ -2,11 +2,7 @@ import logging
 from typing import List
 from uuid import UUID
 
-from app.domain.dto.statement_processing import (
-    PersistenceRequestDTO,
-    PersistenceResultDTO,
-    TransactionDTO,
-)
+from app.domain.dto.statement_processing import PersistenceRequestDTO, PersistenceResultDTO, TransactionDTO
 from app.domain.models.transaction import SourceType
 from app.services.common import compute_hash, process_dataframe
 
@@ -28,9 +24,7 @@ class StatementPersistenceService:
         self.uploaded_file_repo = uploaded_file_repo
         self.file_analysis_metadata_repo = file_analysis_metadata_repo
 
-    def persist(
-        self, persistence_request: PersistenceRequestDTO
-    ) -> PersistenceResultDTO:
+    def persist(self, persistence_request: PersistenceRequestDTO) -> PersistenceResultDTO:
         uploaded_file_id = persistence_request.uploaded_file_id
         column_mapping = persistence_request.column_mapping
         header_row_index = persistence_request.header_row_index
@@ -45,9 +39,7 @@ class StatementPersistenceService:
 
         processed_df = process_dataframe(raw_df, header_row_index, data_start_row_index)
 
-        normalized_df = self.transaction_normalizer.normalize(
-            processed_df, column_mapping
-        )
+        normalized_df = self.transaction_normalizer.normalize(processed_df, column_mapping)
 
         transactions = []
         for index, (_, row) in enumerate(normalized_df.iterrows()):
@@ -63,9 +55,7 @@ class StatementPersistenceService:
             )
             transactions.append(transaction)
 
-        transactions_saved, duplicated_transactions = self.transaction_repo.save_batch(
-            transactions
-        )
+        transactions_saved, duplicated_transactions = self.transaction_repo.save_batch(transactions)
 
         file_hash = compute_hash(file_type, raw_df)
         existing_metadata = self.file_analysis_metadata_repo.find_by_hash(file_hash)
@@ -104,16 +94,12 @@ class StatementPersistenceService:
             if dto.row_index is None:
                 dto.row_index = 0  # Default fallback
             if dto.sort_index is None:
-                dto.sort_index = (
-                    dto.row_index
-                )  # Default to row_index for uploaded transactions
+                dto.sort_index = dto.row_index  # Default to row_index for uploaded transactions
             if not dto.source_type:
                 dto.source_type = SourceType.UPLOAD.value
 
         # Save the batch of DTOs
-        transactions_saved, duplicated_transactions = self.transaction_repo.save_batch(
-            processed_dtos
-        )
+        transactions_saved, duplicated_transactions = self.transaction_repo.save_batch(processed_dtos)
 
         return PersistenceResultDTO(
             uploaded_file_id=uploaded_file_id,

@@ -2,9 +2,10 @@ from datetime import date
 from typing import List, Optional
 from uuid import UUID
 
+from sqlalchemy.orm import Session
+
 from app.domain.models.initial_balance import InitialBalance
 from app.ports.repositories.initial_balance import InitialBalanceRepository
-from sqlalchemy.orm import Session
 
 
 class SQLAlchemyInitialBalanceRepository(InitialBalanceRepository):
@@ -18,15 +19,9 @@ class SQLAlchemyInitialBalanceRepository(InitialBalanceRepository):
         return initial_balance
 
     def get_by_id(self, initial_balance_id: UUID) -> Optional[InitialBalance]:
-        return (
-            self.db_session.query(InitialBalance)
-            .filter(InitialBalance.id == initial_balance_id)
-            .first()
-        )
+        return self.db_session.query(InitialBalance).filter(InitialBalance.id == initial_balance_id).first()
 
-    def get_by_source_and_date(
-        self, source_id: UUID, balance_date: date
-    ) -> Optional[InitialBalance]:
+    def get_by_source_and_date(self, source_id: UUID, balance_date: date) -> Optional[InitialBalance]:
         return (
             self.db_session.query(InitialBalance)
             .filter(
@@ -44,9 +39,7 @@ class SQLAlchemyInitialBalanceRepository(InitialBalanceRepository):
             .first()
         )
 
-    def get_latest_by_source_and_date(
-        self, source_id: UUID, before_date: date
-    ) -> Optional[InitialBalance]:
+    def get_latest_by_source_and_date(self, source_id: UUID, before_date: date) -> Optional[InitialBalance]:
         """Get the latest initial balance for a source before a specific date"""
         return (
             self.db_session.query(InitialBalance)
@@ -72,11 +65,7 @@ class SQLAlchemyInitialBalanceRepository(InitialBalanceRepository):
         return initial_balance
 
     def delete(self, initial_balance_id: UUID) -> bool:
-        initial_balance = (
-            self.db_session.query(InitialBalance)
-            .filter(InitialBalance.id == initial_balance_id)
-            .first()
-        )
+        initial_balance = self.db_session.query(InitialBalance).filter(InitialBalance.id == initial_balance_id).first()
         if initial_balance:
             self.db_session.delete(initial_balance)
             self.db_session.commit()
