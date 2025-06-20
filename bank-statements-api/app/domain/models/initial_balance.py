@@ -1,5 +1,4 @@
-from datetime import date, datetime, timezone
-from decimal import Decimal
+from datetime import datetime, timezone
 from uuid import uuid4
 
 from sqlalchemy import Column, Date, DateTime, ForeignKey, Numeric, UniqueConstraint

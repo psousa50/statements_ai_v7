@@ -6,10 +6,8 @@ from uuid import UUID
 from pydantic import BaseModel, ConfigDict, Field, field_serializer, field_validator
 
 from app.domain.models.background_job import JobStatus
-from app.domain.models.category import Category
 from app.domain.models.processing import BackgroundJobInfo
-from app.domain.models.source import Source
-from app.domain.models.transaction import CategorizationStatus, SourceType
+from app.domain.models.transaction import CategorizationStatus
 from app.domain.models.transaction_categorization import CategorizationSource
 
 
@@ -318,26 +316,12 @@ class CategoryUpdateRequest(BaseModel):
     parent_id: Optional[UUID] = None
 
 
-class CategoryListResponse(BaseModel):
-    categories: List[CategoryResponse]
-    total: int
-
-    model_config = ConfigDict(from_attributes=True)
-
-
 class SourceCreateRequest(BaseModel):
     name: str
 
 
 class SourceUpdateRequest(BaseModel):
     name: str
-
-
-class SourceListResponse(BaseModel):
-    sources: List[SourceResponse]
-    total: int
-
-    model_config = ConfigDict(from_attributes=True)
 
 
 # Background Job API Schemas
@@ -417,15 +401,5 @@ class CategorizationResponse(BaseModel):
     categorized_count: int
     success: bool
     message: str
-
-    model_config = ConfigDict(from_attributes=True)
-
-
-class TransactionCategorizationStatsResponse(BaseModel):
-    total_transactions: int
-    categorized_transactions: int
-    uncategorized_transactions: int
-    failed_transactions: int
-    categorization_rate: float
 
     model_config = ConfigDict(from_attributes=True)

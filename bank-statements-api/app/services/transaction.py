@@ -5,7 +5,7 @@ from uuid import UUID
 
 from app.api.schemas import TransactionCreateRequest, TransactionListResponse
 from app.common.text_normalization import normalize_description
-from app.domain.models.transaction import CategorizationStatus, SourceType, Transaction
+from app.domain.models.transaction import CategorizationStatus, Transaction
 from app.ports.repositories.initial_balance import InitialBalanceRepository
 from app.ports.repositories.transaction import TransactionRepository
 
