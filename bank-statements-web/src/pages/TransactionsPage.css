@@ -749,6 +749,7 @@
 .transactions-page .transaction-table table {
   width: 100%;
   border-collapse: collapse;
+  table-layout: fixed;
   font-size: 0.875rem;
   background-color: var(--bg-primary);
 }

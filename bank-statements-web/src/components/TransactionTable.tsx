@@ -212,6 +212,13 @@ export const TransactionTable = ({
     <div className="transaction-table">
       <h2>Transactions</h2>
       <table>
+        <colgroup>
+          <col style={{ width: '15%' }} />
+          <col style={{ width: '35%' }} />
+          {onCategorize && <col style={{ width: '20%' }} />}
+          <col style={{ width: '15%' }} />
+          <col style={{ width: '15%' }} />
+        </colgroup>
         <thead>
           <tr>
             <SortableHeader
