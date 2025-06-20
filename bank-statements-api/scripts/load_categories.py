@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Script to read categories from bankstatements_public_categories.csv and create them via the API.
+Script to read categories from categories.csv and create them via the API.
 
 This script:
 1. Reads the CSV file with categories in "Category: Subcategory" format
@@ -58,7 +58,9 @@ class CategoryLoader:
 
         return parent_categories, subcategories
 
-    def create_category(self, name: str, parent_id: Optional[str] = None) -> Optional[str]:
+    def create_category(
+        self, name: str, parent_id: Optional[str] = None
+    ) -> Optional[str]:
         """
         Create a category via the API.
 
@@ -107,7 +109,9 @@ class CategoryLoader:
             print(f"❌ Error reading CSV file: {e}")
             return False
 
-        print(f"📊 Found {len(parent_categories)} parent categories and {len(subcategories)} subcategories")
+        print(
+            f"📊 Found {len(parent_categories)} parent categories and {len(subcategories)} subcategories"
+        )
         print()
 
         # Step 1: Create all parent categories
@@ -135,13 +139,17 @@ class CategoryLoader:
         for parent_name, subcategory_name in subcategories:
             parent_id = self.created_categories.get(parent_name)
             if not parent_id:
-                print(f"⚠️  Skipping {subcategory_name} (parent {parent_name} not found)")
+                print(
+                    f"⚠️  Skipping {subcategory_name} (parent {parent_name} not found)"
+                )
                 failed_subcategories.append((parent_name, subcategory_name))
                 continue
 
             category_id = self.create_category(subcategory_name, parent_id)
             if category_id:
-                self.created_categories[f"{parent_name}: {subcategory_name}"] = category_id
+                self.created_categories[f"{parent_name}: {subcategory_name}"] = (
+                    category_id
+                )
             else:
                 failed_subcategories.append((parent_name, subcategory_name))
 
@@ -154,23 +162,31 @@ class CategoryLoader:
 
         # Summary
         total_expected = len(parent_categories) + len(subcategories)
-        total_created = len([k for k in self.created_categories.keys() if not k.startswith("//") and k.strip()])
+        total_created = len(
+            [
+                k
+                for k in self.created_categories.keys()
+                if not k.startswith("//") and k.strip()
+            ]
+        )
 
         print("📈 Summary:")
         print(f"   Expected: {total_expected} categories")
         print(f"   Created:  {total_created} categories")
-        print(f"   Success rate: {(total_created/total_expected)*100:.1f}%")
+        print(f"   Success rate: {(total_created / total_expected) * 100:.1f}%")
 
         return len(failed_parents) == 0 and len(failed_subcategories) == 0
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Load categories from CSV into the Bank Statements API")
+    parser = argparse.ArgumentParser(
+        description="Load categories from CSV into the Bank Statements API"
+    )
     parser.add_argument(
         "csv_file",
         nargs="?",
-        default="/Users/pedrosousa/Work/Personal/statements-ai/statements-ai-v7/data/bankstatements_public_categories.csv",
-        help="Path to the CSV file containing categories (default: data/bankstatements_public_categories.csv)",
+        default="/Users/pedrosousa/Work/Personal/statements-ai/statements-ai-v7/data/categories.csv",
+        help="Path to the CSV file containing categories (default: data/categories.csv)",
     )
     parser.add_argument(
         "--api-url",
@@ -196,7 +212,9 @@ def main():
         print(f"✅ API is reachable at {args.api_url}")
     except Exception as e:
         print(f"❌ Cannot reach API at {args.api_url}: {e}")
-        print("   Make sure the API server is running (python run.py in bank-statements-api/)")
+        print(
+            "   Make sure the API server is running (python run.py in bank-statements-api/)"
+        )
         sys.exit(1)
 
     print()
@@ -208,7 +226,9 @@ def main():
         print("\n🎉 All categories loaded successfully!")
         sys.exit(0)
     else:
-        print("\n⚠️  Some categories failed to load. Check the output above for details.")
+        print(
+            "\n⚠️  Some categories failed to load. Check the output above for details."
+        )
         sys.exit(1)
 
 
