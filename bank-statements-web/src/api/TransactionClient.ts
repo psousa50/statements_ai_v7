@@ -18,6 +18,8 @@ export interface TransactionFilters {
   start_date?: string
   end_date?: string
   include_running_balance?: boolean
+  sort_field?: string
+  sort_direction?: 'asc' | 'desc'
 }
 
 export interface CategoryTotal {
@@ -97,6 +99,12 @@ export const transactionClient: TransactionClient = {
     }
     if (filters?.include_running_balance) {
       params.append('include_running_balance', 'true')
+    }
+    if (filters?.sort_field) {
+      params.append('sort_field', filters.sort_field)
+    }
+    if (filters?.sort_direction) {
+      params.append('sort_direction', filters.sort_direction)
     }
 
     const url = params.toString() ? `${API_URL}?${params.toString()}` : API_URL

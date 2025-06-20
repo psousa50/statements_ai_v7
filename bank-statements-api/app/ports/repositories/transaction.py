@@ -52,6 +52,8 @@ class TransactionRepository(ABC):
         source_id: Optional[UUID] = None,
         start_date: Optional[date] = None,
         end_date: Optional[date] = None,
+        sort_field: Optional[str] = None,
+        sort_direction: Optional[str] = None,
     ) -> Tuple[List[Transaction], int]:
         """
         Get transactions with pagination and advanced filtering
@@ -67,6 +69,8 @@ class TransactionRepository(ABC):
             source_id: Optional source ID to filter by
             start_date: Optional start date filter (inclusive)
             end_date: Optional end date filter (inclusive)
+            sort_field: Optional field to sort by (date, amount, description, created_at)
+            sort_direction: Optional sort direction (asc, desc)
 
         Returns:
             Tuple of (transactions list, total count)

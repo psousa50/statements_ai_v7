@@ -72,6 +72,8 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         source_id: Optional[UUID] = None,
         start_date: Optional[date] = None,
         end_date: Optional[date] = None,
+        sort_field: Optional[str] = None,
+        sort_direction: Optional[str] = None,
     ) -> Tuple[List[Transaction], int]:
         """Get transactions with pagination and advanced filtering"""
 
@@ -121,13 +123,12 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         # Get total count
         total = query.count()
 
-        # Apply pagination and ordering - use sort_index for consistent ordering
-        transactions = (
-            query.order_by(Transaction.date.desc(), Transaction.sort_index.asc())
-            .offset((page - 1) * page_size)
-            .limit(page_size)
-            .all()
-        )
+        # Apply sorting
+        order_clause = self._get_order_clause(sort_field, sort_direction)
+        query = query.order_by(*order_clause)
+
+        # Apply pagination
+        transactions = query.offset((page - 1) * page_size).limit(page_size).all()
 
         return transactions, total
 
@@ -414,3 +415,37 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         self.db_session.commit()
         self.db_session.refresh(transaction)
         return transaction
+
+    def _get_order_clause(
+        self, sort_field: Optional[str], sort_direction: Optional[str]
+    ):
+        """Build the ORDER BY clause based on sort parameters."""
+        # Default sorting
+        if not sort_field:
+            return [Transaction.date.desc(), Transaction.sort_index.asc()]
+
+        # Validate sort direction
+        direction = sort_direction.lower() if sort_direction else "desc"
+        if direction not in ["asc", "desc"]:
+            direction = "desc"
+
+        # Map sort fields to database columns
+        if sort_field == "date":
+            column = Transaction.date
+        elif sort_field == "amount":
+            column = Transaction.amount
+        elif sort_field == "description":
+            column = Transaction.description
+        elif sort_field == "normalized_description":
+            column = Transaction.normalized_description
+        elif sort_field == "created_at":
+            column = Transaction.created_at
+        else:
+            # Default to date for unknown fields
+            column = Transaction.date
+
+        # Apply direction - use same direction for both primary and secondary sort
+        if direction == "asc":
+            return [column.asc(), Transaction.sort_index.asc()]
+        else:
+            return [column.desc(), Transaction.sort_index.desc()]

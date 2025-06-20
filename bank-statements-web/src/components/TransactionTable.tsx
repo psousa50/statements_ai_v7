@@ -2,12 +2,18 @@ import { format } from 'date-fns'
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react'
 import { Category, Transaction, Source } from '../types/Transaction'
 
+export type TransactionSortField = 'date' | 'description' | 'amount' | 'created_at'
+export type TransactionSortDirection = 'asc' | 'desc'
+
 interface TransactionTableProps {
   transactions: Transaction[]
   categories: Category[]
   sources: Source[]
   loading: boolean
   onCategorize?: (transactionId: string, categoryId?: string) => void
+  sortField?: TransactionSortField
+  sortDirection?: TransactionSortDirection
+  onSort?: (field: TransactionSortField) => void
 }
 
 interface CategoryPickerProps {
@@ -122,12 +128,51 @@ const CategoryPicker = ({ transaction, categories, onCategorize }: CategoryPicke
   )
 }
 
+const SortableHeader = ({
+  field,
+  children,
+  currentSortField,
+  currentSortDirection,
+  onSort,
+}: {
+  field: TransactionSortField
+  children: React.ReactNode
+  currentSortField?: TransactionSortField
+  currentSortDirection?: TransactionSortDirection
+  onSort?: (field: TransactionSortField) => void
+}) => {
+  const isActive = currentSortField === field
+  const direction = isActive ? currentSortDirection : undefined
+
+  return (
+    <th
+      className={`sortable-header ${isActive ? 'active' : ''}`}
+      onClick={() => onSort?.(field)}
+      style={{ cursor: onSort ? 'pointer' : 'default' }}
+    >
+      <div className="header-content">
+        <span>{children}</span>
+        {onSort && (
+          <span className="sort-indicator">
+            {isActive && direction === 'asc' && '↑'}
+            {isActive && direction === 'desc' && '↓'}
+            {!isActive && '⇅'}
+          </span>
+        )}
+      </div>
+    </th>
+  )
+}
+
 export const TransactionTable = ({
   transactions,
   categories,
   sources,
   loading,
   onCategorize,
+  sortField,
+  sortDirection,
+  onSort,
 }: TransactionTableProps) => {
   // Check if any transaction has running balance
   const hasRunningBalance = transactions.some((t) => t.running_balance !== undefined)
@@ -168,9 +213,30 @@ export const TransactionTable = ({
       <table>
         <thead>
           <tr>
-            <th>Date</th>
-            <th>Description</th>
-            <th>Amount</th>
+            <SortableHeader
+              field="date"
+              currentSortField={sortField}
+              currentSortDirection={sortDirection}
+              onSort={onSort}
+            >
+              Date
+            </SortableHeader>
+            <SortableHeader
+              field="description"
+              currentSortField={sortField}
+              currentSortDirection={sortDirection}
+              onSort={onSort}
+            >
+              Description
+            </SortableHeader>
+            <SortableHeader
+              field="amount"
+              currentSortField={sortField}
+              currentSortDirection={sortDirection}
+              onSort={onSort}
+            >
+              Amount
+            </SortableHeader>
             {hasRunningBalance && <th>Running Balance</th>}
             <th>Source</th>
             {onCategorize && <th>Category</th>}

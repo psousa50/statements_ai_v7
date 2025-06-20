@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import { useTransactions } from '../services/hooks/useTransactions'
 import { useCategories } from '../services/hooks/useCategories'
 import { useSources } from '../services/hooks/useSources'
-import { TransactionTable } from '../components/TransactionTable'
+import { TransactionTable, TransactionSortField, TransactionSortDirection } from '../components/TransactionTable'
 import { TransactionFilters } from '../components/TransactionFilters'
 import { Pagination } from '../components/Pagination'
 import { CategorizationStatus } from '../types/Transaction'
@@ -23,6 +23,8 @@ export const TransactionsPage = () => {
     const urlStatus = searchParams.get('status')
     const urlSourceId = searchParams.get('source_id')
     const urlCategoryIds = searchParams.get('category_ids')
+    const urlSortField = searchParams.get('sort_field')
+    const urlSortDirection = searchParams.get('sort_direction')
 
     return {
       page: 1,
@@ -35,6 +37,8 @@ export const TransactionsPage = () => {
       status: (urlStatus as CategorizationStatus) || undefined,
       source_id: urlSourceId || undefined,
       category_ids: urlCategoryIds ? urlCategoryIds.split(',') : undefined,
+      sort_field: (urlSortField as TransactionSortField) || 'date',
+      sort_direction: (urlSortDirection as TransactionSortDirection) || 'asc',
     }
   }
 
@@ -200,6 +204,28 @@ export const TransactionsPage = () => {
     [handleFilterChange]
   )
 
+  const handleSort = useCallback(
+    (field: TransactionSortField) => {
+      const currentSortField = filters.sort_field
+      const currentSortDirection = filters.sort_direction || 'desc'
+
+      let newSortDirection: TransactionSortDirection
+      if (currentSortField === field) {
+        // Toggle direction if same field
+        newSortDirection = currentSortDirection === 'asc' ? 'desc' : 'asc'
+      } else {
+        // Default to desc for new field
+        newSortDirection = 'desc'
+      }
+
+      handleFilterChange({
+        sort_field: field,
+        sort_direction: newSortDirection,
+      })
+    },
+    [filters.sort_field, filters.sort_direction, handleFilterChange]
+  )
+
   // Debounced updates (local state only)
   const handleAmountRangeFilter = useCallback((minAmount?: number, maxAmount?: number) => {
     setLocalMinAmount(minAmount)
@@ -219,6 +245,8 @@ export const TransactionsPage = () => {
     const clearedFilters = {
       page: 1,
       page_size: filters.page_size,
+      sort_field: 'date' as TransactionSortField,
+      sort_direction: 'asc' as TransactionSortDirection,
       include_running_balance: includeRunningBalance && !!filters.source_id,
     }
     setFilters(clearedFilters)
@@ -235,6 +263,11 @@ export const TransactionsPage = () => {
     // Refresh the current page after categorization
     fetchTransactions({ ...filters, include_running_balance: includeRunningBalance && !!filters.source_id })
   }
+
+  const handleRunningBalanceToggle = useCallback((checked: boolean) => {
+    setIncludeRunningBalance(checked)
+    // The useEffect above will handle the API call automatically
+  }, [])
 
   return (
     <div className="transactions-page">
@@ -286,7 +319,7 @@ export const TransactionsPage = () => {
                   <input
                     type="checkbox"
                     checked={includeRunningBalance}
-                    onChange={(e) => setIncludeRunningBalance(e.target.checked)}
+                    onChange={(e) => handleRunningBalanceToggle(e.target.checked)}
                   />
                   Show Running Balance
                 </label>
@@ -305,6 +338,9 @@ export const TransactionsPage = () => {
               sources={sources || []}
               loading={loading}
               onCategorize={handleCategorizeTransaction}
+              sortField={filters.sort_field as TransactionSortField}
+              sortDirection={filters.sort_direction}
+              onSort={handleSort}
             />
           </div>
 

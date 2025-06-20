@@ -89,6 +89,8 @@ class TransactionService:
         start_date: Optional[date] = None,
         end_date: Optional[date] = None,
         include_running_balance: bool = False,
+        sort_field: Optional[str] = None,
+        sort_direction: Optional[str] = None,
     ) -> TransactionListResponse:
         """Get transactions with pagination and advanced filtering"""
         transactions, total = self.transaction_repository.get_paginated(
@@ -102,6 +104,8 @@ class TransactionService:
             source_id=source_id,
             start_date=start_date,
             end_date=end_date,
+            sort_field=sort_field,
+            sort_direction=sort_direction,
         )
 
         # Calculate running balance if requested and source is specified
@@ -163,8 +167,8 @@ class TransactionService:
         for transaction in transactions:
             transaction.running_balance = balances.get(transaction.id)
 
-        # Re-sort by date and created_at in reverse order (newest first) to match existing behavior
-        transactions.sort(key=lambda x: (x.date, x.created_at), reverse=True)
+        # Note: We don't re-sort here to preserve the user's sorting preferences
+        # The transactions are already sorted according to the user's sort_field and sort_direction
 
     def get_category_totals(
         self,

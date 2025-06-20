@@ -78,6 +78,12 @@ def register_transaction_routes(
         include_running_balance: bool = Query(
             False, description="Include running balance in response"
         ),
+        sort_field: Optional[str] = Query(
+            None, description="Field to sort by (date, amount, description, created_at)"
+        ),
+        sort_direction: Optional[str] = Query(
+            None, description="Sort direction (asc, desc)"
+        ),
         internal: InternalDependencies = Depends(provide_dependencies),
     ):
         # Parse category_ids if provided
@@ -104,6 +110,8 @@ def register_transaction_routes(
             start_date=start_date,
             end_date=end_date,
             include_running_balance=include_running_balance,
+            sort_field=sort_field,
+            sort_direction=sort_direction,
         )
         return transactions
 
