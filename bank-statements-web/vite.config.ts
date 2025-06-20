@@ -1,6 +1,11 @@
 import { defineConfig } from 'vitest/config'
 import path from 'path'
 
+// Only VITE_ variables are exposed to frontend code. WEB_PORT is used only for dev server config.
+const WEB_PORT = process.env.WEB_PORT ? parseInt(process.env.WEB_PORT) : 5173
+
+console.log('Vite config - WEB_PORT:', WEB_PORT)
+
 export default defineConfig({
   test: {
     globals: true,
@@ -14,11 +19,11 @@ export default defineConfig({
     },
   },
   server: {
-    host: '0.0.0.0',
-    port: 5173,
+    host: process.env.VITE_DEV_SERVER_HOST || '0.0.0.0',
+    port: WEB_PORT,
     proxy: {
       '/api': {
-        target: 'http://127.0.0.1:8000',
+        target: 'http://localhost:8000', // Hardcoded for development
         changeOrigin: true,
       },
     },

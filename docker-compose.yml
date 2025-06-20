@@ -10,7 +10,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
-      - "54321:5432"
+      - "${DB_PORT:-54321}:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
@@ -26,8 +26,11 @@ services:
     environment:
       - DATABASE_URL=postgresql://postgres:postgres@db:5432/bank_statements
       - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+      - API_PORT=${API_PORT:-8000}
+      - WEB_PORT=${WEB_PORT:-5173}
+      - DB_PORT=${DB_PORT:-54321}
     ports:
-      - "8000:8000"
+      - "${API_PORT:-8000}:8000"
     depends_on:
       db:
         condition: service_healthy
@@ -43,9 +46,11 @@ services:
       - ./bank-statements-web:/app
       - /app/node_modules
     ports:
-      - "5173:5173"
+      - "${WEB_PORT:-5173}:5173"
     environment:
-      - VITE_API_URL=http://localhost:8000
+      - VITE_API_URL=${API_BASE_URL:-http://localhost:8000}
+      - VITE_WEB_PORT=${WEB_PORT:-5173}
+      - VITE_API_PORT=${API_PORT:-8000}
     depends_on:
       - api
     command: bash -c "corepack enable && pnpm install && pnpm run dev -- --host 0.0.0.0"

@@ -1,103 +1,126 @@
-import axios from 'axios';
+import { APIRequestContext, request } from "@playwright/test";
 
 // Define the Transaction interface based on the project's type definition
 interface Transaction {
-  id?: string;
-  date: string;
+  id: string;
   description: string;
   amount: number;
-  created_at?: string;
+  date: string;
+  category_id?: string;
+  source_id: string;
+  created_at: string;
+  updated_at: string;
 }
 
-// API base URL - this should match the backend API URL
-const API_BASE_URL = process.env.VITE_API_URL || 'http://localhost:8000';
+// Get API URL from environment or use default
+const API_BASE_URL =
+  process.env.VITE_API_URL ||
+  process.env.API_BASE_URL ||
+  "http://localhost:8000";
 const API_V1_BASE_URL = `${API_BASE_URL}/api/v1`;
 
+export async function createApiContext(): Promise<APIRequestContext> {
+  return await request.newContext({
+    baseURL: API_BASE_URL,
+  });
+}
+
 /**
- * Creates a new transaction via the API
- * @param transaction Transaction data to create
+ * Creates a single transaction via the API
+ * @param transaction The transaction data (without id and created_at)
  * @returns The created transaction
  */
-export async function createTransaction(
-  transaction: Omit<Transaction, 'id' | 'created_at'>
+export async function createTransactionLegacy(
+  transaction: Omit<Transaction, "id" | "created_at">
 ): Promise<Transaction> {
   try {
-    const response = await axios.post(
-      `${API_V1_BASE_URL}/transactions`,
-      transaction
-    );
-    return response.data;
-  } catch (error: any) {
-    if (error.code === 'ECONNREFUSED') {
-      console.error(
-        'ERROR: API server is not running. Please start the backend server with "cd bank-statements-api && python run.py" before running tests.'
-      );
-    } else {
-      console.error('Error creating transaction:', error);
+    const response = await fetch(`${API_BASE_URL}/api/v1/transactions`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(transaction),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
-    throw error; // Re-throw to allow the test to fail if transaction creation fails
+
+    return await response.json();
+  } catch (error: any) {
+    console.error("Error creating transaction:", error);
+    throw error;
   }
 }
 
 /**
  * Creates multiple transactions via the API
- * @param transactions Array of transaction data to create
+ * @param transactions Array of transaction data (without id and created_at)
  * @returns Array of created transactions
  */
 export async function createTransactions(
-  transactions: Omit<Transaction, 'id' | 'created_at'>[]
+  transactions: Omit<Transaction, "id" | "created_at">[]
 ): Promise<Transaction[]> {
   try {
     const createdTransactions: Transaction[] = [];
 
     for (const transaction of transactions) {
       try {
-        const createdTransaction = await createTransaction(transaction);
+        const createdTransaction = await createTransactionLegacy(transaction);
         createdTransactions.push(createdTransaction);
       } catch (error) {
-        console.error(`Error creating transaction:`, error);
         console.error(
-          `Failed to create transaction: ${JSON.stringify(transaction)}`
+          `Failed to create transaction: ${transaction.description}`,
+          error
         );
-        // Continue with the next transaction
       }
     }
 
-    if (createdTransactions.length === 0) {
-      throw new Error('Failed to create any transactions');
-    }
-
     return createdTransactions;
-  } catch (error) {
-    console.error('Error creating transactions:', error);
+  } catch (error: any) {
+    console.error("Error creating transactions:", error);
     throw error;
   }
 }
 
 /**
- * Deletes all transactions from the API
+ * Deletes all transactions via the API
  * This is useful for cleaning up before and after tests
  */
 export async function deleteAllTransactions(): Promise<void> {
   try {
-    const response = await axios.get(`${API_V1_BASE_URL}/transactions`);
-    const transactions: Transaction[] = response.data.transactions;
+    const response = await fetch(`${API_BASE_URL}/api/v1/transactions`);
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    const transactions: Transaction[] = data.transactions;
 
     const deletePromises = transactions.map(
       async (transaction) =>
-        await axios.delete(`${API_V1_BASE_URL}/transactions/${transaction.id}`)
+        await fetch(`${API_BASE_URL}/api/v1/transactions/${transaction.id}`, {
+          method: "DELETE",
+        })
     );
 
     await Promise.all(deletePromises);
+    console.log(`Deleted ${transactions.length} transactions`);
   } catch (error: any) {
-    if (error.code === 'ECONNREFUSED') {
-      console.error(
-        'ERROR: API server is not running. Please start the backend server with "cd bank-statements-api && python run.py" before running tests.'
-      );
-    } else {
-      console.error('Error deleting transactions:', error);
-    }
-  } finally {
-    console.log('Delete all transactions process completed.');
+    console.error("Error deleting transactions:", error);
+    throw error;
   }
+}
+
+export async function getTransactions(apiContext: APIRequestContext) {
+  const response = await apiContext.get("/api/v1/transactions");
+  return await response.json();
+}
+
+export async function deleteTransaction(
+  apiContext: APIRequestContext,
+  transactionId: string
+) {
+  return await apiContext.delete(`/api/v1/transactions/${transactionId}`);
 }
