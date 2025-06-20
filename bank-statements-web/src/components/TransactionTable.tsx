@@ -14,6 +14,7 @@ interface TransactionTableProps {
   sortField?: TransactionSortField
   sortDirection?: TransactionSortDirection
   onSort?: (field: TransactionSortField) => void
+  showRunningBalance?: boolean
 }
 
 interface CategoryPickerProps {
@@ -173,10 +174,8 @@ export const TransactionTable = ({
   sortField,
   sortDirection,
   onSort,
+  showRunningBalance = false,
 }: TransactionTableProps) => {
-  // Check if any transaction has running balance
-  const hasRunningBalance = transactions.some((t) => t.running_balance !== undefined)
-
   if (loading) {
     return <div className="loading">Loading transactions...</div>
   }
@@ -237,8 +236,7 @@ export const TransactionTable = ({
             >
               Amount
             </SortableHeader>
-            {hasRunningBalance && <th>Running Balance</th>}
-            <th>Source</th>
+            {showRunningBalance ? <th>Running Balance</th> : <th>Source</th>}
             {onCategorize && <th>Category</th>}
           </tr>
         </thead>
@@ -248,12 +246,13 @@ export const TransactionTable = ({
               <td>{formatDate(transaction.date)}</td>
               <td>{transaction.description}</td>
               <td className={transaction.amount < 0 ? 'negative' : 'positive'}>{formatAmount(transaction.amount)}</td>
-              {hasRunningBalance && (
+              {showRunningBalance ? (
                 <td className="running-balance">
                   {transaction.running_balance !== undefined ? formatAmount(transaction.running_balance) : '-'}
                 </td>
+              ) : (
+                <td>{getSourceName(transaction.source_id)}</td>
               )}
-              <td>{getSourceName(transaction.source_id)}</td>
               {onCategorize && (
                 <td>
                   <CategoryPicker transaction={transaction} categories={categories} onCategorize={onCategorize} />
