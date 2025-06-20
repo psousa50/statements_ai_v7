@@ -1127,4 +1127,13 @@
   font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+}
+
+.transactions-page .transaction-table th.text-right,
+.transactions-page .transaction-table td.text-right {
+  text-align: right;
+}
+
+.transactions-page .transaction-table .sortable-header.text-right .header-content {
+  justify-content: flex-end;
 } 

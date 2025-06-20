@@ -125,6 +125,19 @@ tr:hover {
   background-color: var(--bg-tertiary);
 }
 
+th.text-right,
+td.text-right {
+  text-align: right !important;
+}
+
+th.amount-column,
+td.amount-column {
+  text-align: right !important;
+}
+
+.sortable-header.text-right {
+  text-align: right !important;
+}
 
 .positive {
   color: var(--positive-amount);

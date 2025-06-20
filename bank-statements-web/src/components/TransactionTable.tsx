@@ -135,19 +135,21 @@ const SortableHeader = ({
   currentSortField,
   currentSortDirection,
   onSort,
+  className,
 }: {
   field: TransactionSortField
   children: React.ReactNode
   currentSortField?: TransactionSortField
   currentSortDirection?: TransactionSortDirection
   onSort?: (field: TransactionSortField) => void
+  className?: string
 }) => {
   const isActive = currentSortField === field
   const direction = isActive ? currentSortDirection : undefined
 
   return (
     <th
-      className={`sortable-header ${isActive ? 'active' : ''}`}
+      className={`sortable-header ${isActive ? 'active' : ''} ${className || ''}`}
       onClick={() => onSort?.(field)}
       style={{ cursor: onSort ? 'pointer' : 'default' }}
     >
@@ -228,16 +230,21 @@ export const TransactionTable = ({
             >
               Description
             </SortableHeader>
+            {onCategorize && <th style={{ textAlign: 'left' }}>Category</th>}
             <SortableHeader
               field="amount"
               currentSortField={sortField}
               currentSortDirection={sortDirection}
               onSort={onSort}
+              className="text-right"
             >
               Amount
             </SortableHeader>
-            {showRunningBalance ? <th>Running Balance</th> : <th>Source</th>}
-            {onCategorize && <th>Category</th>}
+            {showRunningBalance ? (
+              <th className="text-right">Running Balance</th>
+            ) : (
+              <th style={{ textAlign: 'left' }}>Source</th>
+            )}
           </tr>
         </thead>
         <tbody>
@@ -245,18 +252,20 @@ export const TransactionTable = ({
             <tr key={transaction.id}>
               <td>{formatDate(transaction.date)}</td>
               <td>{transaction.description}</td>
-              <td className={transaction.amount < 0 ? 'negative' : 'positive'}>{formatAmount(transaction.amount)}</td>
-              {showRunningBalance ? (
-                <td className="running-balance">
-                  {transaction.running_balance !== undefined ? formatAmount(transaction.running_balance) : '-'}
-                </td>
-              ) : (
-                <td>{getSourceName(transaction.source_id)}</td>
-              )}
               {onCategorize && (
                 <td>
                   <CategoryPicker transaction={transaction} categories={categories} onCategorize={onCategorize} />
                 </td>
+              )}
+              <td className={`text-right ${transaction.amount < 0 ? 'negative' : 'positive'}`}>
+                {formatAmount(transaction.amount)}
+              </td>
+              {showRunningBalance ? (
+                <td className="running-balance text-right">
+                  {transaction.running_balance !== undefined ? formatAmount(transaction.running_balance) : '-'}
+                </td>
+              ) : (
+                <td>{getSourceName(transaction.source_id)}</td>
               )}
             </tr>
           ))}
