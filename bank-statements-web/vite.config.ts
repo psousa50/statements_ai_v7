@@ -12,6 +12,12 @@ export default defineConfig({
     setupFiles: './tests/setupTests.ts',
     environment: 'jsdom',
     include: ['tests/**/*.test.ts?(x)'],
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'json', 'html'],
+      include: ['src/**/*'],
+      exclude: ['src/**/*.test.ts', 'src/**/*.test.tsx', 'src/main.tsx'],
+    },
   },
   resolve: {
     alias: {

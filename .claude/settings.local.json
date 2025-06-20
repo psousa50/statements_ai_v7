@@ -1,7 +1,17 @@
 {
   "permissions": {
     "allow": [
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "mcp__ide__getDiagnostics",
+      "Bash(rg:*)",
+      "Bash(poetry run pytest:*)",
+      "Bash(pnpm run test:*)",
+      "Bash(pnpm add:*)",
+      "Bash(poetry show:*)",
+      "Bash(pnpm audit:*)",
+      "Bash(pnpm:*)",
+      "Bash(poetry check:*)",
+      "Bash(ls:*)"
     ],
     "deny": []
   }
