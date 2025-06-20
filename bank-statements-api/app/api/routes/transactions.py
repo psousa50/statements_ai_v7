@@ -10,10 +10,10 @@ from app.api.schemas import (
     CategorizationResultResponse,
     CategoryTotalResponse,
     CategoryTotalsResponse,
-    TransactionCreate,
+    TransactionCreateRequest,
     TransactionListResponse,
     TransactionResponse,
-    TransactionUpdate,
+    TransactionUpdateRequest,
 )
 from app.core.config import settings
 from app.core.dependencies import InternalDependencies
@@ -30,15 +30,20 @@ def register_transaction_routes(
         "", response_model=TransactionResponse, status_code=status.HTTP_201_CREATED
     )
     def create_transaction(
-        transaction_data: TransactionCreate,
+        transaction_data: TransactionCreateRequest,
+        after_transaction_id: Optional[UUID] = Query(
+            None, description="Insert after this transaction ID for ordering"
+        ),
         internal: InternalDependencies = Depends(provide_dependencies),
     ):
-        transaction = internal.transaction_service.create_transaction(
-            transaction_date=transaction_data.date,
-            description=transaction_data.description,
-            amount=transaction_data.amount,
-            category_id=transaction_data.category_id,
-            source_id=transaction_data.source_id,
+        """
+        Create a manual transaction with proper ordering.
+        If after_transaction_id is provided, the new transaction will be inserted after that transaction.
+        Otherwise, it will be added at the end of the day's transactions.
+        """
+        transaction = internal.transaction_service.create_manual_transaction(
+            transaction_data=transaction_data,
+            after_transaction_id=after_transaction_id,
         )
         return transaction
 
@@ -218,7 +223,7 @@ def register_transaction_routes(
     @router.put("/{transaction_id}", response_model=TransactionResponse)
     def update_transaction(
         transaction_id: UUID,
-        transaction_data: TransactionUpdate,
+        transaction_data: TransactionUpdateRequest,
         internal: InternalDependencies = Depends(provide_dependencies),
     ):
         updated_transaction = internal.transaction_service.update_transaction(

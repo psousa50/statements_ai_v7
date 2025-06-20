@@ -1,9 +1,6 @@
 from typing import Callable, Iterator, List, Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, FastAPI, HTTPException, Query, status
-from sqlalchemy.exc import IntegrityError
-
 from app.api.schemas import (
     TransactionCategorizationCreate,
     TransactionCategorizationListResponse,
@@ -13,24 +10,39 @@ from app.api.schemas import (
 )
 from app.core.dependencies import InternalDependencies
 from app.domain.models.transaction_categorization import CategorizationSource
+from fastapi import APIRouter, Depends, FastAPI, HTTPException, Query, status
+from sqlalchemy.exc import IntegrityError
 
 
 def register_transaction_categorization_routes(
     app: FastAPI, provide_dependencies: Callable[[], Iterator[InternalDependencies]]
 ):
-    router = APIRouter(prefix="/transaction-categorizations", tags=["Transaction Categorizations"])
+    router = APIRouter(
+        prefix="/transaction-categorizations", tags=["Transaction Categorizations"]
+    )
 
     @router.get("/", response_model=TransactionCategorizationListResponse)
     async def list_transaction_categorizations(
         page: int = Query(1, ge=1, description="Page number"),
-        page_size: int = Query(20, ge=1, le=100, description="Number of rules per page"),
-        description_search: Optional[str] = Query(None, description="Search in normalized descriptions"),
-        category_ids: Optional[List[str]] = Query(None, description="Filter by category IDs"),
-        source: Optional[CategorizationSource] = Query(None, description="Filter by categorization source"),
-        sort_field: Optional[str] = Query(
-            None, description="Field to sort by (normalized_description, category, usage, source, created_at)"
+        page_size: int = Query(
+            20, ge=1, le=100, description="Number of rules per page"
         ),
-        sort_direction: Optional[str] = Query(None, description="Sort direction (asc or desc)"),
+        description_search: Optional[str] = Query(
+            None, description="Search in normalized descriptions"
+        ),
+        category_ids: Optional[List[str]] = Query(
+            None, description="Filter by category IDs"
+        ),
+        source: Optional[CategorizationSource] = Query(
+            None, description="Filter by categorization source"
+        ),
+        sort_field: Optional[str] = Query(
+            None,
+            description="Field to sort by (normalized_description, category, usage, source, created_at)",
+        ),
+        sort_direction: Optional[str] = Query(
+            None, description="Sort direction (asc or desc)"
+        ),
         internal: InternalDependencies = Depends(provide_dependencies),
     ):
         """
@@ -45,14 +57,16 @@ def register_transaction_categorization_routes(
         - **sort_direction**: Sort direction (asc or desc)
         """
         try:
-            rules, total = internal.transaction_categorization_management_service.get_rules_paginated(
-                page=page,
-                page_size=page_size,
-                description_search=description_search,
-                category_ids=category_ids,
-                source=source,
-                sort_field=sort_field,
-                sort_direction=sort_direction,
+            rules, total = (
+                internal.transaction_categorization_management_service.get_rules_paginated(
+                    page=page,
+                    page_size=page_size,
+                    description_search=description_search,
+                    category_ids=category_ids,
+                    source=source,
+                    sort_field=sort_field,
+                    sort_direction=sort_direction,
+                )
             )
 
             # Convert to response format with transaction counts
@@ -73,6 +87,9 @@ def register_transaction_categorization_routes(
             return TransactionCategorizationListResponse(
                 categorizations=rule_responses,
                 total=total,
+                page=page,
+                page_size=page_size,
+                total_pages=(total + page_size - 1) // page_size if total > 0 else 1,
             )
         except Exception as e:
             raise HTTPException(
@@ -108,7 +125,9 @@ def register_transaction_categorization_routes(
         internal: InternalDependencies = Depends(provide_dependencies),
     ):
         """Get a specific transaction categorization rule by ID."""
-        rule = internal.transaction_categorization_management_service.get_rule_by_id(rule_id)
+        rule = internal.transaction_categorization_management_service.get_rule_by_id(
+            rule_id
+        )
         if not rule:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -125,7 +144,11 @@ def register_transaction_categorization_routes(
             category=rule.category,
         )
 
-    @router.post("/", response_model=TransactionCategorizationResponse, status_code=status.HTTP_201_CREATED)
+    @router.post(
+        "/",
+        response_model=TransactionCategorizationResponse,
+        status_code=status.HTTP_201_CREATED,
+    )
     async def create_transaction_categorization(
         rule_data: TransactionCategorizationCreate,
         internal: InternalDependencies = Depends(provide_dependencies),
@@ -227,7 +250,9 @@ def register_transaction_categorization_routes(
         internal: InternalDependencies = Depends(provide_dependencies),
     ):
         """Delete a transaction categorization rule."""
-        success = internal.transaction_categorization_management_service.delete_rule(rule_id)
+        success = internal.transaction_categorization_management_service.delete_rule(
+            rule_id
+        )
         if not success:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,

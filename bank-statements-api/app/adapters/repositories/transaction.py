@@ -5,7 +5,7 @@ from uuid import UUID
 
 from app.common.text_normalization import normalize_description
 from app.domain.dto.statement_processing import TransactionDTO
-from app.domain.models.transaction import CategorizationStatus, Transaction
+from app.domain.models.transaction import CategorizationStatus, SourceType, Transaction
 from app.ports.repositories.transaction import TransactionRepository
 from sqlalchemy import and_, func, or_
 from sqlalchemy.orm import Session
@@ -27,10 +27,18 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         return transaction
 
     def get_by_id(self, transaction_id: UUID) -> Optional[Transaction]:
-        return self.db_session.query(Transaction).filter(Transaction.id == transaction_id).first()
+        return (
+            self.db_session.query(Transaction)
+            .filter(Transaction.id == transaction_id)
+            .first()
+        )
 
     def get_all(self) -> List[Transaction]:
-        return self.db_session.query(Transaction).order_by(Transaction.date.desc()).all()
+        return (
+            self.db_session.query(Transaction)
+            .order_by(Transaction.date.desc(), Transaction.sort_index.asc())
+            .all()
+        )
 
     def get_all_by_source_and_date_range(
         self,
@@ -47,8 +55,10 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         if start_date:
             query = query.filter(Transaction.date >= start_date)
 
-        # Order by date and created_at for consistent ordering
-        return query.order_by(Transaction.date.asc(), Transaction.created_at.asc()).all()
+        # Order by date and sort_index for consistent ordering
+        return query.order_by(
+            Transaction.date.asc(), Transaction.sort_index.asc()
+        ).all()
 
     def get_paginated(
         self,
@@ -111,8 +121,13 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         # Get total count
         total = query.count()
 
-        # Apply pagination and ordering
-        transactions = query.order_by(Transaction.date.desc()).offset((page - 1) * page_size).limit(page_size).all()
+        # Apply pagination and ordering - use sort_index for consistent ordering
+        transactions = (
+            query.order_by(Transaction.date.desc(), Transaction.sort_index.asc())
+            .offset((page - 1) * page_size)
+            .limit(page_size)
+            .all()
+        )
 
         return transactions, total
 
@@ -183,7 +198,9 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         totals = {}
         for category_id, total_amount, transaction_count in results:
             totals[category_id] = {
-                "total_amount": Decimal(str(total_amount)) if total_amount else Decimal("0"),
+                "total_amount": Decimal(str(total_amount))
+                if total_amount
+                else Decimal("0"),
                 "transaction_count": Decimal(str(transaction_count)),
             }
 
@@ -254,7 +271,9 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
             # Find matching transactions in database
             matching_transactions = self.find_matching_transactions(
                 date=(
-                    transaction_dto.date if isinstance(transaction_dto.date, str) else transaction_dto.date.strftime("%Y-%m-%d")
+                    transaction_dto.date
+                    if isinstance(transaction_dto.date, str)
+                    else transaction_dto.date.strftime("%Y-%m-%d")
                 ),
                 description=transaction_dto.description,
                 amount=float(transaction_dto.amount),
@@ -276,12 +295,23 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
                 if isinstance(date_val, str):
                     date_val = datetime.strptime(date_val, "%Y-%m-%d").date()
 
+                # Convert source_type string to enum
+                source_type_enum = SourceType.UPLOAD
+                if transaction_dto.source_type == "manual":
+                    source_type_enum = SourceType.MANUAL
+
                 transaction = Transaction(
                     date=date_val,
                     amount=transaction_dto.amount,
                     description=transaction_dto.description,
-                    normalized_description=normalize_description(transaction_dto.description),
+                    normalized_description=normalize_description(
+                        transaction_dto.description
+                    ),
                     uploaded_file_id=UUID(transaction_dto.uploaded_file_id),
+                    row_index=transaction_dto.row_index,
+                    sort_index=transaction_dto.sort_index or 0,
+                    source_type=source_type_enum,
+                    manual_position_after=transaction_dto.manual_position_after,
                 )
 
                 if source_uuid:
@@ -296,8 +326,10 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
     def get_oldest_uncategorized(self, limit: int = 10) -> List[Transaction]:
         return (
             self.db_session.query(Transaction)
-            .filter(Transaction.categorization_status == CategorizationStatus.UNCATEGORIZED)
-            .order_by(Transaction.date.asc())
+            .filter(
+                Transaction.categorization_status == CategorizationStatus.UNCATEGORIZED
+            )
+            .order_by(Transaction.date.asc(), Transaction.sort_index.asc())
             .limit(limit)
             .all()
         )
@@ -306,20 +338,28 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         return (
             self.db_session.query(Transaction)
             .filter(Transaction.uploaded_file_id == uploaded_file_id)
-            .order_by(Transaction.date.asc())
+            .order_by(Transaction.date.asc(), Transaction.sort_index.asc())
             .all()
         )
 
-    def bulk_update_category_by_normalized_description(self, normalized_description: str, category_id: Optional[UUID]) -> int:
+    def bulk_update_category_by_normalized_description(
+        self, normalized_description: str, category_id: Optional[UUID]
+    ) -> int:
         """
         Update the category for all transactions with the given normalized description.
         """
-        query = self.db_session.query(Transaction).filter(Transaction.normalized_description == normalized_description)
+        query = self.db_session.query(Transaction).filter(
+            Transaction.normalized_description == normalized_description
+        )
 
         # Update the category_id and categorization_status for all matching transactions
         update_values = {
             "category_id": category_id,
-            "categorization_status": (CategorizationStatus.CATEGORIZED if category_id else CategorizationStatus.UNCATEGORIZED),
+            "categorization_status": (
+                CategorizationStatus.CATEGORIZED
+                if category_id
+                else CategorizationStatus.UNCATEGORIZED
+            ),
         }
 
         # Execute bulk update
@@ -327,3 +367,50 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         self.db_session.commit()
 
         return updated_count
+
+    def get_max_sort_index_for_date(self, source_id: UUID, date: date) -> int:
+        """
+        Get the maximum sort_index for transactions on a given date and source.
+        """
+        result = (
+            self.db_session.query(func.max(Transaction.sort_index))
+            .filter(Transaction.source_id == source_id, Transaction.date == date)
+            .scalar()
+        )
+        return result or 0
+
+    def create_manual_transaction(
+        self, transaction_data, after_transaction_id: Optional[UUID] = None
+    ) -> Transaction:
+        """
+        Create a manual transaction with proper sort_index assignment.
+        """
+        # Get next sort_index for the date
+        max_sort = self.get_max_sort_index_for_date(
+            transaction_data.source_id, transaction_data.date
+        )
+
+        if after_transaction_id:
+            after_transaction = self.get_by_id(after_transaction_id)
+            if after_transaction:
+                sort_index = after_transaction.sort_index + 10  # Gap strategy
+            else:
+                sort_index = max_sort + 10
+        else:
+            sort_index = max_sort + 10
+
+        transaction = Transaction(
+            date=transaction_data.date,
+            amount=transaction_data.amount,
+            description=transaction_data.description,
+            normalized_description=normalize_description(transaction_data.description),
+            source_id=transaction_data.source_id,
+            sort_index=sort_index,
+            source_type=SourceType.MANUAL,
+            manual_position_after=after_transaction_id,
+        )
+
+        self.db_session.add(transaction)
+        self.db_session.commit()
+        self.db_session.refresh(transaction)
+        return transaction

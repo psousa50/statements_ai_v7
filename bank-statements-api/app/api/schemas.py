@@ -4,7 +4,10 @@ from typing import Dict, List, Optional, Sequence, Tuple
 from uuid import UUID
 
 from app.domain.models.background_job import JobStatus
-from app.domain.models.transaction import CategorizationStatus
+from app.domain.models.category import Category
+from app.domain.models.processing import BackgroundJobInfo
+from app.domain.models.source import Source
+from app.domain.models.transaction import CategorizationStatus, SourceType
 from app.domain.models.transaction_categorization import CategorizationSource
 from pydantic import BaseModel, ConfigDict, Field, field_serializer, field_validator
 
@@ -33,6 +36,8 @@ class CategoryListResponse(BaseModel):
     categories: Sequence[CategoryResponse]
     total: int
 
+    model_config = ConfigDict(from_attributes=True)
+
 
 class SourceBase(BaseModel):
     name: str
@@ -56,6 +61,8 @@ class SourceResponse(BaseModel):
 class SourceListResponse(BaseModel):
     sources: Sequence[SourceResponse]
     total: int
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 class TransactionBase(BaseModel):
@@ -85,6 +92,10 @@ class TransactionResponse(BaseModel):
     source_id: Optional[UUID] = None
     categorization_status: CategorizationStatus
     running_balance: Optional[Decimal] = None
+    row_index: Optional[int] = None
+    sort_index: int
+    source_type: str
+    manual_position_after: Optional[UUID] = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -96,9 +107,41 @@ class TransactionResponse(BaseModel):
         return value
 
 
+class TransactionCreateRequest(BaseModel):
+    date: date
+    description: str
+    amount: Decimal
+    source_id: UUID
+    category_id: Optional[UUID] = None
+    after_transaction_id: Optional[UUID] = None
+
+
+class TransactionUpdateRequest(BaseModel):
+    date: Optional[date] = None
+    description: Optional[str] = None
+    amount: Optional[Decimal] = None
+    category_id: Optional[UUID] = None
+
+
+class TransactionFilters(BaseModel):
+    category_ids: Optional[List[UUID]] = None
+    status: Optional[CategorizationStatus] = None
+    min_amount: Optional[Decimal] = None
+    max_amount: Optional[Decimal] = None
+    description_search: Optional[str] = None
+    source_id: Optional[UUID] = None
+    start_date: Optional[date] = None
+    end_date: Optional[date] = None
+
+
 class TransactionListResponse(BaseModel):
-    transactions: Sequence[TransactionResponse]
+    transactions: List[TransactionResponse]
     total: int
+    page: int
+    page_size: int
+    total_pages: int
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 class CategoryTotalResponse(BaseModel):
@@ -115,6 +158,14 @@ class CategoryTotalResponse(BaseModel):
 
 class CategoryTotalsResponse(BaseModel):
     totals: Sequence[CategoryTotalResponse]
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class CategoryTotalsListResponse(BaseModel):
+    totals: List[CategoryTotalsResponse]
+    total_transactions: int
+    total_amount: Decimal
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -147,11 +198,21 @@ class StatementAnalysisResponse(BaseModel):
 
 
 class StatementUploadRequest(BaseModel):
-    source_id: str
     uploaded_file_id: str
-    column_mapping: dict
+    source_id: str
+    column_mapping: Dict[str, str]
     header_row_index: int
     data_start_row_index: int
+
+
+class BackgroundJobInfoResponse(BaseModel):
+    job_id: str
+    status: str
+    remaining_transactions: int
+    estimated_completion_seconds: int
+    status_url: str
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 class StatementUploadResponse(BaseModel):
@@ -168,9 +229,61 @@ class StatementUploadResponse(BaseModel):
     processing_time_ms: int
 
     # Background job information (if unmatched transactions exist)
-    background_job: Optional["BackgroundJobInfoResponse"] = None
+    background_job: Optional[BackgroundJobInfoResponse] = None
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class StatementUploadResult(BaseModel):
+    uploaded_file_id: str
+    transactions_saved: int
+    duplicated_transactions: int
+    background_job_info: Optional["BackgroundJobInfo"] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class TransactionCategorizationCreateRequest(BaseModel):
+    normalized_description: str
+    category_id: UUID
+
+
+class TransactionCategorizationUpdateRequest(BaseModel):
+    category_id: UUID
+
+
+class TransactionCategorizationResponse(BaseModel):
+    id: UUID
+    normalized_description: str
+    category_id: UUID
+    source: CategorizationSource
+    created_at: datetime
+    updated_at: datetime
+    category: Optional[CategoryResponse] = None
+    transaction_count: Optional[int] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class TransactionCategorizationListResponse(BaseModel):
+    categorizations: List[TransactionCategorizationResponse]
+    total: int
+    page: int
+    page_size: int
+    total_pages: int
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class TransactionCategorizationFilters(BaseModel):
+    description_search: Optional[str] = None
+    category_ids: Optional[List[UUID]] = None
+    source: Optional[CategorizationSource] = None
+
+
+class BatchCategorizationRequest(BaseModel):
+    transaction_ids: List[UUID]
+    category_id: UUID
 
 
 class CategorizationResultResponse(BaseModel):
@@ -194,27 +307,39 @@ class BatchCategorizationResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-class CategorizationResponse(BaseModel):
-    categorized_count: int
-    success: bool
-    message: str
+class CategoryCreateRequest(BaseModel):
+    name: str
+    parent_id: Optional[UUID] = None
+
+
+class CategoryUpdateRequest(BaseModel):
+    name: Optional[str] = None
+    parent_id: Optional[UUID] = None
+
+
+class CategoryListResponse(BaseModel):
+    categories: List[CategoryResponse]
+    total: int
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class SourceCreateRequest(BaseModel):
+    name: str
+
+
+class SourceUpdateRequest(BaseModel):
+    name: str
+
+
+class SourceListResponse(BaseModel):
+    sources: List[SourceResponse]
+    total: int
 
     model_config = ConfigDict(from_attributes=True)
 
 
 # Background Job API Schemas
-class BackgroundJobInfoResponse(BaseModel):
-    """Background job information for API responses"""
-
-    job_id: UUID
-    status: JobStatus
-    remaining_transactions: int
-    estimated_completion_seconds: Optional[int] = None
-    status_url: str
-
-    model_config = ConfigDict(from_attributes=True)
-
-
 class JobStatusResponse(BaseModel):
     """Response for job status endpoint"""
 
@@ -268,24 +393,6 @@ class TransactionCategorizationUpdate(TransactionCategorizationBase):
     pass
 
 
-class TransactionCategorizationResponse(BaseModel):
-    id: UUID
-    normalized_description: str
-    category_id: UUID
-    source: CategorizationSource
-    created_at: datetime
-    updated_at: datetime
-    category: Optional[CategoryResponse] = None
-    transaction_count: Optional[int] = None
-
-    model_config = ConfigDict(from_attributes=True)
-
-
-class TransactionCategorizationListResponse(BaseModel):
-    categorizations: Sequence[TransactionCategorizationResponse]
-    total: int
-
-
 class TransactionCategorizationStatsResponse(BaseModel):
     summary: Dict[str, int]
     category_usage: List[Dict]
@@ -303,3 +410,21 @@ class BulkUpdateTransactionsRequest(BaseModel):
 class BulkUpdateTransactionsResponse(BaseModel):
     updated_count: int
     message: str
+
+
+class CategorizationResponse(BaseModel):
+    categorized_count: int
+    success: bool
+    message: str
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class TransactionCategorizationStatsResponse(BaseModel):
+    total_transactions: int
+    categorized_transactions: int
+    uncategorized_transactions: int
+    failed_transactions: int
+    categorization_rate: float
+
+    model_config = ConfigDict(from_attributes=True)

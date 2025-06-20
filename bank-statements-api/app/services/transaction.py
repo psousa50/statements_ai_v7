@@ -3,9 +3,9 @@ from decimal import Decimal
 from typing import Dict, List, Optional
 from uuid import UUID
 
-from app.api.schemas import TransactionListResponse
+from app.api.schemas import TransactionCreateRequest, TransactionListResponse
 from app.common.text_normalization import normalize_description
-from app.domain.models.transaction import CategorizationStatus, Transaction
+from app.domain.models.transaction import CategorizationStatus, SourceType, Transaction
 from app.ports.repositories.initial_balance import InitialBalanceRepository
 from app.ports.repositories.transaction import TransactionRepository
 
@@ -32,7 +32,7 @@ class TransactionService:
         source_id: UUID,
         category_id: Optional[UUID] = None,
     ) -> Transaction:
-        """Create a new transaction"""
+        """Create a new transaction (deprecated - use create_manual_transaction instead)"""
         transaction = Transaction(
             date=transaction_date,
             description=description,
@@ -47,6 +47,26 @@ class TransactionService:
             ),
         )
         return self.transaction_repository.create(transaction)
+
+    def create_manual_transaction(
+        self,
+        transaction_data: TransactionCreateRequest,
+        after_transaction_id: Optional[UUID] = None,
+    ) -> Transaction:
+        """
+        Create a manual transaction with proper ordering.
+
+        Args:
+            transaction_data: The transaction data to create
+            after_transaction_id: Optional transaction ID to insert after for ordering
+
+        Returns:
+            The created transaction with proper sort_index
+        """
+        return self.transaction_repository.create_manual_transaction(
+            transaction_data=transaction_data,
+            after_transaction_id=after_transaction_id,
+        )
 
     def get_transaction(self, transaction_id: UUID) -> Optional[Transaction]:
         """Get a transaction by ID"""
@@ -88,7 +108,16 @@ class TransactionService:
         if include_running_balance and source_id is not None:
             self._add_running_balance_to_transactions(transactions, source_id)
 
-        return TransactionListResponse(transactions=transactions, total=total)
+        # Calculate total pages
+        total_pages = (total + page_size - 1) // page_size if total > 0 else 1
+
+        return TransactionListResponse(
+            transactions=transactions,
+            total=total,
+            page=page,
+            page_size=page_size,
+            total_pages=total_pages,
+        )
 
     def _add_running_balance_to_transactions(
         self, transactions: List[Transaction], source_id: UUID

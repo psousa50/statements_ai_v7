@@ -1,5 +1,6 @@
 import { expect, test } from 'vitest'
 import { render, screen } from '@testing-library/react'
+import { MemoryRouter } from 'react-router-dom'
 import { TransactionsPage } from '@/pages/Transactions'
 import { ApiProvider } from '@/api/ApiContext'
 import { createMockApiClient } from '../createMockApiClient'
@@ -25,13 +26,15 @@ test('renders transactions page with mock data', async () => {
   })
 
   render(
-    <ApiProvider client={apiClient}>
-      <TransactionsPage />
-    </ApiProvider>
+    <MemoryRouter>
+      <ApiProvider client={apiClient}>
+        <TransactionsPage />
+      </ApiProvider>
+    </MemoryRouter>
   )
 
   // Check that the page title is rendered
-  expect(screen.getByText('Bank Statement Analyzer')).toBeInTheDocument()
+  expect(screen.getByText('Transactions')).toBeInTheDocument()
 
   // Wait for the transaction to be loaded and displayed
   expect(await screen.findByText('Test Transaction')).toBeInTheDocument()

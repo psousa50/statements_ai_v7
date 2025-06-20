@@ -78,6 +78,10 @@ class TransactionDTO:
         category_id: Optional[UUID] = None,
         categorization_status: Optional[str] = None,
         normalized_description: Optional[str] = None,
+        row_index: Optional[int] = None,
+        sort_index: Optional[int] = None,
+        source_type: str = "upload",
+        manual_position_after: Optional[UUID] = None,
     ):
         self.id = id
         self.date = date
@@ -89,6 +93,10 @@ class TransactionDTO:
         self.category_id = category_id
         self.categorization_status = categorization_status
         self.normalized_description = normalized_description
+        self.row_index = row_index
+        self.sort_index = sort_index
+        self.source_type = source_type
+        self.manual_position_after = manual_position_after
 
     @classmethod
     def from_entity(cls, entity):
@@ -101,6 +109,12 @@ class TransactionDTO:
             source_id=str(entity.source_id) if entity.source_id else None,
             created_at=entity.created_at,
             category_id=entity.category_id,
-            categorization_status=entity.categorization_status.value if entity.categorization_status else None,
+            categorization_status=entity.categorization_status.value
+            if entity.categorization_status
+            else None,
             normalized_description=entity.normalized_description,
+            row_index=entity.row_index,
+            sort_index=entity.sort_index,
+            source_type=entity.source_type.value if entity.source_type else "upload",
+            manual_position_after=entity.manual_position_after,
         )
