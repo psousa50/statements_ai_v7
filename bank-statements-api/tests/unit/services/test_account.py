@@ -182,3 +182,90 @@ class TestAccountService:
         assert result is False
         mock_repository.get_by_id.assert_called_once_with(account_id)
         mock_repository.delete.assert_not_called()
+
+    def test_upsert_accounts_from_csv_new_accounts(self, service, mock_repository):
+        """Test upserting new accounts from CSV"""
+        # Arrange
+        csv_content = "name\nAccount 1\nAccount 2"
+        mock_repository.get_by_name.return_value = None
+        created_accounts = [
+            Account(id=uuid4(), name="Account 1"),
+            Account(id=uuid4(), name="Account 2"),
+        ]
+        mock_repository.create.side_effect = created_accounts
+
+        # Act
+        result = service.upsert_accounts_from_csv(csv_content)
+
+        # Assert
+        assert len(result) == 2
+        assert result == created_accounts
+        assert mock_repository.get_by_name.call_count == 2
+        assert mock_repository.create.call_count == 2
+
+    def test_upsert_accounts_from_csv_existing_accounts(self, service, mock_repository):
+        """Test upserting existing accounts from CSV"""
+        # Arrange
+        csv_content = "name\nAccount 1"
+        existing_account = Account(id=uuid4(), name="Account 1")
+        mock_repository.get_by_name.return_value = existing_account
+
+        # Act
+        result = service.upsert_accounts_from_csv(csv_content)
+
+        # Assert
+        assert len(result) == 1
+        assert result[0] == existing_account
+        mock_repository.get_by_name.assert_called_once_with("Account 1")
+        mock_repository.create.assert_not_called()
+
+    def test_upsert_accounts_from_csv_mixed(self, service, mock_repository):
+        """Test upserting mix of new and existing accounts from CSV"""
+        # Arrange
+        csv_content = "name\nExisting Account\nNew Account"
+        existing_account = Account(id=uuid4(), name="Existing Account")
+        new_account = Account(id=uuid4(), name="New Account")
+
+        def mock_get_by_name(name):
+            return existing_account if name == "Existing Account" else None
+
+        mock_repository.get_by_name.side_effect = mock_get_by_name
+        mock_repository.create.return_value = new_account
+
+        # Act
+        result = service.upsert_accounts_from_csv(csv_content)
+
+        # Assert
+        assert len(result) == 2
+        assert existing_account in result
+        assert new_account in result
+        assert mock_repository.get_by_name.call_count == 2
+        mock_repository.create.assert_called_once()
+
+    def test_upsert_accounts_from_csv_missing_name_column(self, service, mock_repository):
+        """Test CSV upload with missing name column raises error"""
+        # Arrange
+        csv_content = "invalid_column\nValue 1"
+
+        # Act & Assert
+        with pytest.raises(ValueError, match="CSV must contain 'name' column"):
+            service.upsert_accounts_from_csv(csv_content)
+
+    def test_upsert_accounts_from_csv_empty_names_skipped(self, service, mock_repository):
+        """Test CSV upload skips empty account names"""
+        # Arrange
+        csv_content = "name\nValid Account\n\n   \nAnother Account"
+        created_accounts = [
+            Account(id=uuid4(), name="Valid Account"),
+            Account(id=uuid4(), name="Another Account"),
+        ]
+        mock_repository.get_by_name.return_value = None
+        mock_repository.create.side_effect = created_accounts
+
+        # Act
+        result = service.upsert_accounts_from_csv(csv_content)
+
+        # Assert
+        assert len(result) == 2
+        assert mock_repository.get_by_name.call_count == 2
+        assert mock_repository.create.call_count == 2

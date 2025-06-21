@@ -1,3 +1,5 @@
+import csv
+import io
 from typing import List, Optional
 from uuid import UUID
 
@@ -35,3 +37,31 @@ class AccountService:
             self.account_repository.delete(account_id)
             return True
         return False
+
+    def upsert_accounts_from_csv(self, csv_content: str) -> List[Account]:
+        """
+        Upsert accounts from CSV content.
+        Expected CSV format: name
+        """
+        accounts = []
+        csv_reader = csv.DictReader(io.StringIO(csv_content))
+
+        for row in csv_reader:
+            if "name" not in row:
+                raise ValueError("CSV must contain 'name' column")
+
+            name = row["name"].strip()
+            if not name:
+                continue
+
+            # Check if account already exists
+            existing_account = self.account_repository.get_by_name(name)
+            if existing_account:
+                accounts.append(existing_account)
+            else:
+                # Create new account
+                new_account = Account(name=name)
+                created_account = self.account_repository.create(new_account)
+                accounts.append(created_account)
+
+        return accounts

@@ -1,9 +1,9 @@
 from typing import Callable, Iterator
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, FastAPI, HTTPException, status
+from fastapi import APIRouter, Depends, FastAPI, File, HTTPException, UploadFile, status
 
-from app.api.schemas import AccountCreate, AccountListResponse, AccountResponse, AccountUpdate
+from app.api.schemas import AccountCreate, AccountListResponse, AccountResponse, AccountUpdate, AccountUploadResponse
 from app.core.config import settings
 from app.core.dependencies import InternalDependencies
 from app.logging.utils import log_exception
@@ -136,6 +136,52 @@ def register_account_routes(app: FastAPI, provide_dependencies: Callable[[], Ite
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"Error deleting account: {str(e)}",
+            )
+
+    @router.post("/upload", response_model=AccountUploadResponse, status_code=status.HTTP_200_OK)
+    async def upload_accounts_csv(
+        file: UploadFile = File(...),
+        internal: InternalDependencies = Depends(provide_dependencies),
+    ):
+        """Upload accounts from CSV file"""
+        try:
+            # Validate file type
+            if not file.content_type or not file.content_type.startswith(("text/csv", "application/csv")):
+                if not file.filename or not file.filename.lower().endswith(".csv"):
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="File must be a CSV file",
+                    )
+
+            # Read file content
+            content = await file.read()
+            csv_content = content.decode("utf-8")
+
+            # Get existing accounts for comparison
+            existing_accounts = {acc.name: acc for acc in internal.account_service.get_all_accounts()}
+
+            # Process CSV and upsert accounts
+            accounts = internal.account_service.upsert_accounts_from_csv(csv_content)
+
+            # Count created vs updated
+            created_count = 0
+            updated_count = 0
+
+            for account in accounts:
+                if account.name in existing_accounts:
+                    updated_count += 1
+                else:
+                    created_count += 1
+
+            return AccountUploadResponse(accounts=accounts, total=len(accounts), created=created_count, updated=updated_count)
+
+        except HTTPException:
+            raise
+        except Exception as e:
+            log_exception("Error uploading accounts: %s", str(e))
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Error uploading accounts: {str(e)}",
             )
 
     app.include_router(router, prefix=settings.API_V1_STR)
