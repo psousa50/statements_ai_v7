@@ -49,8 +49,8 @@ class StatementPersistenceService:
                 description=row["description"],
                 uploaded_file_id=uploaded_file_id,
                 account_id=account_id,
-                row_index=index,  # Assign row_index based on position in file
-                sort_index=index,  # Initially same as row_index for uploaded transactions
+                row_index=index,
+                sort_index=index,
                 source_type=SourceType.UPLOAD.value,
             )
             transactions.append(transaction)

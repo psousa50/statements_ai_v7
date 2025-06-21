@@ -73,11 +73,13 @@ class TransactionBase(BaseModel):
 class TransactionCreate(TransactionBase):
     category_id: Optional[UUID] = None
     account_id: UUID
+    counterparty_account_id: Optional[UUID] = None
 
 
 class TransactionUpdate(TransactionBase):
     category_id: Optional[UUID] = None
     account_id: UUID
+    counterparty_account_id: Optional[UUID] = None
 
 
 class TransactionResponse(BaseModel):
@@ -89,6 +91,7 @@ class TransactionResponse(BaseModel):
     created_at: "date"
     category_id: Optional[UUID] = None
     account_id: Optional[UUID] = None
+    counterparty_account_id: Optional[UUID] = None
     categorization_status: CategorizationStatus
     running_balance: Optional[Decimal] = None
     row_index: Optional[int] = None
@@ -112,6 +115,7 @@ class TransactionCreateRequest(BaseModel):
     amount: Decimal
     account_id: UUID
     category_id: Optional[UUID] = None
+    counterparty_account_id: Optional[UUID] = None
     after_transaction_id: Optional[UUID] = None
 
 
@@ -120,6 +124,7 @@ class TransactionUpdateRequest(BaseModel):
     description: Optional[str] = None
     amount: Optional[Decimal] = None
     category_id: Optional[UUID] = None
+    counterparty_account_id: Optional[UUID] = None
 
 
 class TransactionFilters(BaseModel):
@@ -129,6 +134,7 @@ class TransactionFilters(BaseModel):
     max_amount: Optional[Decimal] = None
     description_search: Optional[str] = None
     account_id: Optional[UUID] = None
+    counterparty_account_id: Optional[UUID] = None
     start_date: Optional[date] = None
     end_date: Optional[date] = None
 

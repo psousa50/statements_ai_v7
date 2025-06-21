@@ -41,7 +41,12 @@ class Transaction(Base):
     category = relationship("Category")
 
     account_id = Column(UUID(as_uuid=True), ForeignKey("accounts.id"), nullable=False)
-    account = relationship("Account", back_populates="transactions")
+    account = relationship("Account", foreign_keys=[account_id], back_populates="transactions")
+
+    counterparty_account_id = Column(UUID(as_uuid=True), ForeignKey("accounts.id"), nullable=True)
+    counterparty_account = relationship(
+        "Account", foreign_keys=[counterparty_account_id], back_populates="counterparty_transactions"
+    )
 
     categorization_status = Column(
         SQLAlchemyEnum(CategorizationStatus),
