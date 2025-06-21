@@ -10,11 +10,11 @@ from sqlalchemy import create_engine, event
 from sqlalchemy.orm import sessionmaker
 
 from app.core.dependencies import ExternalDependencies, build_internal_dependencies
-from app.domain.dto.statement_processing import PersistenceRequestDTO, PersistenceResultDTO
+from app.domain.dto.statement_processing import PersistenceResultDTO, TransactionDTO
 from app.domain.models.account import Account
 from app.domain.models.statement import Statement
 from app.domain.models.transaction import Transaction
-from app.domain.models.uploaded_file import FileAnalysisMetadata, UploadedFile
+from app.domain.models.uploaded_file import UploadedFile
 
 
 @pytest.fixture
@@ -110,16 +110,43 @@ class TestStatementProcessingIntegration:
         db_session.add(source)
         db_session.flush()
 
-        persistence_request = PersistenceRequestDTO(
-            uploaded_file_id=analysis_result.uploaded_file_id,
-            column_mapping=analysis_result.column_mapping,
-            header_row_index=analysis_result.header_row_index,
-            data_start_row_index=analysis_result.data_start_row_index,
-            account_id=source.id,
-        )
+        # Create transaction DTOs manually for testing
+        from app.domain.models.transaction import SourceType
+
+        processed_dtos = [
+            TransactionDTO(
+                date="2023-01-01",
+                amount=100.00,
+                description="Deposit",
+                account_id=str(source.id),
+                row_index=0,
+                sort_index=0,
+                source_type=SourceType.UPLOAD.value,
+            ),
+            TransactionDTO(
+                date="2023-01-02",
+                amount=-50.00,
+                description="Withdrawal",
+                account_id=str(source.id),
+                row_index=1,
+                sort_index=1,
+                source_type=SourceType.UPLOAD.value,
+            ),
+            TransactionDTO(
+                date="2023-01-03",
+                amount=25.50,
+                description="Refund",
+                account_id=str(source.id),
+                row_index=2,
+                sort_index=2,
+                source_type=SourceType.UPLOAD.value,
+            ),
+        ]
 
         persistence_service = dependencies.statement_persistence_service
-        persistence_result = persistence_service.persist(persistence_request)
+        persistence_result = persistence_service.save_processed_transactions(
+            processed_dtos=processed_dtos, account_id=source.id, uploaded_file_id=analysis_result.uploaded_file_id
+        )
 
         assert isinstance(persistence_result, PersistenceResultDTO)
         assert persistence_result.transactions_saved == 3
@@ -130,15 +157,7 @@ class TestStatementProcessingIntegration:
         assert uploaded_file.filename == filename
         assert uploaded_file.content == content
 
-        metadata = db_session.query(FileAnalysisMetadata).filter(FileAnalysisMetadata.account_id == source.id).first()
-        assert metadata.account_id == source.id
-        assert metadata.column_mapping == {
-            "date": "Data",
-            "amount": "Valor",
-            "description": "Descricao",
-        }
-        assert metadata.header_row_index == 1
-        assert metadata.data_start_row_index == 2
+        # Note: File analysis metadata is now handled separately in the production flow
 
         # Get the statement that was created
         statement = db_session.query(Statement).filter(Statement.account_id == source.id).first()
@@ -180,32 +199,83 @@ class TestStatementProcessingIntegration:
         source = Account(name="Test Bank")
         db_session.add(source)
         db_session.flush()
-        persistence_request = PersistenceRequestDTO(
-            uploaded_file_id=first_analysis.uploaded_file_id,
-            column_mapping=first_analysis.column_mapping,
-            header_row_index=first_analysis.header_row_index,
-            data_start_row_index=first_analysis.data_start_row_index,
-            account_id=source.id,
-        )
+        # Create transaction DTOs for first upload
+        from app.domain.models.transaction import SourceType
+
+        first_processed_dtos = [
+            TransactionDTO(
+                date="2023-01-01",
+                amount=100.00,
+                description="Deposit",
+                account_id=str(source.id),
+                row_index=0,
+                sort_index=0,
+                source_type=SourceType.UPLOAD.value,
+            ),
+            TransactionDTO(
+                date="2023-01-02",
+                amount=-50.00,
+                description="Withdrawal",
+                account_id=str(source.id),
+                row_index=1,
+                sort_index=1,
+                source_type=SourceType.UPLOAD.value,
+            ),
+            TransactionDTO(
+                date="2023-01-03",
+                amount=25.50,
+                description="Refund",
+                account_id=str(source.id),
+                row_index=2,
+                sort_index=2,
+                source_type=SourceType.UPLOAD.value,
+            ),
+        ]
 
         persistence_service = dependencies.statement_persistence_service
-        persistence_service.persist(persistence_request)
+        persistence_service.save_processed_transactions(
+            processed_dtos=first_processed_dtos, account_id=source.id, uploaded_file_id=first_analysis.uploaded_file_id
+        )
 
         initial_file_count = db_session.query(UploadedFile).count()
-        initial_metadata_count = db_session.query(FileAnalysisMetadata).count()
 
         second_analysis = analyzer_service.analyze(
             filename=filename,
             file_content=content,
         )
-        persistence_request = PersistenceRequestDTO(
-            uploaded_file_id=second_analysis.uploaded_file_id,
-            column_mapping=second_analysis.column_mapping,
-            header_row_index=second_analysis.header_row_index,
-            data_start_row_index=second_analysis.data_start_row_index,
-            account_id=source.id,
+        # Create transaction DTOs for second upload
+        second_processed_dtos = [
+            TransactionDTO(
+                date="2023-01-01",
+                amount=100.00,
+                description="Deposit",
+                account_id=str(source.id),
+                row_index=0,
+                sort_index=0,
+                source_type=SourceType.UPLOAD.value,
+            ),
+            TransactionDTO(
+                date="2023-01-02",
+                amount=-50.00,
+                description="Withdrawal",
+                account_id=str(source.id),
+                row_index=1,
+                sort_index=1,
+                source_type=SourceType.UPLOAD.value,
+            ),
+            TransactionDTO(
+                date="2023-01-03",
+                amount=25.50,
+                description="Refund",
+                account_id=str(source.id),
+                row_index=2,
+                sort_index=2,
+                source_type=SourceType.UPLOAD.value,
+            ),
+        ]
+        persistence_service.save_processed_transactions(
+            processed_dtos=second_processed_dtos, account_id=source.id, uploaded_file_id=second_analysis.uploaded_file_id
         )
-        persistence_service.persist(persistence_request)
 
         assert second_analysis.file_type == first_analysis.file_type
         assert second_analysis.column_mapping == first_analysis.column_mapping
@@ -213,4 +283,3 @@ class TestStatementProcessingIntegration:
         assert second_analysis.data_start_row_index == first_analysis.data_start_row_index
 
         assert db_session.query(UploadedFile).count() == initial_file_count + 1
-        assert db_session.query(FileAnalysisMetadata).count() == initial_metadata_count

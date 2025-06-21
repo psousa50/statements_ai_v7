@@ -1,15 +1,15 @@
 import uuid
-from unittest.mock import ANY, MagicMock, Mock
+from unittest.mock import MagicMock, Mock
 
 import pandas as pd
 
-from app.domain.dto.statement_processing import PersistenceRequestDTO, PersistenceResultDTO, TransactionDTO
+from app.domain.dto.statement_processing import PersistenceResultDTO, TransactionDTO
 from app.domain.dto.uploaded_file import FileAnalysisMetadataDTO, UploadedFileDTO
 from app.services.statement_processing.statement_persistence import StatementPersistenceService
 
 
 class TestStatementPersistenceService:
-    def test_persist_transactions(self):
+    def test_save_processed_transactions(self):
         statement_parser = MagicMock()
         statement_parser.parse.return_value = pd.DataFrame(
             {
@@ -72,19 +72,31 @@ class TestStatementPersistenceService:
         uploaded_file_id = str(uuid.uuid4())
         account_id = uuid.uuid4()
 
-        persistence_request = PersistenceRequestDTO(
-            account_id=account_id,
-            uploaded_file_id=uploaded_file_id,
-            column_mapping={
-                "date": "Date",
-                "amount": "Amount",
-                "description": "Description",
-            },
-            header_row_index=0,
-            data_start_row_index=1,
-        )
+        # Create processed transaction DTOs
+        processed_dtos = [
+            TransactionDTO(
+                date="2023-01-01",
+                amount=100.00,
+                description="Deposit",
+                account_id=str(account_id),
+                row_index=0,
+                sort_index=0,
+                source_type="UPLOAD",
+            ),
+            TransactionDTO(
+                date="2023-01-02",
+                amount=-200.00,
+                description="Withdrawal",
+                account_id=str(account_id),
+                row_index=1,
+                sort_index=1,
+                source_type="UPLOAD",
+            ),
+        ]
 
-        result = persistence_service.persist(persistence_request)
+        result = persistence_service.save_processed_transactions(
+            processed_dtos=processed_dtos, account_id=account_id, uploaded_file_id=uploaded_file_id
+        )
 
         assert isinstance(result, PersistenceResultDTO)
         assert result.uploaded_file_id == uploaded_file_id
@@ -92,19 +104,9 @@ class TestStatementPersistenceService:
         assert result.duplicated_transactions == 0
 
         uploaded_file_repo.find_by_id.assert_called_once_with(uploaded_file_id)
-        statement_parser.parse.assert_called_once()
-        transaction_normalizer.normalize.assert_called_once_with(ANY, persistence_request.column_mapping)
 
         transaction_repo.save_batch.assert_called_once()
         saved_transactions = transaction_repo.save_batch.call_args[0][0]
         assert len(saved_transactions) == 2
         assert all(isinstance(t, TransactionDTO) for t in saved_transactions)
         assert all(t.statement_id == str(mock_statement.id) for t in saved_transactions)
-
-        file_analysis_metadata_repo.save.assert_called_once_with(
-            file_hash=ANY,
-            column_mapping=persistence_request.column_mapping,
-            header_row_index=persistence_request.header_row_index,
-            data_start_row_index=persistence_request.data_start_row_index,
-            account_id=account_id,
-        )
