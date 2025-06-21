@@ -5,6 +5,7 @@ from uuid import uuid4
 
 import pytest
 
+from app.api.schemas import TransactionCreateRequest
 from app.domain.models.transaction import Transaction
 from app.ports.repositories.initial_balance import InitialBalanceRepository
 from app.ports.repositories.transaction import TransactionRepository
@@ -38,26 +39,28 @@ class TestTransactionService:
         return transaction
 
     def test_create_transaction(self, service, mock_repository, sample_transaction):
-        mock_repository.create.return_value = sample_transaction
+        mock_repository.create_transaction.return_value = sample_transaction
         transaction_date = date(2023, 4, 15)
         description = "Test Transaction"
         amount = Decimal("100.50")
         account_id = uuid4()
 
-        result = service.create_transaction(
-            transaction_date=transaction_date,
+        transaction_data = TransactionCreateRequest(
+            date=transaction_date,
             description=description,
             amount=amount,
             account_id=account_id,
         )
 
+        result = service.create_transaction(
+            transaction_data=transaction_data,
+        )
+
         assert result == sample_transaction
-        mock_repository.create.assert_called_once()
-        created_transaction = mock_repository.create.call_args[0][0]
-        assert created_transaction.date == transaction_date
-        assert created_transaction.description == description
-        assert created_transaction.amount == amount
-        assert created_transaction.account_id == account_id
+        mock_repository.create_transaction.assert_called_once_with(
+            transaction_data=transaction_data,
+            after_transaction_id=None,
+        )
 
     def test_get_transaction(self, service, mock_repository, sample_transaction):
         transaction_id = sample_transaction.id

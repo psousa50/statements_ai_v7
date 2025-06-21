@@ -36,7 +36,7 @@ def register_transaction_routes(app: FastAPI, provide_dependencies: Callable[[],
         If after_transaction_id is provided, the new transaction will be inserted after that transaction.
         Otherwise, it will be added at the end of the day's transactions.
         """
-        transaction = internal.transaction_service.create_manual_transaction(
+        transaction = internal.transaction_service.create_transaction(
             transaction_data=transaction_data,
             after_transaction_id=after_transaction_id,
         )

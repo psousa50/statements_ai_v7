@@ -356,9 +356,9 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         )
         return result or 0
 
-    def create_manual_transaction(self, transaction_data, after_transaction_id: Optional[UUID] = None) -> Transaction:
+    def create_transaction(self, transaction_data, after_transaction_id: Optional[UUID] = None) -> Transaction:
         """
-        Create a manual transaction with proper sort_index assignment.
+        Create a transaction with proper sort_index assignment.
         """
         # Get next sort_index for the date
         max_sort = self.get_max_sort_index_for_date(transaction_data.account_id, transaction_data.date)

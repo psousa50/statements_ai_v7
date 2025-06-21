@@ -26,31 +26,11 @@ class TransactionService:
 
     def create_transaction(
         self,
-        transaction_date: date,
-        description: str,
-        amount: Decimal,
-        account_id: UUID,
-        category_id: Optional[UUID] = None,
-    ) -> Transaction:
-        """Create a new transaction (deprecated - use create_manual_transaction instead)"""
-        transaction = Transaction(
-            date=transaction_date,
-            description=description,
-            normalized_description=normalize_description(description),
-            amount=amount,
-            category_id=category_id,
-            account_id=account_id,
-            categorization_status=(CategorizationStatus.CATEGORIZED if category_id else CategorizationStatus.UNCATEGORIZED),
-        )
-        return self.transaction_repository.create(transaction)
-
-    def create_manual_transaction(
-        self,
         transaction_data: TransactionCreateRequest,
         after_transaction_id: Optional[UUID] = None,
     ) -> Transaction:
         """
-        Create a manual transaction with proper ordering.
+        Create a transaction with proper ordering.
 
         Args:
             transaction_data: The transaction data to create
@@ -59,7 +39,7 @@ class TransactionService:
         Returns:
             The created transaction with proper sort_index
         """
-        return self.transaction_repository.create_manual_transaction(
+        return self.transaction_repository.create_transaction(
             transaction_data=transaction_data,
             after_transaction_id=after_transaction_id,
         )

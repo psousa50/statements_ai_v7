@@ -31,7 +31,7 @@ def test_create_transaction():
     )
 
     # Patch the correct method for manual transaction creation
-    internal_dependencies.transaction_service.create_manual_transaction.return_value = mock_transaction
+    internal_dependencies.transaction_service.create_transaction.return_value = mock_transaction
     client = build_client(internal_dependencies)
 
     transaction_data = TransactionCreate(
@@ -61,7 +61,7 @@ def test_create_transaction():
     assert transaction_response.source_type == SourceType.MANUAL.value
     assert transaction_response.manual_position_after is None
 
-    internal_dependencies.transaction_service.create_manual_transaction.assert_called_once()
+    internal_dependencies.transaction_service.create_transaction.assert_called_once()
 
 
 def test_get_transaction():

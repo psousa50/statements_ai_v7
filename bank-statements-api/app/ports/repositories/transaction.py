@@ -4,6 +4,7 @@ from decimal import Decimal
 from typing import Dict, List, Optional, Tuple
 from uuid import UUID
 
+from app.api.schemas import TransactionCreateRequest
 from app.domain.dto.statement_processing import TransactionDTO
 from app.domain.models.transaction import CategorizationStatus, Transaction
 
@@ -17,6 +18,13 @@ class TransactionRepository(ABC):
     @abstractmethod
     def create(self, transaction: Transaction) -> Transaction:
         """Create a new transaction"""
+        pass
+
+    @abstractmethod
+    def create_transaction(
+        self, transaction_data: TransactionCreateRequest, after_transaction_id: Optional[UUID] = None
+    ) -> Transaction:
+        """Create a transaction with proper ordering"""
         pass
 
     @abstractmethod
