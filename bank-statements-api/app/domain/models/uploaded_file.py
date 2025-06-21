@@ -23,10 +23,10 @@ class FileAnalysisMetadata(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     file_hash = Column(Text, unique=True, nullable=False, index=True)
-    source_id = Column(UUID(as_uuid=True), ForeignKey("sources.id"), nullable=False)
+    account_id = Column(UUID(as_uuid=True), ForeignKey("accounts.id"), nullable=False)
     column_mapping = Column(JSONB, nullable=False)
     header_row_index = Column(Integer, nullable=False)
     data_start_row_index = Column(Integer, nullable=False)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
 
-    source = relationship("Source")
+    account = relationship("Account")

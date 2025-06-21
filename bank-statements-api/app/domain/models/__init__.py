@@ -1,4 +1,5 @@
 # Import all models for SQLAlchemy relationship resolution
+from .account import Account
 from .background_job import BackgroundJob, JobStatus, JobType
 from .categorization import BatchCategorizationResult, CategorizationResult
 from .category import Category
@@ -10,7 +11,6 @@ from .processing import (
     ProcessingProgress,
     SyncCategorizationResult,
 )
-from .source import Source
 from .transaction import CategorizationStatus, Transaction
 from .transaction_categorization import CategorizationSource, TransactionCategorization
 from .uploaded_file import FileAnalysisMetadata, UploadedFile
@@ -33,8 +33,8 @@ __all__ = [
     "JobStatusResponse",
     "ProcessingProgress",
     "SyncCategorizationResult",
-    # Source
-    "Source",
+    # Account
+    "Account",
     # Transaction
     "CategorizationStatus",
     "Transaction",

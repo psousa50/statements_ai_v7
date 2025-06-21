@@ -9,5 +9,5 @@ curl -X POST "$API_URL" \
   -H "Content-Type: application/json" \
   -d '{
     "file_path": "data/statements/100_BT_Records.csv",
-    "source_id": "1"
+    "account_id": "1"
   }'

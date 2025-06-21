@@ -50,11 +50,11 @@ class SQLAlchemyFileAnalysisMetadataRepository(FileAnalysisMetadataRepository):
         column_mapping: dict,
         header_row_index: int,
         data_start_row_index: int,
-        source_id: Optional[UUID] = None,
+        account_id: Optional[UUID] = None,
     ) -> FileAnalysisMetadataDTO:
         metadata = FileAnalysisMetadata(
             file_hash=file_hash,
-            source_id=source_id,
+            account_id=account_id,
             column_mapping=column_mapping,
             header_row_index=header_row_index,
             data_start_row_index=data_start_row_index,
@@ -67,7 +67,7 @@ class SQLAlchemyFileAnalysisMetadataRepository(FileAnalysisMetadataRepository):
         return FileAnalysisMetadataDTO(
             id=str(metadata.id),
             file_hash=metadata.file_hash,
-            source_id=str(metadata.source_id) if metadata.source_id else None,
+            account_id=str(metadata.account_id) if metadata.account_id else None,
             column_mapping=metadata.column_mapping,
             header_row_index=metadata.header_row_index,
             data_start_row_index=metadata.data_start_row_index,
@@ -83,7 +83,7 @@ class SQLAlchemyFileAnalysisMetadataRepository(FileAnalysisMetadataRepository):
         return FileAnalysisMetadataDTO(
             id=str(metadata.id),
             file_hash=metadata.file_hash,
-            source_id=str(metadata.source_id) if metadata.source_id else None,
+            account_id=str(metadata.account_id) if metadata.account_id else None,
             column_mapping=metadata.column_mapping,
             header_row_index=metadata.header_row_index,
             data_start_row_index=metadata.data_start_row_index,

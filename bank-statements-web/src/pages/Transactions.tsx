@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useTransactions } from '../services/hooks/useTransactions'
 import { useCategories } from '../services/hooks/useCategories'
-import { useSources } from '../services/hooks/useSources'
+import { useAccounts } from '../services/hooks/useAccounts'
 import { TransactionTable, TransactionSortField, TransactionSortDirection } from '../components/TransactionTable'
 import { TransactionFilters } from '../components/TransactionFilters'
 import { Pagination } from '../components/Pagination'
@@ -21,7 +21,7 @@ export const TransactionsPage = () => {
     const urlStartDate = searchParams.get('start_date')
     const urlEndDate = searchParams.get('end_date')
     const urlStatus = searchParams.get('status')
-    const urlSourceId = searchParams.get('source_id')
+    const urlAccountId = searchParams.get('account_id')
     const urlCategoryIds = searchParams.get('category_ids')
     const urlSortField = searchParams.get('sort_field')
     const urlSortDirection = searchParams.get('sort_direction')
@@ -35,7 +35,7 @@ export const TransactionsPage = () => {
       start_date: urlStartDate || undefined,
       end_date: urlEndDate || undefined,
       status: (urlStatus as CategorizationStatus) || undefined,
-      source_id: urlSourceId || undefined,
+      account_id: urlAccountId || undefined,
       category_ids: urlCategoryIds ? urlCategoryIds.split(',') : undefined,
       sort_field: (urlSortField as TransactionSortField) || 'date',
       sort_direction: (urlSortDirection as TransactionSortDirection) || 'asc',
@@ -69,16 +69,16 @@ export const TransactionsPage = () => {
   } = useTransactions()
 
   const { categories, loading: categoriesLoading, error: categoriesError } = useCategories()
-  const { sources, loading: sourcesLoading, error: sourcesError } = useSources()
+  const { accounts, loading: accountsLoading, error: accountsError } = useAccounts()
 
-  const loading = transactionsLoading || categoriesLoading || sourcesLoading
-  const error = transactionsError || categoriesError || sourcesError
+  const loading = transactionsLoading || categoriesLoading || accountsLoading
+  const error = transactionsError || categoriesError || accountsError
 
   // Load data on mount with initial filters from URL
   useEffect(() => {
     fetchTransactions({
       ...filters,
-      include_running_balance: !!filters.source_id,
+      include_running_balance: !!filters.account_id,
     })
   }, [fetchTransactions, filters])
 
@@ -105,7 +105,7 @@ export const TransactionsPage = () => {
           start_date: localStartDate || undefined,
           end_date: localEndDate || undefined,
           page: 1,
-          include_running_balance: !!filters.source_id,
+          include_running_balance: !!filters.account_id,
         }
         setFilters(updatedFilters)
         fetchTransactions(updatedFilters)
@@ -138,7 +138,7 @@ export const TransactionsPage = () => {
       const updatedFilters = {
         ...filters,
         page,
-        include_running_balance: !!filters.source_id,
+        include_running_balance: !!filters.account_id,
       }
       setFilters(updatedFilters)
       fetchTransactions(updatedFilters)
@@ -152,7 +152,7 @@ export const TransactionsPage = () => {
         ...filters,
         page_size,
         page: 1,
-        include_running_balance: !!filters.source_id,
+        include_running_balance: !!filters.account_id,
       }
       setFilters(updatedFilters)
       fetchTransactions(updatedFilters)
@@ -175,9 +175,9 @@ export const TransactionsPage = () => {
     [handleFilterChange]
   )
 
-  const handleSourceFilter = useCallback(
-    (sourceId?: string) => {
-      handleFilterChange({ source_id: sourceId })
+  const handleAccountFilter = useCallback(
+    (accountId?: string) => {
+      handleFilterChange({ account_id: accountId })
     },
     [handleFilterChange]
   )
@@ -239,7 +239,7 @@ export const TransactionsPage = () => {
   const handleCategorizeTransaction = async (transactionId: string, categoryId?: string) => {
     await categorizeTransaction(transactionId, categoryId)
     // Refresh the current page after categorization
-    fetchTransactions({ ...filters, include_running_balance: !!filters.source_id })
+    fetchTransactions({ ...filters, include_running_balance: !!filters.account_id })
   }
 
   return (
@@ -261,10 +261,10 @@ export const TransactionsPage = () => {
         <div className="filters-sidebar">
           <TransactionFilters
             categories={categories || []}
-            sources={sources || []}
+            accounts={accounts || []}
             selectedCategoryIds={filters.category_ids}
             selectedStatus={filters.status}
-            selectedSourceId={filters.source_id}
+            selectedAccountId={filters.account_id}
             minAmount={localMinAmount}
             maxAmount={localMaxAmount}
             descriptionSearch={localDescriptionSearch}
@@ -272,7 +272,7 @@ export const TransactionsPage = () => {
             endDate={localEndDate}
             onCategoryChange={handleCategoryFilter}
             onStatusChange={handleStatusFilter}
-            onSourceChange={handleSourceFilter}
+            onAccountChange={handleAccountFilter}
             onAmountRangeChange={handleAmountRangeFilter}
             onDescriptionSearchChange={handleDescriptionSearchFilter}
             onDateRangeChange={handleDateRangeFilter}
@@ -292,13 +292,13 @@ export const TransactionsPage = () => {
             <TransactionTable
               transactions={transactions || []}
               categories={categories || []}
-              sources={sources || []}
+              accounts={accounts || []}
               loading={loading}
               onCategorize={handleCategorizeTransaction}
               sortField={filters.sort_field as TransactionSortField}
               sortDirection={filters.sort_direction}
               onSort={handleSort}
-              showRunningBalance={!!filters.source_id}
+              showRunningBalance={!!filters.account_id}
             />
           </div>
 

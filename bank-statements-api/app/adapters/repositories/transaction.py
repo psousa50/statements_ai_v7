@@ -33,15 +33,15 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
     def get_all(self) -> List[Transaction]:
         return self.db_session.query(Transaction).order_by(Transaction.date.desc(), Transaction.sort_index.asc()).all()
 
-    def get_all_by_source_and_date_range(
+    def get_all_by_account_and_date_range(
         self,
-        source_id: UUID,
+        account_id: UUID,
         end_date: date,
         start_date: Optional[date] = None,
     ) -> List[Transaction]:
-        """Get all transactions for a source within a date range"""
+        """Get all transactions for an account within a date range"""
         query = self.db_session.query(Transaction).filter(
-            Transaction.source_id == source_id,
+            Transaction.account_id == account_id,
             Transaction.date <= end_date,
         )
 
@@ -60,7 +60,7 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         min_amount: Optional[Decimal] = None,
         max_amount: Optional[Decimal] = None,
         description_search: Optional[str] = None,
-        source_id: Optional[UUID] = None,
+        account_id: Optional[UUID] = None,
         start_date: Optional[date] = None,
         end_date: Optional[date] = None,
         sort_field: Optional[str] = None,
@@ -98,9 +98,9 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
                 )
             )
 
-        # Source filter
-        if source_id is not None:
-            filters.append(Transaction.source_id == source_id)
+        # Account filter
+        if account_id is not None:
+            filters.append(Transaction.account_id == account_id)
 
         # Date range filters
         if start_date is not None:
@@ -130,7 +130,7 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         min_amount: Optional[Decimal] = None,
         max_amount: Optional[Decimal] = None,
         description_search: Optional[str] = None,
-        source_id: Optional[UUID] = None,
+        account_id: Optional[UUID] = None,
         start_date: Optional[date] = None,
         end_date: Optional[date] = None,
     ) -> Dict[Optional[UUID], Dict[str, Decimal]]:
@@ -170,9 +170,9 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
                 )
             )
 
-        # Source filter
-        if source_id is not None:
-            filters.append(Transaction.source_id == source_id)
+        # Account filter
+        if account_id is not None:
+            filters.append(Transaction.account_id == account_id)
 
         # Date range filters
         if start_date is not None:
@@ -214,7 +214,7 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         date: str,
         description: str,
         amount: float,
-        source_id: Optional[UUID] = None,
+        account_id: Optional[UUID] = None,
     ) -> List[Transaction]:
         """
         Find all transactions that match the given criteria.
@@ -235,9 +235,9 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
             Transaction.amount == amount_val,
         )
 
-        # Add source filter if provided
-        if source_id is not None:
-            query = query.filter(Transaction.source_id == source_id)
+        # Add account filter if provided
+        if account_id is not None:
+            query = query.filter(Transaction.account_id == account_id)
 
         return query.all()
 
@@ -250,13 +250,13 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         processed_tx_ids = set()  # Track transaction IDs we've already matched
 
         for transaction_dto in transactions:
-            # Convert source_id to UUID if provided
-            source_uuid = None
-            if transaction_dto.source_id:
-                if isinstance(transaction_dto.source_id, UUID):
-                    source_uuid = transaction_dto.source_id
+            # Convert account_id to UUID if provided
+            account_uuid = None
+            if transaction_dto.account_id:
+                if isinstance(transaction_dto.account_id, UUID):
+                    account_uuid = transaction_dto.account_id
                 else:
-                    source_uuid = UUID(transaction_dto.source_id)
+                    account_uuid = UUID(transaction_dto.account_id)
 
             # Find matching transactions in database
             matching_transactions = self.find_matching_transactions(
@@ -265,7 +265,7 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
                 ),
                 description=transaction_dto.description,
                 amount=float(transaction_dto.amount),
-                source_id=source_uuid,
+                account_id=account_uuid,
             )
 
             # Check if any matching transaction hasn't been marked as duplicate yet
@@ -283,10 +283,10 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
                 if isinstance(date_val, str):
                     date_val = datetime.strptime(date_val, "%Y-%m-%d").date()
 
-                # Convert source_type string to enum
-                source_type_enum = SourceType.UPLOAD
+                # Convert account_type string to enum
+                account_type_enum = SourceType.UPLOAD
                 if transaction_dto.source_type == "manual":
-                    source_type_enum = SourceType.MANUAL
+                    account_type_enum = SourceType.MANUAL
 
                 transaction = Transaction(
                     date=date_val,
@@ -296,12 +296,12 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
                     uploaded_file_id=UUID(transaction_dto.uploaded_file_id),
                     row_index=transaction_dto.row_index,
                     sort_index=transaction_dto.sort_index or 0,
-                    source_type=source_type_enum,
+                    source_type=account_type_enum,
                     manual_position_after=transaction_dto.manual_position_after,
                 )
 
-                if source_uuid:
-                    transaction.source_id = source_uuid
+                if account_uuid:
+                    transaction.account_id = account_uuid
 
                 self.db_session.add(transaction)
                 saved_count += 1
@@ -344,13 +344,13 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
 
         return updated_count
 
-    def get_max_sort_index_for_date(self, source_id: UUID, date: date) -> int:
+    def get_max_sort_index_for_date(self, account_id: UUID, date: date) -> int:
         """
-        Get the maximum sort_index for transactions on a given date and source.
+        Get the maximum sort_index for transactions on a given date and account.
         """
         result = (
             self.db_session.query(func.max(Transaction.sort_index))
-            .filter(Transaction.source_id == source_id, Transaction.date == date)
+            .filter(Transaction.account_id == account_id, Transaction.date == date)
             .scalar()
         )
         return result or 0
@@ -360,7 +360,7 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         Create a manual transaction with proper sort_index assignment.
         """
         # Get next sort_index for the date
-        max_sort = self.get_max_sort_index_for_date(transaction_data.source_id, transaction_data.date)
+        max_sort = self.get_max_sort_index_for_date(transaction_data.account_id, transaction_data.date)
 
         if after_transaction_id:
             after_transaction = self.get_by_id(after_transaction_id)
@@ -376,7 +376,7 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
             amount=transaction_data.amount,
             description=transaction_data.description,
             normalized_description=normalize_description(transaction_data.description),
-            source_id=transaction_data.source_id,
+            account_id=transaction_data.account_id,
             sort_index=sort_index,
             source_type=SourceType.MANUAL,
             manual_position_after=after_transaction_id,

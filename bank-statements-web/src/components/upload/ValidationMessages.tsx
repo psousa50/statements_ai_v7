@@ -4,13 +4,13 @@ import { Alert, Box } from '@mui/material'
 interface ValidationMessagesProps {
   columnMapping: Record<string, string>
   sampleData: string[][]
-  selectedSource: string
+  selectedAccount: string
 }
 
 export const ValidationMessages: React.FC<ValidationMessagesProps> = ({
   columnMapping,
   sampleData,
-  selectedSource,
+  selectedAccount,
 }) => {
   const errors = React.useMemo(() => {
     const errorMessages = []
@@ -32,16 +32,16 @@ export const ValidationMessages: React.FC<ValidationMessagesProps> = ({
       errorMessages.push('Description column is required')
     }
 
-    // Check if source bank is selected
-    if (!selectedSource) {
-      errorMessages.push('Source bank selection is required')
+    // Check if account bank is selected
+    if (!selectedAccount) {
+      errorMessages.push('Account bank selection is required')
     }
 
     // For the new format, we don't check for blank values in the validation messages
     // as that would require more complex processing of the rows data
 
     return errorMessages
-  }, [columnMapping, sampleData, selectedSource])
+  }, [columnMapping, sampleData, selectedAccount])
 
   const warnings = React.useMemo((): string[] => {
     const warningMessages: string[] = []

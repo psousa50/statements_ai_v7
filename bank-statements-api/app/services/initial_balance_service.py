@@ -11,26 +11,26 @@ class InitialBalanceService:
     def __init__(self, initial_balance_repository: InitialBalanceRepository):
         self.initial_balance_repository = initial_balance_repository
 
-    def create_initial_balance(self, source_id: UUID, balance_date: date, balance_amount: Decimal) -> InitialBalance:
+    def create_initial_balance(self, account_id: UUID, balance_date: date, balance_amount: Decimal) -> InitialBalance:
         """Create a new initial balance for a source"""
         initial_balance = InitialBalance(
-            source_id=source_id,
+            account_id=account_id,
             balance_date=balance_date,
             balance_amount=balance_amount,
         )
         return self.initial_balance_repository.create(initial_balance)
 
-    def get_latest_balance(self, source_id: UUID) -> Optional[InitialBalance]:
+    def get_latest_balance(self, account_id: UUID) -> Optional[InitialBalance]:
         """Get the latest initial balance for a source"""
-        return self.initial_balance_repository.get_latest_by_source(source_id)
+        return self.initial_balance_repository.get_latest_by_account_id(account_id)
 
-    def get_all_balances(self, source_id: UUID) -> List[InitialBalance]:
+    def get_all_balances(self, account_id: UUID) -> List[InitialBalance]:
         """Get all initial balances for a source"""
-        return self.initial_balance_repository.get_all_by_source(source_id)
+        return self.initial_balance_repository.get_all_by_account_id(account_id)
 
-    def get_balance_by_date(self, source_id: UUID, balance_date: date) -> Optional[InitialBalance]:
+    def get_balance_by_date(self, account_id: UUID, balance_date: date) -> Optional[InitialBalance]:
         """Get initial balance for a specific date"""
-        return self.initial_balance_repository.get_by_source_and_date(source_id, balance_date)
+        return self.initial_balance_repository.get_by_account_id_and_date(account_id, balance_date)
 
     def update_initial_balance(
         self, initial_balance_id: UUID, balance_date: date, balance_amount: Decimal

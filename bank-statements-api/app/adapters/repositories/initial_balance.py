@@ -21,40 +21,40 @@ class SQLAlchemyInitialBalanceRepository(InitialBalanceRepository):
     def get_by_id(self, initial_balance_id: UUID) -> Optional[InitialBalance]:
         return self.db_session.query(InitialBalance).filter(InitialBalance.id == initial_balance_id).first()
 
-    def get_by_source_and_date(self, source_id: UUID, balance_date: date) -> Optional[InitialBalance]:
+    def get_by_account_id_and_date(self, account_id: UUID, balance_date: date) -> Optional[InitialBalance]:
         return (
             self.db_session.query(InitialBalance)
             .filter(
-                InitialBalance.source_id == source_id,
+                InitialBalance.account_id == account_id,
                 InitialBalance.balance_date == balance_date,
             )
             .first()
         )
 
-    def get_latest_by_source(self, source_id: UUID) -> Optional[InitialBalance]:
+    def get_latest_by_account_id(self, account_id: UUID) -> Optional[InitialBalance]:
         return (
             self.db_session.query(InitialBalance)
-            .filter(InitialBalance.source_id == source_id)
+            .filter(InitialBalance.account_id == account_id)
             .order_by(InitialBalance.balance_date.desc())
             .first()
         )
 
-    def get_latest_by_source_and_date(self, source_id: UUID, before_date: date) -> Optional[InitialBalance]:
-        """Get the latest initial balance for a source before a specific date"""
+    def get_latest_by_account_id_and_date(self, account_id: UUID, before_date: date) -> Optional[InitialBalance]:
+        """Get the latest initial balance for an account before a specific date"""
         return (
             self.db_session.query(InitialBalance)
             .filter(
-                InitialBalance.source_id == source_id,
+                InitialBalance.account_id == account_id,
                 InitialBalance.balance_date <= before_date,
             )
             .order_by(InitialBalance.balance_date.desc())
             .first()
         )
 
-    def get_all_by_source(self, source_id: UUID) -> List[InitialBalance]:
+    def get_all_by_account_id(self, account_id: UUID) -> List[InitialBalance]:
         return (
             self.db_session.query(InitialBalance)
-            .filter(InitialBalance.source_id == source_id)
+            .filter(InitialBalance.account_id == account_id)
             .order_by(InitialBalance.balance_date.desc())
             .all()
         )

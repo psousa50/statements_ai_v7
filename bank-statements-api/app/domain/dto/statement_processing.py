@@ -12,7 +12,7 @@ class AnalysisResultDTO:
         header_row_index: int,
         data_start_row_index: int,
         sample_data: list[list],
-        source_id: Optional[str] = None,
+        account_id: Optional[str] = None,
         total_transactions: int = 0,
         unique_transactions: int = 0,
         duplicate_transactions: int = 0,
@@ -27,7 +27,7 @@ class AnalysisResultDTO:
         self.header_row_index = header_row_index
         self.data_start_row_index = data_start_row_index
         self.sample_data = sample_data
-        self.source_id = source_id
+        self.account_id = account_id
         self.total_transactions = total_transactions
         self.unique_transactions = unique_transactions
         self.duplicate_transactions = duplicate_transactions
@@ -40,13 +40,13 @@ class AnalysisResultDTO:
 class PersistenceRequestDTO:
     def __init__(
         self,
-        source_id: UUID,
+        account_id: UUID,
         uploaded_file_id: str,
         column_mapping: dict,
         header_row_index: int,
         data_start_row_index: int,
     ):
-        self.source_id = source_id
+        self.account_id = account_id
         self.uploaded_file_id = uploaded_file_id
         self.column_mapping = column_mapping
         self.header_row_index = header_row_index
@@ -72,7 +72,7 @@ class TransactionDTO:
         amount: float,
         description: str,
         uploaded_file_id: str,
-        source_id: Optional[str] = None,
+        account_id: Optional[str] = None,
         id: Optional[str] = None,
         created_at: Optional[datetime] = None,
         category_id: Optional[UUID] = None,
@@ -88,7 +88,7 @@ class TransactionDTO:
         self.amount = amount
         self.description = description
         self.uploaded_file_id = uploaded_file_id
-        self.source_id = source_id
+        self.account_id = account_id
         self.created_at = created_at
         self.category_id = category_id
         self.categorization_status = categorization_status
@@ -106,7 +106,7 @@ class TransactionDTO:
             amount=entity.amount,
             description=entity.description,
             uploaded_file_id=str(entity.uploaded_file_id),
-            source_id=str(entity.source_id) if entity.source_id else None,
+            account_id=str(entity.account_id) if entity.account_id else None,
             created_at=entity.created_at,
             category_id=entity.category_id,
             categorization_status=entity.categorization_status.value if entity.categorization_status else None,

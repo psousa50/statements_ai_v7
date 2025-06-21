@@ -251,7 +251,7 @@ class TestStatementAnalyzerService:
         mock_tx = MagicMock()
         mock_tx.id = uuid.uuid4()
 
-        def mock_find_matching(date, description, amount, source_id=None):
+        def mock_find_matching(date, description, amount, account_id=None):
             # Only return match for DepositA
             if description == "DepositA":
                 return [mock_tx]

@@ -1,15 +1,15 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { DateRangePicker } from 'rsuite'
-import { CategorizationStatus, Category, Source } from '../types/Transaction'
+import { CategorizationStatus, Category, Account } from '../types/Transaction'
 import { CategorySelector } from './CategorySelector'
 import 'rsuite/dist/rsuite.min.css'
 
 interface TransactionFiltersProps {
   categories: Category[]
-  sources: Source[]
+  accounts: Account[]
   selectedCategoryIds?: string[]
   selectedStatus?: CategorizationStatus
-  selectedSourceId?: string
+  selectedAccountId?: string
   minAmount?: number
   maxAmount?: number
   descriptionSearch?: string
@@ -17,7 +17,7 @@ interface TransactionFiltersProps {
   endDate?: string
   onCategoryChange: (categoryIds: string[]) => void
   onStatusChange: (status?: CategorizationStatus) => void
-  onSourceChange: (sourceId?: string) => void
+  onAccountChange: (accountId?: string) => void
   onAmountRangeChange: (minAmount?: number, maxAmount?: number) => void
   onDescriptionSearchChange: (search?: string) => void
   onDateRangeChange?: (startDate?: string, endDate?: string) => void
@@ -40,10 +40,10 @@ const formatDateForInput = (date: Date): string => {
 
 export const TransactionFilters = ({
   categories,
-  sources,
+  accounts,
   selectedCategoryIds = [],
   selectedStatus,
-  selectedSourceId,
+  selectedAccountId,
   minAmount,
   maxAmount,
   descriptionSearch,
@@ -51,7 +51,7 @@ export const TransactionFilters = ({
   endDate,
   onCategoryChange,
   onStatusChange: _onStatusChange,
-  onSourceChange,
+  onAccountChange,
   onAmountRangeChange,
   onDescriptionSearchChange,
   onDateRangeChange,
@@ -83,7 +83,7 @@ export const TransactionFilters = ({
     minAmount !== undefined ||
     maxAmount !== undefined ||
     descriptionSearch ||
-    selectedSourceId ||
+    selectedAccountId ||
     startDate ||
     endDate
 
@@ -172,7 +172,6 @@ export const TransactionFilters = ({
     },
   ]
 
-
   const handleAmountChange = useCallback(
     (field: 'min' | 'max', value: string) => {
       const numValue = value === '' ? undefined : parseFloat(value)
@@ -239,21 +238,21 @@ export const TransactionFilters = ({
             </select>
           </div>
 
-          {/* Source Filter */}
+          {/* Account Filter */}
           <div className="filter-section">
-            <label htmlFor="source-filter" className="filter-label">
-              Source
+            <label htmlFor="account-filter" className="filter-label">
+              Account
             </label>
             <select
-              id="source-filter"
-              value={selectedSourceId || ''}
-              onChange={(e) => onSourceChange(e.target.value || undefined)}
+              id="account-filter"
+              value={selectedAccountId || ''}
+              onChange={(e) => onAccountChange(e.target.value || undefined)}
               className="filter-select"
             >
-              <option value="">All Sources</option>
-              {sources.map((source) => (
-                <option key={source.id} value={source.id}>
-                  {source.name}
+              <option value="">All Accounts</option>
+              {accounts.map((account) => (
+                <option key={account.id} value={account.id}>
+                  {account.name}
                 </option>
               ))}
             </select>
@@ -278,7 +277,10 @@ export const TransactionFilters = ({
                 />
               </div>
             ) : (
-              <div className="filter-placeholder" style={{ padding: '8px', color: 'var(--text-secondary)', fontStyle: 'italic' }}>
+              <div
+                className="filter-placeholder"
+                style={{ padding: '8px', color: 'var(--text-secondary)', fontStyle: 'italic' }}
+              >
                 Not available
               </div>
             )}

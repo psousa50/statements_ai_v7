@@ -11,7 +11,12 @@
       "Bash(pnpm audit:*)",
       "Bash(pnpm:*)",
       "Bash(poetry check:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(grep:*)",
+      "Bash(poetry run alembic:*)",
+      "Bash(mv:*)",
+      "Bash(sed:*)",
+      "Bash(poetry run:*)"
     ],
     "deny": []
   }

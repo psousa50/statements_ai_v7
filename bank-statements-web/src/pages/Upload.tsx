@@ -8,7 +8,7 @@ import { AnalysisSummary } from '../components/upload/AnalysisSummary'
 import { ColumnMappingTable } from '../components/upload/ColumnMappingTable'
 import { ValidationMessages } from '../components/upload/ValidationMessages'
 import { UploadFooter } from '../components/upload/UploadFooter'
-import { SourceSelector } from '../components/upload/SourceSelector'
+import { AccountSelector } from '../components/upload/AccountSelector'
 
 export const Upload: React.FC = () => {
   const navigate = useNavigate()
@@ -18,7 +18,7 @@ export const Upload: React.FC = () => {
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
   const [analysisResult, setAnalysisResult] = useState<StatementAnalysisResponse | null>(null)
-  const [selectedSource, setSelectedSource] = useState<string>('')
+  const [selectedAccount, setSelectedAccount] = useState<string>('')
 
   // State for user edits
   const [columnMapping, setColumnMapping] = useState<Record<string, string>>({
@@ -54,8 +54,8 @@ export const Upload: React.FC = () => {
       setHeaderRowIndex(result.header_row_index)
       setDataStartRowIndex(result.data_start_row_index)
 
-      if (result.source_id) {
-        setSelectedSource(result.source_id)
+      if (result.account_id) {
+        setSelectedAccount(result.account_id)
       }
 
       setNotification({
@@ -81,8 +81,8 @@ export const Upload: React.FC = () => {
     const hasAmount = !!columnMapping.amount
     const hasDebitAndCredit = !!columnMapping.debit_amount && !!columnMapping.credit_amount
 
-    return !!columnMapping.date && (hasAmount || hasDebitAndCredit) && !!columnMapping.description && !!selectedSource
-  }, [columnMapping, selectedSource])
+    return !!columnMapping.date && (hasAmount || hasDebitAndCredit) && !!columnMapping.description && !!selectedAccount
+  }, [columnMapping, selectedAccount])
 
   // Handle finalize upload
   const handleFinalize = async () => {
@@ -96,7 +96,7 @@ export const Upload: React.FC = () => {
         column_mapping: columnMapping,
         header_row_index: headerRowIndex,
         data_start_row_index: dataStartRowIndex,
-        source_id: selectedSource || file?.name || 'Unknown',
+        account_id: selectedAccount || file?.name || 'Unknown',
       })
 
       // If sample_data is returned, use it for display
@@ -158,12 +158,12 @@ export const Upload: React.FC = () => {
               <Box sx={{ display: 'flex', gap: 3, mb: 3, alignItems: 'flex-start' }}>
                 <Paper variant="outlined" sx={{ p: 3, flex: '0 0 300px' }}>
                   <Typography variant="h6" gutterBottom>
-                    Select Source Bank
+                    Select Account Bank
                   </Typography>
                   <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
                     Choose the bank or financial institution that issued this statement.
                   </Typography>
-                  <SourceSelector value={selectedSource} onChange={setSelectedSource} />
+                  <AccountSelector value={selectedAccount} onChange={setSelectedAccount} />
                 </Paper>
 
                 <Paper variant="outlined" sx={{ p: 3, flex: 1 }}>
@@ -184,7 +184,7 @@ export const Upload: React.FC = () => {
               <ValidationMessages
                 columnMapping={columnMapping}
                 sampleData={analysisResult.sample_data}
-                selectedSource={selectedSource}
+                selectedAccount={selectedAccount}
               />
 
               <UploadFooter

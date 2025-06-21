@@ -95,7 +95,7 @@ docker-compose up db                        # Start only database
 
 ## Database Schema
 
-Core entities: `Transaction`, `Category`, `Source`, `UploadedFile`, `FileAnalysisMetadata`, `BackgroundJob`. Use Alembic for migrations.
+Core entities: `Transaction`, `Category`, `Account`, `UploadedFile`, `FileAnalysisMetadata`, `BackgroundJob`. Use Alembic for migrations.
 
 ## File Organization
 

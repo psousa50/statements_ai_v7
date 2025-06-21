@@ -29,7 +29,7 @@ class StatementPersistenceService:
         column_mapping = persistence_request.column_mapping
         header_row_index = persistence_request.header_row_index
         data_start_row_index = persistence_request.data_start_row_index
-        source_id = persistence_request.source_id
+        account_id = persistence_request.account_id
 
         uploaded_file = self.uploaded_file_repo.find_by_id(uploaded_file_id)
         file_content = uploaded_file.content
@@ -48,7 +48,7 @@ class StatementPersistenceService:
                 amount=row["amount"],
                 description=row["description"],
                 uploaded_file_id=uploaded_file_id,
-                source_id=source_id,
+                account_id=account_id,
                 row_index=index,  # Assign row_index based on position in file
                 sort_index=index,  # Initially same as row_index for uploaded transactions
                 source_type=SourceType.UPLOAD.value,
@@ -65,7 +65,7 @@ class StatementPersistenceService:
                 column_mapping=column_mapping,
                 header_row_index=header_row_index,
                 data_start_row_index=data_start_row_index,
-                source_id=source_id,
+                account_id=account_id,
             )
 
         return PersistenceResultDTO(
@@ -77,7 +77,7 @@ class StatementPersistenceService:
     def save_processed_transactions(
         self,
         processed_dtos: List[TransactionDTO],
-        source_id: UUID,
+        account_id: UUID,
         uploaded_file_id: str,
     ) -> PersistenceResultDTO:
         """
@@ -86,10 +86,10 @@ class StatementPersistenceService:
         """
         logger.info(f"Saving {len(processed_dtos)} processed transaction DTOs")
 
-        # Enrich DTOs with source_id if not already set
+        # Enrich DTOs with account_id if not already set
         for dto in processed_dtos:
-            if not dto.source_id:
-                dto.source_id = str(source_id)
+            if not dto.account_id:
+                dto.account_id = str(account_id)
             # Ensure row_index and sort_index are set for uploaded transactions
             if dto.row_index is None:
                 dto.row_index = 0  # Default fallback

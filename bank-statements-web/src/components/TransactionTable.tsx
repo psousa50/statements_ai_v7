@@ -1,6 +1,6 @@
 import { format } from 'date-fns'
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react'
-import { Category, Transaction, Source } from '../types/Transaction'
+import { Category, Transaction, Account } from '../types/Transaction'
 
 export type TransactionSortField = 'date' | 'description' | 'amount' | 'created_at'
 export type TransactionSortDirection = 'asc' | 'desc'
@@ -8,7 +8,7 @@ export type TransactionSortDirection = 'asc' | 'desc'
 interface TransactionTableProps {
   transactions: Transaction[]
   categories: Category[]
-  sources: Source[]
+  accounts: Account[]
   loading: boolean
   onCategorize?: (transactionId: string, categoryId?: string) => void
   sortField?: TransactionSortField
@@ -170,7 +170,7 @@ const SortableHeader = ({
 export const TransactionTable = ({
   transactions,
   categories,
-  sources,
+  accounts,
   loading,
   onCategorize,
   sortField,
@@ -202,10 +202,10 @@ export const TransactionTable = ({
   }
 
   // Helper function to get source name by ID
-  const getSourceName = (sourceId?: string) => {
-    if (!sourceId) return 'Unknown'
-    const source = sources.find((s) => s.id === sourceId)
-    return source ? source.name : 'Unknown'
+  const getAccountName = (accountId?: string) => {
+    if (!accountId) return 'Unknown'
+    const account = accounts.find((a) => a.id === accountId)
+    return account ? account.name : 'Unknown'
   }
 
   return (
@@ -272,7 +272,7 @@ export const TransactionTable = ({
                   {transaction.running_balance !== undefined ? formatAmount(transaction.running_balance) : '-'}
                 </td>
               ) : (
-                <td>{getSourceName(transaction.source_id)}</td>
+                <td>{getAccountName(transaction.account_id)}</td>
               )}
             </tr>
           ))}

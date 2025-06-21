@@ -3,11 +3,12 @@ from decimal import Decimal
 from typing import Dict, List, Optional, Sequence, Tuple
 from uuid import UUID
 
+from pydantic import BaseModel, ConfigDict, Field, field_serializer, field_validator
+
 from app.domain.models.background_job import JobStatus
 from app.domain.models.processing import BackgroundJobInfo
 from app.domain.models.transaction import CategorizationStatus
 from app.domain.models.transaction_categorization import CategorizationSource
-from pydantic import BaseModel, ConfigDict, Field, field_serializer, field_validator
 
 
 class CategoryBase(BaseModel):
@@ -37,27 +38,27 @@ class CategoryListResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-class SourceBase(BaseModel):
+class AccountBase(BaseModel):
     name: str
 
 
-class SourceCreate(SourceBase):
+class AccountCreate(AccountBase):
     pass
 
 
-class SourceUpdate(SourceBase):
+class AccountUpdate(AccountBase):
     pass
 
 
-class SourceResponse(BaseModel):
+class AccountResponse(BaseModel):
     id: UUID
     name: str
 
     model_config = ConfigDict(from_attributes=True)
 
 
-class SourceListResponse(BaseModel):
-    sources: Sequence[SourceResponse]
+class AccountListResponse(BaseModel):
+    accounts: Sequence[AccountResponse]
     total: int
 
     model_config = ConfigDict(from_attributes=True)
@@ -71,12 +72,12 @@ class TransactionBase(BaseModel):
 
 class TransactionCreate(TransactionBase):
     category_id: Optional[UUID] = None
-    source_id: UUID
+    account_id: UUID
 
 
 class TransactionUpdate(TransactionBase):
     category_id: Optional[UUID] = None
-    source_id: UUID
+    account_id: UUID
 
 
 class TransactionResponse(BaseModel):
@@ -87,7 +88,7 @@ class TransactionResponse(BaseModel):
     amount: Decimal
     created_at: "date"
     category_id: Optional[UUID] = None
-    source_id: Optional[UUID] = None
+    account_id: Optional[UUID] = None
     categorization_status: CategorizationStatus
     running_balance: Optional[Decimal] = None
     row_index: Optional[int] = None
@@ -109,7 +110,7 @@ class TransactionCreateRequest(BaseModel):
     date: date
     description: str
     amount: Decimal
-    source_id: UUID
+    account_id: UUID
     category_id: Optional[UUID] = None
     after_transaction_id: Optional[UUID] = None
 
@@ -127,7 +128,7 @@ class TransactionFilters(BaseModel):
     min_amount: Optional[Decimal] = None
     max_amount: Optional[Decimal] = None
     description_search: Optional[str] = None
-    source_id: Optional[UUID] = None
+    account_id: Optional[UUID] = None
     start_date: Optional[date] = None
     end_date: Optional[date] = None
 
@@ -182,7 +183,7 @@ class StatementAnalysisResponse(BaseModel):
     header_row_index: int
     data_start_row_index: int
     sample_data: list[list]
-    source_id: Optional[str] = None
+    account_id: Optional[str] = None
     # New transaction statistics fields - now mandatory
     total_transactions: int
     unique_transactions: int
@@ -197,7 +198,7 @@ class StatementAnalysisResponse(BaseModel):
 
 class StatementUploadRequest(BaseModel):
     uploaded_file_id: str
-    source_id: str
+    account_id: str
     column_mapping: Dict[str, str]
     header_row_index: int
     data_start_row_index: int

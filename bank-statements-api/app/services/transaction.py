@@ -29,7 +29,7 @@ class TransactionService:
         transaction_date: date,
         description: str,
         amount: Decimal,
-        source_id: UUID,
+        account_id: UUID,
         category_id: Optional[UUID] = None,
     ) -> Transaction:
         """Create a new transaction (deprecated - use create_manual_transaction instead)"""
@@ -39,7 +39,7 @@ class TransactionService:
             normalized_description=normalize_description(description),
             amount=amount,
             category_id=category_id,
-            source_id=source_id,
+            account_id=account_id,
             categorization_status=(CategorizationStatus.CATEGORIZED if category_id else CategorizationStatus.UNCATEGORIZED),
         )
         return self.transaction_repository.create(transaction)
@@ -81,7 +81,7 @@ class TransactionService:
         min_amount: Optional[Decimal] = None,
         max_amount: Optional[Decimal] = None,
         description_search: Optional[str] = None,
-        source_id: Optional[UUID] = None,
+        account_id: Optional[UUID] = None,
         start_date: Optional[date] = None,
         end_date: Optional[date] = None,
         include_running_balance: bool = False,
@@ -97,16 +97,16 @@ class TransactionService:
             min_amount=min_amount,
             max_amount=max_amount,
             description_search=description_search,
-            source_id=source_id,
+            account_id=account_id,
             start_date=start_date,
             end_date=end_date,
             sort_field=sort_field,
             sort_direction=sort_direction,
         )
 
-        # Calculate running balance if requested and source is specified
-        if include_running_balance and source_id is not None:
-            self._add_running_balance_to_transactions(transactions, source_id)
+        # Calculate running balance if requested and account is specified
+        if include_running_balance and account_id is not None:
+            self._add_running_balance_to_transactions(transactions, account_id)
 
         # Calculate total pages
         total_pages = (total + page_size - 1) // page_size if total > 0 else 1
@@ -119,8 +119,8 @@ class TransactionService:
             total_pages=total_pages,
         )
 
-    def _add_running_balance_to_transactions(self, transactions: List[Transaction], source_id: UUID):
-        """Add running balance to transactions for a specific source"""
+    def _add_running_balance_to_transactions(self, transactions: List[Transaction], account_id: UUID):
+        """Add running balance to transactions for a specific account"""
         if not transactions:
             return
 
@@ -128,19 +128,19 @@ class TransactionService:
         latest_date = max(t.date for t in transactions)
 
         # Get all transactions up to the latest date for accurate running balance
-        all_transactions = self.transaction_repository.get_all_by_source_and_date_range(
-            source_id=source_id, end_date=latest_date
+        all_transactions = self.transaction_repository.get_all_by_account_and_date_range(
+            account_id=account_id, end_date=latest_date
         )
 
         # Get the earliest transaction date
         earliest_date = min(t.date for t in all_transactions)
 
         # Get the latest initial balance before the earliest transaction date
-        latest_balance = self.initial_balance_repository.get_latest_by_source_and_date(
-            source_id=source_id, before_date=earliest_date
+        latest_balance = self.initial_balance_repository.get_latest_by_account_id_and_date(
+            account_id=account_id, before_date=earliest_date
         )
 
-        # For the first transactions of a source, start from 0 if no initial balance exists
+        # For the first transactions of an account, start from 0 if no initial balance exists
         starting_balance = Decimal("0.00")
         if latest_balance and latest_balance.balance_date <= earliest_date:
             starting_balance = latest_balance.balance_amount
@@ -169,7 +169,7 @@ class TransactionService:
         min_amount: Optional[Decimal] = None,
         max_amount: Optional[Decimal] = None,
         description_search: Optional[str] = None,
-        source_id: Optional[UUID] = None,
+        account_id: Optional[UUID] = None,
         start_date: Optional[date] = None,
         end_date: Optional[date] = None,
     ) -> Dict[Optional[UUID], Dict[str, Decimal]]:
@@ -180,7 +180,7 @@ class TransactionService:
             min_amount=min_amount,
             max_amount=max_amount,
             description_search=description_search,
-            source_id=source_id,
+            account_id=account_id,
             start_date=start_date,
             end_date=end_date,
         )
@@ -191,7 +191,7 @@ class TransactionService:
         transaction_date: date,
         description: str,
         amount: Decimal,
-        source_id: UUID,
+        account_id: UUID,
         category_id: Optional[UUID] = None,
     ) -> Optional[Transaction]:
         """Update a transaction"""
@@ -208,8 +208,8 @@ class TransactionService:
                 CategorizationStatus.CATEGORIZED if category_id else CategorizationStatus.UNCATEGORIZED
             )
 
-            # Update source
-            transaction.source_id = source_id  # type: ignore
+            # Update account
+            transaction.account_id = account_id  # type: ignore
 
             return self.transaction_repository.update(transaction)
         return None

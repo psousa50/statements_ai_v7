@@ -1,5 +1,5 @@
 import { CategoryClient } from './CategoryClient'
-import { SourceClient } from './SourceClient'
+import { AccountClient } from './AccountClient'
 import { StatementClient } from './StatementClient'
 import { TransactionClient } from './TransactionClient'
 import { TransactionCategorizationClient } from './TransactionCategorizationClient'
@@ -9,5 +9,5 @@ export interface ApiClient {
   transactionCategorizations: TransactionCategorizationClient
   categories: CategoryClient
   statements: StatementClient
-  sources: SourceClient
+  accounts: AccountClient
 }

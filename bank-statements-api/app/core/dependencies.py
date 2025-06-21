@@ -4,22 +4,22 @@ from typing import Generator, Optional
 
 from sqlalchemy.orm import Session
 
+from app.adapters.repositories.account import SQLAlchemyAccountRepository
 from app.adapters.repositories.background_job import SQLAlchemyBackgroundJobRepository
 from app.adapters.repositories.category import SQLAlchemyCategoryRepository
 from app.adapters.repositories.initial_balance import SQLAlchemyInitialBalanceRepository
-from app.adapters.repositories.source import SQLAlchemySourceRepository
 from app.adapters.repositories.transaction import SQLAlchemyTransactionRepository
 from app.adapters.repositories.transaction_categorization import SQLAlchemyTransactionCategorizationRepository
 from app.adapters.repositories.uploaded_file import SQLAlchemyFileAnalysisMetadataRepository, SQLAlchemyUploadedFileRepository
 from app.ai.gemini_ai import GeminiAI
 from app.ai.llm_client import LLMClient
 from app.core.database import SessionLocal
+from app.services.account import AccountService
 from app.services.background.background_job_service import BackgroundJobService
 from app.services.category import CategoryService
 from app.services.initial_balance_service import InitialBalanceService
 from app.services.rule_based_categorization import RuleBasedCategorizationService
 from app.services.schema_detection.heuristic_schema_detector import HeuristicSchemaDetector
-from app.services.source import SourceService
 from app.services.statement_processing.file_type_detector import StatementFileTypeDetector
 from app.services.statement_processing.statement_analyzer import StatementAnalyzerService
 from app.services.statement_processing.statement_parser import StatementParser
@@ -49,7 +49,7 @@ class InternalDependencies:
         self,
         transaction_service: TransactionService,
         category_service: CategoryService,
-        source_service: SourceService,
+        account_service: AccountService,
         initial_balance_service: InitialBalanceService,
         statement_analyzer_service: StatementAnalyzerService,
         statement_persistence_service: StatementPersistenceService,
@@ -64,7 +64,7 @@ class InternalDependencies:
     ):
         self.transaction_service = transaction_service
         self.category_service = category_service
-        self.source_service = source_service
+        self.account_service = account_service
         self.initial_balance_service = initial_balance_service
         self.statement_analyzer_service = statement_analyzer_service
         self.statement_persistence_service = statement_persistence_service
@@ -85,7 +85,7 @@ def build_external_dependencies() -> ExternalDependencies:
 def build_internal_dependencies(external: ExternalDependencies) -> InternalDependencies:
     transaction_repo = SQLAlchemyTransactionRepository(external.db)
     category_repo = SQLAlchemyCategoryRepository(external.db)
-    source_repo = SQLAlchemySourceRepository(external.db)
+    account_repo = SQLAlchemyAccountRepository(external.db)
     initial_balance_repo = SQLAlchemyInitialBalanceRepository(external.db)
     uploaded_file_repo = SQLAlchemyUploadedFileRepository(external.db)
     file_analysis_metadata_repo = SQLAlchemyFileAnalysisMetadataRepository(external.db)
@@ -98,7 +98,7 @@ def build_internal_dependencies(external: ExternalDependencies) -> InternalDepen
     schema_detector = HeuristicSchemaDetector()
     transaction_normalizer = TransactionNormalizer()
     category_service = CategoryService(category_repo)
-    source_service = SourceService(source_repo)
+    account_service = AccountService(account_repo)
     initial_balance_service = InitialBalanceService(initial_balance_repo)
     transaction_service = TransactionService(transaction_repo, initial_balance_repo)
 
@@ -157,7 +157,7 @@ def build_internal_dependencies(external: ExternalDependencies) -> InternalDepen
     return InternalDependencies(
         transaction_service=transaction_service,
         category_service=category_service,
-        source_service=source_service,
+        account_service=account_service,
         initial_balance_service=initial_balance_service,
         statement_analyzer_service=statement_analyzer_service,
         statement_persistence_service=statement_persistence_service,

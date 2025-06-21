@@ -1,14 +1,13 @@
 import os
-import sys
 from pathlib import Path
 
+import uvicorn
 from dotenv import load_dotenv
 
 # Load environment variables from the backend .env file
 backend_env_path = Path(__file__).parent / ".env"
 load_dotenv(backend_env_path)
 
-import uvicorn
 
 if __name__ == "__main__":
     port = int(os.getenv("API_PORT", "8000"))

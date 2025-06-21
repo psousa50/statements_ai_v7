@@ -26,7 +26,7 @@ class TestFileAnalysisMetadataModel:
         metadata = FileAnalysisMetadata(
             id=uuid.uuid4(),
             file_hash="abc123",
-            source_id=uuid.uuid4(),
+            account_id=uuid.uuid4(),
             column_mapping={
                 "date": "Date",
                 "amount": "Amount",
@@ -39,7 +39,7 @@ class TestFileAnalysisMetadataModel:
 
         assert isinstance(metadata.id, UUID)
         assert metadata.file_hash == "abc123"
-        assert isinstance(metadata.source_id, UUID)
+        assert isinstance(metadata.account_id, UUID)
         assert metadata.column_mapping == {
             "date": "Date",
             "amount": "Amount",

@@ -12,7 +12,7 @@ from sqlalchemy.orm import sessionmaker
 
 from app.api.schemas import StatementUploadRequest
 from app.core.dependencies import ExternalDependencies, build_internal_dependencies
-from app.domain.models.source import Source
+from app.domain.models.account import Account
 from app.domain.models.transaction import Transaction
 from app.domain.models.transaction_categorization import CategorizationSource, TransactionCategorization
 from app.domain.models.uploaded_file import UploadedFile
@@ -110,14 +110,14 @@ class TestStatementUploadIntegration:
         assert len(analysis_result.sample_data) > 0
 
         # Create a real source
-        source = Source(name="Test Bank")
+        source = Account(name="Test Bank")
         db_session.add(source)
         db_session.flush()
 
         # Step 2: Real statement upload with processing
         upload_request = StatementUploadRequest(
             uploaded_file_id=analysis_result.uploaded_file_id,
-            source_id=str(source.id),
+            account_id=str(source.id),
             column_mapping=analysis_result.column_mapping,
             header_row_index=analysis_result.header_row_index,
             data_start_row_index=analysis_result.data_start_row_index,
@@ -192,14 +192,14 @@ class TestStatementUploadIntegration:
         )
 
         # Create source
-        source = Source(name="Credit Card")
+        source = Account(name="Credit Card")
         db_session.add(source)
         db_session.flush()
 
         # Upload and process
         upload_request = StatementUploadRequest(
             uploaded_file_id=analysis_result.uploaded_file_id,
-            source_id=str(source.id),
+            account_id=str(source.id),
             column_mapping=analysis_result.column_mapping,
             header_row_index=analysis_result.header_row_index,
             data_start_row_index=analysis_result.data_start_row_index,
@@ -260,13 +260,13 @@ class TestStatementUploadIntegration:
             file_content=csv_content,
         )
 
-        source = Source(name="Test Card")
+        source = Account(name="Test Card")
         db_session.add(source)
         db_session.flush()
 
         upload_request = StatementUploadRequest(
             uploaded_file_id=analysis_result.uploaded_file_id,
-            source_id=str(source.id),
+            account_id=str(source.id),
             column_mapping=analysis_result.column_mapping,
             header_row_index=analysis_result.header_row_index,
             data_start_row_index=analysis_result.data_start_row_index,

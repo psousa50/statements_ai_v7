@@ -57,10 +57,10 @@ class StatementAnalyzerService:
             conversion_model.column_mapping,
             conversion_model.header_row_index,
             conversion_model.data_start_row_index,
-            existing_metadata.source_id if existing_metadata else None,
+            existing_metadata.account_id if existing_metadata else None,
         )
 
-        source_id = existing_metadata.source_id if existing_metadata else None
+        account_id = existing_metadata.account_id if existing_metadata else None
 
         return AnalysisResultDTO(
             uploaded_file_id=uploaded_file_id,
@@ -69,7 +69,7 @@ class StatementAnalyzerService:
             header_row_index=conversion_model.header_row_index,
             data_start_row_index=conversion_model.data_start_row_index,
             sample_data=sample_data,
-            source_id=source_id,
+            account_id=account_id,
             **transaction_stats,  # Unpack the statistics dictionary
         )
 
@@ -96,7 +96,7 @@ class StatementAnalyzerService:
         column_mapping: dict,
         header_row_index: int,
         data_start_row_index: int,
-        source_id: Optional[str] = None,
+        account_id: Optional[str] = None,
     ) -> dict:
         try:
             processed_df = process_dataframe(raw_df, header_row_index, data_start_row_index)
@@ -105,7 +105,7 @@ class StatementAnalyzerService:
 
             total_transactions = len(normalized_df)
 
-            duplicate_transactions = self._count_duplicates(normalized_df, source_id)
+            duplicate_transactions = self._count_duplicates(normalized_df, account_id)
 
             unique_transactions = total_transactions - duplicate_transactions
 
@@ -156,20 +156,20 @@ class StatementAnalyzerService:
                 "total_credit": 0.0,
             }
 
-    def _count_duplicates(self, normalized_df, source_id):
+    def _count_duplicates(self, normalized_df, account_id):
         processed_tx_ids = set()  # Track transaction IDs we've already matched as duplicates
         duplicate_count = 0
 
         for _, row in normalized_df.iterrows():
-            source_uuid = None
-            if source_id:
-                source_uuid = UUID(source_id) if isinstance(source_id, str) else source_id
+            account_uuid = None
+            if account_id:
+                account_uuid = UUID(account_id) if isinstance(account_id, str) else account_id
 
             matching_transactions = self.transaction_repo.find_matching_transactions(
                 date=row["date"] if isinstance(row["date"], str) else row["date"].strftime("%Y-%m-%d"),
                 description=row["description"],
                 amount=float(row["amount"]),
-                source_id=source_uuid,
+                account_id=account_uuid,
             )
 
             for match in matching_transactions:

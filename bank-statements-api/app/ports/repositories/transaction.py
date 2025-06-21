@@ -30,13 +30,13 @@ class TransactionRepository(ABC):
         pass
 
     @abstractmethod
-    def get_all_by_source_and_date_range(
+    def get_all_by_account_and_date_range(
         self,
-        source_id: UUID,
+        account_id: UUID,
         end_date: date,
         start_date: Optional[date] = None,
     ) -> List[Transaction]:
-        """Get all transactions for a source within a date range"""
+        """Get all transactions for an account within a date range"""
         pass
 
     @abstractmethod
@@ -49,7 +49,7 @@ class TransactionRepository(ABC):
         min_amount: Optional[Decimal] = None,
         max_amount: Optional[Decimal] = None,
         description_search: Optional[str] = None,
-        source_id: Optional[UUID] = None,
+        account_id: Optional[UUID] = None,
         start_date: Optional[date] = None,
         end_date: Optional[date] = None,
         sort_field: Optional[str] = None,
@@ -66,7 +66,7 @@ class TransactionRepository(ABC):
             min_amount: Optional minimum amount filter
             max_amount: Optional maximum amount filter
             description_search: Optional description search filter
-            source_id: Optional source ID to filter by
+            account_id: Optional account ID to filter by
             start_date: Optional start date filter (inclusive)
             end_date: Optional end date filter (inclusive)
             sort_field: Optional field to sort by (date, amount, description, created_at)
@@ -85,7 +85,7 @@ class TransactionRepository(ABC):
         min_amount: Optional[Decimal] = None,
         max_amount: Optional[Decimal] = None,
         description_search: Optional[str] = None,
-        source_id: Optional[UUID] = None,
+        account_id: Optional[UUID] = None,
         start_date: Optional[date] = None,
         end_date: Optional[date] = None,
     ) -> Dict[Optional[UUID], Dict[str, Decimal]]:
@@ -98,7 +98,7 @@ class TransactionRepository(ABC):
             min_amount: Optional minimum amount filter
             max_amount: Optional maximum amount filter
             description_search: Optional description search filter
-            source_id: Optional source ID to filter by
+            account_id: Optional account ID to filter by
             start_date: Optional start date filter (inclusive)
             end_date: Optional end date filter (inclusive)
 
@@ -162,7 +162,7 @@ class TransactionRepository(ABC):
         date: str,
         description: str,
         amount: float,
-        source_id: Optional[UUID] = None,
+        account_id: Optional[UUID] = None,
     ) -> List[Transaction]:
         """
         Find all transactions that match the given criteria.
@@ -171,7 +171,7 @@ class TransactionRepository(ABC):
             date: Transaction date in YYYY-MM-DD format
             description: Transaction description
             amount: Transaction amount
-            source_id: Optional source ID filter
+            account_id: Optional account ID filter
 
         Returns:
             List of matching transactions from the database

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts'
 import { useCategoryTotals } from '../services/hooks/useTransactions'
 import { useCategories } from '../services/hooks/useCategories'
-import { useSources } from '../services/hooks/useSources'
+import { useAccounts } from '../services/hooks/useAccounts'
 import { TransactionFilters } from '../components/TransactionFilters'
 import { CategorizationStatus, Category } from '../types/Transaction'
 import { TransactionFilters as FilterType } from '../api/TransactionClient'
@@ -70,10 +70,10 @@ export const ChartsPage = () => {
   } = useCategoryTotals()
 
   const { categories, loading: categoriesLoading, error: categoriesError } = useCategories()
-  const { sources, loading: sourcesLoading, error: sourcesError } = useSources()
+  const { accounts, loading: accountsLoading, error: accountsError } = useAccounts()
 
-  const loading = categoryTotalsLoading || categoriesLoading || sourcesLoading
-  const error = categoryTotalsError || categoriesError || sourcesError
+  const loading = categoryTotalsLoading || categoriesLoading || accountsLoading
+  const error = categoryTotalsError || categoriesError || accountsError
 
   // Debounced filter update for search, amount, and date inputs
   useEffect(() => {
@@ -142,9 +142,9 @@ export const ChartsPage = () => {
     [handleFilterChange]
   )
 
-  const handleSourceFilter = useCallback(
-    (sourceId?: string) => {
-      handleFilterChange({ source_id: sourceId })
+  const handleAccountFilter = useCallback(
+    (accountId?: string) => {
+      handleFilterChange({ account_id: accountId })
     },
     [handleFilterChange]
   )
@@ -336,7 +336,7 @@ export const ChartsPage = () => {
         if (filters.start_date) params.set('start_date', filters.start_date)
         if (filters.end_date) params.set('end_date', filters.end_date)
         if (filters.status) params.set('status', filters.status)
-        if (filters.source_id) params.set('source_id', filters.source_id)
+        if (filters.account_id) params.set('account_id', filters.account_id)
 
         // Add category filter - for sub-categories, use the specific category ID
         if (data.id !== 'uncategorized' && data.id !== 'other') {
@@ -441,10 +441,10 @@ export const ChartsPage = () => {
         <div className="filters-sidebar">
           <TransactionFilters
             categories={categories || []}
-            sources={sources || []}
+            accounts={accounts || []}
             selectedCategoryIds={filters.category_ids}
             selectedStatus={filters.status}
-            selectedSourceId={filters.source_id}
+            selectedAccountId={filters.account_id}
             minAmount={localMinAmount}
             maxAmount={localMaxAmount}
             descriptionSearch={localDescriptionSearch}
@@ -452,7 +452,7 @@ export const ChartsPage = () => {
             endDate={localEndDate}
             onCategoryChange={handleCategoryFilter}
             onStatusChange={handleStatusFilter}
-            onSourceChange={handleSourceFilter}
+            onAccountChange={handleAccountFilter}
             onAmountRangeChange={handleAmountRangeFilter}
             onDescriptionSearchChange={handleDescriptionSearchFilter}
             onDateRangeChange={handleDateRangeFilter}

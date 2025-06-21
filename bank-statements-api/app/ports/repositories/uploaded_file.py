@@ -23,7 +23,7 @@ class FileAnalysisMetadataRepository(ABC):
         column_mapping: dict,
         header_row_index: int,
         data_start_row_index: int,
-        source_id: Optional[UUID] = None,
+        account_id: Optional[UUID] = None,
     ) -> FileAnalysisMetadataDTO:
         pass
 

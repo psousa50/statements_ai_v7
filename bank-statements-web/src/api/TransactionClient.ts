@@ -3,7 +3,7 @@ import {
   TransactionCreate,
   TransactionListResponse,
   CategorizationStatus,
-  Source,
+  Account,
 } from '../types/Transaction'
 
 export interface TransactionFilters {
@@ -14,7 +14,7 @@ export interface TransactionFilters {
   min_amount?: number
   max_amount?: number
   description_search?: string
-  source_id?: string
+  account_id?: string
   start_date?: string
   end_date?: string
   include_running_balance?: boolean
@@ -88,8 +88,8 @@ export const transactionClient: TransactionClient = {
     if (filters?.description_search) {
       params.append('description_search', filters.description_search)
     }
-    if (filters?.source_id) {
-      params.append('source_id', filters.source_id)
+    if (filters?.account_id) {
+      params.append('account_id', filters.account_id)
     }
     if (filters?.start_date) {
       params.append('start_date', filters.start_date)
@@ -130,8 +130,8 @@ export const transactionClient: TransactionClient = {
     if (filters?.description_search) {
       params.append('description_search', filters.description_search)
     }
-    if (filters?.source_id) {
-      params.append('source_id', filters.source_id)
+    if (filters?.account_id) {
+      params.append('account_id', filters.account_id)
     }
     if (filters?.start_date) {
       params.append('start_date', filters.start_date)

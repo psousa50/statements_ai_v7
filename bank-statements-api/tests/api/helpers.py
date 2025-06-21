@@ -8,11 +8,11 @@ from app.adapters.repositories.background_job import SQLAlchemyBackgroundJobRepo
 from app.adapters.repositories.transaction_categorization import SQLAlchemyTransactionCategorizationRepository
 from app.app import register_app_routes
 from app.core.dependencies import InternalDependencies
+from app.services.account import AccountService
 from app.services.background.background_job_service import BackgroundJobService
 from app.services.category import CategoryService
 from app.services.initial_balance_service import InitialBalanceService
 from app.services.rule_based_categorization import RuleBasedCategorizationService
-from app.services.source import SourceService
 from app.services.statement_processing.statement_analyzer import StatementAnalyzerService
 from app.services.statement_processing.statement_persistence import StatementPersistenceService
 from app.services.statement_processing.statement_upload import StatementUploadService
@@ -25,7 +25,7 @@ from app.services.transaction_processing_orchestrator import TransactionProcessi
 def mocked_dependencies(
     transaction_service: TransactionService = None,
     category_service: CategoryService = None,
-    source_service: SourceService = None,
+    account_service: AccountService = None,
     statement_analyzer_service: StatementAnalyzerService = None,
     statement_persistence_service: StatementPersistenceService = None,
     statement_upload_service: StatementUploadService = None,
@@ -48,7 +48,7 @@ def mocked_dependencies(
     return InternalDependencies(
         transaction_service=transaction_service,
         category_service=category_service or MagicMock(spec=CategoryService),
-        source_service=source_service or MagicMock(spec=SourceService),
+        account_service=account_service or MagicMock(spec=AccountService),
         initial_balance_service=initial_balance_service,
         statement_analyzer_service=statement_analyzer_service or MagicMock(spec=StatementAnalyzerService),
         statement_persistence_service=statement_persistence_service or MagicMock(spec=StatementPersistenceService),

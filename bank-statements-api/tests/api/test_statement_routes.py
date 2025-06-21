@@ -69,7 +69,7 @@ class TestStatementRoutes:
         internal_dependencies = mocked_dependencies()
         client = build_client(internal_dependencies)
         uploaded_file_id = str(uuid4())
-        source_id = uuid4()
+        account_id = uuid4()
 
         # Mock the new upload service
         from app.services.statement_processing.statement_upload import StatementUploadResult
@@ -95,7 +95,7 @@ class TestStatementRoutes:
             },
             header_row_index=0,
             data_start_row_index=1,
-            source_id=str(source_id),
+            account_id=str(account_id),
         )
 
         response = client.post("/api/v1/statements/upload", json=jsonable_encoder(request_data))
@@ -135,7 +135,7 @@ class TestStatementRoutes:
             },
             header_row_index=0,
             data_start_row_index=1,
-            source_id=str(uuid4()),
+            account_id=str(uuid4()),
         )
 
         response = client.post("/api/v1/statements/upload", json=jsonable_encoder(request_data))
@@ -148,7 +148,7 @@ class TestStatementRoutes:
         internal_dependencies = mocked_dependencies()
         client = build_client(internal_dependencies)
         uploaded_file_id = str(uuid4())
-        source_id = uuid4()
+        account_id = uuid4()
         job_id = uuid4()
 
         # Mock background job info
@@ -187,7 +187,7 @@ class TestStatementRoutes:
             },
             header_row_index=0,
             data_start_row_index=1,
-            source_id=str(source_id),
+            account_id=str(account_id),
         )
 
         response = client.post("/api/v1/statements/upload", json=jsonable_encoder(request_data))
@@ -216,7 +216,7 @@ class TestStatementRoutes:
         internal_dependencies = mocked_dependencies()
         client = build_client(internal_dependencies)
         uploaded_file_id = str(uuid4())
-        source_id = uuid4()
+        account_id = uuid4()
 
         # Mock service failure
         internal_dependencies.statement_upload_service.upload_and_process.side_effect = Exception("Service failed")
@@ -230,7 +230,7 @@ class TestStatementRoutes:
             },
             header_row_index=0,
             data_start_row_index=1,
-            source_id=str(source_id),
+            account_id=str(account_id),
         )
 
         response = client.post("/api/v1/statements/upload", json=jsonable_encoder(request_data))

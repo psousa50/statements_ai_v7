@@ -2,8 +2,8 @@ from typing import Callable, Iterator
 
 from fastapi import FastAPI
 
+from app.api.routes.accounts import register_account_routes
 from app.api.routes.categories import register_category_routes
-from app.api.routes.sources import register_source_routes
 from app.api.routes.statements import register_statement_routes, register_transaction_job_routes
 from app.api.routes.transaction_categorizations import register_transaction_categorization_routes
 from app.api.routes.transactions import register_transaction_routes
@@ -25,6 +25,6 @@ def register_app_routes(app: FastAPI, provide_dependencies: Callable[[], Iterato
     register_transaction_routes(app, provide_dependencies)
     register_transaction_categorization_routes(app, provide_dependencies)
     register_category_routes(app, provide_dependencies)
-    register_source_routes(app, provide_dependencies)
+    register_account_routes(app, provide_dependencies)
     register_statement_routes(app, provide_dependencies)
     register_transaction_job_routes(app, provide_dependencies)

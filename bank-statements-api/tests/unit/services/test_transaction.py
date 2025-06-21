@@ -42,13 +42,13 @@ class TestTransactionService:
         transaction_date = date(2023, 4, 15)
         description = "Test Transaction"
         amount = Decimal("100.50")
-        source_id = uuid4()
+        account_id = uuid4()
 
         result = service.create_transaction(
             transaction_date=transaction_date,
             description=description,
             amount=amount,
-            source_id=source_id,
+            account_id=account_id,
         )
 
         assert result == sample_transaction
@@ -57,7 +57,7 @@ class TestTransactionService:
         assert created_transaction.date == transaction_date
         assert created_transaction.description == description
         assert created_transaction.amount == amount
-        assert created_transaction.source_id == source_id
+        assert created_transaction.account_id == account_id
 
     def test_get_transaction(self, service, mock_repository, sample_transaction):
         transaction_id = sample_transaction.id
@@ -108,14 +108,14 @@ class TestTransactionService:
         new_date = date(2023, 4, 20)
         new_description = "Updated Transaction"
         new_amount = Decimal("150.75")
-        new_source_id = uuid4()
+        new_account_id = uuid4()
 
         result = service.update_transaction(
             transaction_id=transaction_id,
             transaction_date=new_date,
             description=new_description,
             amount=new_amount,
-            source_id=new_source_id,
+            account_id=new_account_id,
         )
 
         assert result == sample_transaction
@@ -124,7 +124,7 @@ class TestTransactionService:
         assert sample_transaction.date == new_date
         assert sample_transaction.description == new_description
         assert sample_transaction.amount == new_amount
-        assert sample_transaction.source_id == new_source_id
+        assert sample_transaction.account_id == new_account_id
 
     def test_update_transaction_not_found(self, service, mock_repository):
         transaction_id = uuid4()
@@ -134,7 +134,7 @@ class TestTransactionService:
             transaction_date=date(2023, 4, 20),
             description="Updated Transaction",
             amount=Decimal("150.75"),
-            source_id=uuid4(),
+            account_id=uuid4(),
         )
 
         assert result is None

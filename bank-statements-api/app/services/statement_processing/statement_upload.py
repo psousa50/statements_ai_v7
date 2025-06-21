@@ -74,7 +74,7 @@ class StatementUploadService:
             column_mapping=upload_request.column_mapping,
             header_row_index=upload_request.header_row_index,
             data_start_row_index=upload_request.data_start_row_index,
-            source_id=UUID(upload_request.source_id),
+            account_id=UUID(upload_request.account_id),
         )
 
         # Step 2: Process transaction DTOs (categorization, background job setup)
@@ -86,7 +86,7 @@ class StatementUploadService:
         # Step 3: Save processed transactions with all data complete
         persistence_result = self.statement_persistence_service.save_processed_transactions(
             processed_dtos=processing_result.processed_dtos,
-            source_id=UUID(upload_request.source_id),
+            account_id=UUID(upload_request.account_id),
             uploaded_file_id=upload_request.uploaded_file_id,
         )
 
@@ -128,7 +128,7 @@ class StatementUploadService:
             column_mapping=upload_request.column_mapping,
             header_row_index=upload_request.header_row_index,
             data_start_row_index=upload_request.data_start_row_index,
-            source_id=UUID(upload_request.source_id),
+            account_id=UUID(upload_request.account_id),
         )
 
         # Step 6: Return result (background job info already set above)
@@ -168,7 +168,7 @@ class StatementUploadService:
         column_mapping: dict,
         header_row_index: int,
         data_start_row_index: int,
-        source_id: UUID,
+        account_id: UUID,
     ) -> List[TransactionDTO]:
         """Parse uploaded file to transaction DTOs without persisting"""
         # Get uploaded file
@@ -195,7 +195,7 @@ class StatementUploadService:
                 amount=row["amount"],
                 description=row["description"],
                 uploaded_file_id=uploaded_file_id,
-                source_id=str(source_id),
+                account_id=str(account_id),
                 row_index=index,  # Assign row_index based on position in file
                 sort_index=index,  # Initially same as row_index for uploaded transactions
                 source_type=SourceType.UPLOAD.value,
@@ -210,7 +210,7 @@ class StatementUploadService:
         column_mapping: dict,
         header_row_index: int,
         data_start_row_index: int,
-        source_id: UUID,
+        account_id: UUID,
     ):
         """Save file analysis metadata for duplicate detection"""
         uploaded_file = self.uploaded_file_repo.find_by_id(uploaded_file_id)
@@ -228,7 +228,7 @@ class StatementUploadService:
                 column_mapping=column_mapping,
                 header_row_index=header_row_index,
                 data_start_row_index=data_start_row_index,
-                source_id=source_id,
+                account_id=account_id,
             )
 
     def _get_unmatched_transaction_ids(self, uploaded_file_id: str, processed_dtos: List[TransactionDTO]) -> List[UUID]:

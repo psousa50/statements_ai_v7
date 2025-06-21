@@ -10,7 +10,7 @@ from sqlalchemy.orm import sessionmaker
 
 from app.core.dependencies import ExternalDependencies, build_internal_dependencies
 from app.domain.dto.statement_processing import TransactionDTO
-from app.domain.models.source import Source
+from app.domain.models.account import Account
 from app.domain.models.transaction import Transaction
 from app.domain.models.uploaded_file import UploadedFile
 
@@ -82,10 +82,10 @@ class TestTransactionDeduplicationIntegration:
         dependencies = build_internal_dependencies(ExternalDependencies(db=db_session, llm_client=llm_client))
 
         # Create a test source
-        source = Source(name="Test Bank for Deduplication")
-        db_session.add(source)
+        account = Account(name="Test Bank for Deduplication")
+        db_session.add(account)
         db_session.commit()
-        db_session.refresh(source)
+        db_session.refresh(account)
 
         # Create an uploaded file to satisfy foreign key constraint
         uploaded_file_id = uuid.uuid4()
@@ -103,7 +103,7 @@ class TestTransactionDeduplicationIntegration:
             date=date(2023, 1, 1),
             description="Coffee Shop Purchase",
             amount=Decimal("25.50"),
-            source_id=source.id,
+            account_id=account.id,
             normalized_description="coffee shop purchase",
             uploaded_file_id=uploaded_file_id,
         )
@@ -116,21 +116,21 @@ class TestTransactionDeduplicationIntegration:
                 date="2023-01-01",
                 description="Coffee Shop Purchase",  # This is a duplicate
                 amount=25.50,
-                source_id=str(source.id),
+                account_id=str(account.id),
                 uploaded_file_id=str(uploaded_file_id),
             ),
             TransactionDTO(
                 date="2023-01-02",
                 description="Grocery Store",  # This is new
                 amount=45.75,
-                source_id=str(source.id),
+                account_id=str(account.id),
                 uploaded_file_id=str(uploaded_file_id),
             ),
             TransactionDTO(
                 date="2023-01-03",
                 description="Gas Station",  # This is new
                 amount=35.00,
-                source_id=str(source.id),
+                account_id=str(account.id),
                 uploaded_file_id=str(uploaded_file_id),
             ),
         ]
@@ -138,7 +138,7 @@ class TestTransactionDeduplicationIntegration:
         # Use the persistence service to save transactions with deduplication
         persistence_result = dependencies.statement_persistence_service.save_processed_transactions(
             processed_dtos=transaction_dtos,
-            source_id=source.id,
+            account_id=account.id,
             uploaded_file_id=str(uploaded_file_id),
         )
 
@@ -147,7 +147,7 @@ class TestTransactionDeduplicationIntegration:
         assert persistence_result.duplicated_transactions == 1  # 1 duplicate found
 
         # Verify the database state
-        all_transactions = db_session.query(Transaction).filter(Transaction.source_id == source.id).all()
+        all_transactions = db_session.query(Transaction).filter(Transaction.account_id == account.id).all()
         assert len(all_transactions) == 3  # 1 existing + 2 new
 
         # Verify the specific transactions

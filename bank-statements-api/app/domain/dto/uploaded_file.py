@@ -33,7 +33,7 @@ class FileAnalysisMetadataDTO:
         self,
         id: str,
         file_hash: str,
-        source_id: Optional[str],
+        account_id: Optional[str],
         column_mapping: dict,
         header_row_index: int,
         data_start_row_index: int,
@@ -41,7 +41,7 @@ class FileAnalysisMetadataDTO:
     ):
         self.id = id
         self.file_hash = file_hash
-        self.source_id = source_id
+        self.account_id = account_id
         self.column_mapping = column_mapping
         self.header_row_index = header_row_index
         self.data_start_row_index = data_start_row_index
@@ -53,7 +53,7 @@ class FileAnalysisMetadataDTO:
             id=str(entity.id),
             uploaded_file_id=str(entity.uploaded_file_id),
             file_hash=entity.file_hash,
-            source_id=str(entity.source_id) if entity.source_id else None,
+            account_id=str(entity.account_id) if entity.account_id else None,
             column_mapping=entity.column_mapping,
             header_row_index=entity.header_row_index,
             data_start_row_index=entity.data_start_row_index,
