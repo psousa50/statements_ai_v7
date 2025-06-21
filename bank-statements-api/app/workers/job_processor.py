@@ -60,6 +60,8 @@ class JobProcessor:
 
         if job_type == JobType.AI_CATEGORIZATION:
             await self._process_ai_categorization_job_by_id(job_id, job_progress)
+        elif job_type == JobType.AI_COUNTERPARTY_IDENTIFICATION:
+            await self._process_ai_counterparty_identification_job_by_id(job_id, job_progress)
         else:
             raise ValueError(f"Unknown job type: {job_type}")
 
@@ -96,6 +98,41 @@ class JobProcessor:
 
         except Exception as e:
             logger.error(f"AI categorization job {job_id} failed: {e}")
+            raise
+
+    async def _process_ai_counterparty_identification_job_by_id(self, job_id: UUID, job_progress: dict) -> None:
+        """
+        Process an AI counterparty identification job using job ID.
+
+        Delegates to TransactionCounterpartyService for actual counterparty identification work.
+        """
+        try:
+            # Extract transaction IDs from job progress
+            unprocessed_transaction_ids = job_progress.get("unprocessed_transaction_ids", [])
+            if not unprocessed_transaction_ids:
+                raise ValueError("No unprocessed transaction IDs found in job progress")
+
+            # Convert string IDs back to UUIDs
+            transaction_ids = [UUID(tid) for tid in unprocessed_transaction_ids]
+
+            # Delegate to the specialized counterparty identification service
+            result = await self.internal.transaction_counterparty_service.identify_counterparty_batch_by_ids(
+                transaction_ids,
+                progress_callback=lambda progress: self.internal.background_job_service.update_job_progress(job_id, progress),
+                batch_size=20,
+            )
+
+            # Mark job as completed with results
+            self.internal.background_job_service.mark_job_completed(job_id, result)
+
+            logger.info(
+                f"AI counterparty identification job {job_id} completed. "
+                f"Processed: {result['total_processed']}, Success: {result['successfully_identified']}, "
+                f"Failed: {result['failed_identifications']}, Time: {result['processing_time_ms']}ms"
+            )
+
+        except Exception as e:
+            logger.error(f"AI counterparty identification job {job_id} failed: {e}")
             raise
 
     async def _process_ai_categorization_job(self, job: BackgroundJob) -> None:

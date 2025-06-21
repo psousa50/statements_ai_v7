@@ -191,3 +191,16 @@ class TransactionRepository(ABC):
             Number of transactions updated
         """
         pass
+
+    @abstractmethod
+    def get_transactions_without_counterparty(self, limit: int = 10) -> List[Transaction]:
+        """
+        Get transactions that don't have a counterparty account identified
+
+        Args:
+            limit: Maximum number of transactions to return
+
+        Returns:
+            List of transactions without counterparty accounts, ordered by date (oldest first)
+        """
+        pass

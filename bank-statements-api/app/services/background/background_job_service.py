@@ -46,6 +46,37 @@ class BackgroundJobService:
 
         return created_job
 
+    def queue_ai_counterparty_identification_job(
+        self, uploaded_file_id: UUID, unprocessed_transaction_ids: List[UUID]
+    ) -> BackgroundJob:
+        """Queue an AI counterparty identification job for unprocessed transactions"""
+        if not unprocessed_transaction_ids:
+            raise ValueError("Cannot queue job with empty transaction list")
+
+        # Create new background job
+        job = BackgroundJob(
+            job_type=JobType.AI_COUNTERPARTY_IDENTIFICATION,
+            status=JobStatus.PENDING,
+            uploaded_file_id=uploaded_file_id,
+            progress={
+                "unprocessed_transaction_ids": [str(tid) for tid in unprocessed_transaction_ids],
+                "total_transactions": len(unprocessed_transaction_ids),
+                "processed_transactions": 0,
+                "current_batch": 0,
+                "total_batches": 0,
+                "phase": "QUEUED",
+            },
+            result={},
+        )
+
+        # Save to repository
+        created_job = self.repository.create(job)
+        logger.info(
+            f"Queued AI counterparty identification job {created_job.id} for {len(unprocessed_transaction_ids)} transactions"
+        )
+
+        return created_job
+
     def get_job_status(self, job_id: UUID) -> Optional[BackgroundJob]:
         """Get job status by ID"""
         return self.repository.get_by_id(job_id)

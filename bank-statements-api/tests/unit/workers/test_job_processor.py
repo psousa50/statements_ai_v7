@@ -21,6 +21,7 @@ class TestJobProcessor:
         internal.transaction_service.transaction_repository = Mock()
         internal.transaction_categorization_service = Mock()
         internal.transaction_categorization_service.transaction_categorizer = Mock()
+        internal.transaction_counterparty_service = Mock()
         # Add the transaction categorization repository
         internal.transaction_categorization_repository = Mock()
         internal.transaction_categorization_repository.create_rule.return_value = None
@@ -179,6 +180,79 @@ class TestJobProcessor:
         # Assert
         mock_internal.background_job_service.update_job_progress.assert_called()
         mock_internal.background_job_service.mark_job_completed.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_ai_counterparty_identification_job_processing(self, job_processor, mock_internal, sample_transactions):
+        """Test processing of AI counterparty identification jobs"""
+        # Create a counterparty identification job
+        transaction_ids = [str(t.id) for t in sample_transactions]
+
+        counterparty_job = BackgroundJob(
+            job_type=JobType.AI_COUNTERPARTY_IDENTIFICATION,
+            status=JobStatus.IN_PROGRESS,
+            uploaded_file_id=uuid4(),
+            progress={
+                "unprocessed_transaction_ids": transaction_ids,
+                "total_transactions": len(transaction_ids),
+                "processed_transactions": 0,
+                "current_batch": 0,
+                "total_batches": 0,
+                "phase": "QUEUED",
+            },
+            result={},
+        )
+        counterparty_job.id = uuid4()
+
+        # Mock the counterparty identification service
+        async def mock_identify_counterparty_batch_by_ids(transaction_ids, progress_callback=None, batch_size=20):
+            if progress_callback:
+                from app.domain.models.processing import ProcessingProgress
+
+                progress = ProcessingProgress(
+                    current_batch=1,
+                    total_batches=1,
+                    processed_transactions=len(transaction_ids),
+                    total_transactions=len(transaction_ids),
+                    phase="AI_COUNTERPARTY_IDENTIFYING",
+                )
+                progress_callback(progress)
+
+            return {
+                "total_processed": len(transaction_ids),
+                "successfully_identified": len(transaction_ids),
+                "failed_identifications": 0,
+                "processing_time_ms": 150,
+            }
+
+        mock_internal.transaction_counterparty_service.identify_counterparty_batch_by_ids = (
+            mock_identify_counterparty_batch_by_ids
+        )
+
+        # Execute
+        await job_processor._process_ai_counterparty_identification_job_by_id(counterparty_job.id, counterparty_job.progress)
+
+        # Assert
+        mock_internal.background_job_service.update_job_progress.assert_called()
+        mock_internal.background_job_service.mark_job_completed.assert_called_with(
+            counterparty_job.id,
+            {
+                "total_processed": 2,
+                "successfully_identified": 2,
+                "failed_identifications": 0,
+                "processing_time_ms": 150,
+            },
+        )
+
+    @pytest.mark.asyncio
+    async def test_unknown_job_type_raises_error(self, job_processor, mock_internal):
+        """Test that unknown job types raise appropriate errors"""
+        # Create a job with an invalid type (we'll mock this since enum validation would catch it earlier)
+        job_id = uuid4()
+
+        with pytest.raises(ValueError, match="Unknown job type"):
+            # We can't actually create a BackgroundJob with an invalid JobType due to enum validation,
+            # so we test the error path directly
+            await job_processor._process_single_job_by_id(job_id, "INVALID_JOB_TYPE", {})
 
 
 class TestConvenienceFunction:

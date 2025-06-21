@@ -122,6 +122,23 @@ class StatementUploadService:
                 else:
                     logger.info(f"Background job {background_job.id} queued for cron processing")
 
+        # Step 3.6: Schedule background job for counterparty identification (after persistence)
+        # Get all persisted transaction IDs for counterparty identification
+        all_transaction_ids = self._get_all_transaction_ids(upload_request.uploaded_file_id, processing_result.processed_dtos)
+
+        if all_transaction_ids:
+            logger.info(f"Queuing counterparty identification job for {len(all_transaction_ids)} transactions")
+
+            counterparty_job = self.background_job_service.queue_ai_counterparty_identification_job(
+                UUID(upload_request.uploaded_file_id), all_transaction_ids
+            )
+
+            # Trigger immediate background job processing if requested
+            if background_tasks and internal_deps:
+                self._trigger_immediate_processing(background_tasks, internal_deps)
+            else:
+                logger.info(f"Counterparty identification job {counterparty_job.id} queued for cron processing")
+
         # Step 5: Save file analysis metadata for future duplicate detection
         self._save_file_analysis_metadata(
             uploaded_file_id=upload_request.uploaded_file_id,
@@ -257,3 +274,21 @@ class StatementUploadService:
         unmatched_ids = [t.id for t in all_transactions if t.categorization_status == CategorizationStatus.UNCATEGORIZED]
 
         return unmatched_ids
+
+    def _get_all_transaction_ids(self, uploaded_file_id: str, processed_dtos: List[TransactionDTO]) -> List[UUID]:
+        """Get all transaction IDs for counterparty identification"""
+        # Get all DTOs that have statement_id set during persistence
+        all_dtos = [dto for dto in processed_dtos if dto.statement_id]
+
+        if not all_dtos:
+            return []
+
+        # Get statement_id from the first DTO (all should have the same statement_id)
+        statement_id = UUID(all_dtos[0].statement_id)
+
+        # Query the database for all transactions from this statement
+        transaction_repo = self.transaction_processing_orchestrator.transaction_repository
+        all_transactions = transaction_repo.get_by_statement_id(statement_id)
+
+        # Return all transaction IDs
+        return [t.id for t in all_transactions]

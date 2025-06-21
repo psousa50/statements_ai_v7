@@ -420,3 +420,13 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
             return [column.asc(), Transaction.sort_index.asc()]
         else:
             return [column.desc(), Transaction.sort_index.desc()]
+
+    def get_transactions_without_counterparty(self, limit: int = 10) -> List[Transaction]:
+        """Get transactions that need counterparty identification (counterparty_status = 'unprocessed')"""
+        return (
+            self.db_session.query(Transaction)
+            .filter(Transaction.counterparty_status == CounterpartyStatus.UNPROCESSED)
+            .order_by(Transaction.date.asc(), Transaction.sort_index.asc())
+            .limit(limit)
+            .all()
+        )

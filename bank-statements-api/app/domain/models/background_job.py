@@ -21,6 +21,7 @@ class JobStatus(str, Enum):
 
 class JobType(str, Enum):
     AI_CATEGORIZATION = "AI_CATEGORIZATION"
+    AI_COUNTERPARTY_IDENTIFICATION = "AI_COUNTERPARTY_IDENTIFICATION"
 
 
 class BackgroundJob(Base):

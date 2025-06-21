@@ -29,7 +29,9 @@ from app.services.statement_processing.statement_upload import StatementUploadSe
 from app.services.statement_processing.transaction_normalizer import TransactionNormalizer
 from app.services.transaction import TransactionService
 from app.services.transaction_categorization.llm_transaction_categorizer import LLMTransactionCategorizer
+from app.services.transaction_categorization.llm_transaction_counterparty import LLMTransactionCounterparty
 from app.services.transaction_categorization.transaction_categorization import TransactionCategorizationService
+from app.services.transaction_counterparty_service import TransactionCounterpartyService
 from app.services.transaction_categorization_management import TransactionCategorizationManagementService
 from app.services.transaction_processing_orchestrator import TransactionProcessingOrchestrator
 
@@ -56,6 +58,7 @@ class InternalDependencies:
         statement_persistence_service: StatementPersistenceService,
         statement_upload_service: StatementUploadService,
         transaction_categorization_service: TransactionCategorizationService,
+        transaction_counterparty_service: TransactionCounterpartyService,
         transaction_categorization_management_service: TransactionCategorizationManagementService,
         rule_based_categorization_service: RuleBasedCategorizationService,
         background_job_service: BackgroundJobService,
@@ -71,6 +74,7 @@ class InternalDependencies:
         self.statement_persistence_service = statement_persistence_service
         self.statement_upload_service = statement_upload_service
         self.transaction_categorization_service = transaction_categorization_service
+        self.transaction_counterparty_service = transaction_counterparty_service
         self.transaction_categorization_management_service = transaction_categorization_management_service
         self.rule_based_categorization_service = rule_based_categorization_service
         self.background_job_service = background_job_service
@@ -124,6 +128,12 @@ def build_internal_dependencies(external: ExternalDependencies) -> InternalDepen
         transaction_categorization_repository=transaction_categorization_repo,
     )
 
+    transaction_counterparty = LLMTransactionCounterparty(account_repo, external.llm_client)
+    transaction_counterparty_service = TransactionCounterpartyService(
+        transaction_repository=transaction_repo,
+        transaction_counterparty=transaction_counterparty,
+    )
+
     transaction_categorization_management_service = TransactionCategorizationManagementService(
         repository=transaction_categorization_repo,
     )
@@ -166,6 +176,7 @@ def build_internal_dependencies(external: ExternalDependencies) -> InternalDepen
         statement_persistence_service=statement_persistence_service,
         statement_upload_service=statement_upload_service,
         transaction_categorization_service=transaction_categorization_service,
+        transaction_counterparty_service=transaction_counterparty_service,
         transaction_categorization_management_service=transaction_categorization_management_service,
         rule_based_categorization_service=rule_based_categorization_service,
         background_job_service=background_job_service,

@@ -4,6 +4,7 @@ from typing import List
 
 import pandas as pd
 
+from app.domain.models.account import Account
 from app.domain.models.category import Category
 from app.domain.models.transaction import Transaction
 
@@ -118,3 +119,49 @@ Transaction Date,Value Date,Details,Amount,Balance
 {df.iloc[:10].to_csv(index=False)}
 ---------------------------------------------------------
 """
+
+
+def counterparty_identification_prompt(transactions: List[Transaction], accounts: List[Account]) -> str:
+    """Create a prompt for LLM to identify counterparty accounts for transactions"""
+
+    accounts_info = [f"{{id: {account.id}, name: {account.name}}}" for account in accounts]
+
+    transaction_data = []
+    for t in transactions:
+        transaction_data.append({"description": t.description, "signed_amount": t.signed_amount})
+
+    prompt = f"""
+You are a bank transaction counterparty identification assistant. Your task is to identify the most likely counterparty account for each transaction based on the transaction description and signed amount.
+
+Transactions: 
+{json.dumps(transaction_data, indent=2)}
+
+Available Counterparty Accounts:
+{json.dumps(accounts_info, indent=2)}
+
+For each transaction, analyze the description and signed amount to determine which counterparty account is most likely involved in this transaction.
+
+Consider:
+- Transaction descriptions that might indicate transfers between accounts
+- Positive amounts typically indicate money coming FROM the counterparty account TO the current account
+- Negative amounts typically indicate money going FROM the current account TO the counterparty account
+- Account names that might match or relate to the transaction description
+- Common patterns in inter-account transfers
+
+Return your answer as a JSON object with the following format:
+[
+    {{
+        "transaction_description": <description of the transaction>,
+        "counterparty_account_id": <id of the identified counterparty account, or null if no clear counterparty>,
+        "confidence": <a number between 0 and 1 indicating your confidence in this identification>
+    }},
+    {{
+        "transaction_description": <description of the transaction>,
+        "counterparty_account_id": <id of the identified counterparty account, or null if no clear counterparty>,
+        "confidence": <a number between 0 and 1 indicating your confidence in this identification>
+    }}
+]
+
+Only return the JSON object, nothing else.
+"""
+    return prompt
