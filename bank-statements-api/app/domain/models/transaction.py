@@ -40,7 +40,7 @@ class Transaction(Base):
     amount = Column(Numeric(precision=10, scale=2), nullable=False)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
 
-    statement_id = Column(UUID(as_uuid=True), ForeignKey("statements.id"), nullable=True)
+    statement_id = Column(UUID(as_uuid=True), ForeignKey("statements.id"), nullable=False)
     statement = relationship("Statement", back_populates="transactions")
 
     category_id = Column(UUID(as_uuid=True), ForeignKey("categories.id"), nullable=True)
@@ -71,7 +71,7 @@ class Transaction(Base):
     )
 
     # New ordering fields
-    row_index = Column(Integer, nullable=True)
+    row_index = Column(Integer, nullable=False)
     sort_index = Column(Integer, nullable=False, default=0)
     source_type = Column(
         SQLAlchemyEnum(SourceType, values_callable=lambda x: [e.value for e in x]),

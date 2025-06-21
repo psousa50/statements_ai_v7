@@ -11,6 +11,7 @@ from sqlalchemy.orm import sessionmaker
 from app.core.dependencies import ExternalDependencies, build_internal_dependencies
 from app.domain.dto.statement_processing import TransactionDTO
 from app.domain.models.account import Account
+from app.domain.models.statement import Statement
 from app.domain.models.transaction import Transaction
 from app.domain.models.uploaded_file import UploadedFile
 
@@ -98,6 +99,17 @@ class TestTransactionDeduplicationIntegration:
         db_session.add(uploaded_file)
         db_session.commit()
 
+        # Create a statement for the transaction
+        statement = Statement(
+            account_id=account.id,
+            filename="test.csv",
+            file_type="CSV",
+            content=b"Date,Amount,Description\n2023-01-01,25.50,Coffee Shop Purchase",
+        )
+        db_session.add(statement)
+        db_session.commit()
+        db_session.refresh(statement)
+
         # Create an existing transaction in the database
         existing_transaction = Transaction(
             date=date(2023, 1, 1),
@@ -105,7 +117,8 @@ class TestTransactionDeduplicationIntegration:
             amount=Decimal("25.50"),
             account_id=account.id,
             normalized_description="coffee shop purchase",
-            statement_id=None,  # Will be set during deduplication test
+            statement_id=statement.id,  # Now required
+            row_index=0,  # Now required
         )
         db_session.add(existing_transaction)
         db_session.commit()
