@@ -3,12 +3,15 @@ from decimal import Decimal
 from typing import Dict, List, Optional, Sequence, Tuple
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, field_serializer, field_validator
-
 from app.domain.models.background_job import JobStatus
 from app.domain.models.processing import BackgroundJobInfo
-from app.domain.models.transaction import CategorizationStatus
+from app.domain.models.transaction import (
+    CategorizationStatus,
+    CounterpartyStatus,
+    SourceType,
+)
 from app.domain.models.transaction_categorization import CategorizationSource
+from pydantic import BaseModel, ConfigDict, Field, field_serializer, field_validator
 
 
 class CategoryBase(BaseModel):
@@ -74,12 +77,14 @@ class TransactionCreate(TransactionBase):
     category_id: Optional[UUID] = None
     account_id: UUID
     counterparty_account_id: Optional[UUID] = None
+    counterparty_status: Optional[CounterpartyStatus] = None
 
 
 class TransactionUpdate(TransactionBase):
     category_id: Optional[UUID] = None
     account_id: UUID
     counterparty_account_id: Optional[UUID] = None
+    counterparty_status: Optional[CounterpartyStatus] = None
 
 
 class TransactionResponse(BaseModel):
@@ -92,6 +97,7 @@ class TransactionResponse(BaseModel):
     category_id: Optional[UUID] = None
     account_id: Optional[UUID] = None
     counterparty_account_id: Optional[UUID] = None
+    counterparty_status: CounterpartyStatus
     categorization_status: CategorizationStatus
     running_balance: Optional[Decimal] = None
     row_index: Optional[int] = None
@@ -116,6 +122,7 @@ class TransactionCreateRequest(BaseModel):
     account_id: UUID
     category_id: Optional[UUID] = None
     counterparty_account_id: Optional[UUID] = None
+    counterparty_status: Optional[CounterpartyStatus] = None
     after_transaction_id: Optional[UUID] = None
 
 
@@ -125,6 +132,7 @@ class TransactionUpdateRequest(BaseModel):
     amount: Optional[Decimal] = None
     category_id: Optional[UUID] = None
     counterparty_account_id: Optional[UUID] = None
+    counterparty_status: Optional[CounterpartyStatus] = None
 
 
 class TransactionFilters(BaseModel):

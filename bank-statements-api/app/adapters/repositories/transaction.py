@@ -3,13 +3,17 @@ from decimal import Decimal
 from typing import Dict, List, Optional, Tuple
 from uuid import UUID
 
-from sqlalchemy import and_, func, or_
-from sqlalchemy.orm import Session
-
 from app.common.text_normalization import normalize_description
 from app.domain.dto.statement_processing import TransactionDTO
-from app.domain.models.transaction import CategorizationStatus, SourceType, Transaction
+from app.domain.models.transaction import (
+    CategorizationStatus,
+    CounterpartyStatus,
+    SourceType,
+    Transaction,
+)
 from app.ports.repositories.transaction import TransactionRepository
+from sqlalchemy import and_, func, or_
+from sqlalchemy.orm import Session
 
 
 class SQLAlchemyTransactionRepository(TransactionRepository):
@@ -28,10 +32,18 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         return transaction
 
     def get_by_id(self, transaction_id: UUID) -> Optional[Transaction]:
-        return self.db_session.query(Transaction).filter(Transaction.id == transaction_id).first()
+        return (
+            self.db_session.query(Transaction)
+            .filter(Transaction.id == transaction_id)
+            .first()
+        )
 
     def get_all(self) -> List[Transaction]:
-        return self.db_session.query(Transaction).order_by(Transaction.date.desc(), Transaction.sort_index.asc()).all()
+        return (
+            self.db_session.query(Transaction)
+            .order_by(Transaction.date.desc(), Transaction.sort_index.asc())
+            .all()
+        )
 
     def get_all_by_account_and_date_range(
         self,
@@ -49,7 +61,9 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
             query = query.filter(Transaction.date >= start_date)
 
         # Order by date and sort_index for consistent ordering
-        return query.order_by(Transaction.date.asc(), Transaction.sort_index.asc()).all()
+        return query.order_by(
+            Transaction.date.asc(), Transaction.sort_index.asc()
+        ).all()
 
     def get_paginated(
         self,
@@ -190,7 +204,9 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         totals = {}
         for category_id, total_amount, transaction_count in results:
             totals[category_id] = {
-                "total_amount": Decimal(str(total_amount)) if total_amount else Decimal("0"),
+                "total_amount": Decimal(str(total_amount))
+                if total_amount
+                else Decimal("0"),
                 "transaction_count": Decimal(str(transaction_count)),
             }
 
@@ -261,7 +277,9 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
             # Find matching transactions in database
             matching_transactions = self.find_matching_transactions(
                 date=(
-                    transaction_dto.date if isinstance(transaction_dto.date, str) else transaction_dto.date.strftime("%Y-%m-%d")
+                    transaction_dto.date
+                    if isinstance(transaction_dto.date, str)
+                    else transaction_dto.date.strftime("%Y-%m-%d")
                 ),
                 description=transaction_dto.description,
                 amount=float(transaction_dto.amount),
@@ -292,12 +310,16 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
                     date=date_val,
                     amount=transaction_dto.amount,
                     description=transaction_dto.description,
-                    normalized_description=normalize_description(transaction_dto.description),
+                    normalized_description=normalize_description(
+                        transaction_dto.description
+                    ),
                     uploaded_file_id=UUID(transaction_dto.uploaded_file_id),
                     row_index=transaction_dto.row_index,
                     sort_index=transaction_dto.sort_index or 0,
                     source_type=account_type_enum,
                     manual_position_after=transaction_dto.manual_position_after,
+                    counterparty_status=transaction_dto.counterparty_status
+                    or CounterpartyStatus.UNPROCESSED,
                 )
 
                 if account_uuid:
@@ -312,7 +334,9 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
     def get_oldest_uncategorized(self, limit: int = 10) -> List[Transaction]:
         return (
             self.db_session.query(Transaction)
-            .filter(Transaction.categorization_status == CategorizationStatus.UNCATEGORIZED)
+            .filter(
+                Transaction.categorization_status == CategorizationStatus.UNCATEGORIZED
+            )
             .order_by(Transaction.date.asc(), Transaction.sort_index.asc())
             .limit(limit)
             .all()
@@ -326,16 +350,24 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
             .all()
         )
 
-    def bulk_update_category_by_normalized_description(self, normalized_description: str, category_id: Optional[UUID]) -> int:
+    def bulk_update_category_by_normalized_description(
+        self, normalized_description: str, category_id: Optional[UUID]
+    ) -> int:
         """
         Update the category for all transactions with the given normalized description.
         """
-        query = self.db_session.query(Transaction).filter(Transaction.normalized_description == normalized_description)
+        query = self.db_session.query(Transaction).filter(
+            Transaction.normalized_description == normalized_description
+        )
 
         # Update the category_id and categorization_status for all matching transactions
         update_values = {
             "category_id": category_id,
-            "categorization_status": (CategorizationStatus.CATEGORIZED if category_id else CategorizationStatus.UNCATEGORIZED),
+            "categorization_status": (
+                CategorizationStatus.CATEGORIZED
+                if category_id
+                else CategorizationStatus.UNCATEGORIZED
+            ),
         }
 
         # Execute bulk update
@@ -355,12 +387,16 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         )
         return result or 0
 
-    def create_manual_transaction(self, transaction_data, after_transaction_id: Optional[UUID] = None) -> Transaction:
+    def create_manual_transaction(
+        self, transaction_data, after_transaction_id: Optional[UUID] = None
+    ) -> Transaction:
         """
         Create a manual transaction with proper sort_index assignment.
         """
         # Get next sort_index for the date
-        max_sort = self.get_max_sort_index_for_date(transaction_data.account_id, transaction_data.date)
+        max_sort = self.get_max_sort_index_for_date(
+            transaction_data.account_id, transaction_data.date
+        )
 
         if after_transaction_id:
             after_transaction = self.get_by_id(after_transaction_id)
@@ -380,6 +416,9 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
             sort_index=sort_index,
             source_type=SourceType.MANUAL,
             manual_position_after=after_transaction_id,
+            counterparty_status=getattr(
+                transaction_data, "counterparty_status", CounterpartyStatus.UNPROCESSED
+            ),
         )
 
         self.db_session.add(transaction)
@@ -387,7 +426,9 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         self.db_session.refresh(transaction)
         return transaction
 
-    def _get_order_clause(self, sort_field: Optional[str], sort_direction: Optional[str]):
+    def _get_order_clause(
+        self, sort_field: Optional[str], sort_direction: Optional[str]
+    ):
         """Build the ORDER BY clause based on sort parameters."""
         # Default sorting
         if not sort_field:
