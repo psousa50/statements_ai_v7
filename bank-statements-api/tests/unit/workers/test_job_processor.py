@@ -40,7 +40,7 @@ class TestJobProcessor:
                 date="2024-01-01",
                 amount=100.00,
                 description=f"Test transaction {i + 1}",
-                uploaded_file_id=uuid4(),
+                statement_id=uuid4(),
             )
             transaction.id = uuid4()
             transactions.append(transaction)

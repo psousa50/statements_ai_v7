@@ -17,12 +17,14 @@ class StatementPersistenceService:
         transaction_repo,
         uploaded_file_repo,
         file_analysis_metadata_repo,
+        statement_repo,
     ):
         self.statement_parser = statement_parser
         self.transaction_normalizer = transaction_normalizer
         self.transaction_repo = transaction_repo
         self.uploaded_file_repo = uploaded_file_repo
         self.file_analysis_metadata_repo = file_analysis_metadata_repo
+        self.statement_repo = statement_repo
 
     def persist(self, persistence_request: PersistenceRequestDTO) -> PersistenceResultDTO:
         uploaded_file_id = persistence_request.uploaded_file_id
@@ -41,14 +43,22 @@ class StatementPersistenceService:
 
         normalized_df = self.transaction_normalizer.normalize(processed_df, column_mapping)
 
+        # Create statement from uploaded file
+        statement = self.statement_repo.save(
+            account_id=account_id,
+            filename=uploaded_file.filename,
+            file_type=uploaded_file.file_type,
+            content=uploaded_file.content,
+        )
+
         transactions = []
         for index, (_, row) in enumerate(normalized_df.iterrows()):
             transaction = TransactionDTO(
                 date=row["date"],
                 amount=row["amount"],
                 description=row["description"],
-                uploaded_file_id=uploaded_file_id,
-                account_id=account_id,
+                statement_id=str(statement.id),
+                account_id=str(account_id),
                 row_index=index,
                 sort_index=index,
                 source_type=SourceType.UPLOAD.value,
@@ -97,6 +107,20 @@ class StatementPersistenceService:
                 dto.sort_index = dto.row_index  # Default to row_index for uploaded transactions
             if not dto.source_type:
                 dto.source_type = SourceType.UPLOAD.value
+
+        # Create statement from uploaded file if transactions need to be saved
+        if processed_dtos:
+            uploaded_file = self.uploaded_file_repo.find_by_id(uploaded_file_id)
+            statement = self.statement_repo.save(
+                account_id=account_id,
+                filename=uploaded_file.filename,
+                file_type=uploaded_file.file_type,
+                content=uploaded_file.content,
+            )
+
+            # Update all DTOs with the statement_id
+            for dto in processed_dtos:
+                dto.statement_id = str(statement.id)
 
         # Save the batch of DTOs
         transactions_saved, duplicated_transactions = self.transaction_repo.save_batch(processed_dtos)

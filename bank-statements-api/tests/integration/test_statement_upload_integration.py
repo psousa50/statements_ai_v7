@@ -13,6 +13,7 @@ from sqlalchemy.orm import sessionmaker
 from app.api.schemas import StatementUploadRequest
 from app.core.dependencies import ExternalDependencies, build_internal_dependencies
 from app.domain.models.account import Account
+from app.domain.models.statement import Statement
 from app.domain.models.transaction import Transaction
 from app.domain.models.transaction_categorization import CategorizationSource, TransactionCategorization
 from app.domain.models.uploaded_file import UploadedFile
@@ -146,7 +147,11 @@ class TestStatementUploadIntegration:
         assert uploaded_file.content == csv_content
 
         # Check transactions were actually saved to database
-        transactions = db_session.query(Transaction).filter(Transaction.uploaded_file_id == uploaded_file_id).all()
+        # Get the statement that was created for this account
+        statement = db_session.query(Statement).filter(Statement.account_id == source.id).first()
+        assert statement is not None
+
+        transactions = db_session.query(Transaction).filter(Transaction.statement_id == statement.id).all()
         assert len(transactions) == 4
 
         # Verify specific transaction data
@@ -214,9 +219,11 @@ class TestStatementUploadIntegration:
         assert upload_result.transactions_saved == 3
 
         # Check real database state
-        transactions = (
-            db_session.query(Transaction).filter(Transaction.uploaded_file_id == analysis_result.uploaded_file_id).all()
-        )
+        # Get the statement that was created for this account
+        statement = db_session.query(Statement).filter(Statement.account_id == source.id).first()
+        assert statement is not None
+
+        transactions = db_session.query(Transaction).filter(Transaction.statement_id == statement.id).all()
 
         assert len(transactions) == 3
         # Verify all transactions have normalized descriptions (processed by real normalizer)

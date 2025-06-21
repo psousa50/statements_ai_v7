@@ -17,6 +17,7 @@ class Account(Base):
     counterparty_transactions = relationship(
         "Transaction", foreign_keys="Transaction.counterparty_account_id", back_populates="counterparty_account"
     )
+    statements = relationship("Statement", back_populates="account")
 
     def __repr__(self):
         return f"<Account(id={self.id}, name={self.name})>"

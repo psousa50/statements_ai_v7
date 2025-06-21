@@ -12,6 +12,7 @@ from sqlalchemy.orm import sessionmaker
 from app.core.dependencies import ExternalDependencies, build_internal_dependencies
 from app.domain.dto.statement_processing import PersistenceRequestDTO, PersistenceResultDTO
 from app.domain.models.account import Account
+from app.domain.models.statement import Statement
 from app.domain.models.transaction import Transaction
 from app.domain.models.uploaded_file import FileAnalysisMetadata, UploadedFile
 
@@ -139,7 +140,13 @@ class TestStatementProcessingIntegration:
         assert metadata.header_row_index == 1
         assert metadata.data_start_row_index == 2
 
-        transactions = db_session.query(Transaction).filter(Transaction.uploaded_file_id == uploaded_file_id).all()
+        # Get the statement that was created
+        statement = db_session.query(Statement).filter(Statement.account_id == source.id).first()
+        assert statement is not None
+        assert statement.filename == filename
+        assert statement.content == content
+
+        transactions = db_session.query(Transaction).filter(Transaction.statement_id == statement.id).all()
         assert len(transactions) == 3
 
         expected = [

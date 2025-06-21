@@ -105,7 +105,7 @@ class TestTransactionDeduplicationIntegration:
             amount=Decimal("25.50"),
             account_id=account.id,
             normalized_description="coffee shop purchase",
-            uploaded_file_id=uploaded_file_id,
+            statement_id=None,  # Will be set during deduplication test
         )
         db_session.add(existing_transaction)
         db_session.commit()
@@ -117,21 +117,21 @@ class TestTransactionDeduplicationIntegration:
                 description="Coffee Shop Purchase",  # This is a duplicate
                 amount=25.50,
                 account_id=str(account.id),
-                uploaded_file_id=str(uploaded_file_id),
+                statement_id=None,  # Will be set during deduplication
             ),
             TransactionDTO(
                 date="2023-01-02",
                 description="Grocery Store",  # This is new
                 amount=45.75,
                 account_id=str(account.id),
-                uploaded_file_id=str(uploaded_file_id),
+                statement_id=None,  # Will be set during deduplication
             ),
             TransactionDTO(
                 date="2023-01-03",
                 description="Gas Station",  # This is new
                 amount=35.00,
                 account_id=str(account.id),
-                uploaded_file_id=str(uploaded_file_id),
+                statement_id=None,  # Will be set during deduplication
             ),
         ]
 

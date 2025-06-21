@@ -194,7 +194,7 @@ class StatementUploadService:
                 date=row["date"],
                 amount=row["amount"],
                 description=row["description"],
-                uploaded_file_id=uploaded_file_id,
+                statement_id=None,  # Will be set during persistence
                 account_id=str(account_id),
                 row_index=index,  # Assign row_index based on position in file
                 sort_index=index,  # Initially same as row_index for uploaded transactions
@@ -233,25 +233,27 @@ class StatementUploadService:
 
     def _get_unmatched_transaction_ids(self, uploaded_file_id: str, processed_dtos: List[TransactionDTO]) -> List[UUID]:
         """Get transaction IDs for DTOs that were not categorized by rules"""
-        # Get all persisted transactions for this uploaded file
+        # Get all persisted transactions that have unmatched categorization status
         from app.domain.models.transaction import CategorizationStatus
 
-        # We need access to the transaction repository to get the persisted IDs
-        # For now, let's get unmatched DTOs and then query the database
-        unmatched_descriptions = [
-            dto.normalized_description
+        # Get unmatched DTOs that should have statement_id set during persistence
+        unmatched_dtos = [
+            dto
             for dto in processed_dtos
-            if dto.categorization_status == CategorizationStatus.UNCATEGORIZED
+            if dto.categorization_status == CategorizationStatus.UNCATEGORIZED and dto.statement_id
         ]
 
-        if not unmatched_descriptions:
+        if not unmatched_dtos:
             return []
 
-        # Query the database for transactions with these descriptions
-        # This is a bit hacky but necessary since DTOs don't have IDs until after persistence
-        transaction_repo = self.transaction_processing_orchestrator.transaction_repository
-        all_transactions = transaction_repo.get_by_uploaded_file_id(UUID(uploaded_file_id))
+        # Get statement_id from the first DTO (all should have the same statement_id)
+        statement_id = UUID(unmatched_dtos[0].statement_id)
 
-        unmatched_ids = [t.id for t in all_transactions if t.normalized_description in unmatched_descriptions]
+        # Query the database for transactions from this statement
+        transaction_repo = self.transaction_processing_orchestrator.transaction_repository
+        all_transactions = transaction_repo.get_by_statement_id(statement_id)
+
+        # Filter to only unmatched transactions
+        unmatched_ids = [t.id for t in all_transactions if t.categorization_status == CategorizationStatus.UNCATEGORIZED]
 
         return unmatched_ids

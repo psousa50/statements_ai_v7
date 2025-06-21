@@ -73,7 +73,7 @@ class TransactionDTO:
         date: str,
         amount: float,
         description: str,
-        uploaded_file_id: str,
+        statement_id: Optional[str] = None,
         account_id: Optional[str] = None,
         id: Optional[str] = None,
         created_at: Optional[datetime] = None,
@@ -90,7 +90,7 @@ class TransactionDTO:
         self.date = date
         self.amount = amount
         self.description = description
-        self.uploaded_file_id = uploaded_file_id
+        self.statement_id = statement_id
         self.account_id = account_id
         self.created_at = created_at
         self.category_id = category_id
@@ -109,13 +109,11 @@ class TransactionDTO:
             date=entity.date,
             amount=entity.amount,
             description=entity.description,
-            uploaded_file_id=str(entity.uploaded_file_id),
+            statement_id=str(entity.statement_id) if entity.statement_id else None,
             account_id=str(entity.account_id) if entity.account_id else None,
             created_at=entity.created_at,
             category_id=entity.category_id,
-            categorization_status=entity.categorization_status.value
-            if entity.categorization_status
-            else None,
+            categorization_status=entity.categorization_status.value if entity.categorization_status else None,
             normalized_description=entity.normalized_description,
             row_index=entity.row_index,
             sort_index=entity.sort_index,

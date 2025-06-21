@@ -21,9 +21,7 @@ depends_on: Union[str, Sequence[str], None] = None
 
 def upgrade() -> None:
     # Create the counterparty_status enum
-    counterparty_status_enum = postgresql.ENUM(
-        "unprocessed", "inferred", "confirmed", name="counterpartystatus"
-    )
+    counterparty_status_enum = postgresql.ENUM("unprocessed", "inferred", "confirmed", name="counterpartystatus")
     counterparty_status_enum.create(op.get_bind())
 
     # Add the counterparty_status column to the transactions table
@@ -43,7 +41,5 @@ def downgrade() -> None:
     op.drop_column("transactions", "counterparty_status")
 
     # Drop the enum
-    counterparty_status_enum = postgresql.ENUM(
-        "unprocessed", "inferred", "confirmed", name="counterpartystatus"
-    )
+    counterparty_status_enum = postgresql.ENUM("unprocessed", "inferred", "confirmed", name="counterpartystatus")
     counterparty_status_enum.drop(op.get_bind())

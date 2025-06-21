@@ -15,9 +15,12 @@ poetry run python run.py                    # Start dev server (port 8000)
 poetry run pytest                           # Run tests
 poetry run pytest --cov                     # Run tests with coverage
 poetry run alembic upgrade head             # Run migrations
+peotry run isort .                          # Check code formatting
 poetry run ruff check .                     # Lint code
-poetry run black . --line-length 160        # Format code
+poetry run black .                          # Format code
 ```
+
+Note: isort, black and ruff needs to run inside the bank-statements-api folder
 
 ### Frontend (pnpm)
 ```bash

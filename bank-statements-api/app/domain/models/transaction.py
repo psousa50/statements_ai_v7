@@ -4,11 +4,13 @@ from enum import Enum
 from typing import Optional
 from uuid import uuid4
 
-from app.core.database import Base
-from sqlalchemy import Column, Date, DateTime, ForeignKey, Integer, Numeric, String
+from sqlalchemy import Column, Date, DateTime
 from sqlalchemy import Enum as SQLAlchemyEnum
+from sqlalchemy import ForeignKey, Integer, Numeric, String
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
+
+from app.core.database import Base
 
 
 class CategorizationStatus(str, Enum):
@@ -36,26 +38,18 @@ class Transaction(Base):
     description = Column(String, nullable=False)
     normalized_description = Column(String, nullable=False, index=True)
     amount = Column(Numeric(precision=10, scale=2), nullable=False)
-    created_at = Column(
-        DateTime, default=lambda: datetime.now(timezone.utc), nullable=False
-    )
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
 
-    uploaded_file_id = Column(
-        UUID(as_uuid=True), ForeignKey("uploaded_files.id"), nullable=True
-    )
-    uploaded_file = relationship("UploadedFile")
+    statement_id = Column(UUID(as_uuid=True), ForeignKey("statements.id"), nullable=True)
+    statement = relationship("Statement", back_populates="transactions")
 
     category_id = Column(UUID(as_uuid=True), ForeignKey("categories.id"), nullable=True)
     category = relationship("Category")
 
     account_id = Column(UUID(as_uuid=True), ForeignKey("accounts.id"), nullable=False)
-    account = relationship(
-        "Account", foreign_keys=[account_id], back_populates="transactions"
-    )
+    account = relationship("Account", foreign_keys=[account_id], back_populates="transactions")
 
-    counterparty_account_id = Column(
-        UUID(as_uuid=True), ForeignKey("accounts.id"), nullable=True
-    )
+    counterparty_account_id = Column(UUID(as_uuid=True), ForeignKey("accounts.id"), nullable=True)
     counterparty_account = relationship(
         "Account",
         foreign_keys=[counterparty_account_id],
@@ -71,9 +65,7 @@ class Transaction(Base):
     categorization_confidence = Column(Numeric(precision=5, scale=4), nullable=True)
 
     counterparty_status = Column(
-        SQLAlchemyEnum(
-            CounterpartyStatus, values_callable=lambda x: [e.value for e in x]
-        ),
+        SQLAlchemyEnum(CounterpartyStatus, values_callable=lambda x: [e.value for e in x]),
         default=CounterpartyStatus.UNPROCESSED,
         nullable=False,
     )
@@ -86,9 +78,7 @@ class Transaction(Base):
         default=SourceType.UPLOAD,
         nullable=False,
     )
-    manual_position_after = Column(
-        UUID(as_uuid=True), ForeignKey("transactions.id"), nullable=True
-    )
+    manual_position_after = Column(UUID(as_uuid=True), ForeignKey("transactions.id"), nullable=True)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

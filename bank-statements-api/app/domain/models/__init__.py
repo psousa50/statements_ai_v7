@@ -11,6 +11,7 @@ from .processing import (
     ProcessingProgress,
     SyncCategorizationResult,
 )
+from .statement import Statement
 from .transaction import CategorizationStatus, Transaction
 from .transaction_categorization import CategorizationSource, TransactionCategorization
 from .uploaded_file import FileAnalysisMetadata, UploadedFile
@@ -41,6 +42,8 @@ __all__ = [
     # Transaction Categorization
     "CategorizationSource",
     "TransactionCategorization",
+    # Statement
+    "Statement",
     # Uploaded File
     "FileAnalysisMetadata",
     "UploadedFile",

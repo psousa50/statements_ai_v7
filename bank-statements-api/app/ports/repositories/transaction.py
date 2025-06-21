@@ -144,15 +144,15 @@ class TransactionRepository(ABC):
         pass
 
     @abstractmethod
-    def get_by_uploaded_file_id(self, uploaded_file_id: UUID) -> List[Transaction]:
+    def get_by_statement_id(self, statement_id: UUID) -> List[Transaction]:
         """
-        Get all transactions associated with an uploaded file
+        Get all transactions associated with a statement
 
         Args:
-            uploaded_file_id: UUID of the uploaded file
+            statement_id: UUID of the statement
 
         Returns:
-            List of transactions from the uploaded file
+            List of transactions from the statement
         """
         pass
 

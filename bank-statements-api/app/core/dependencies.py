@@ -8,6 +8,7 @@ from app.adapters.repositories.account import SQLAlchemyAccountRepository
 from app.adapters.repositories.background_job import SQLAlchemyBackgroundJobRepository
 from app.adapters.repositories.category import SQLAlchemyCategoryRepository
 from app.adapters.repositories.initial_balance import SQLAlchemyInitialBalanceRepository
+from app.adapters.repositories.statement import SqlAlchemyStatementRepository
 from app.adapters.repositories.transaction import SQLAlchemyTransactionRepository
 from app.adapters.repositories.transaction_categorization import SQLAlchemyTransactionCategorizationRepository
 from app.adapters.repositories.uploaded_file import SQLAlchemyFileAnalysisMetadataRepository, SQLAlchemyUploadedFileRepository
@@ -89,6 +90,7 @@ def build_internal_dependencies(external: ExternalDependencies) -> InternalDepen
     initial_balance_repo = SQLAlchemyInitialBalanceRepository(external.db)
     uploaded_file_repo = SQLAlchemyUploadedFileRepository(external.db)
     file_analysis_metadata_repo = SQLAlchemyFileAnalysisMetadataRepository(external.db)
+    statement_repo = SqlAlchemyStatementRepository(external.db)
     transaction_categorization_repo = SQLAlchemyTransactionCategorizationRepository(external.db)
     background_job_repo = SQLAlchemyBackgroundJobRepository(external.db)
 
@@ -142,6 +144,7 @@ def build_internal_dependencies(external: ExternalDependencies) -> InternalDepen
         transaction_repo=transaction_repo,
         uploaded_file_repo=uploaded_file_repo,
         file_analysis_metadata_repo=file_analysis_metadata_repo,
+        statement_repo=statement_repo,
     )
 
     statement_upload_service = StatementUploadService(

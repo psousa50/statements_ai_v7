@@ -1,5 +1,5 @@
 import uuid
-from unittest.mock import ANY, MagicMock
+from unittest.mock import ANY, MagicMock, Mock
 
 import pandas as pd
 
@@ -55,12 +55,18 @@ class TestStatementPersistenceService:
             created_at=None,
         )
 
+        statement_repo = Mock()
+        mock_statement = Mock()
+        mock_statement.id = uuid.uuid4()
+        statement_repo.save.return_value = mock_statement
+
         persistence_service = StatementPersistenceService(
             statement_parser=statement_parser,
             transaction_normalizer=transaction_normalizer,
             transaction_repo=transaction_repo,
             uploaded_file_repo=uploaded_file_repo,
             file_analysis_metadata_repo=file_analysis_metadata_repo,
+            statement_repo=statement_repo,
         )
 
         uploaded_file_id = str(uuid.uuid4())
@@ -93,7 +99,7 @@ class TestStatementPersistenceService:
         saved_transactions = transaction_repo.save_batch.call_args[0][0]
         assert len(saved_transactions) == 2
         assert all(isinstance(t, TransactionDTO) for t in saved_transactions)
-        assert all(t.uploaded_file_id == uploaded_file_id for t in saved_transactions)
+        assert all(t.statement_id == str(mock_statement.id) for t in saved_transactions)
 
         file_analysis_metadata_repo.save.assert_called_once_with(
             file_hash=ANY,
