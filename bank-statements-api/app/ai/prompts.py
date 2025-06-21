@@ -128,10 +128,10 @@ def counterparty_identification_prompt(transactions: List[Transaction], accounts
 
     transaction_data = []
     for t in transactions:
-        transaction_data.append({"description": t.description, "signed_amount": t.signed_amount})
+        transaction_data.append({"description": t.description, "amount": str(t.amount)})
 
     prompt = f"""
-You are a bank transaction counterparty identification assistant. Your task is to identify the most likely counterparty account for each transaction based on the transaction description and signed amount.
+You are a bank transaction counterparty identification assistant. Your task is to identify the most likely counterparty account for each transaction based on the transaction description and amount.
 
 Transactions: 
 {json.dumps(transaction_data, indent=2)}
@@ -139,7 +139,7 @@ Transactions:
 Available Counterparty Accounts:
 {json.dumps(accounts_info, indent=2)}
 
-For each transaction, analyze the description and signed amount to determine which counterparty account is most likely involved in this transaction.
+For each transaction, analyze the description and amount to determine which counterparty account is most likely involved in this transaction.
 
 Consider:
 - Transaction descriptions that might indicate transfers between accounts

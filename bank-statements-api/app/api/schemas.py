@@ -64,6 +64,15 @@ class AccountListResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class AccountUploadResponse(BaseModel):
+    accounts: Sequence[AccountResponse]
+    total: int
+    created: int
+    updated: int
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class TransactionBase(BaseModel):
     date: date
     description: str

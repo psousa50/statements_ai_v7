@@ -6,7 +6,7 @@ from uuid import UUID
 
 from app.domain.models.counterparty import BatchCounterpartyResult, CounterpartyResult
 from app.domain.models.processing import ProcessingProgress
-from app.domain.models.transaction import CategorizationStatus, Transaction
+from app.domain.models.transaction import CategorizationStatus, CounterpartyStatus, Transaction
 from app.ports.categorizers.transaction_counterparty import TransactionCounterparty
 from app.ports.repositories.transaction import TransactionRepository
 
@@ -35,6 +35,9 @@ class TransactionCounterpartyService:
             transaction = next((t for t in transactions if t.id == result.transaction_id), None)
             if transaction:
                 transaction.counterparty_account_id = result.counterparty_account_id
+                # Update counterparty status to indicate it was processed
+                if result.status == CategorizationStatus.CATEGORIZED:
+                    transaction.counterparty_status = CounterpartyStatus.INFERRED
                 # Note: We don't update categorization_status for counterparty identification
                 # since it's a separate concern from categorization
                 self.transaction_repository.update(transaction)
@@ -171,6 +174,8 @@ class TransactionCounterpartyService:
 
                             # Update transaction with counterparty result
                             fresh_transaction.counterparty_account_id = result.counterparty_account_id
+                            # Update counterparty status to indicate it was processed by LLM
+                            fresh_transaction.counterparty_status = CounterpartyStatus.INFERRED
                             # Note: counterparty_account_id can be None, which is valid
 
                             # Save to database
