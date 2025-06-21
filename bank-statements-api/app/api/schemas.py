@@ -9,6 +9,7 @@ from app.domain.models.background_job import JobStatus
 from app.domain.models.processing import BackgroundJobInfo
 from app.domain.models.transaction import CategorizationStatus, CounterpartyStatus
 from app.domain.models.transaction_categorization import CategorizationSource
+from app.domain.models.transaction_counterparty_rule import CounterpartyRuleSource
 
 
 class CategoryBase(BaseModel):
@@ -421,5 +422,42 @@ class CategorizationResponse(BaseModel):
     categorized_count: int
     success: bool
     message: str
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+# Transaction Counterparty Rule Schemas
+class TransactionCounterpartyRuleBase(BaseModel):
+    normalized_description: str
+    counterparty_account_id: UUID
+    min_amount: Optional[Decimal] = None
+    max_amount: Optional[Decimal] = None
+    source: CounterpartyRuleSource = CounterpartyRuleSource.MANUAL
+
+
+class TransactionCounterpartyRuleCreate(TransactionCounterpartyRuleBase):
+    pass
+
+
+class TransactionCounterpartyRuleUpdate(TransactionCounterpartyRuleBase):
+    pass
+
+
+class TransactionCounterpartyRuleResponse(BaseModel):
+    id: UUID
+    normalized_description: str
+    counterparty_account_id: UUID
+    min_amount: Optional[Decimal] = None
+    max_amount: Optional[Decimal] = None
+    source: CounterpartyRuleSource
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class TransactionCounterpartyRuleListResponse(BaseModel):
+    rules: Sequence[TransactionCounterpartyRuleResponse]
+    total: int
 
     model_config = ConfigDict(from_attributes=True)

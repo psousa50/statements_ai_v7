@@ -5,10 +5,11 @@ from uuid import UUID
 
 from app.domain.dto.statement_processing import TransactionDTO
 from app.domain.models.processing import BackgroundJobInfo, DTOProcessingResult, SyncCategorizationResult
-from app.domain.models.transaction import CategorizationStatus, Transaction
+from app.domain.models.transaction import CategorizationStatus, CounterpartyStatus, Transaction
 from app.ports.repositories.transaction import TransactionRepository
 from app.services.background.background_job_service import BackgroundJobService
 from app.services.rule_based_categorization import RuleBasedCategorizationService
+from app.services.rule_based_counterparty import RuleBasedCounterpartyService
 
 logger = logging.getLogger(__name__)
 
@@ -19,8 +20,9 @@ class TransactionProcessingOrchestrator:
 
     Orchestrates the complete transaction processing workflow:
     1. Immediate rule-based categorization
-    2. Queuing background AI categorization for unmatched transactions
-    3. Progress tracking and job management
+    2. Immediate rule-based counterparty identification
+    3. Queuing background AI categorization for unmatched transactions
+    4. Progress tracking and job management
 
     This provides synchronous results for rule-matched transactions
     while handling complex AI categorization asynchronously.
@@ -29,10 +31,12 @@ class TransactionProcessingOrchestrator:
     def __init__(
         self,
         rule_based_categorization_service: RuleBasedCategorizationService,
+        rule_based_counterparty_service: RuleBasedCounterpartyService,
         background_job_service: BackgroundJobService,
         transaction_repository: TransactionRepository,
     ):
         self.rule_based_categorization_service = rule_based_categorization_service
+        self.rule_based_counterparty_service = rule_based_counterparty_service
         self.background_job_service = background_job_service
         self.transaction_repository = transaction_repository
 
@@ -68,26 +72,44 @@ class TransactionProcessingOrchestrator:
         # Perform synchronous rule-based categorization on unique descriptions
         rule_matches = self.rule_based_categorization_service.categorize_batch(unique_normalized_descriptions)
 
-        # Apply rule-based categorization results to transactions
+        # Phase 1b: Rule-based counterparty identification
+        description_amount_pairs = [(t.normalized_description, t.amount) for t in transactions]
+        unique_description_amount_pairs = list(dict.fromkeys(description_amount_pairs))  # Remove duplicates
+
+        counterparty_matches = self.rule_based_counterparty_service.identify_counterparty_batch(unique_description_amount_pairs)
+
+        # Apply rule-based categorization and counterparty results to transactions
         matched_transactions = []
         unmatched_transactions = []
 
         for transaction in transactions:
-            if transaction.normalized_description in rule_matches:
+            categorization_matched = transaction.normalized_description in rule_matches
+            counterparty_matched = transaction.normalized_description in counterparty_matches
+
+            if categorization_matched:
                 # Rule match found - categorize transaction
                 category_id = rule_matches[transaction.normalized_description]
                 transaction.category_id = category_id
                 transaction.categorization_status = CategorizationStatus.CATEGORIZED
+                logger.debug(f"Categorization rule match: {transaction.normalized_description} -> {category_id}")
 
-                # Save transaction to database
+            if counterparty_matched:
+                # Counterparty rule match found
+                counterparty_account_id = counterparty_matches[transaction.normalized_description]
+                transaction.counterparty_account_id = counterparty_account_id
+                transaction.counterparty_status = CounterpartyStatus.INFERRED
+                logger.debug(f"Counterparty rule match: {transaction.normalized_description} -> {counterparty_account_id}")
+
+            # Save transaction to database if any changes were made
+            if categorization_matched or counterparty_matched:
                 self.transaction_repository.update(transaction)
 
+            if categorization_matched:
                 matched_transactions.append(transaction)
-                logger.debug(f"Rule match: {transaction.normalized_description} -> {category_id}")
             else:
-                # No rule match - transaction remains uncategorized
+                # No categorization rule match - transaction remains uncategorized
                 unmatched_transactions.append(transaction)
-                logger.debug(f"No rule match: {transaction.normalized_description}")
+                logger.debug(f"No categorization rule match: {transaction.normalized_description}")
 
         # Calculate metrics
         total_processed = len(transactions)
@@ -158,24 +180,45 @@ class TransactionProcessingOrchestrator:
         # Perform synchronous rule-based categorization on unique descriptions
         rule_matches = self.rule_based_categorization_service.categorize_batch(unique_normalized_descriptions)
 
-        # Apply rule-based categorization results to DTOs
+        # Phase 1b: Rule-based counterparty identification for DTOs
+        description_amount_pairs = [(dto.normalized_description, dto.amount) for dto in transaction_dtos]
+        unique_description_amount_pairs = list(dict.fromkeys(description_amount_pairs))  # Remove duplicates
+
+        counterparty_matches = self.rule_based_counterparty_service.identify_counterparty_batch(unique_description_amount_pairs)
+
+        # Apply rule-based categorization and counterparty results to DTOs
         matched_dtos = []
         unmatched_dtos = []
 
         for dto in transaction_dtos:
-            if dto.normalized_description in rule_matches:
+            categorization_matched = dto.normalized_description in rule_matches
+            counterparty_matched = dto.normalized_description in counterparty_matches
+
+            if categorization_matched:
                 # Rule match found - enrich DTO with category
                 category_id = rule_matches[dto.normalized_description]
                 dto.category_id = category_id
                 dto.categorization_status = CategorizationStatus.CATEGORIZED
-
-                matched_dtos.append(dto)
-                logger.debug(f"Rule match: {dto.normalized_description} -> {category_id}")
+                logger.debug(f"Categorization rule match: {dto.normalized_description} -> {category_id}")
             else:
-                # No rule match - DTO remains uncategorized
+                # No categorization rule match - DTO remains uncategorized
                 dto.categorization_status = CategorizationStatus.UNCATEGORIZED
+
+            if counterparty_matched:
+                # Counterparty rule match found - enrich DTO with counterparty
+                counterparty_account_id = counterparty_matches[dto.normalized_description]
+                dto.counterparty_account_id = counterparty_account_id
+                dto.counterparty_status = CounterpartyStatus.INFERRED
+                logger.debug(f"Counterparty rule match: {dto.normalized_description} -> {counterparty_account_id}")
+            else:
+                # No counterparty rule match
+                dto.counterparty_status = CounterpartyStatus.UNPROCESSED
+
+            if categorization_matched:
+                matched_dtos.append(dto)
+            else:
                 unmatched_dtos.append(dto)
-                logger.debug(f"No rule match: {dto.normalized_description}")
+                logger.debug(f"No categorization rule match: {dto.normalized_description}")
 
         # Calculate metrics
         total_processed = len(transaction_dtos)

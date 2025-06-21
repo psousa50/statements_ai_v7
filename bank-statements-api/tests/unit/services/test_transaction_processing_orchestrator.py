@@ -36,15 +36,25 @@ class TestTransactionProcessingOrchestrator:
         return repository
 
     @pytest.fixture
+    def mock_rule_based_counterparty_service(self):
+        """Create mock rule-based counterparty service"""
+        from app.services.rule_based_counterparty import RuleBasedCounterpartyService
+
+        service = MagicMock(spec=RuleBasedCounterpartyService)
+        return service
+
+    @pytest.fixture
     def orchestrator(
         self,
         mock_rule_based_service,
+        mock_rule_based_counterparty_service,
         mock_background_job_service,
         mock_transaction_repository,
     ):
         """Create orchestrator with mocked dependencies"""
         return TransactionProcessingOrchestrator(
             rule_based_categorization_service=mock_rule_based_service,
+            rule_based_counterparty_service=mock_rule_based_counterparty_service,
             background_job_service=mock_background_job_service,
             transaction_repository=mock_transaction_repository,
         )

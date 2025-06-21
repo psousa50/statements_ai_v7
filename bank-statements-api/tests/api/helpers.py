@@ -13,12 +13,14 @@ from app.services.background.background_job_service import BackgroundJobService
 from app.services.category import CategoryService
 from app.services.initial_balance_service import InitialBalanceService
 from app.services.rule_based_categorization import RuleBasedCategorizationService
+from app.services.rule_based_counterparty import RuleBasedCounterpartyService
 from app.services.statement_processing.statement_analyzer import StatementAnalyzerService
 from app.services.statement_processing.statement_persistence import StatementPersistenceService
 from app.services.statement_processing.statement_upload import StatementUploadService
 from app.services.transaction import TransactionService
 from app.services.transaction_categorization.transaction_categorization import TransactionCategorizationService
 from app.services.transaction_categorization_management import TransactionCategorizationManagementService
+from app.services.transaction_counterparty_rule_management import TransactionCounterpartyRuleManagementService
 from app.services.transaction_counterparty_service import TransactionCounterpartyService
 from app.services.transaction_processing_orchestrator import TransactionProcessingOrchestrator
 
@@ -33,7 +35,9 @@ def mocked_dependencies(
     transaction_categorization_service: TransactionCategorizationService = None,
     transaction_counterparty_service: TransactionCounterpartyService = None,
     transaction_categorization_management_service: TransactionCategorizationManagementService = None,
+    transaction_counterparty_rule_management_service: TransactionCounterpartyRuleManagementService = None,
     rule_based_categorization_service: RuleBasedCategorizationService = None,
+    rule_based_counterparty_service: RuleBasedCounterpartyService = None,
     background_job_service: BackgroundJobService = None,
     background_job_repository: SQLAlchemyBackgroundJobRepository = None,
     transaction_processing_orchestrator: TransactionProcessingOrchestrator = None,
@@ -60,7 +64,10 @@ def mocked_dependencies(
         transaction_counterparty_service=transaction_counterparty_service or MagicMock(spec=TransactionCounterpartyService),
         transaction_categorization_management_service=transaction_categorization_management_service
         or MagicMock(spec=TransactionCategorizationManagementService),
+        transaction_counterparty_rule_management_service=transaction_counterparty_rule_management_service
+        or MagicMock(spec=TransactionCounterpartyRuleManagementService),
         rule_based_categorization_service=rule_based_categorization_service or MagicMock(spec=RuleBasedCategorizationService),
+        rule_based_counterparty_service=rule_based_counterparty_service or MagicMock(spec=RuleBasedCounterpartyService),
         background_job_service=background_job_service or MagicMock(spec=BackgroundJobService),
         background_job_repository=background_job_repository or MagicMock(spec=SQLAlchemyBackgroundJobRepository),
         transaction_processing_orchestrator=transaction_processing_orchestrator

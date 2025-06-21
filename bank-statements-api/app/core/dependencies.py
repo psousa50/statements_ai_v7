@@ -11,6 +11,7 @@ from app.adapters.repositories.initial_balance import SQLAlchemyInitialBalanceRe
 from app.adapters.repositories.statement import SqlAlchemyStatementRepository
 from app.adapters.repositories.transaction import SQLAlchemyTransactionRepository
 from app.adapters.repositories.transaction_categorization import SQLAlchemyTransactionCategorizationRepository
+from app.adapters.repositories.transaction_counterparty_rule import SQLAlchemyTransactionCounterpartyRuleRepository
 from app.adapters.repositories.uploaded_file import SQLAlchemyFileAnalysisMetadataRepository, SQLAlchemyUploadedFileRepository
 from app.ai.gemini_ai import GeminiAI
 from app.ai.llm_client import LLMClient
@@ -20,6 +21,7 @@ from app.services.background.background_job_service import BackgroundJobService
 from app.services.category import CategoryService
 from app.services.initial_balance_service import InitialBalanceService
 from app.services.rule_based_categorization import RuleBasedCategorizationService
+from app.services.rule_based_counterparty import RuleBasedCounterpartyService
 from app.services.schema_detection.heuristic_schema_detector import HeuristicSchemaDetector
 from app.services.statement_processing.file_type_detector import StatementFileTypeDetector
 from app.services.statement_processing.statement_analyzer import StatementAnalyzerService
@@ -32,6 +34,7 @@ from app.services.transaction_categorization.llm_transaction_categorizer import 
 from app.services.transaction_categorization.llm_transaction_counterparty import LLMTransactionCounterparty
 from app.services.transaction_categorization.transaction_categorization import TransactionCategorizationService
 from app.services.transaction_categorization_management import TransactionCategorizationManagementService
+from app.services.transaction_counterparty_rule_management import TransactionCounterpartyRuleManagementService
 from app.services.transaction_counterparty_service import TransactionCounterpartyService
 from app.services.transaction_processing_orchestrator import TransactionProcessingOrchestrator
 
@@ -60,7 +63,9 @@ class InternalDependencies:
         transaction_categorization_service: TransactionCategorizationService,
         transaction_counterparty_service: TransactionCounterpartyService,
         transaction_categorization_management_service: TransactionCategorizationManagementService,
+        transaction_counterparty_rule_management_service: TransactionCounterpartyRuleManagementService,
         rule_based_categorization_service: RuleBasedCategorizationService,
+        rule_based_counterparty_service: RuleBasedCounterpartyService,
         background_job_service: BackgroundJobService,
         background_job_repository: SQLAlchemyBackgroundJobRepository,
         transaction_processing_orchestrator: TransactionProcessingOrchestrator,
@@ -76,7 +81,9 @@ class InternalDependencies:
         self.transaction_categorization_service = transaction_categorization_service
         self.transaction_counterparty_service = transaction_counterparty_service
         self.transaction_categorization_management_service = transaction_categorization_management_service
+        self.transaction_counterparty_rule_management_service = transaction_counterparty_rule_management_service
         self.rule_based_categorization_service = rule_based_categorization_service
+        self.rule_based_counterparty_service = rule_based_counterparty_service
         self.background_job_service = background_job_service
         self.background_job_repository = background_job_repository
         self.transaction_processing_orchestrator = transaction_processing_orchestrator
@@ -96,6 +103,7 @@ def build_internal_dependencies(external: ExternalDependencies) -> InternalDepen
     file_analysis_metadata_repo = SQLAlchemyFileAnalysisMetadataRepository(external.db)
     statement_repo = SqlAlchemyStatementRepository(external.db)
     transaction_categorization_repo = SQLAlchemyTransactionCategorizationRepository(external.db)
+    transaction_counterparty_rule_repo = SQLAlchemyTransactionCounterpartyRuleRepository(external.db)
     background_job_repo = SQLAlchemyBackgroundJobRepository(external.db)
 
     file_type_detector = StatementFileTypeDetector()
@@ -112,10 +120,15 @@ def build_internal_dependencies(external: ExternalDependencies) -> InternalDepen
         repository=transaction_categorization_repo, enable_cache=True
     )
 
+    rule_based_counterparty_service = RuleBasedCounterpartyService(
+        repository=transaction_counterparty_rule_repo, enable_cache=True
+    )
+
     background_job_service = BackgroundJobService(background_job_repo)
 
     transaction_processing_orchestrator = TransactionProcessingOrchestrator(
         rule_based_categorization_service=rule_based_categorization_service,
+        rule_based_counterparty_service=rule_based_counterparty_service,
         background_job_service=background_job_service,
         transaction_repository=transaction_repo,
     )
@@ -132,10 +145,15 @@ def build_internal_dependencies(external: ExternalDependencies) -> InternalDepen
     transaction_counterparty_service = TransactionCounterpartyService(
         transaction_repository=transaction_repo,
         transaction_counterparty=transaction_counterparty,
+        transaction_counterparty_rule_repository=transaction_counterparty_rule_repo,
     )
 
     transaction_categorization_management_service = TransactionCategorizationManagementService(
         repository=transaction_categorization_repo,
+    )
+
+    transaction_counterparty_rule_management_service = TransactionCounterpartyRuleManagementService(
+        repository=transaction_counterparty_rule_repo,
     )
 
     statement_analyzer_service = StatementAnalyzerService(
@@ -178,7 +196,9 @@ def build_internal_dependencies(external: ExternalDependencies) -> InternalDepen
         transaction_categorization_service=transaction_categorization_service,
         transaction_counterparty_service=transaction_counterparty_service,
         transaction_categorization_management_service=transaction_categorization_management_service,
+        transaction_counterparty_rule_management_service=transaction_counterparty_rule_management_service,
         rule_based_categorization_service=rule_based_categorization_service,
+        rule_based_counterparty_service=rule_based_counterparty_service,
         background_job_service=background_job_service,
         background_job_repository=background_job_repo,
         transaction_processing_orchestrator=transaction_processing_orchestrator,
