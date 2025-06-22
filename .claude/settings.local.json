@@ -16,7 +16,10 @@
       "Bash(poetry run alembic:*)",
       "Bash(mv:*)",
       "Bash(sed:*)",
-      "Bash(poetry run:*)"
+      "Bash(poetry run:*)",
+      "mcp__puppeteer__puppeteer_evaluate",
+      "mcp__puppeteer__puppeteer_navigate",
+      "mcp__puppeteer__puppeteer_screenshot"
     ],
     "deny": []
   }
