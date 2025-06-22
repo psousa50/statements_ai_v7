@@ -22,6 +22,8 @@ export interface Transaction {
   category_id?: string
   categorization_status: CategorizationStatus
   running_balance?: number
+  counterparty_account_id?: string
+  counterparty_status?: 'UNPROCESSED' | 'INFERRED' | 'CONFIRMED'
 }
 
 export interface TransactionCreate {

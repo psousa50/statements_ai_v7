@@ -258,7 +258,16 @@ export const TransactionTable = ({
           {transactions.map((transaction) => (
             <tr key={transaction.id}>
               <td>{formatDate(transaction.date)}</td>
-              <td>{transaction.description}</td>
+              <td>
+                <div className="transaction-description">
+                  <div>{transaction.description}</div>
+                  {transaction.counterparty_account_id && (
+                    <div className={`counterparty-badge ${transaction.amount < 0 ? 'negative' : 'positive'}`}>
+                      {transaction.amount < 0 ? 'to' : 'from'}: {getAccountName(transaction.counterparty_account_id)}
+                    </div>
+                  )}
+                </div>
+              </td>
               {onCategorize && (
                 <td>
                   <CategoryPicker transaction={transaction} categories={categories} onCategorize={onCategorize} />
