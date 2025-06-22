@@ -38,7 +38,7 @@ export const TransactionsPage = () => {
       account_id: urlAccountId || undefined,
       category_ids: urlCategoryIds ? urlCategoryIds.split(',') : undefined,
       sort_field: (urlSortField as TransactionSortField) || 'date',
-      sort_direction: (urlSortDirection as TransactionSortDirection) || 'asc',
+      sort_direction: (urlSortDirection as TransactionSortDirection) || 'desc',
     }
   }
 
@@ -224,7 +224,7 @@ export const TransactionsPage = () => {
       page: 1,
       page_size: filters.page_size,
       sort_field: 'date' as TransactionSortField,
-      sort_direction: 'asc' as TransactionSortDirection,
+      sort_direction: 'desc' as TransactionSortDirection,
       include_running_balance: false,
     }
     setFilters(clearedFilters)
