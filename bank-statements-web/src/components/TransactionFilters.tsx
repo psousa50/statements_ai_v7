@@ -274,6 +274,7 @@ export const TransactionFilters = ({
                   character=" - "
                   size="md"
                   placement="bottomStart"
+                  className="date-range-picker-input"
                 />
               </div>
             ) : (

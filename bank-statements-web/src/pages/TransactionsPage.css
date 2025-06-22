@@ -1011,6 +1011,94 @@
   background-color: var(--bg-accent);
 }
 
+/* RSuite DateRangePicker Dark Mode - Override default styles */
+/* Target the actual input element classes */
+.rs-date-range-input,
+.rs-input[placeholder="Select date range"],
+.date-range-picker .rs-date-range-input,
+.date-range-picker .rs-input {
+  background-color: var(--bg-primary) !important;
+  border: 1px solid var(--border-primary) !important;
+  color: var(--text-primary) !important;
+  padding: 0.75rem !important;
+  border-radius: 8px !important;
+  font-size: 0.875rem !important;
+  transition: border-color 0.2s, box-shadow 0.2s !important;
+  width: 100% !important;
+  min-height: 42px !important;
+}
+
+/* Also target the picker toggle classes */
+.date-range-picker-input.rs-picker-default,
+.date-range-picker-input .rs-picker-toggle,
+.date-range-picker .rs-picker-default,
+.date-range-picker .rs-picker-toggle {
+  background-color: var(--bg-primary) !important;
+  border: 1px solid var(--border-primary) !important;
+  color: var(--text-primary) !important;
+  padding: 0.75rem !important;
+  border-radius: 8px !important;
+  font-size: 0.875rem !important;
+  transition: border-color 0.2s, box-shadow 0.2s !important;
+  width: 100% !important;
+  min-height: 42px !important;
+}
+
+/* Hover states */
+.rs-date-range-input:hover,
+.rs-input[placeholder="Select date range"]:hover,
+.date-range-picker .rs-date-range-input:hover,
+.date-range-picker .rs-input:hover,
+.date-range-picker-input .rs-picker-toggle:hover,
+.date-range-picker .rs-picker-toggle:hover {
+  border-color: var(--border-secondary) !important;
+}
+
+/* Focus states */
+.rs-date-range-input:focus,
+.rs-input[placeholder="Select date range"]:focus,
+.date-range-picker .rs-date-range-input:focus,
+.date-range-picker .rs-input:focus,
+.date-range-picker-input .rs-picker-toggle:focus,
+.date-range-picker-input .rs-picker-toggle:focus-within,
+.date-range-picker .rs-picker-toggle:focus,
+.date-range-picker .rs-picker-toggle:focus-within {
+  outline: none !important;
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
+}
+
+.date-range-picker-input .rs-picker-toggle-placeholder,
+.date-range-picker .rs-picker-toggle-placeholder {
+  color: var(--text-muted) !important;
+}
+
+.date-range-picker-input .rs-picker-toggle-value,
+.date-range-picker .rs-picker-toggle-value {
+  color: var(--text-primary) !important;
+}
+
+.date-range-picker-input .rs-picker-toggle-caret,
+.date-range-picker .rs-picker-toggle-caret {
+  color: var(--text-muted) !important;
+}
+
+/* Fix the calendar icon background */
+.date-range-picker .rs-input-group-addon,
+.rs-input-group-addon {
+  background-color: var(--bg-primary) !important;
+  border: 1px solid var(--border-primary) !important;
+  border-left: none !important;
+  color: var(--text-muted) !important;
+}
+
+/* Ensure consistent background across all elements */
+.date-range-picker-input .rs-picker-toggle *,
+.date-range-picker .rs-picker-toggle *,
+.date-range-picker * {
+  background-color: inherit !important;
+}
+
 /* Custom Date Picker Dark Mode - Target specific class */
 .custom-date-picker.rs-picker-default,
 .custom-date-picker .rs-picker-toggle {
