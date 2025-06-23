@@ -164,7 +164,7 @@ class StatementAnalyzerService:
             # Skip rows with invalid dates
             if not isinstance(row["date"], str) and pd.isna(row["date"]):
                 continue
-                
+
             account_uuid = None
             if account_id:
                 account_uuid = UUID(account_id) if isinstance(account_id, str) else account_id

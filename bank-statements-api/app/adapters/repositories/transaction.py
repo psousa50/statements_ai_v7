@@ -254,7 +254,7 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
             # Skip transactions with invalid dates
             if not isinstance(transaction_dto.date, str) and pd.isna(transaction_dto.date):
                 continue
-                
+
             # Convert account_id to UUID if provided
             account_uuid = None
             if transaction_dto.account_id:
@@ -264,8 +264,10 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
                     account_uuid = UUID(transaction_dto.account_id)
 
             # Prepare date string
-            date_str = transaction_dto.date if isinstance(transaction_dto.date, str) else transaction_dto.date.strftime("%Y-%m-%d")
-            
+            date_str = (
+                transaction_dto.date if isinstance(transaction_dto.date, str) else transaction_dto.date.strftime("%Y-%m-%d")
+            )
+
             # Find matching transactions in database
             matching_transactions = self.find_matching_transactions(
                 date=date_str,
