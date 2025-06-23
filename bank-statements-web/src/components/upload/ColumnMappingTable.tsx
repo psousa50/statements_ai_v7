@@ -206,7 +206,7 @@ export const ColumnMappingTable: React.FC<ColumnMappingTableProps> = ({
       </Typography>
 
       <Typography variant="body2" sx={{ mb: 2, color: 'text.secondary' }}>
-        Click row numbers to set header, right-click for data start: H{headerRowIndex + 1} (blue), D
+        Click row numbers to set header, right-click for data start: Header: {headerRowIndex + 1} (blue), Data start:
         {dataStartRowIndex + 1} (green)
       </Typography>
 
