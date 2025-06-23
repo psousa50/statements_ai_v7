@@ -80,7 +80,7 @@ class TransactionNormalizer:
         result_df["description"] = descriptions.fillna("").astype(str)
 
         if "date" in result_df.columns:
-            result_df["date"] = result_df["date"].apply(lambda x: x.strftime("%Y-%m-%d") if hasattr(x, "strftime") else x)
+            result_df["date"] = result_df["date"].apply(lambda x: x.strftime("%Y-%m-%d") if pd.notna(x) and hasattr(x, "strftime") else x)
 
         return result_df
 

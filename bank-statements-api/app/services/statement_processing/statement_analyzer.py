@@ -161,12 +161,17 @@ class StatementAnalyzerService:
         duplicate_count = 0
 
         for _, row in normalized_df.iterrows():
+            # Skip rows with invalid dates
+            if not isinstance(row["date"], str) and pd.isna(row["date"]):
+                continue
+                
             account_uuid = None
             if account_id:
                 account_uuid = UUID(account_id) if isinstance(account_id, str) else account_id
 
+            date_str = row["date"] if isinstance(row["date"], str) else row["date"].strftime("%Y-%m-%d")
             matching_transactions = self.transaction_repo.find_matching_transactions(
-                date=row["date"] if isinstance(row["date"], str) else row["date"].strftime("%Y-%m-%d"),
+                date=date_str,
                 description=row["description"],
                 amount=float(row["amount"]),
                 account_id=account_uuid,
