@@ -37,6 +37,7 @@ from app.services.transaction_categorization_management import TransactionCatego
 from app.services.transaction_counterparty_rule_management import TransactionCounterpartyRuleManagementService
 from app.services.transaction_counterparty_service import TransactionCounterpartyService
 from app.services.transaction_processing_orchestrator import TransactionProcessingOrchestrator
+from app.services.transaction_rule_enhancement import TransactionRuleEnhancementService
 
 logger = logging.getLogger(__name__)
 
@@ -133,6 +134,11 @@ def build_internal_dependencies(external: ExternalDependencies) -> InternalDepen
         transaction_repository=transaction_repo,
     )
 
+    transaction_rule_enhancement_service = TransactionRuleEnhancementService(
+        rule_based_categorization_service=rule_based_categorization_service,
+        rule_based_counterparty_service=rule_based_counterparty_service,
+    )
+
     # transaction_categorizer = SimpleTransactionCategorizer(category_repo)
     transaction_categorizer = LLMTransactionCategorizer(category_repo, external.llm_client)
     transaction_categorization_service = TransactionCategorizationService(
@@ -180,7 +186,7 @@ def build_internal_dependencies(external: ExternalDependencies) -> InternalDepen
         transaction_normalizer=transaction_normalizer,
         uploaded_file_repo=uploaded_file_repo,
         file_analysis_metadata_repo=file_analysis_metadata_repo,
-        transaction_processing_orchestrator=transaction_processing_orchestrator,
+        transaction_rule_enhancement_service=transaction_rule_enhancement_service,
         statement_persistence_service=statement_persistence_service,
         background_job_service=background_job_service,
     )

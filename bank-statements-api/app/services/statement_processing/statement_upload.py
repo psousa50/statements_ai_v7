@@ -4,7 +4,9 @@ from uuid import UUID
 
 from app.api.schemas import StatementUploadRequest
 from app.domain.dto.statement_processing import TransactionDTO
+from app.domain.dto.statement_upload import EnhancedTransactions, ParsedStatement, SavedStatement, ScheduledJobs
 from app.domain.models.transaction import SourceType
+from app.services.transaction_rule_enhancement import TransactionRuleEnhancementService
 
 logger = logging.getLogger("app")
 
@@ -38,7 +40,7 @@ class StatementUploadService:
         transaction_normalizer,
         uploaded_file_repo,
         file_analysis_metadata_repo,
-        transaction_processing_orchestrator,
+        transaction_rule_enhancement_service: TransactionRuleEnhancementService,
         statement_persistence_service,
         background_job_service,
     ):
@@ -46,100 +48,119 @@ class StatementUploadService:
         self.transaction_normalizer = transaction_normalizer
         self.uploaded_file_repo = uploaded_file_repo
         self.file_analysis_metadata_repo = file_analysis_metadata_repo
-        self.transaction_processing_orchestrator = transaction_processing_orchestrator
+        self.transaction_rule_enhancement_service = transaction_rule_enhancement_service
         self.statement_persistence_service = statement_persistence_service
         self.background_job_service = background_job_service
 
-    def upload_and_process(
+    def upload_statement(
         self,
         upload_request: StatementUploadRequest,
         background_tasks=None,
         internal_deps=None,
     ) -> StatementUploadResult:
         """
-        Complete statement upload and processing flow:
-        1. Parse file to transaction DTOs
-        2. Process DTOs (categorization, etc.)
-        3. Save processed transactions to database
-        4. Trigger immediate background job processing if background_tasks provided
-
-        Args:
-            upload_request: The upload request data
-            background_tasks: Optional FastAPI BackgroundTasks for immediate processing
-            internal_deps: Optional internal dependencies for background processing
+        Simplified statement upload process with 4 clear steps:
+        1. Parse statement file
+        2. Enhance transactions with rule-based processing
+        3. Save statement and transactions to database
+        4. Schedule background jobs for AI processing
         """
-        # Step 1: Parse file to transaction DTOs (without persisting)
-        transaction_dtos = self._parse_to_transaction_dtos(
-            uploaded_file_id=upload_request.uploaded_file_id,
-            column_mapping=upload_request.column_mapping,
-            header_row_index=upload_request.header_row_index,
-            data_start_row_index=upload_request.data_start_row_index,
-            account_id=UUID(upload_request.account_id),
-        )
+        # Step 1: Parse Statement
+        parsed = self.parse_statement(upload_request)
 
-        # Step 2: Process transaction DTOs (categorization, background job setup)
-        processing_result = self.transaction_processing_orchestrator.process_transaction_dtos(
-            transaction_dtos=transaction_dtos,
+        # Step 2: Enhance Transactions
+        enhanced = self.enhance_transactions(parsed)
+
+        # Step 3: Save Statement
+        saved = self.save_statement(enhanced, upload_request)
+
+        # Step 4: Schedule Background Jobs
+        jobs = self.schedule_jobs(saved, enhanced)
+
+        # Optional: Trigger immediate processing if requested
+        if background_tasks and internal_deps:
+            self._trigger_immediate_processing(background_tasks, internal_deps)
+
+        return self._build_result(enhanced, saved, jobs)
+
+    # Keep old method for backward compatibility during transition
+    def upload_and_process(
+        self,
+        upload_request: StatementUploadRequest,
+        background_tasks=None,
+        internal_deps=None,
+    ) -> StatementUploadResult:
+        """Backward compatibility method - delegates to new upload_statement method"""
+        return self.upload_statement(upload_request, background_tasks, internal_deps)
+
+    def parse_statement(self, upload_request: StatementUploadRequest) -> ParsedStatement:
+        """Step 1: Parse uploaded file to transaction DTOs"""
+        logger.info(f"Parsing statement file {upload_request.uploaded_file_id}")
+
+        # Get uploaded file
+        uploaded_file = self.uploaded_file_repo.find_by_id(upload_request.uploaded_file_id)
+        file_content = uploaded_file.content
+        file_type = uploaded_file.file_type
+
+        # Parse file to dataframe
+        raw_df = self.statement_parser.parse(file_content, file_type)
+
+        # Process dataframe (header/data row handling)
+        from app.services.common import process_dataframe
+
+        processed_df = process_dataframe(raw_df, upload_request.header_row_index, upload_request.data_start_row_index)
+
+        # Normalize columns
+        normalized_df = self.transaction_normalizer.normalize(processed_df, upload_request.column_mapping)
+
+        # Convert to DTOs
+        transaction_dtos = []
+        for index, (_, row) in enumerate(normalized_df.iterrows()):
+            transaction_dto = TransactionDTO(
+                date=row["date"],
+                amount=row["amount"],
+                description=row["description"],
+                statement_id=None,  # Will be set during persistence
+                account_id=upload_request.account_id,
+                row_index=index,  # Assign row_index based on position in file
+                sort_index=index,  # Initially same as row_index for uploaded transactions
+                source_type=SourceType.UPLOAD.value,
+            )
+            transaction_dtos.append(transaction_dto)
+
+        return ParsedStatement(
             uploaded_file_id=UUID(upload_request.uploaded_file_id),
+            transaction_dtos=transaction_dtos,
+            account_id=UUID(upload_request.account_id),
         )
 
-        # Step 3: Save processed transactions with all data complete
+    def enhance_transactions(self, parsed: ParsedStatement) -> EnhancedTransactions:
+        """Step 2: Enhance transactions with rule-based processing"""
+        logger.info(f"Enhancing {len(parsed.transaction_dtos)} transactions")
+
+        enhancement_result = self.transaction_rule_enhancement_service.enhance_transactions(parsed.transaction_dtos)
+
+        return EnhancedTransactions(
+            enhanced_dtos=enhancement_result.enhanced_dtos,
+            total_processed=enhancement_result.total_processed,
+            rule_based_matches=enhancement_result.rule_based_matches,
+            match_rate_percentage=enhancement_result.match_rate_percentage,
+            processing_time_ms=enhancement_result.processing_time_ms,
+            has_unmatched=enhancement_result.has_unmatched,
+        )
+
+    def save_statement(self, enhanced: EnhancedTransactions, upload_request: StatementUploadRequest) -> SavedStatement:
+        """Step 3: Save statement and transactions to database"""
+        logger.info(f"Saving {len(enhanced.enhanced_dtos)} transactions to database")
+
+        # Save processed transactions
         persistence_result = self.statement_persistence_service.save_processed_transactions(
-            processed_dtos=processing_result.processed_dtos,
+            processed_dtos=enhanced.enhanced_dtos,
             account_id=UUID(upload_request.account_id),
             uploaded_file_id=upload_request.uploaded_file_id,
         )
 
-        # Step 3.5: Schedule background job for unmatched transactions (after persistence)
-        background_job_info = None
-        if processing_result.has_unmatched_transactions:
-            # Get the persisted transaction IDs for unmatched transactions
-            unmatched_transaction_ids = self._get_unmatched_transaction_ids(
-                upload_request.uploaded_file_id, processing_result.processed_dtos
-            )
-
-            if unmatched_transaction_ids:
-                logger.info(f"Queuing background job for {len(unmatched_transaction_ids)} unmatched transactions")
-
-                background_job = self.background_job_service.queue_ai_categorization_job(
-                    UUID(upload_request.uploaded_file_id), unmatched_transaction_ids
-                )
-
-                # Create background job info for response
-                from app.domain.models.processing import BackgroundJobInfo
-
-                background_job_info = BackgroundJobInfo(
-                    job_id=background_job.id,
-                    status=background_job.status,
-                    remaining_transactions=len(unmatched_transaction_ids),
-                    estimated_completion_seconds=len(unmatched_transaction_ids) * 2,  # Rough estimate
-                    status_url=f"/api/v1/transactions/categorization-jobs/{background_job.id}/status",
-                )
-
-                # Step 4: Trigger immediate background job processing if requested
-                if background_tasks and internal_deps:
-                    self._trigger_immediate_processing(background_tasks, internal_deps)
-                else:
-                    logger.info(f"Background job {background_job.id} queued for cron processing")
-
-        # Step 3.6: Schedule background job for counterparty identification (after persistence)
-        # Get all persisted transaction IDs for counterparty identification
-        all_transaction_ids = self._get_all_transaction_ids(upload_request.uploaded_file_id, processing_result.processed_dtos)
-
-        if all_transaction_ids:
-            logger.info(f"Queuing counterparty identification job for {len(all_transaction_ids)} transactions")
-
-            counterparty_job = self.background_job_service.queue_ai_counterparty_identification_job(
-                UUID(upload_request.uploaded_file_id), all_transaction_ids
-            )
-
-            # Trigger immediate background job processing if requested
-            if background_tasks and internal_deps:
-                self._trigger_immediate_processing(background_tasks, internal_deps)
-            else:
-                logger.info(f"Counterparty identification job {counterparty_job.id} queued for cron processing")
-
-        # Step 5: Save file analysis metadata for future duplicate detection
+        # Save file analysis metadata for future duplicate detection
         self._save_file_analysis_metadata(
             uploaded_file_id=upload_request.uploaded_file_id,
             column_mapping=upload_request.column_mapping,
@@ -148,16 +169,77 @@ class StatementUploadService:
             account_id=UUID(upload_request.account_id),
         )
 
-        # Step 6: Return result (background job info already set above)
-        return StatementUploadResult(
+        return SavedStatement(
+            statement=persistence_result.statement,
             uploaded_file_id=persistence_result.uploaded_file_id,
             transactions_saved=persistence_result.transactions_saved,
             duplicated_transactions=persistence_result.duplicated_transactions,
-            total_processed=processing_result.total_processed,
-            rule_based_matches=processing_result.rule_based_matches,
-            match_rate_percentage=processing_result.match_rate_percentage,
-            processing_time_ms=processing_result.processing_time_ms,
-            background_job_info=background_job_info,
+        )
+
+    def schedule_jobs(self, saved: SavedStatement, enhanced: EnhancedTransactions) -> ScheduledJobs:
+        """Step 4: Schedule background jobs for AI processing"""
+        categorization_job_info = None
+        counterparty_job_info = None
+
+        # Schedule AI categorization for unmatched transactions
+        if enhanced.has_unmatched:
+            unmatched_transaction_ids = self._get_unmatched_transaction_ids_from_statement(saved.statement.id)
+
+            if unmatched_transaction_ids:
+                logger.info(f"Queuing AI categorization job for {len(unmatched_transaction_ids)} unmatched transactions")
+
+                background_job = self.background_job_service.queue_ai_categorization_job(
+                    UUID(saved.uploaded_file_id), unmatched_transaction_ids
+                )
+
+                from app.domain.models.processing import BackgroundJobInfo
+
+                categorization_job_info = BackgroundJobInfo(
+                    job_id=background_job.id,
+                    status=background_job.status,
+                    remaining_transactions=len(unmatched_transaction_ids),
+                    estimated_completion_seconds=len(unmatched_transaction_ids) * 2,
+                    status_url=f"/api/v1/transactions/categorization-jobs/{background_job.id}/status",
+                )
+
+        # Schedule AI counterparty identification for all transactions
+        all_transaction_ids = self._get_all_transaction_ids_from_statement(saved.statement.id)
+
+        if all_transaction_ids:
+            logger.info(f"Queuing AI counterparty identification job for {len(all_transaction_ids)} transactions")
+
+            counterparty_job = self.background_job_service.queue_ai_counterparty_identification_job(
+                UUID(saved.uploaded_file_id), all_transaction_ids
+            )
+
+            from app.domain.models.processing import BackgroundJobInfo
+
+            counterparty_job_info = BackgroundJobInfo(
+                job_id=counterparty_job.id,
+                status=counterparty_job.status,
+                remaining_transactions=len(all_transaction_ids),
+                estimated_completion_seconds=len(all_transaction_ids) * 1,
+                status_url=f"/api/v1/transactions/counterparty-jobs/{counterparty_job.id}/status",
+            )
+
+        return ScheduledJobs(
+            categorization_job_info=categorization_job_info,
+            counterparty_job_info=counterparty_job_info,
+        )
+
+    def _build_result(
+        self, enhanced: EnhancedTransactions, saved: SavedStatement, jobs: ScheduledJobs
+    ) -> StatementUploadResult:
+        """Build the final result object"""
+        return StatementUploadResult(
+            uploaded_file_id=saved.uploaded_file_id,
+            transactions_saved=saved.transactions_saved,
+            duplicated_transactions=saved.duplicated_transactions,
+            total_processed=enhanced.total_processed,
+            rule_based_matches=enhanced.rule_based_matches,
+            match_rate_percentage=enhanced.match_rate_percentage,
+            processing_time_ms=enhanced.processing_time_ms,
+            background_job_info=jobs.categorization_job_info,  # Keep main job info for response
         )
 
     def _trigger_immediate_processing(self, background_tasks, internal_deps):
@@ -178,48 +260,6 @@ class StatementUploadService:
             # Don't fail the upload if immediate processing fails
             logger.warning(f"Failed to trigger immediate background processing: {e}")
             logger.info("Background jobs will be processed by cron worker")
-
-    def _parse_to_transaction_dtos(
-        self,
-        uploaded_file_id: str,
-        column_mapping: dict,
-        header_row_index: int,
-        data_start_row_index: int,
-        account_id: UUID,
-    ) -> List[TransactionDTO]:
-        """Parse uploaded file to transaction DTOs without persisting"""
-        # Get uploaded file
-        uploaded_file = self.uploaded_file_repo.find_by_id(uploaded_file_id)
-        file_content = uploaded_file.content
-        file_type = uploaded_file.file_type
-
-        # Parse file to dataframe
-        raw_df = self.statement_parser.parse(file_content, file_type)
-
-        # Process dataframe (header/data row handling)
-        from app.services.common import process_dataframe
-
-        processed_df = process_dataframe(raw_df, header_row_index, data_start_row_index)
-
-        # Normalize columns
-        normalized_df = self.transaction_normalizer.normalize(processed_df, column_mapping)
-
-        # Convert to DTOs
-        transaction_dtos = []
-        for index, (_, row) in enumerate(normalized_df.iterrows()):
-            transaction_dto = TransactionDTO(
-                date=row["date"],
-                amount=row["amount"],
-                description=row["description"],
-                statement_id=None,  # Will be set during persistence
-                account_id=str(account_id),
-                row_index=index,  # Assign row_index based on position in file
-                sort_index=index,  # Initially same as row_index for uploaded transactions
-                source_type=SourceType.UPLOAD.value,
-            )
-            transaction_dtos.append(transaction_dto)
-
-        return transaction_dtos
 
     def _save_file_analysis_metadata(
         self,
@@ -248,26 +288,14 @@ class StatementUploadService:
                 account_id=account_id,
             )
 
-    def _get_unmatched_transaction_ids(self, uploaded_file_id: str, processed_dtos: List[TransactionDTO]) -> List[UUID]:
-        """Get transaction IDs for DTOs that were not categorized by rules"""
-        # Get all persisted transactions that have unmatched categorization status
+    def _get_unmatched_transaction_ids_from_statement(self, statement_id: UUID) -> List[UUID]:
+        """Get transaction IDs for unmatched transactions from a statement"""
         from app.domain.models.transaction import CategorizationStatus
 
-        # Get unmatched DTOs that should have statement_id set during persistence
-        unmatched_dtos = [
-            dto
-            for dto in processed_dtos
-            if dto.categorization_status == CategorizationStatus.UNCATEGORIZED and dto.statement_id
-        ]
+        # Use statement persistence service to get transaction repository
+        transaction_repo = self.statement_persistence_service.transaction_repo
 
-        if not unmatched_dtos:
-            return []
-
-        # Get statement_id from the first DTO (all should have the same statement_id)
-        statement_id = UUID(unmatched_dtos[0].statement_id)
-
-        # Query the database for transactions from this statement
-        transaction_repo = self.transaction_processing_orchestrator.transaction_repository
+        # Get all transactions from this statement
         all_transactions = transaction_repo.get_by_statement_id(statement_id)
 
         # Filter to only unmatched transactions
@@ -275,19 +303,12 @@ class StatementUploadService:
 
         return unmatched_ids
 
-    def _get_all_transaction_ids(self, uploaded_file_id: str, processed_dtos: List[TransactionDTO]) -> List[UUID]:
-        """Get all transaction IDs for counterparty identification"""
-        # Get all DTOs that have statement_id set during persistence
-        all_dtos = [dto for dto in processed_dtos if dto.statement_id]
+    def _get_all_transaction_ids_from_statement(self, statement_id: UUID) -> List[UUID]:
+        """Get all transaction IDs from a statement"""
+        # Use statement persistence service to get transaction repository
+        transaction_repo = self.statement_persistence_service.transaction_repo
 
-        if not all_dtos:
-            return []
-
-        # Get statement_id from the first DTO (all should have the same statement_id)
-        statement_id = UUID(all_dtos[0].statement_id)
-
-        # Query the database for all transactions from this statement
-        transaction_repo = self.transaction_processing_orchestrator.transaction_repository
+        # Get all transactions from this statement
         all_transactions = transaction_repo.get_by_statement_id(statement_id)
 
         # Return all transaction IDs

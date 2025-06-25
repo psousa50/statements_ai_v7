@@ -50,6 +50,7 @@ class StatementPersistenceService:
                 dto.source_type = SourceType.UPLOAD.value
 
         # Create statement from uploaded file if transactions need to be saved
+        statement = None
         if processed_dtos:
             uploaded_file = self.uploaded_file_repo.find_by_id(uploaded_file_id)
             statement = self.statement_repo.save(
@@ -70,4 +71,5 @@ class StatementPersistenceService:
             uploaded_file_id=uploaded_file_id,
             transactions_saved=transactions_saved,
             duplicated_transactions=duplicated_transactions,
+            statement=statement,
         )

@@ -61,10 +61,12 @@ class PersistenceResultDTO:
         uploaded_file_id: str,
         transactions_saved: int,
         duplicated_transactions: int = 0,
+        statement=None,
     ):
         self.uploaded_file_id = uploaded_file_id
         self.transactions_saved = transactions_saved
         self.duplicated_transactions = duplicated_transactions
+        self.statement = statement
 
 
 class TransactionDTO:
@@ -85,6 +87,7 @@ class TransactionDTO:
         source_type: str = "upload",
         manual_position_after: Optional[UUID] = None,
         counterparty_status: Optional[CounterpartyStatus] = None,
+        counterparty_account_id: Optional[UUID] = None,
     ):
         self.id = id
         self.date = date
@@ -101,6 +104,7 @@ class TransactionDTO:
         self.source_type = source_type
         self.manual_position_after = manual_position_after
         self.counterparty_status = counterparty_status
+        self.counterparty_account_id = counterparty_account_id
 
     @classmethod
     def from_entity(cls, entity):
@@ -120,4 +124,5 @@ class TransactionDTO:
             source_type=entity.source_type.value if entity.source_type else "upload",
             manual_position_after=entity.manual_position_after,
             counterparty_status=entity.counterparty_status,
+            counterparty_account_id=entity.counterparty_account_id,
         )
