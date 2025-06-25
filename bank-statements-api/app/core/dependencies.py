@@ -26,7 +26,6 @@ from app.services.schema_detection.heuristic_schema_detector import HeuristicSch
 from app.services.statement_processing.file_type_detector import StatementFileTypeDetector
 from app.services.statement_processing.statement_analyzer import StatementAnalyzerService
 from app.services.statement_processing.statement_parser import StatementParser
-from app.services.statement_processing.statement_persistence import StatementPersistenceService
 from app.services.statement_processing.statement_upload import StatementUploadService
 from app.services.statement_processing.transaction_normalizer import TransactionNormalizer
 from app.services.transaction import TransactionService
@@ -59,7 +58,6 @@ class InternalDependencies:
         account_service: AccountService,
         initial_balance_service: InitialBalanceService,
         statement_analyzer_service: StatementAnalyzerService,
-        statement_persistence_service: StatementPersistenceService,
         statement_upload_service: StatementUploadService,
         transaction_categorization_service: TransactionCategorizationService,
         transaction_counterparty_service: TransactionCounterpartyService,
@@ -77,7 +75,6 @@ class InternalDependencies:
         self.account_service = account_service
         self.initial_balance_service = initial_balance_service
         self.statement_analyzer_service = statement_analyzer_service
-        self.statement_persistence_service = statement_persistence_service
         self.statement_upload_service = statement_upload_service
         self.transaction_categorization_service = transaction_categorization_service
         self.transaction_counterparty_service = transaction_counterparty_service
@@ -172,22 +169,14 @@ def build_internal_dependencies(external: ExternalDependencies) -> InternalDepen
         transaction_repo=transaction_repo,
     )
 
-    statement_persistence_service = StatementPersistenceService(
-        statement_parser=statement_parser,
-        transaction_normalizer=transaction_normalizer,
-        transaction_repo=transaction_repo,
-        uploaded_file_repo=uploaded_file_repo,
-        file_analysis_metadata_repo=file_analysis_metadata_repo,
-        statement_repo=statement_repo,
-    )
-
     statement_upload_service = StatementUploadService(
         statement_parser=statement_parser,
         transaction_normalizer=transaction_normalizer,
         uploaded_file_repo=uploaded_file_repo,
         file_analysis_metadata_repo=file_analysis_metadata_repo,
         transaction_rule_enhancement_service=transaction_rule_enhancement_service,
-        statement_persistence_service=statement_persistence_service,
+        statement_repo=statement_repo,
+        transaction_repo=transaction_repo,
         background_job_service=background_job_service,
     )
 
@@ -197,7 +186,6 @@ def build_internal_dependencies(external: ExternalDependencies) -> InternalDepen
         account_service=account_service,
         initial_balance_service=initial_balance_service,
         statement_analyzer_service=statement_analyzer_service,
-        statement_persistence_service=statement_persistence_service,
         statement_upload_service=statement_upload_service,
         transaction_categorization_service=transaction_categorization_service,
         transaction_counterparty_service=transaction_counterparty_service,

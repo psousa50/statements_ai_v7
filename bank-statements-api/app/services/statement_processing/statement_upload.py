@@ -41,7 +41,8 @@ class StatementUploadService:
         uploaded_file_repo,
         file_analysis_metadata_repo,
         transaction_rule_enhancement_service: TransactionRuleEnhancementService,
-        statement_persistence_service,
+        statement_repo,
+        transaction_repo,
         background_job_service,
     ):
         self.statement_parser = statement_parser
@@ -49,7 +50,8 @@ class StatementUploadService:
         self.uploaded_file_repo = uploaded_file_repo
         self.file_analysis_metadata_repo = file_analysis_metadata_repo
         self.transaction_rule_enhancement_service = transaction_rule_enhancement_service
-        self.statement_persistence_service = statement_persistence_service
+        self.statement_repo = statement_repo
+        self.transaction_repo = transaction_repo
         self.background_job_service = background_job_service
 
     def upload_statement(
@@ -153,12 +155,36 @@ class StatementUploadService:
         """Step 3: Save statement and transactions to database"""
         logger.info(f"Saving {len(enhanced.enhanced_dtos)} transactions to database")
 
-        # Save processed transactions
-        persistence_result = self.statement_persistence_service.save_processed_transactions(
-            processed_dtos=enhanced.enhanced_dtos,
-            account_id=UUID(upload_request.account_id),
-            uploaded_file_id=upload_request.uploaded_file_id,
-        )
+        # Create statement from uploaded file if transactions need to be saved
+        statement = None
+        transactions_saved = 0
+        duplicated_transactions = 0
+        
+        if enhanced.enhanced_dtos:
+            # Get uploaded file and create statement
+            uploaded_file = self.uploaded_file_repo.find_by_id(upload_request.uploaded_file_id)
+            statement = self.statement_repo.save(
+                account_id=UUID(upload_request.account_id),
+                filename=uploaded_file.filename,
+                file_type=uploaded_file.file_type,
+                content=uploaded_file.content,
+            )
+
+            # Enrich DTOs with required fields
+            for dto in enhanced.enhanced_dtos:
+                if not dto.account_id:
+                    dto.account_id = upload_request.account_id
+                if dto.row_index is None:
+                    dto.row_index = 0  # Default fallback
+                if dto.sort_index is None:
+                    dto.sort_index = dto.row_index  # Default to row_index for uploaded transactions
+                if not dto.source_type:
+                    dto.source_type = SourceType.UPLOAD.value
+                # Set statement_id on all DTOs
+                dto.statement_id = str(statement.id)
+
+            # Save the batch of DTOs
+            transactions_saved, duplicated_transactions = self.transaction_repo.save_batch(enhanced.enhanced_dtos)
 
         # Save file analysis metadata for future duplicate detection
         self._save_file_analysis_metadata(
@@ -170,10 +196,10 @@ class StatementUploadService:
         )
 
         return SavedStatement(
-            statement=persistence_result.statement,
-            uploaded_file_id=persistence_result.uploaded_file_id,
-            transactions_saved=persistence_result.transactions_saved,
-            duplicated_transactions=persistence_result.duplicated_transactions,
+            statement=statement,
+            uploaded_file_id=upload_request.uploaded_file_id,
+            transactions_saved=transactions_saved,
+            duplicated_transactions=duplicated_transactions,
         )
 
     def schedule_jobs(self, saved: SavedStatement, enhanced: EnhancedTransactions) -> ScheduledJobs:
@@ -292,11 +318,8 @@ class StatementUploadService:
         """Get transaction IDs for unmatched transactions from a statement"""
         from app.domain.models.transaction import CategorizationStatus
 
-        # Use statement persistence service to get transaction repository
-        transaction_repo = self.statement_persistence_service.transaction_repo
-
         # Get all transactions from this statement
-        all_transactions = transaction_repo.get_by_statement_id(statement_id)
+        all_transactions = self.transaction_repo.get_by_statement_id(statement_id)
 
         # Filter to only unmatched transactions
         unmatched_ids = [t.id for t in all_transactions if t.categorization_status == CategorizationStatus.UNCATEGORIZED]
@@ -305,11 +328,8 @@ class StatementUploadService:
 
     def _get_all_transaction_ids_from_statement(self, statement_id: UUID) -> List[UUID]:
         """Get all transaction IDs from a statement"""
-        # Use statement persistence service to get transaction repository
-        transaction_repo = self.statement_persistence_service.transaction_repo
-
         # Get all transactions from this statement
-        all_transactions = transaction_repo.get_by_statement_id(statement_id)
+        all_transactions = self.transaction_repo.get_by_statement_id(statement_id)
 
         # Return all transaction IDs
         return [t.id for t in all_transactions]

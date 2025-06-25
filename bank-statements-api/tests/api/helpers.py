@@ -15,7 +15,6 @@ from app.services.initial_balance_service import InitialBalanceService
 from app.services.rule_based_categorization import RuleBasedCategorizationService
 from app.services.rule_based_counterparty import RuleBasedCounterpartyService
 from app.services.statement_processing.statement_analyzer import StatementAnalyzerService
-from app.services.statement_processing.statement_persistence import StatementPersistenceService
 from app.services.statement_processing.statement_upload import StatementUploadService
 from app.services.transaction import TransactionService
 from app.services.transaction_categorization.transaction_categorization import TransactionCategorizationService
@@ -30,7 +29,6 @@ def mocked_dependencies(
     category_service: CategoryService = None,
     account_service: AccountService = None,
     statement_analyzer_service: StatementAnalyzerService = None,
-    statement_persistence_service: StatementPersistenceService = None,
     statement_upload_service: StatementUploadService = None,
     transaction_categorization_service: TransactionCategorizationService = None,
     transaction_counterparty_service: TransactionCounterpartyService = None,
@@ -57,7 +55,6 @@ def mocked_dependencies(
         account_service=account_service or MagicMock(spec=AccountService),
         initial_balance_service=initial_balance_service,
         statement_analyzer_service=statement_analyzer_service or MagicMock(spec=StatementAnalyzerService),
-        statement_persistence_service=statement_persistence_service or MagicMock(spec=StatementPersistenceService),
         statement_upload_service=statement_upload_service or MagicMock(spec=StatementUploadService),
         transaction_categorization_service=transaction_categorization_service
         or MagicMock(spec=TransactionCategorizationService),

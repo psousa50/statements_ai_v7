@@ -15,7 +15,7 @@ sequenceDiagram
     participant TRES as TransactionRuleEnhancementService
     participant RBCS as RuleBasedCategorizationService
     participant RBCPS as RuleBasedCounterpartyService
-    participant SPS as StatementPersistenceService
+    participant SR as StatementRepository
     participant TR as TransactionRepository
     participant BJS as BackgroundJobService
     participant BT as BackgroundTasks
@@ -43,10 +43,13 @@ sequenceDiagram
     TRES-->>SUS: EnhancedTransactions
     
     Note over SUS: Step 3: Save Statement
-    SUS->>SPS: save_processed_transactions(enhanced_dtos, account_id, uploaded_file_id)
-    SPS->>TR: save_batch(transactions)
-    TR-->>SPS: persistence_results
-    SPS-->>SUS: Statement + save_metrics
+    SUS->>UFR: find_by_id(uploaded_file_id)
+    UFR-->>SUS: UploadedFile
+    SUS->>SR: save(account_id, filename, file_type, content)
+    SR-->>SUS: Statement
+    SUS-->>SUS: enrich DTOs with statement_id
+    SUS->>TR: save_batch(enhanced_dtos)
+    TR-->>SUS: persistence_results
     SUS->>FAMR: save(file_analysis_metadata)
     FAMR-->>SUS: saved_metadata
     SUS-->>SUS: SavedStatement
@@ -88,7 +91,7 @@ sequenceDiagram
 
 - **StatementUploadService**: Main orchestrator using clean 4-step process
 - **TransactionRuleEnhancementService**: Pure enhancement service (no side effects)
-- **StatementPersistenceService**: Handles database persistence
+- **StatementRepository & TransactionRepository**: Handle database persistence
 - **BackgroundJobService**: Manages asynchronous AI processing
 - **RuleBasedCategorizationService**: Applies categorization rules
 - **RuleBasedCounterpartyService**: Identifies transaction counterparties
@@ -97,7 +100,7 @@ sequenceDiagram
 
 **Separation of Concerns:**
 - **Enhancement** is now pure (no database operations)
-- **Persistence** is separate from processing logic
+- **Persistence** is handled directly by repositories (no intermediate service layer)
 - **Job scheduling** is isolated as its own step
 
 **Benefits:**

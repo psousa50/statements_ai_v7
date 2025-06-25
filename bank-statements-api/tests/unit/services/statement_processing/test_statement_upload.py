@@ -32,7 +32,11 @@ class TestStatementUploadService:
         return Mock()
 
     @pytest.fixture
-    def mock_statement_persistence_service(self):
+    def mock_statement_repo(self):
+        return Mock()
+
+    @pytest.fixture
+    def mock_transaction_repo(self):
         return Mock()
 
     @pytest.fixture
@@ -47,7 +51,8 @@ class TestStatementUploadService:
         mock_uploaded_file_repo,
         mock_file_analysis_metadata_repo,
         mock_transaction_rule_enhancement_service,
-        mock_statement_persistence_service,
+        mock_statement_repo,
+        mock_transaction_repo,
         mock_background_job_service,
     ):
         return StatementUploadService(
@@ -56,7 +61,8 @@ class TestStatementUploadService:
             uploaded_file_repo=mock_uploaded_file_repo,
             file_analysis_metadata_repo=mock_file_analysis_metadata_repo,
             transaction_rule_enhancement_service=mock_transaction_rule_enhancement_service,
-            statement_persistence_service=mock_statement_persistence_service,
+            statement_repo=mock_statement_repo,
+            transaction_repo=mock_transaction_repo,
             background_job_service=mock_background_job_service,
         )
 
@@ -169,9 +175,8 @@ class TestStatementUploadService:
             has_unmatched=True,
         )
 
-        # Mock the transaction repository calls via statement persistence service
-        mock_transaction_repo = Mock()
-        statement_upload_service.statement_persistence_service.transaction_repo = mock_transaction_repo
+        # Mock the transaction repository calls directly
+        mock_transaction_repo = statement_upload_service.transaction_repo
         
         # Mock transactions returned from repository
         from app.domain.models.transaction import CategorizationStatus
@@ -229,9 +234,8 @@ class TestStatementUploadService:
             has_unmatched=False,  # No unmatched transactions
         )
 
-        # Mock the transaction repository calls
-        mock_transaction_repo = Mock()
-        statement_upload_service.statement_persistence_service.transaction_repo = mock_transaction_repo
+        # Mock the transaction repository calls directly
+        mock_transaction_repo = statement_upload_service.transaction_repo
         
         # Mock only matched transactions
         matched_transaction = Mock()
