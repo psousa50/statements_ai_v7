@@ -51,7 +51,7 @@ def register_statement_routes(app: FastAPI, provide_dependencies: Callable[[], I
         """
         try:
             # Delegate to service with immediate background processing capability
-            result = internal.statement_upload_service.upload_and_process(
+            result = internal.statement_upload_service.upload_statement(
                 upload_data, background_tasks=background_tasks, internal_deps=internal
             )
 

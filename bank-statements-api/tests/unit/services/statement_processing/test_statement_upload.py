@@ -108,7 +108,7 @@ class TestStatementUploadService:
 
         # Verify
         mock_transaction_rule_enhancement_service.enhance_transactions.assert_called_once_with(parsed.transaction_dtos)
-        
+
         assert isinstance(result, EnhancedTransactions)
         assert result.enhanced_dtos == parsed.transaction_dtos
         assert result.total_processed == 2
@@ -127,7 +127,7 @@ class TestStatementUploadService:
             processing_time_ms=150,
             has_unmatched=True,
         )
-        
+
         uploaded_file_id = str(uuid4())
         saved = SavedStatement(
             statement=Mock(),
@@ -135,12 +135,12 @@ class TestStatementUploadService:
             transactions_saved=4,
             duplicated_transactions=1,
         )
-        
+
         categorization_job_info = Mock()
         jobs = ScheduledJobs(categorization_job_info=categorization_job_info)
-        
+
         result = statement_upload_service._build_result(enhanced, saved, jobs)
-        
+
         assert isinstance(result, StatementUploadResult)
         assert result.uploaded_file_id == uploaded_file_id
         assert result.transactions_saved == 4
@@ -177,23 +177,23 @@ class TestStatementUploadService:
 
         # Mock the transaction repository calls directly
         mock_transaction_repo = statement_upload_service.transaction_repo
-        
+
         # Mock transactions returned from repository
         from app.domain.models.transaction import CategorizationStatus
-        
+
         unmatched_transaction = Mock()
         unmatched_transaction.id = uuid4()
         unmatched_transaction.categorization_status = CategorizationStatus.UNCATEGORIZED
-        
+
         all_transaction = Mock()
         all_transaction.id = uuid4()
-        
+
         mock_transaction_repo.get_by_statement_id.return_value = [unmatched_transaction, all_transaction]
 
         # Mock background job responses
         categorization_job = Mock(id=uuid4(), status="PENDING")
         counterparty_job = Mock(id=uuid4(), status="PENDING")
-        
+
         mock_background_job_service.queue_ai_categorization_job.return_value = categorization_job
         mock_background_job_service.queue_ai_counterparty_identification_job.return_value = counterparty_job
 
@@ -236,11 +236,11 @@ class TestStatementUploadService:
 
         # Mock the transaction repository calls directly
         mock_transaction_repo = statement_upload_service.transaction_repo
-        
+
         # Mock only matched transactions
         matched_transaction = Mock()
         matched_transaction.id = uuid4()
-        
+
         mock_transaction_repo.get_by_statement_id.return_value = [matched_transaction, matched_transaction]
 
         counterparty_job = Mock(id=uuid4(), status="PENDING")
@@ -258,54 +258,3 @@ class TestStatementUploadService:
         assert result.has_counterparty_job
         assert result.categorization_job_info is None
         assert result.counterparty_job_info.job_id == counterparty_job.id
-
-    def test_upload_and_process_backward_compatibility(
-        self,
-        statement_upload_service,
-        sample_upload_request,
-    ):
-        """Test that upload_and_process delegates to upload_statement method"""
-        # Create a simple spy to verify the method delegation
-        original_upload_statement = statement_upload_service.upload_statement
-        
-        call_count = 0
-        call_args = None
-        call_kwargs = None
-        
-        def mock_upload_statement(*args, **kwargs):
-            nonlocal call_count, call_args, call_kwargs
-            call_count += 1
-            call_args = args
-            call_kwargs = kwargs
-            # Return a simple result
-            return StatementUploadResult(
-                uploaded_file_id=sample_upload_request.uploaded_file_id,
-                transactions_saved=1,
-                duplicated_transactions=0,
-                total_processed=1,
-                rule_based_matches=1,
-                match_rate_percentage=100.0,
-                processing_time_ms=50,
-                background_job_info=None,
-            )
-        
-        # Replace the method temporarily
-        statement_upload_service.upload_statement = mock_upload_statement
-        
-        try:
-            result = statement_upload_service.upload_and_process(sample_upload_request)
-            
-            # Verify delegation happened
-            assert call_count == 1
-            assert call_args[0] == sample_upload_request  # First argument should be upload_request
-            assert call_kwargs.get('background_tasks') is None
-            assert call_kwargs.get('internal_deps') is None
-            
-            # Verify result
-            assert isinstance(result, StatementUploadResult)
-            assert result.uploaded_file_id == sample_upload_request.uploaded_file_id
-            assert result.transactions_saved == 1
-            
-        finally:
-            # Restore original method
-            statement_upload_service.upload_statement = original_upload_statement

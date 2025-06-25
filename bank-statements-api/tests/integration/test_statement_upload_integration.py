@@ -125,7 +125,7 @@ class TestStatementUploadIntegration:
         )
 
         # Use real upload service
-        upload_result = dependencies.statement_upload_service.upload_and_process(
+        upload_result = dependencies.statement_upload_service.upload_statement(
             upload_request,
             background_tasks=MagicMock(),  # Mock FastAPI background tasks
             internal_deps=dependencies,
@@ -210,7 +210,7 @@ class TestStatementUploadIntegration:
             data_start_row_index=analysis_result.data_start_row_index,
         )
 
-        upload_result = dependencies.statement_upload_service.upload_and_process(
+        upload_result = dependencies.statement_upload_service.upload_statement(
             upload_request, background_tasks=MagicMock(), internal_deps=dependencies
         )
 
@@ -279,7 +279,7 @@ class TestStatementUploadIntegration:
             data_start_row_index=analysis_result.data_start_row_index,
         )
 
-        dependencies.statement_upload_service.upload_and_process(
+        dependencies.statement_upload_service.upload_statement(
             upload_request, background_tasks=MagicMock(), internal_deps=dependencies
         )
 

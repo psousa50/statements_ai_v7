@@ -84,7 +84,7 @@ class TestStatementRoutes:
             processing_time_ms=150,
             background_job_info=None,
         )
-        internal_dependencies.statement_upload_service.upload_and_process.return_value = upload_result
+        internal_dependencies.statement_upload_service.upload_statement.return_value = upload_result
 
         request_data = StatementUploadRequest(
             uploaded_file_id=uploaded_file_id,
@@ -114,7 +114,7 @@ class TestStatementRoutes:
         assert persistence_result.background_job is None
 
         # Verify the service was called with the correct request
-        call_args = internal_dependencies.statement_upload_service.upload_and_process.call_args
+        call_args = internal_dependencies.statement_upload_service.upload_statement.call_args
         assert call_args[0][0] == request_data  # First positional arg should be request_data
         assert "background_tasks" in call_args[1]  # Should have background_tasks kwarg
         assert "internal_deps" in call_args[1]  # Should have internal_deps kwarg
@@ -124,7 +124,7 @@ class TestStatementRoutes:
         client = build_client(internal_dependencies)
 
         # Mock service failure
-        internal_dependencies.statement_upload_service.upload_and_process.side_effect = Exception("Test error")
+        internal_dependencies.statement_upload_service.upload_statement.side_effect = Exception("Test error")
 
         request_data = StatementUploadRequest(
             uploaded_file_id=str(uuid4()),
@@ -173,7 +173,7 @@ class TestStatementRoutes:
             processing_time_ms=250,
             background_job_info=background_job_info,
         )
-        internal_dependencies.statement_upload_service.upload_and_process.return_value = upload_result
+        internal_dependencies.statement_upload_service.upload_statement.return_value = upload_result
 
         # Mock background job repository to prevent hanging when process_pending_jobs is called
         internal_dependencies.background_job_repository.claim_single_pending_job.return_value = None
@@ -219,7 +219,7 @@ class TestStatementRoutes:
         account_id = uuid4()
 
         # Mock service failure
-        internal_dependencies.statement_upload_service.upload_and_process.side_effect = Exception("Service failed")
+        internal_dependencies.statement_upload_service.upload_statement.side_effect = Exception("Service failed")
 
         request_data = StatementUploadRequest(
             uploaded_file_id=uploaded_file_id,

@@ -135,14 +135,6 @@ class JobProcessor:
             logger.error(f"AI counterparty identification job {job_id} failed: {e}")
             raise
 
-    async def _process_ai_categorization_job(self, job: BackgroundJob) -> None:
-        """Process an AI categorization job (deprecated - use _process_ai_categorization_job_by_id)"""
-        # This method is kept for backwards compatibility but should not be used
-        # Extract data immediately to avoid session issues
-        job_id = job.id
-        job_progress = job.progress.copy() if job.progress else {}
-        await self._process_ai_categorization_job_by_id(job_id, job_progress)
-
     def _mark_job_failed_by_id(self, job_id: UUID, error_message: str) -> None:
         """Mark a job as failed with error message using job ID"""
         try:

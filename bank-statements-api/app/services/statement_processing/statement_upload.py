@@ -85,16 +85,6 @@ class StatementUploadService:
 
         return self._build_result(enhanced, saved, jobs)
 
-    # Keep old method for backward compatibility during transition
-    def upload_and_process(
-        self,
-        upload_request: StatementUploadRequest,
-        background_tasks=None,
-        internal_deps=None,
-    ) -> StatementUploadResult:
-        """Backward compatibility method - delegates to new upload_statement method"""
-        return self.upload_statement(upload_request, background_tasks, internal_deps)
-
     def parse_statement(self, upload_request: StatementUploadRequest) -> ParsedStatement:
         """Step 1: Parse uploaded file to transaction DTOs"""
         logger.info(f"Parsing statement file {upload_request.uploaded_file_id}")
