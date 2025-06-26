@@ -99,13 +99,13 @@ class EnhancementRuleManagementService:
         
         # Validate category exists if specified
         if category_id:
-            category = self.category_repository.find_by_id(category_id)
+            category = self.category_repository.get_by_id(category_id)
             if not category:
                 raise ValueError(f"Category with ID {category_id} not found")
         
         # Validate counterparty account exists if specified
         if counterparty_account_id:
-            account = self.account_repository.find_by_id(counterparty_account_id)
+            account = self.account_repository.get_by_id(counterparty_account_id)
             if not account:
                 raise ValueError(f"Account with ID {counterparty_account_id} not found")
         
@@ -161,13 +161,13 @@ class EnhancementRuleManagementService:
         
         # Validate category exists if specified
         if category_id:
-            category = self.category_repository.find_by_id(category_id)
+            category = self.category_repository.get_by_id(category_id)
             if not category:
                 raise ValueError(f"Category with ID {category_id} not found")
         
         # Validate counterparty account exists if specified
         if counterparty_account_id:
-            account = self.account_repository.find_by_id(counterparty_account_id)
+            account = self.account_repository.get_by_id(counterparty_account_id)
             if not account:
                 raise ValueError(f"Account with ID {counterparty_account_id} not found")
         
