@@ -17,8 +17,7 @@ import { useEnhancementRules } from '../services/hooks/useEnhancementRules'
 import { EnhancementRuleFilters, EnhancementRule } from '../types/EnhancementRule'
 import { EnhancementRuleTable } from '../components/EnhancementRuleTable'
 import { EnhancementRuleFiltersComponent } from '../components/EnhancementRuleFilters'
-import { CreateEnhancementRuleModal } from '../components/CreateEnhancementRuleModal'
-import { EditEnhancementRuleModal } from '../components/EditEnhancementRuleModal'
+import { EnhancementRuleModal } from '../components/EnhancementRuleModal'
 
 export const EnhancementRules: React.FC = () => {
   const {
@@ -38,8 +37,7 @@ export const EnhancementRules: React.FC = () => {
     sort_direction: 'desc',
   })
 
-  const [createModalOpen, setCreateModalOpen] = useState(false)
-  const [editModalOpen, setEditModalOpen] = useState(false)
+  const [modalOpen, setModalOpen] = useState(false)
   const [selectedRule, setSelectedRule] = useState<EnhancementRule | null>(null)
   const [cleanupDialogOpen, setCleanupDialogOpen] = useState(false)
   const [cleanupLoading, setCleanupLoading] = useState(false)
@@ -76,12 +74,13 @@ export const EnhancementRules: React.FC = () => {
   }
 
   const handleCreateRule = () => {
-    setCreateModalOpen(true)
+    setSelectedRule(null) // Clear selected rule for create mode
+    setModalOpen(true)
   }
 
   const handleEditRule = (rule: EnhancementRule) => {
     setSelectedRule(rule)
-    setEditModalOpen(true)
+    setModalOpen(true)
   }
 
   const handleDeleteRule = async (id: string) => {
@@ -93,15 +92,15 @@ export const EnhancementRules: React.FC = () => {
     }
   }
 
-  const handleRuleCreated = () => {
-    setCreateModalOpen(false)
+  const handleModalSuccess = () => {
+    setModalOpen(false)
+    setSelectedRule(null)
     loadRules()
   }
 
-  const handleRuleUpdated = () => {
-    setEditModalOpen(false)
+  const handleModalClose = () => {
+    setModalOpen(false)
     setSelectedRule(null)
-    loadRules()
   }
 
   const handleCleanupUnused = async () => {
@@ -177,25 +176,13 @@ export const EnhancementRules: React.FC = () => {
         />
       </Paper>
 
-      {/* Create Rule Modal */}
-      <CreateEnhancementRuleModal
-        open={createModalOpen}
-        onClose={() => setCreateModalOpen(false)}
-        onSuccess={handleRuleCreated}
+      {/* Enhancement Rule Modal (Create/Edit) */}
+      <EnhancementRuleModal
+        open={modalOpen}
+        rule={selectedRule || undefined}
+        onClose={handleModalClose}
+        onSuccess={handleModalSuccess}
       />
-
-      {/* Edit Rule Modal */}
-      {selectedRule && (
-        <EditEnhancementRuleModal
-          open={editModalOpen}
-          rule={selectedRule}
-          onClose={() => {
-            setEditModalOpen(false)
-            setSelectedRule(null)
-          }}
-          onSuccess={handleRuleUpdated}
-        />
-      )}
 
       {/* Cleanup Confirmation Dialog */}
       <Dialog open={cleanupDialogOpen} onClose={() => setCleanupDialogOpen(false)}>

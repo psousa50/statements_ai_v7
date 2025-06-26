@@ -16,6 +16,7 @@
   background: var(--bg-primary);
   min-height: 40px;
   cursor: text;
+  color: var(--text-primary);
 }
 
 /* Fix double border when CategorySelector is inside a form-group */
@@ -84,12 +85,12 @@
   flex: 1;
   min-width: 120px;
   font-size: 14px;
-  color: var(--text-primary);
+  color: var(--text-primary) !important;
   padding: 0;
 }
 
 .category-input::placeholder {
-  color: var(--text-secondary);
+  color: var(--text-muted) !important;
 }
 
 /* Clear button */
@@ -161,4 +162,195 @@
 /* Multiple mode specific styles */
 .category-selector.multiple .category-input {
   min-width: 80px;
+}
+
+/* Form variant - matches MUI styling with dark mode support */
+.category-selector.variant-form .category-selector-input-container {
+  border: 1px solid rgba(255, 255, 255, 0.23) !important;
+  border-radius: 4px !important;
+  padding: 7px 14px !important;
+  min-height: 38px !important;
+  height: 55px !important;
+  font-size: 14px !important;
+  background: transparent !important;
+  color: var(--text-primary) !important;
+  transition: border-color 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms !important;
+  box-sizing: border-box !important;
+}
+
+.category-selector.variant-form .category-selector-input-container:hover {
+  border-color: rgba(255, 255, 255, 1) !important;
+}
+
+.category-selector.variant-form .category-selector-input-container:focus-within {
+  border-color: #90caf9 !important;
+  border-width: 2px !important;
+  box-shadow: none !important;
+}
+
+.category-selector.variant-form .category-selector-input-container .category-input {
+  font-size: 16px !important;
+  line-height: 1.5 !important;
+  color: var(--text-primary) !important;
+  background: transparent !important;
+}
+
+.category-selector.variant-form .category-selector-input-container .category-input::placeholder {
+  color: var(--text-muted) !important;
+}
+
+.category-selector.variant-form .category-suggestions {
+  border: 1px solid var(--border-secondary) !important;
+  border-top: none !important;
+  background: var(--bg-primary) !important;
+  box-shadow: 0px 5px 5px -3px var(--shadow-light), 0px 8px 10px 1px var(--shadow-light), 0px 3px 14px 2px var(--shadow-light) !important;
+}
+
+.category-selector.variant-form .category-suggestion {
+  color: var(--text-primary) !important;
+  background: var(--bg-primary) !important;
+}
+
+.category-selector.variant-form .category-suggestion:hover {
+  background: var(--bg-tertiary) !important;
+}
+
+/* Filter variant - matches TransactionFilters styling */
+.category-selector.variant-filter .category-selector-input-container {
+  border: 1px solid var(--border-secondary) !important;
+  border-radius: 4px !important;
+  padding: 8px 12px !important;
+  min-height: 40px !important;
+  background: var(--bg-primary) !important;
+  transition: border-color 0.2s !important;
+}
+
+.category-selector.variant-filter .category-selector-input-container:focus-within {
+  border-color: var(--text-accent) !important;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1) !important;
+}
+
+.category-selector.variant-filter .category-selector-input-container .category-input {
+  font-size: 0.875rem !important;
+  color: var(--text-primary) !important;
+}
+
+.category-selector.variant-filter .category-selector-input-container .category-input::placeholder {
+  color: var(--text-muted) !important;
+}
+
+.category-selector.variant-filter .category-suggestions {
+  border: 1px solid var(--border-secondary) !important;
+  border-top: none !important;
+  border-radius: 0 0 4px 4px !important;
+  box-shadow: 0 4px 6px var(--shadow-light) !important;
+}
+
+/* Force CSS variables to take precedence over page-specific styles */
+input.category-input,
+.category-selector .category-input,
+.category-selector-input-container .category-input,
+input[class*="category-input"],
+*[class*="category-input"] {
+  color: var(--text-primary) !important;
+}
+
+input.category-input::placeholder,
+.category-selector .category-input::placeholder,
+.category-selector-input-container .category-input::placeholder,
+input[class*="category-input"]::placeholder,
+*[class*="category-input"]::placeholder {
+  color: var(--text-muted) !important;
+}
+
+/* Additional dark mode specific overrides */
+[data-theme="dark"] .category-input,
+body.rs-theme-dark .category-input,
+.rs-theme-dark .category-input {
+  color: rgba(255, 255, 255, 0.87) !important;
+}
+
+[data-theme="dark"] .category-input::placeholder,
+body.rs-theme-dark .category-input::placeholder,
+.rs-theme-dark .category-input::placeholder {
+  color: rgba(255, 255, 255, 0.6) !important;
+}
+
+/* Ultimate nuclear option - direct element targeting */
+.category-selector input {
+  color: var(--text-primary) !important;
+}
+
+.category-selector input::placeholder {
+  color: var(--text-muted) !important;
+}
+
+/* MUI dialog specific overrides */
+.MuiDialog-root .category-input,
+.MuiDialogContent-root .category-input,
+[role="dialog"] .category-input,
+.MuiDialog-paper .category-input,
+.MuiDialog-container .category-input {
+  color: var(--text-primary) !important;
+  background-color: transparent !important;
+}
+
+.MuiDialog-root .category-input::placeholder,
+.MuiDialogContent-root .category-input::placeholder,
+[role="dialog"] .category-input::placeholder,
+.MuiDialog-paper .category-input::placeholder,
+.MuiDialog-container .category-input::placeholder {
+  color: var(--text-muted) !important;
+}
+
+/* Form variant specific - ensure CSS variables work */
+.category-selector.variant-form input.category-input,
+.category-selector.variant-form .category-selector-input-container .category-input {
+  color: var(--text-primary) !important;
+}
+
+.category-selector.variant-form input.category-input::placeholder,
+.category-selector.variant-form .category-selector-input-container .category-input::placeholder {
+  color: var(--text-muted) !important;
+}
+
+/* Filter variant specific - ensure CSS variables work */
+.category-selector.variant-filter input.category-input,
+.category-selector.variant-filter .category-selector-input-container .category-input {
+  color: var(--text-primary) !important;
+}
+
+.category-selector.variant-filter input.category-input::placeholder,
+.category-selector.variant-filter .category-selector-input-container .category-input::placeholder {
+  color: var(--text-muted) !important;
+}
+
+/* Maximum specificity fallback - use CSS variables */
+.modal-content .category-selector .category-input,
+.form-group .category-selector .category-input,
+div.category-selector div.category-selector-input-container input.category-input {
+  color: var(--text-primary) !important;
+}
+
+.modal-content .category-selector .category-input::placeholder,
+.form-group .category-selector .category-input::placeholder,
+div.category-selector div.category-selector-input-container input.category-input::placeholder {
+  color: var(--text-muted) !important;
+}
+
+/* Absolute final override for MUI dialogs - Maximum specificity */
+.MuiDialog-root .MuiDialogContent-root .category-selector.variant-form .category-selector-input-container .category-input {
+  color: var(--text-primary) !important;
+  background-color: transparent !important;
+}
+
+.MuiDialog-root .MuiDialogContent-root .category-selector.variant-form .category-selector-input-container .category-input::placeholder {
+  color: var(--text-muted) !important;
+}
+
+/* Dark mode specific override with maximum specificity */
+[data-theme="dark"] .MuiDialog-root .category-input,
+body.rs-theme-dark .MuiDialog-root .category-input,
+.rs-theme-dark .MuiDialog-root .category-input {
+  color: rgba(255, 255, 255, 0.87) !important;
 }

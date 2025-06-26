@@ -322,6 +322,7 @@ export const TransactionFilters = ({
               placeholder="Type to add categories..."
               multiple={true}
               allowClear={false}
+              variant="filter"
             />
           </div>
         </div>

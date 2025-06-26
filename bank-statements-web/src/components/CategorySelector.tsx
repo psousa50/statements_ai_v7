@@ -11,6 +11,7 @@ interface CategorySelectorProps {
   placeholder?: string
   allowClear?: boolean
   multiple?: boolean
+  variant?: 'default' | 'filter' | 'form'
 }
 
 export const CategorySelector = ({
@@ -22,6 +23,7 @@ export const CategorySelector = ({
   placeholder = 'Select a category',
   allowClear = true,
   multiple = false,
+  variant = 'default',
 }: CategorySelectorProps) => {
   const [categoryInput, setCategoryInput] = useState('')
   const [showSuggestions, setShowSuggestions] = useState(false)
@@ -145,6 +147,24 @@ export const CategorySelector = ({
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
+  // Force color fix for dark mode
+  useEffect(() => {
+    if (inputRef.current) {
+      const textPrimary = getComputedStyle(document.documentElement).getPropertyValue('--text-primary').trim()
+      if (textPrimary) {
+        inputRef.current.style.color = textPrimary
+        inputRef.current.style.setProperty('color', textPrimary, 'important')
+      } else {
+        // Fallback for dark mode detection
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark' ||
+                      document.body.classList.contains('rs-theme-dark')
+        if (isDark) {
+          inputRef.current.style.setProperty('color', 'rgba(255, 255, 255, 0.87)', 'important')
+        }
+      }
+    }
+  }, [showSuggestions, variant])
+
   // Display text for the input
   const inputDisplayValue = multiple
     ? categoryInput
@@ -154,7 +174,7 @@ export const CategorySelector = ({
   const placeholderText = multiple && selectedCategories.length > 0 ? 'Add more categories...' : placeholder
 
   return (
-    <div className={`category-selector ${multiple ? 'multiple' : 'single'}`} ref={containerRef}>
+    <div className={`category-selector ${multiple ? 'multiple' : 'single'} variant-${variant}`} ref={containerRef}>
       <div className="category-selector-input-container">
         {/* Selected categories tags (multiple mode only) */}
         {multiple &&
@@ -181,6 +201,10 @@ export const CategorySelector = ({
           onKeyDown={handleInputKeyDown}
           placeholder={placeholderText}
           className="category-input"
+          style={{
+            color: 'var(--text-primary)',
+            backgroundColor: 'transparent',
+          }}
         />
 
         {/* Clear button */}

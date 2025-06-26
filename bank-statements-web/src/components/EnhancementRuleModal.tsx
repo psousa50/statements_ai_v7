@@ -21,15 +21,17 @@ import { useApi } from '../api/ApiContext'
 import { useEnhancementRules } from '../services/hooks/useEnhancementRules'
 import {
   EnhancementRule,
+  EnhancementRuleCreate,
   EnhancementRuleUpdate,
   EnhancementRuleSource,
   MatchType,
 } from '../types/EnhancementRule'
 import { Category } from '../types/Transaction'
+import { CategorySelector } from './CategorySelector'
 
-interface EditEnhancementRuleModalProps {
+interface EnhancementRuleModalProps {
   open: boolean
-  rule: EnhancementRule
+  rule?: EnhancementRule // undefined for create, defined for edit
   onClose: () => void
   onSuccess: () => void
 }
@@ -40,24 +42,26 @@ interface CounterpartyAccount {
   account_number?: string
 }
 
-export const EditEnhancementRuleModal: React.FC<EditEnhancementRuleModalProps> = ({
+export const EnhancementRuleModal: React.FC<EnhancementRuleModalProps> = ({
   open,
   rule,
   onClose,
   onSuccess,
 }) => {
   const apiClient = useApi()
-  const { updateRule, loading, error } = useEnhancementRules()
+  const { createRule, updateRule, loading, error } = useEnhancementRules()
   
+  const isEditing = !!rule
   const [categories, setCategories] = useState<Category[]>([])
   const [counterpartyAccounts, setCounterpartyAccounts] = useState<CounterpartyAccount[]>([])
-  const [formData, setFormData] = useState<EnhancementRuleUpdate>({
+  const [formData, setFormData] = useState<EnhancementRuleCreate | EnhancementRuleUpdate>({
     normalized_description_pattern: '',
     match_type: MatchType.INFIX,
     source: EnhancementRuleSource.MANUAL,
   })
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
 
+  // Initialize form data when rule changes (for editing)
   useEffect(() => {
     if (rule) {
       setFormData({
@@ -70,6 +74,13 @@ export const EditEnhancementRuleModal: React.FC<EditEnhancementRuleModalProps> =
         start_date: rule.start_date,
         end_date: rule.end_date,
         source: rule.source,
+      })
+    } else {
+      // Reset form for create mode
+      setFormData({
+        normalized_description_pattern: '',
+        match_type: MatchType.INFIX,
+        source: EnhancementRuleSource.MANUAL,
       })
     }
   }, [rule])
@@ -100,7 +111,6 @@ export const EditEnhancementRuleModal: React.FC<EditEnhancementRuleModalProps> =
       errors.normalized_description_pattern = 'Description is required'
     }
 
-
     if (formData.min_amount !== undefined && formData.max_amount !== undefined) {
       if (formData.min_amount > formData.max_amount) {
         errors.amount_range = 'Minimum amount cannot be greater than maximum amount'
@@ -123,20 +133,32 @@ export const EditEnhancementRuleModal: React.FC<EditEnhancementRuleModalProps> =
     }
 
     try {
-      await updateRule(rule.id, formData)
+      if (isEditing && rule) {
+        await updateRule(rule.id, formData as EnhancementRuleUpdate)
+      } else {
+        await createRule(formData as EnhancementRuleCreate)
+      }
       onSuccess()
       handleClose()
     } catch (err) {
-      console.error('Failed to update enhancement rule:', err)
+      console.error(`Failed to ${isEditing ? 'update' : 'create'} enhancement rule:`, err)
     }
   }
 
   const handleClose = () => {
+    if (!isEditing) {
+      // Reset form only for create mode
+      setFormData({
+        normalized_description_pattern: '',
+        match_type: MatchType.INFIX,
+        source: EnhancementRuleSource.MANUAL,
+      })
+    }
     setValidationErrors({})
     onClose()
   }
 
-  const handleFieldChange = (field: keyof EnhancementRuleUpdate, value: any) => {
+  const handleFieldChange = (field: keyof (EnhancementRuleCreate | EnhancementRuleUpdate), value: any) => {
     setFormData({ ...formData, [field]: value })
     if (validationErrors[field]) {
       setValidationErrors({ ...validationErrors, [field]: '' })
@@ -145,7 +167,7 @@ export const EditEnhancementRuleModal: React.FC<EditEnhancementRuleModalProps> =
 
   return (
     <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
-      <DialogTitle>Edit Enhancement Rule</DialogTitle>
+      <DialogTitle>{isEditing ? 'Edit Enhancement Rule' : 'Create Enhancement Rule'}</DialogTitle>
       <DialogContent>
         {error && (
           <Alert severity="error" sx={{ mb: 2 }}>
@@ -205,19 +227,15 @@ export const EditEnhancementRuleModal: React.FC<EditEnhancementRuleModalProps> =
 
           <Stack direction="row" spacing={2}>
             <FormControl fullWidth>
-              <InputLabel>Category (Optional)</InputLabel>
-              <Select
-                value={formData.category_id || ''}
-                label="Category (Optional)"
-                onChange={(e) => handleFieldChange('category_id', e.target.value || undefined)}
-              >
-                <MenuItem value="">None</MenuItem>
-                {categories.map((category) => (
-                  <MenuItem key={category.id} value={category.id}>
-                    {category.name}
-                  </MenuItem>
-                ))}
-              </Select>
+              <CategorySelector
+                categories={categories}
+                selectedCategoryId={formData.category_id}
+                onCategoryChange={(categoryId) => handleFieldChange('category_id', categoryId)}
+                placeholder="Category (Optional)"
+                allowClear={true}
+                multiple={false}
+                variant="form"
+              />
               <FormHelperText>
                 Category to assign to matching transactions
               </FormHelperText>
@@ -311,7 +329,7 @@ export const EditEnhancementRuleModal: React.FC<EditEnhancementRuleModalProps> =
           disabled={loading}
           startIcon={loading ? <CircularProgress size={16} /> : undefined}
         >
-          {loading ? 'Saving...' : 'Save Changes'}
+          {loading ? (isEditing ? 'Saving...' : 'Creating...') : (isEditing ? 'Save Changes' : 'Create Rule')}
         </Button>
       </DialogActions>
     </Dialog>

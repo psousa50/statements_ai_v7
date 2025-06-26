@@ -128,6 +128,7 @@ export const CategoryModal = ({
               onCategoryChange={(id) => setSelectedParentId(id)}
               placeholder="Select a parent category (leave empty for root category)"
               allowClear={true}
+              variant="form"
             />
             {selectedParentId && (
               <div className="form-help-text">
