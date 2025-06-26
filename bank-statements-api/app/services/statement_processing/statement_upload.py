@@ -149,7 +149,7 @@ class StatementUploadService:
         statement = None
         transactions_saved = 0
         duplicated_transactions = 0
-        
+
         if enhanced.enhanced_dtos:
             # Get uploaded file and create statement
             uploaded_file = self.uploaded_file_repo.find_by_id(upload_request.uploaded_file_id)

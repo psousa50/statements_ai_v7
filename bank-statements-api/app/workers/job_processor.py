@@ -2,7 +2,7 @@ import logging
 from uuid import UUID
 
 from app.core.dependencies import InternalDependencies
-from app.domain.models.background_job import BackgroundJob, JobType
+from app.domain.models.background_job import JobType
 
 logger = logging.getLogger(__name__)
 

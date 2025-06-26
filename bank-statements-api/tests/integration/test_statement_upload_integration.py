@@ -15,7 +15,7 @@ from app.core.dependencies import ExternalDependencies, build_internal_dependenc
 from app.domain.models.account import Account
 from app.domain.models.statement import Statement
 from app.domain.models.transaction import Transaction
-from app.domain.models.transaction_categorization import CategorizationSource, TransactionCategorization
+from app.domain.models.enhancement_rule import EnhancementRule, EnhancementRuleSource
 from app.domain.models.uploaded_file import UploadedFile
 
 
@@ -167,15 +167,14 @@ class TestStatementUploadIntegration:
         assert any("ATM" in desc for desc in descriptions)
         assert any("Salary" in desc for desc in descriptions)
 
-        # Step 4: Verify transaction categorization table
-        categorization_rules = db_session.query(TransactionCategorization).all()
+        # Step 4: Verify enhancement rules table
+        enhancement_rules = db_session.query(EnhancementRule).all()
 
-        # Check if any categorization rules were created during processing
-        for rule in categorization_rules:
-            assert rule.category_id is not None
-            assert rule.source in [CategorizationSource.MANUAL, CategorizationSource.AI]
-            assert rule.normalized_description is not None
-            assert len(rule.normalized_description) > 0
+        # Check if any enhancement rules were created during processing
+        for rule in enhancement_rules:
+            assert rule.source in [EnhancementRuleSource.MANUAL, EnhancementRuleSource.AI]
+            assert rule.normalized_description_pattern is not None
+            assert len(rule.normalized_description_pattern) > 0
             assert rule.created_at is not None
 
     def test_upload_with_real_categorization_processing(self, db_session, llm_client):
@@ -230,15 +229,14 @@ class TestStatementUploadIntegration:
         assert all(t.normalized_description is not None for t in transactions)
         assert all(len(t.normalized_description) > 0 for t in transactions)
 
-        # Verify transaction categorization rules
-        categorization_rules = db_session.query(TransactionCategorization).all()
+        # Verify enhancement rules
+        enhancement_rules = db_session.query(EnhancementRule).all()
 
         # For each rule, verify it has proper structure
-        for rule in categorization_rules:
-            assert rule.category_id is not None
-            assert rule.source in [CategorizationSource.MANUAL, CategorizationSource.AI]
-            assert rule.normalized_description is not None
-            assert len(rule.normalized_description) > 0
+        for rule in enhancement_rules:
+            assert rule.source in [EnhancementRuleSource.MANUAL, EnhancementRuleSource.AI]
+            assert rule.normalized_description_pattern is not None
+            assert len(rule.normalized_description_pattern) > 0
             assert rule.created_at is not None
 
         # Verify transactions have proper categorization status
@@ -283,19 +281,19 @@ class TestStatementUploadIntegration:
             upload_request, background_tasks=MagicMock(), internal_deps=dependencies
         )
 
-        # Check categorization rules in database
-        categorization_rules = db_session.query(TransactionCategorization).all()
+        # Check enhancement rules in database
+        enhancement_rules = db_session.query(EnhancementRule).all()
 
         # Verify source tracking (if any rules were created)
-        if categorization_rules:
+        if enhancement_rules:
             # All sources should be valid enum values
-            valid_sources = {CategorizationSource.MANUAL, CategorizationSource.AI}
-            for rule in categorization_rules:
-                assert rule.source in valid_sources, f"Invalid categorization source: {rule.source}"
+            valid_sources = {EnhancementRuleSource.MANUAL, EnhancementRuleSource.AI}
+            for rule in enhancement_rules:
+                assert rule.source in valid_sources, f"Invalid enhancement rule source: {rule.source}"
 
-            # Verify each categorization rule has complete data
-            for rule in categorization_rules:
-                assert rule.category_id is not None
+            # Verify each enhancement rule has complete data
+            for rule in enhancement_rules:
                 assert rule.source is not None
-                assert rule.normalized_description is not None
+                assert rule.normalized_description_pattern is not None
                 assert rule.created_at is not None
+                # Note: category_id and counterparty_account_id can be None for unmatched rules

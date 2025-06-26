@@ -10,6 +10,7 @@ from app.domain.models.processing import BackgroundJobInfo
 from app.domain.models.transaction import CategorizationStatus, CounterpartyStatus
 from app.domain.models.transaction_categorization import CategorizationSource
 from app.domain.models.transaction_counterparty_rule import CounterpartyRuleSource
+from app.domain.models.enhancement_rule import MatchType, EnhancementRuleSource
 
 
 class CategoryBase(BaseModel):
@@ -459,5 +460,90 @@ class TransactionCounterpartyRuleResponse(BaseModel):
 class TransactionCounterpartyRuleListResponse(BaseModel):
     rules: Sequence[TransactionCounterpartyRuleResponse]
     total: int
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+# Enhancement Rule Schemas
+class EnhancementRuleBase(BaseModel):
+    normalized_description_pattern: str = Field(..., min_length=1, max_length=255)
+    match_type: MatchType
+    category_id: Optional[UUID] = None
+    counterparty_account_id: Optional[UUID] = None
+    min_amount: Optional[Decimal] = None
+    max_amount: Optional[Decimal] = None
+    start_date: Optional[str] = None
+    end_date: Optional[str] = None
+    source: EnhancementRuleSource = EnhancementRuleSource.MANUAL
+
+    @field_validator('normalized_description_pattern')
+    @classmethod
+    def validate_description(cls, v: str) -> str:
+        if not v.strip():
+            raise ValueError('Description cannot be empty')
+        return v.strip()
+
+    @field_validator('min_amount', 'max_amount')
+    @classmethod
+    def validate_amounts(cls, v: Optional[Decimal]) -> Optional[Decimal]:
+        if v is not None and v < 0:
+            raise ValueError('Amount cannot be negative')
+        return v
+
+
+class EnhancementRuleCreate(EnhancementRuleBase):
+    @field_validator('category_id', 'counterparty_account_id')
+    @classmethod
+    def validate_at_least_one_enhancement(cls, v, info):
+        # This will be validated in the service layer instead
+        return v
+
+
+class EnhancementRuleUpdate(EnhancementRuleBase):
+    pass
+
+
+class EnhancementRuleResponse(BaseModel):
+    id: UUID
+    normalized_description_pattern: str
+    match_type: MatchType
+    category_id: Optional[UUID] = None
+    counterparty_account_id: Optional[UUID] = None
+    min_amount: Optional[Decimal] = None
+    max_amount: Optional[Decimal] = None
+    start_date: Optional[str] = None
+    end_date: Optional[str] = None
+    source: EnhancementRuleSource
+    created_at: datetime
+    updated_at: datetime
+    # Optional populated fields
+    category: Optional[CategoryResponse] = None
+    counterparty_account: Optional[AccountResponse] = None
+    transaction_count: Optional[int] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class EnhancementRuleListResponse(BaseModel):
+    rules: Sequence[EnhancementRuleResponse]
+    total: int
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class EnhancementRuleStatsResponse(BaseModel):
+    summary: Dict[str, int]
+    rule_type_usage: Optional[List[Dict]] = None
+    category_usage: Optional[List[Dict]] = None
+    counterparty_usage: Optional[List[Dict]] = None
+    top_rules_by_usage: List[Dict]
+    unused_rules: List[Dict]
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class CleanupUnusedRulesResponse(BaseModel):
+    deleted_count: int
+    message: str
 
     model_config = ConfigDict(from_attributes=True)

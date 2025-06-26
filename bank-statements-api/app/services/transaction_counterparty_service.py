@@ -7,10 +7,8 @@ from uuid import UUID
 from app.domain.models.counterparty import BatchCounterpartyResult, CounterpartyResult
 from app.domain.models.processing import ProcessingProgress
 from app.domain.models.transaction import CategorizationStatus, CounterpartyStatus, Transaction
-from app.domain.models.transaction_counterparty_rule import CounterpartyRuleSource, TransactionCounterpartyRule
 from app.ports.categorizers.transaction_counterparty import TransactionCounterparty
 from app.ports.repositories.transaction import TransactionRepository
-from app.ports.repositories.transaction_counterparty_rule import TransactionCounterpartyRuleRepository
 
 logger = logging.getLogger(__name__)
 
@@ -20,11 +18,9 @@ class TransactionCounterpartyService:
         self,
         transaction_repository: TransactionRepository,
         transaction_counterparty: TransactionCounterparty,
-        transaction_counterparty_rule_repository: Optional[TransactionCounterpartyRuleRepository] = None,
     ) -> None:
         self.transaction_repository: TransactionRepository = transaction_repository
         self.transaction_counterparty: TransactionCounterparty = transaction_counterparty
-        self.transaction_counterparty_rule_repository = transaction_counterparty_rule_repository
 
     def process_unprocessed_transactions_detailed(self, batch_size: int = 10) -> BatchCounterpartyResult:
         """Process transactions that don't have counterparty accounts identified"""
@@ -46,35 +42,7 @@ class TransactionCounterpartyService:
                 # since it's a separate concern from categorization
                 self.transaction_repository.update(transaction)
 
-                # Create counterparty rule for future use (if counterparty was identified)
-                if (
-                    result.counterparty_account_id
-                    and result.status == CategorizationStatus.CATEGORIZED
-                    and self.transaction_counterparty_rule_repository
-                ):
-                    try:
-                        # Check if rule already exists to avoid duplicate key errors
-                        existing_rule = self.transaction_counterparty_rule_repository.get_by_normalized_description(
-                            transaction.normalized_description
-                        )
-                        if not existing_rule:
-                            self.transaction_counterparty_rule_repository.create(
-                                TransactionCounterpartyRule(
-                                    normalized_description=transaction.normalized_description,
-                                    counterparty_account_id=result.counterparty_account_id,
-                                    min_amount=transaction.amount,  # Use exact amount as both min/max for now
-                                    max_amount=transaction.amount,
-                                    source=CounterpartyRuleSource.AI,
-                                )
-                            )
-                            logger.debug(
-                                f"Created AI counterparty rule: {transaction.normalized_description} -> {result.counterparty_account_id}"
-                            )
-                        else:
-                            logger.debug(f"Counterparty rule already exists for: {transaction.normalized_description}")
-                    except Exception as e:
-                        # Don't fail the transaction counterparty identification if rule creation fails
-                        logger.warning(f"Failed to create counterparty rule for {transaction.normalized_description}: {e}")
+                # Note: Rule creation is now handled by TransactionRuleEnhancementService
 
         successful_count = sum(1 for result in counterparty_results if result.status == CategorizationStatus.CATEGORIZED)
         failed_count = len(counterparty_results) - successful_count
@@ -215,35 +183,7 @@ class TransactionCounterpartyService:
                             # Save to database
                             self.transaction_repository.update(fresh_transaction)
 
-                            # Create counterparty rule for future use (if counterparty was identified)
-                            if result.counterparty_account_id and self.transaction_counterparty_rule_repository:
-                                try:
-                                    # Check if rule already exists to avoid duplicate key errors
-                                    existing_rule = self.transaction_counterparty_rule_repository.get_by_normalized_description(
-                                        fresh_transaction.normalized_description
-                                    )
-                                    if not existing_rule:
-                                        self.transaction_counterparty_rule_repository.create(
-                                            TransactionCounterpartyRule(
-                                                normalized_description=fresh_transaction.normalized_description,
-                                                counterparty_account_id=result.counterparty_account_id,
-                                                min_amount=None,
-                                                max_amount=None,
-                                                source=CounterpartyRuleSource.AI,
-                                            )
-                                        )
-                                        logger.debug(
-                                            f"Created AI counterparty rule: {fresh_transaction.normalized_description} -> {result.counterparty_account_id}"
-                                        )
-                                    else:
-                                        logger.debug(
-                                            f"Counterparty rule already exists for: {fresh_transaction.normalized_description}"
-                                        )
-                                except Exception as e:
-                                    # Don't fail the transaction counterparty identification if rule creation fails
-                                    logger.warning(
-                                        f"Failed to create counterparty rule for {fresh_transaction.normalized_description}: {e}"
-                                    )
+                            # Note: Rule creation is now handled by TransactionRuleEnhancementService
 
                             successful_count += 1
                             if result.counterparty_account_id:

@@ -7,10 +7,8 @@ from uuid import UUID
 from app.domain.models.categorization import BatchCategorizationResult, CategorizationResult
 from app.domain.models.processing import ProcessingProgress
 from app.domain.models.transaction import CategorizationStatus, Transaction
-from app.domain.models.transaction_categorization import CategorizationSource
 from app.ports.categorizers.transaction_categorizer import TransactionCategorizer
 from app.ports.repositories.transaction import TransactionRepository
-from app.ports.repositories.transaction_categorization import TransactionCategorizationRepository
 
 logger = logging.getLogger(__name__)
 
@@ -20,11 +18,9 @@ class TransactionCategorizationService:
         self,
         transaction_repository: TransactionRepository,
         transaction_categorizer: TransactionCategorizer,
-        transaction_categorization_repository: TransactionCategorizationRepository,
     ) -> None:
         self.transaction_repository: TransactionRepository = transaction_repository
         self.transaction_categorizer: TransactionCategorizer = transaction_categorizer
-        self.transaction_categorization_repository: TransactionCategorizationRepository = transaction_categorization_repository
 
     def process_uncategorized_transactions_detailed(self, batch_size: int = 10) -> BatchCategorizationResult:
         transactions: List[Transaction] = self.transaction_repository.get_oldest_uncategorized(limit=batch_size)
@@ -180,30 +176,7 @@ class TransactionCategorizationService:
                             # Save to database
                             self.transaction_repository.update(fresh_transaction)
 
-                            # Create categorization rule for future use
-                            try:
-                                # Check if rule already exists to avoid duplicate key errors
-                                existing_rule = self.transaction_categorization_repository.get_rule_by_normalized_description(
-                                    fresh_transaction.normalized_description
-                                )
-                                if not existing_rule:
-                                    self.transaction_categorization_repository.create_rule(
-                                        normalized_description=fresh_transaction.normalized_description,
-                                        category_id=result.category_id,
-                                        source=CategorizationSource.AI,
-                                    )
-                                    logger.debug(
-                                        f"Created AI categorization rule: {fresh_transaction.normalized_description} -> {result.category_id}"
-                                    )
-                                else:
-                                    logger.debug(
-                                        f"Categorization rule already exists for: {fresh_transaction.normalized_description}"
-                                    )
-                            except Exception as e:
-                                # Don't fail the transaction categorization if rule creation fails
-                                logger.warning(
-                                    f"Failed to create categorization rule for {fresh_transaction.normalized_description}: {e}"
-                                )
+                            # Note: Rule creation is now handled by TransactionRuleEnhancementService
 
                             successful_count += 1
                             logger.debug(

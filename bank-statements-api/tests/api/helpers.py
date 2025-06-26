@@ -5,15 +5,12 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from app.adapters.repositories.background_job import SQLAlchemyBackgroundJobRepository
-from app.adapters.repositories.transaction_categorization import SQLAlchemyTransactionCategorizationRepository
 from app.app import register_app_routes
 from app.core.dependencies import InternalDependencies
 from app.services.account import AccountService
 from app.services.background.background_job_service import BackgroundJobService
 from app.services.category import CategoryService
 from app.services.initial_balance_service import InitialBalanceService
-from app.services.rule_based_categorization import RuleBasedCategorizationService
-from app.services.rule_based_counterparty import RuleBasedCounterpartyService
 from app.services.statement_processing.statement_analyzer import StatementAnalyzerService
 from app.services.statement_processing.statement_upload import StatementUploadService
 from app.services.transaction import TransactionService
@@ -21,7 +18,7 @@ from app.services.transaction_categorization.transaction_categorization import T
 from app.services.transaction_categorization_management import TransactionCategorizationManagementService
 from app.services.transaction_counterparty_rule_management import TransactionCounterpartyRuleManagementService
 from app.services.transaction_counterparty_service import TransactionCounterpartyService
-from app.services.transaction_processing_orchestrator import TransactionProcessingOrchestrator
+from app.services.enhancement_rule_management import EnhancementRuleManagementService
 
 
 def mocked_dependencies(
@@ -34,12 +31,9 @@ def mocked_dependencies(
     transaction_counterparty_service: TransactionCounterpartyService = None,
     transaction_categorization_management_service: TransactionCategorizationManagementService = None,
     transaction_counterparty_rule_management_service: TransactionCounterpartyRuleManagementService = None,
-    rule_based_categorization_service: RuleBasedCategorizationService = None,
-    rule_based_counterparty_service: RuleBasedCounterpartyService = None,
+    enhancement_rule_management_service: EnhancementRuleManagementService = None,
     background_job_service: BackgroundJobService = None,
     background_job_repository: SQLAlchemyBackgroundJobRepository = None,
-    transaction_processing_orchestrator: TransactionProcessingOrchestrator = None,
-    transaction_categorization_repository: SQLAlchemyTransactionCategorizationRepository = None,
     initial_balance_service: InitialBalanceService = None,
 ) -> InternalDependencies:
     # Create mocked transaction service with transaction_repository attribute
@@ -63,14 +57,10 @@ def mocked_dependencies(
         or MagicMock(spec=TransactionCategorizationManagementService),
         transaction_counterparty_rule_management_service=transaction_counterparty_rule_management_service
         or MagicMock(spec=TransactionCounterpartyRuleManagementService),
-        rule_based_categorization_service=rule_based_categorization_service or MagicMock(spec=RuleBasedCategorizationService),
-        rule_based_counterparty_service=rule_based_counterparty_service or MagicMock(spec=RuleBasedCounterpartyService),
+        enhancement_rule_management_service=enhancement_rule_management_service
+        or MagicMock(spec=EnhancementRuleManagementService),
         background_job_service=background_job_service or MagicMock(spec=BackgroundJobService),
         background_job_repository=background_job_repository or MagicMock(spec=SQLAlchemyBackgroundJobRepository),
-        transaction_processing_orchestrator=transaction_processing_orchestrator
-        or MagicMock(spec=TransactionProcessingOrchestrator),
-        transaction_categorization_repository=transaction_categorization_repository
-        or MagicMock(spec=SQLAlchemyTransactionCategorizationRepository),
     )
 
 

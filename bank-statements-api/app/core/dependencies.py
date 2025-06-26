@@ -7,11 +7,10 @@ from sqlalchemy.orm import Session
 from app.adapters.repositories.account import SQLAlchemyAccountRepository
 from app.adapters.repositories.background_job import SQLAlchemyBackgroundJobRepository
 from app.adapters.repositories.category import SQLAlchemyCategoryRepository
+from app.adapters.repositories.enhancement_rule import SQLAlchemyEnhancementRuleRepository
 from app.adapters.repositories.initial_balance import SQLAlchemyInitialBalanceRepository
 from app.adapters.repositories.statement import SqlAlchemyStatementRepository
 from app.adapters.repositories.transaction import SQLAlchemyTransactionRepository
-from app.adapters.repositories.transaction_categorization import SQLAlchemyTransactionCategorizationRepository
-from app.adapters.repositories.transaction_counterparty_rule import SQLAlchemyTransactionCounterpartyRuleRepository
 from app.adapters.repositories.uploaded_file import SQLAlchemyFileAnalysisMetadataRepository, SQLAlchemyUploadedFileRepository
 from app.ai.gemini_ai import GeminiAI
 from app.ai.llm_client import LLMClient
@@ -20,8 +19,6 @@ from app.services.account import AccountService
 from app.services.background.background_job_service import BackgroundJobService
 from app.services.category import CategoryService
 from app.services.initial_balance_service import InitialBalanceService
-from app.services.rule_based_categorization import RuleBasedCategorizationService
-from app.services.rule_based_counterparty import RuleBasedCounterpartyService
 from app.services.schema_detection.heuristic_schema_detector import HeuristicSchemaDetector
 from app.services.statement_processing.file_type_detector import StatementFileTypeDetector
 from app.services.statement_processing.statement_analyzer import StatementAnalyzerService
@@ -35,8 +32,9 @@ from app.services.transaction_categorization.transaction_categorization import T
 from app.services.transaction_categorization_management import TransactionCategorizationManagementService
 from app.services.transaction_counterparty_rule_management import TransactionCounterpartyRuleManagementService
 from app.services.transaction_counterparty_service import TransactionCounterpartyService
-from app.services.transaction_processing_orchestrator import TransactionProcessingOrchestrator
+from app.services.transaction_enhancement import TransactionEnhancer
 from app.services.transaction_rule_enhancement import TransactionRuleEnhancementService
+from app.services.enhancement_rule_management import EnhancementRuleManagementService
 
 logger = logging.getLogger(__name__)
 
@@ -63,12 +61,9 @@ class InternalDependencies:
         transaction_counterparty_service: TransactionCounterpartyService,
         transaction_categorization_management_service: TransactionCategorizationManagementService,
         transaction_counterparty_rule_management_service: TransactionCounterpartyRuleManagementService,
-        rule_based_categorization_service: RuleBasedCategorizationService,
-        rule_based_counterparty_service: RuleBasedCounterpartyService,
+        enhancement_rule_management_service: EnhancementRuleManagementService,
         background_job_service: BackgroundJobService,
         background_job_repository: SQLAlchemyBackgroundJobRepository,
-        transaction_processing_orchestrator: TransactionProcessingOrchestrator,
-        transaction_categorization_repository: SQLAlchemyTransactionCategorizationRepository,
     ):
         self.transaction_service = transaction_service
         self.category_service = category_service
@@ -80,12 +75,9 @@ class InternalDependencies:
         self.transaction_counterparty_service = transaction_counterparty_service
         self.transaction_categorization_management_service = transaction_categorization_management_service
         self.transaction_counterparty_rule_management_service = transaction_counterparty_rule_management_service
-        self.rule_based_categorization_service = rule_based_categorization_service
-        self.rule_based_counterparty_service = rule_based_counterparty_service
+        self.enhancement_rule_management_service = enhancement_rule_management_service
         self.background_job_service = background_job_service
         self.background_job_repository = background_job_repository
-        self.transaction_processing_orchestrator = transaction_processing_orchestrator
-        self.transaction_categorization_repository = transaction_categorization_repository
 
 
 def build_external_dependencies() -> ExternalDependencies:
@@ -100,8 +92,7 @@ def build_internal_dependencies(external: ExternalDependencies) -> InternalDepen
     uploaded_file_repo = SQLAlchemyUploadedFileRepository(external.db)
     file_analysis_metadata_repo = SQLAlchemyFileAnalysisMetadataRepository(external.db)
     statement_repo = SqlAlchemyStatementRepository(external.db)
-    transaction_categorization_repo = SQLAlchemyTransactionCategorizationRepository(external.db)
-    transaction_counterparty_rule_repo = SQLAlchemyTransactionCounterpartyRuleRepository(external.db)
+    enhancement_rule_repo = SQLAlchemyEnhancementRuleRepository(external.db)
     background_job_repo = SQLAlchemyBackgroundJobRepository(external.db)
 
     file_type_detector = StatementFileTypeDetector()
@@ -114,26 +105,13 @@ def build_internal_dependencies(external: ExternalDependencies) -> InternalDepen
     initial_balance_service = InitialBalanceService(initial_balance_repo)
     transaction_service = TransactionService(transaction_repo, initial_balance_repo)
 
-    rule_based_categorization_service = RuleBasedCategorizationService(
-        repository=transaction_categorization_repo, enable_cache=True
-    )
-
-    rule_based_counterparty_service = RuleBasedCounterpartyService(
-        repository=transaction_counterparty_rule_repo, enable_cache=True
-    )
+    transaction_enhancer = TransactionEnhancer()
 
     background_job_service = BackgroundJobService(background_job_repo)
 
-    transaction_processing_orchestrator = TransactionProcessingOrchestrator(
-        rule_based_categorization_service=rule_based_categorization_service,
-        rule_based_counterparty_service=rule_based_counterparty_service,
-        background_job_service=background_job_service,
-        transaction_repository=transaction_repo,
-    )
-
     transaction_rule_enhancement_service = TransactionRuleEnhancementService(
-        rule_based_categorization_service=rule_based_categorization_service,
-        rule_based_counterparty_service=rule_based_counterparty_service,
+        transaction_enhancer=transaction_enhancer,
+        enhancement_rule_repository=enhancement_rule_repo,
     )
 
     # transaction_categorizer = SimpleTransactionCategorizer(category_repo)
@@ -141,22 +119,23 @@ def build_internal_dependencies(external: ExternalDependencies) -> InternalDepen
     transaction_categorization_service = TransactionCategorizationService(
         transaction_repository=transaction_repo,
         transaction_categorizer=transaction_categorizer,
-        transaction_categorization_repository=transaction_categorization_repo,
     )
 
     transaction_counterparty = LLMTransactionCounterparty(account_repo, external.llm_client)
     transaction_counterparty_service = TransactionCounterpartyService(
         transaction_repository=transaction_repo,
         transaction_counterparty=transaction_counterparty,
-        transaction_counterparty_rule_repository=transaction_counterparty_rule_repo,
     )
 
-    transaction_categorization_management_service = TransactionCategorizationManagementService(
-        repository=transaction_categorization_repo,
-    )
+    transaction_categorization_management_service = TransactionCategorizationManagementService()
 
-    transaction_counterparty_rule_management_service = TransactionCounterpartyRuleManagementService(
-        repository=transaction_counterparty_rule_repo,
+    transaction_counterparty_rule_management_service = TransactionCounterpartyRuleManagementService()
+
+    enhancement_rule_management_service = EnhancementRuleManagementService(
+        enhancement_rule_repository=enhancement_rule_repo,
+        category_repository=category_repo,
+        account_repository=account_repo,
+        transaction_repository=transaction_repo,
     )
 
     statement_analyzer_service = StatementAnalyzerService(
@@ -191,12 +170,9 @@ def build_internal_dependencies(external: ExternalDependencies) -> InternalDepen
         transaction_counterparty_service=transaction_counterparty_service,
         transaction_categorization_management_service=transaction_categorization_management_service,
         transaction_counterparty_rule_management_service=transaction_counterparty_rule_management_service,
-        rule_based_categorization_service=rule_based_categorization_service,
-        rule_based_counterparty_service=rule_based_counterparty_service,
+        enhancement_rule_management_service=enhancement_rule_management_service,
         background_job_service=background_job_service,
         background_job_repository=background_job_repo,
-        transaction_processing_orchestrator=transaction_processing_orchestrator,
-        transaction_categorization_repository=transaction_categorization_repo,
     )
 
 
@@ -211,5 +187,11 @@ def get_dependencies() -> Generator[tuple[ExternalDependencies, InternalDependen
 
 
 def provide_dependencies() -> Generator[InternalDependencies, None, None]:
+    with get_dependencies() as (_, internal):
+        yield internal
+
+
+def get_internal_dependencies() -> Generator[InternalDependencies, None, None]:
+    """FastAPI dependency function for getting internal dependencies."""
     with get_dependencies() as (_, internal):
         yield internal

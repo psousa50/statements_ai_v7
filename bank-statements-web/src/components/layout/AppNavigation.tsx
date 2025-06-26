@@ -28,13 +28,13 @@ export const AppNavigation: React.FC = () => {
       <ListItem disablePadding>
         <ListItemButton
           component={RouterLink}
-          to="/categorizations"
-          selected={location.pathname === '/categorizations'}
+          to="/enhancement-rules"
+          selected={location.pathname === '/enhancement-rules'}
         >
           <ListItemIcon>
             <CategoryIcon />
           </ListItemIcon>
-          <ListItemText primary="Categorizations" />
+          <ListItemText primary="Enhancement Rules" />
         </ListItemButton>
       </ListItem>
       

@@ -212,3 +212,16 @@ class TransactionRepository(ABC):
             List of transactions without counterparty accounts, ordered by date (oldest first)
         """
         pass
+
+    @abstractmethod
+    def count_matching_rule(self, rule) -> int:
+        """
+        Count transactions that would match the given enhancement rule
+        
+        Args:
+            rule: EnhancementRule to match against
+            
+        Returns:
+            Number of transactions that match the rule
+        """
+        pass

@@ -16,6 +16,9 @@ class MatchType(str, Enum):
     PREFIX = "prefix"
     INFIX = "infix"
 
+    def __str__(self):
+        return self.value
+
 
 class EnhancementRuleSource(str, Enum):
     MANUAL = "MANUAL"
@@ -27,7 +30,7 @@ class EnhancementRule(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     normalized_description_pattern = Column(String, nullable=False, index=True)
-    match_type = Column(SQLAlchemyEnum(MatchType), nullable=False)
+    match_type = Column(String, nullable=False)  # Temporarily disable enum validation
 
     # Optional amount constraints
     min_amount = Column(Numeric(precision=10, scale=2), nullable=True)
@@ -42,7 +45,7 @@ class EnhancementRule(Base):
     counterparty_account_id = Column(UUID(as_uuid=True), ForeignKey("accounts.id"), nullable=True)
 
     # Metadata
-    source = Column(SQLAlchemyEnum(EnhancementRuleSource), nullable=False)
+    source = Column(SQLAlchemyEnum(EnhancementRuleSource, name="enhancementrulesource"), nullable=False)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
     updated_at = Column(
         DateTime,

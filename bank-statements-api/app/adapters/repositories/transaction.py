@@ -438,3 +438,31 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
             .limit(limit)
             .all()
         )
+
+    def count_matching_rule(self, rule) -> int:
+        """Count transactions that would match the given enhancement rule"""
+        from app.domain.models.enhancement_rule import MatchType
+        
+        query = self.db_session.query(func.count(Transaction.id))
+        
+        # Match description pattern based on rule type
+        if rule.match_type == MatchType.EXACT:
+            query = query.filter(Transaction.normalized_description == rule.normalized_description_pattern)
+        elif rule.match_type == MatchType.PREFIX:
+            query = query.filter(Transaction.normalized_description.like(f"{rule.normalized_description_pattern}%"))
+        elif rule.match_type == MatchType.INFIX:
+            query = query.filter(Transaction.normalized_description.like(f"%{rule.normalized_description_pattern}%"))
+        
+        # Apply amount constraints if specified
+        if rule.min_amount is not None:
+            query = query.filter(Transaction.amount >= rule.min_amount)
+        if rule.max_amount is not None:
+            query = query.filter(Transaction.amount <= rule.max_amount)
+        
+        # Apply date constraints if specified
+        if rule.start_date is not None:
+            query = query.filter(Transaction.date >= rule.start_date)
+        if rule.end_date is not None:
+            query = query.filter(Transaction.date <= rule.end_date)
+        
+        return query.scalar() or 0
