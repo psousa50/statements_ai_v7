@@ -100,9 +100,6 @@ export const EditEnhancementRuleModal: React.FC<EditEnhancementRuleModalProps> =
       errors.normalized_description_pattern = 'Description is required'
     }
 
-    if (!formData.category_id && !formData.counterparty_account_id) {
-      errors.rule_type = 'Must specify either a category, counterparty, or both'
-    }
 
     if (formData.min_amount !== undefined && formData.max_amount !== undefined) {
       if (formData.min_amount > formData.max_amount) {
@@ -204,11 +201,6 @@ export const EditEnhancementRuleModal: React.FC<EditEnhancementRuleModalProps> =
             <Typography variant="h6" gutterBottom>
               Rule Actions
             </Typography>
-            {validationErrors.rule_type && (
-              <Alert severity="error" sx={{ mb: 2 }}>
-                {validationErrors.rule_type}
-              </Alert>
-            )}
           </Box>
 
           <Stack direction="row" spacing={2}>
