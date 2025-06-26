@@ -33,7 +33,7 @@ export const EnhancementRules: React.FC = () => {
   const [filters, setFilters] = useState<EnhancementRuleFilters>({
     page: 1,
     page_size: 50,
-    sort_field: 'created_at',
+    sort_field: 'usage',
     sort_direction: 'desc',
   })
 
