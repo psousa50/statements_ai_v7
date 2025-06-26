@@ -16,6 +16,8 @@ import {
 } from '@mui/material'
 import EditIcon from '@mui/icons-material/Edit'
 import DeleteIcon from '@mui/icons-material/Delete'
+import VisibilityIcon from '@mui/icons-material/Visibility'
+import { useNavigate } from 'react-router-dom'
 import { format } from 'date-fns'
 import {
   EnhancementRule,
@@ -45,6 +47,7 @@ export const EnhancementRuleTable: React.FC<EnhancementRuleTableProps> = ({
   onEdit,
   onDelete,
 }) => {
+  const navigate = useNavigate()
   const handleSort = (field: string) => {
     const isAsc = filters.sort_field === field && filters.sort_direction === 'asc'
     onSort(field, isAsc ? 'desc' : 'asc')
@@ -52,6 +55,13 @@ export const EnhancementRuleTable: React.FC<EnhancementRuleTableProps> = ({
 
   const handlePageChange = (_: unknown, newPage: number) => {
     onPageChange(newPage + 1)
+  }
+
+  const handleViewTransactions = (rule: EnhancementRule) => {
+    const params = new URLSearchParams({
+      description_search: rule.normalized_description_pattern
+    })
+    navigate(`/transactions?${params.toString()}`)
   }
 
   const getMatchTypeLabel = (matchType: MatchType) => {
@@ -284,9 +294,20 @@ export const EnhancementRuleTable: React.FC<EnhancementRuleTableProps> = ({
                   )}
                 </TableCell>
                 <TableCell>
-                  <Typography variant="body2">
-                    {rule.transaction_count || 0}
-                  </Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Typography variant="body2">
+                      {rule.transaction_count || 0}
+                    </Typography>
+                    {rule.transaction_count && rule.transaction_count > 0 && (
+                      <IconButton
+                        size="small"
+                        onClick={() => handleViewTransactions(rule)}
+                        title="View transactions"
+                      >
+                        <VisibilityIcon fontSize="small" />
+                      </IconButton>
+                    )}
+                  </Box>
                 </TableCell>
                 <TableCell>
                   <Chip
