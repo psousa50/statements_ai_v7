@@ -3,8 +3,7 @@ import path from 'path'
 
 // Only VITE_ variables are exposed to frontend code. WEB_PORT is used only for dev server config.
 const WEB_PORT = process.env.WEB_PORT ? parseInt(process.env.WEB_PORT) : 5173
-
-console.log('Vite config - WEB_PORT:', WEB_PORT)
+const API_URL = process.env.VITE_API_URL || process.env.API_BASE_URL || 'http://localhost:8000'
 
 export default defineConfig({
   test: {
@@ -29,7 +28,7 @@ export default defineConfig({
     port: WEB_PORT,
     proxy: {
       '/api': {
-        target: 'http://localhost:8000', // Hardcoded for development
+        target: API_URL,
         changeOrigin: true,
       },
     },
