@@ -19,12 +19,7 @@ import DeleteIcon from '@mui/icons-material/Delete'
 import VisibilityIcon from '@mui/icons-material/Visibility'
 import { useNavigate } from 'react-router-dom'
 import { format } from 'date-fns'
-import {
-  EnhancementRule,
-  EnhancementRuleFilters,
-  EnhancementRuleSource,
-  MatchType,
-} from '../types/EnhancementRule'
+import { EnhancementRule, EnhancementRuleFilters, EnhancementRuleSource, MatchType } from '../types/EnhancementRule'
 
 interface EnhancementRuleTableProps {
   rules: EnhancementRule[]
@@ -59,7 +54,7 @@ export const EnhancementRuleTable: React.FC<EnhancementRuleTableProps> = ({
 
   const handleViewTransactions = (rule: EnhancementRule) => {
     const params = new URLSearchParams({
-      description_search: rule.normalized_description_pattern
+      description_search: rule.normalized_description_pattern,
     })
     navigate(`/transactions?${params.toString()}`)
   }
@@ -158,11 +153,7 @@ export const EnhancementRuleTable: React.FC<EnhancementRuleTableProps> = ({
               <TableCell>
                 <TableSortLabel
                   active={filters.sort_field === 'normalized_description_pattern'}
-                  direction={
-                    filters.sort_field === 'normalized_description_pattern' 
-                      ? filters.sort_direction 
-                      : 'asc'
-                  }
+                  direction={filters.sort_field === 'normalized_description_pattern' ? filters.sort_direction : 'asc'}
                   onClick={() => handleSort('normalized_description_pattern')}
                 >
                   Description
@@ -173,11 +164,7 @@ export const EnhancementRuleTable: React.FC<EnhancementRuleTableProps> = ({
               <TableCell>
                 <TableSortLabel
                   active={filters.sort_field === 'category'}
-                  direction={
-                    filters.sort_field === 'category' 
-                      ? filters.sort_direction 
-                      : 'asc'
-                  }
+                  direction={filters.sort_field === 'category' ? filters.sort_direction : 'asc'}
                   onClick={() => handleSort('category')}
                 >
                   Category
@@ -188,11 +175,7 @@ export const EnhancementRuleTable: React.FC<EnhancementRuleTableProps> = ({
               <TableCell>
                 <TableSortLabel
                   active={filters.sort_field === 'usage'}
-                  direction={
-                    filters.sort_field === 'usage' 
-                      ? filters.sort_direction 
-                      : 'asc'
-                  }
+                  direction={filters.sort_field === 'usage' ? filters.sort_direction : 'asc'}
                   onClick={() => handleSort('usage')}
                 >
                   Usage
@@ -201,11 +184,7 @@ export const EnhancementRuleTable: React.FC<EnhancementRuleTableProps> = ({
               <TableCell>
                 <TableSortLabel
                   active={filters.sort_field === 'source'}
-                  direction={
-                    filters.sort_field === 'source' 
-                      ? filters.sort_direction 
-                      : 'asc'
-                  }
+                  direction={filters.sort_field === 'source' ? filters.sort_direction : 'asc'}
                   onClick={() => handleSort('source')}
                 >
                   Source
@@ -214,11 +193,7 @@ export const EnhancementRuleTable: React.FC<EnhancementRuleTableProps> = ({
               <TableCell>
                 <TableSortLabel
                   active={filters.sort_field === 'created_at'}
-                  direction={
-                    filters.sort_field === 'created_at' 
-                      ? filters.sort_direction 
-                      : 'asc'
-                  }
+                  direction={filters.sort_field === 'created_at' ? filters.sort_direction : 'asc'}
                   onClick={() => handleSort('created_at')}
                 >
                   Created
@@ -243,18 +218,12 @@ export const EnhancementRuleTable: React.FC<EnhancementRuleTableProps> = ({
                   />
                 </TableCell>
                 <TableCell>
-                  <Chip
-                    label={getRuleTypeDisplay(rule)}
-                    color={getRuleTypeColor(rule) as any}
-                    size="small"
-                  />
+                  <Chip label={getRuleTypeDisplay(rule)} color={getRuleTypeColor(rule) as any} size="small" />
                 </TableCell>
                 <TableCell>
                   {rule.category ? (
                     <Box>
-                      <Typography variant="body2">
-                        {rule.category.name}
-                      </Typography>
+                      <Typography variant="body2">{rule.category.name}</Typography>
                     </Box>
                   ) : (
                     <Typography variant="body2" color="text.secondary">
@@ -293,16 +262,15 @@ export const EnhancementRuleTable: React.FC<EnhancementRuleTableProps> = ({
                     </Typography>
                   )}
                 </TableCell>
-                <TableCell>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Typography variant="body2">
-                      {rule.transaction_count || 0}
-                    </Typography>
+                <TableCell align="right">
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
+                    <Typography variant="body2">{rule.transaction_count || 0}</Typography>
                     {rule.transaction_count && rule.transaction_count > 0 && (
                       <IconButton
                         size="small"
                         onClick={() => handleViewTransactions(rule)}
                         title="View transactions"
+                        sx={{ ml: -2.5 }}
                       >
                         <VisibilityIcon fontSize="small" />
                       </IconButton>
@@ -317,25 +285,14 @@ export const EnhancementRuleTable: React.FC<EnhancementRuleTableProps> = ({
                   />
                 </TableCell>
                 <TableCell>
-                  <Typography variant="body2">
-                    {format(new Date(rule.created_at), 'MMM d, yyyy')}
-                  </Typography>
+                  <Typography variant="body2">{format(new Date(rule.created_at), 'MMM d, yyyy')}</Typography>
                 </TableCell>
                 <TableCell>
                   <Box sx={{ display: 'flex', gap: 1 }}>
-                    <IconButton
-                      size="small"
-                      onClick={() => onEdit(rule)}
-                      disabled={loading}
-                    >
+                    <IconButton size="small" onClick={() => onEdit(rule)} disabled={loading}>
                       <EditIcon fontSize="small" />
                     </IconButton>
-                    <IconButton
-                      size="small"
-                      onClick={() => onDelete(rule.id)}
-                      disabled={loading}
-                      color="error"
-                    >
+                    <IconButton size="small" onClick={() => onDelete(rule.id)} disabled={loading} color="error">
                       <DeleteIcon fontSize="small" />
                     </IconButton>
                   </Box>
