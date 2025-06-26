@@ -52,7 +52,7 @@ export const EditEnhancementRuleModal: React.FC<EditEnhancementRuleModalProps> =
   const [categories, setCategories] = useState<Category[]>([])
   const [counterpartyAccounts, setCounterpartyAccounts] = useState<CounterpartyAccount[]>([])
   const [formData, setFormData] = useState<EnhancementRuleUpdate>({
-    normalized_description: '',
+    normalized_description_pattern: '',
     match_type: MatchType.INFIX,
     source: EnhancementRuleSource.MANUAL,
   })
@@ -61,7 +61,7 @@ export const EditEnhancementRuleModal: React.FC<EditEnhancementRuleModalProps> =
   useEffect(() => {
     if (rule) {
       setFormData({
-        normalized_description: rule.normalized_description,
+        normalized_description_pattern: rule.normalized_description_pattern,
         match_type: rule.match_type,
         category_id: rule.category_id,
         counterparty_account_id: rule.counterparty_account_id,
@@ -96,8 +96,8 @@ export const EditEnhancementRuleModal: React.FC<EditEnhancementRuleModalProps> =
   const validateForm = () => {
     const errors: Record<string, string> = {}
 
-    if (!formData.normalized_description.trim()) {
-      errors.normalized_description = 'Description is required'
+    if (!formData.normalized_description_pattern.trim()) {
+      errors.normalized_description_pattern = 'Description is required'
     }
 
     if (!formData.category_id && !formData.counterparty_account_id) {
@@ -160,11 +160,11 @@ export const EditEnhancementRuleModal: React.FC<EditEnhancementRuleModalProps> =
           <TextField
             fullWidth
             label="Description Pattern"
-            value={formData.normalized_description}
-            onChange={(e) => handleFieldChange('normalized_description', e.target.value)}
-            error={!!validationErrors.normalized_description}
+            value={formData.normalized_description_pattern}
+            onChange={(e) => handleFieldChange('normalized_description_pattern', e.target.value)}
+            error={!!validationErrors.normalized_description_pattern}
             helperText={
-              validationErrors.normalized_description ||
+              validationErrors.normalized_description_pattern ||
               'Enter the text pattern to match in transaction descriptions'
             }
             required
