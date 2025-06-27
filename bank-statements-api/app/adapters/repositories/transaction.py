@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 
 from app.common.text_normalization import normalize_description
 from app.domain.dto.statement_processing import TransactionDTO
-from app.domain.models.transaction import CategorizationStatus, CounterpartyStatus, SourceType, Transaction
+from app.domain.models.transaction import CategorizationStatus, SourceType, Transaction
 from app.ports.repositories.transaction import TransactionRepository
 
 
@@ -306,7 +306,6 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
                     sort_index=transaction_dto.sort_index or 0,
                     source_type=account_type_enum,
                     manual_position_after=transaction_dto.manual_position_after,
-                    counterparty_status=transaction_dto.counterparty_status or CounterpartyStatus.UNPROCESSED,
                 )
 
                 if account_uuid:
@@ -389,7 +388,6 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
             sort_index=sort_index,
             source_type=SourceType.MANUAL,
             manual_position_after=after_transaction_id,
-            counterparty_status=getattr(transaction_data, "counterparty_status", CounterpartyStatus.UNPROCESSED),
         )
 
         self.db_session.add(transaction)
@@ -429,22 +427,12 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         else:
             return [column.desc(), Transaction.sort_index.desc()]
 
-    def get_transactions_without_counterparty(self, limit: int = 10) -> List[Transaction]:
-        """Get transactions that need counterparty identification (counterparty_status = 'unprocessed')"""
-        return (
-            self.db_session.query(Transaction)
-            .filter(Transaction.counterparty_status == CounterpartyStatus.UNPROCESSED)
-            .order_by(Transaction.date.asc(), Transaction.sort_index.asc())
-            .limit(limit)
-            .all()
-        )
-
     def count_matching_rule(self, rule) -> int:
         """Count transactions that would match the given enhancement rule"""
         from app.domain.models.enhancement_rule import MatchType
-        
+
         query = self.db_session.query(func.count(Transaction.id))
-        
+
         # Match description pattern based on rule type
         if rule.match_type == MatchType.EXACT:
             query = query.filter(Transaction.normalized_description == rule.normalized_description_pattern)
@@ -452,17 +440,17 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
             query = query.filter(Transaction.normalized_description.like(f"{rule.normalized_description_pattern}%"))
         elif rule.match_type == MatchType.INFIX:
             query = query.filter(Transaction.normalized_description.like(f"%{rule.normalized_description_pattern}%"))
-        
+
         # Apply amount constraints if specified
         if rule.min_amount is not None:
             query = query.filter(Transaction.amount >= rule.min_amount)
         if rule.max_amount is not None:
             query = query.filter(Transaction.amount <= rule.max_amount)
-        
+
         # Apply date constraints if specified
         if rule.start_date is not None:
             query = query.filter(Transaction.date >= rule.start_date)
         if rule.end_date is not None:
             query = query.filter(Transaction.date <= rule.end_date)
-        
+
         return query.scalar() or 0

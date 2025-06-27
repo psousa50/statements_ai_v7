@@ -1,5 +1,4 @@
 import logging
-from typing import List
 from uuid import UUID
 
 from app.api.schemas import StatementUploadRequest
@@ -193,54 +192,12 @@ class StatementUploadService:
         )
 
     def schedule_jobs(self, saved: SavedStatement, enhanced: EnhancedTransactions) -> ScheduledJobs:
-        """Step 4: Schedule background jobs for AI processing"""
-        categorization_job_info = None
-        counterparty_job_info = None
-
-        # Schedule AI categorization for unmatched transactions
-        if enhanced.has_unmatched:
-            unmatched_transaction_ids = self._get_unmatched_transaction_ids_from_statement(saved.statement.id)
-
-            if unmatched_transaction_ids:
-                logger.info(f"Queuing AI categorization job for {len(unmatched_transaction_ids)} unmatched transactions")
-
-                background_job = self.background_job_service.queue_ai_categorization_job(
-                    UUID(saved.uploaded_file_id), unmatched_transaction_ids
-                )
-
-                from app.domain.models.processing import BackgroundJobInfo
-
-                categorization_job_info = BackgroundJobInfo(
-                    job_id=background_job.id,
-                    status=background_job.status,
-                    remaining_transactions=len(unmatched_transaction_ids),
-                    estimated_completion_seconds=len(unmatched_transaction_ids) * 2,
-                    status_url=f"/api/v1/transactions/categorization-jobs/{background_job.id}/status",
-                )
-
-        # Schedule AI counterparty identification for all transactions
-        all_transaction_ids = self._get_all_transaction_ids_from_statement(saved.statement.id)
-
-        if all_transaction_ids:
-            logger.info(f"Queuing AI counterparty identification job for {len(all_transaction_ids)} transactions")
-
-            counterparty_job = self.background_job_service.queue_ai_counterparty_identification_job(
-                UUID(saved.uploaded_file_id), all_transaction_ids
-            )
-
-            from app.domain.models.processing import BackgroundJobInfo
-
-            counterparty_job_info = BackgroundJobInfo(
-                job_id=counterparty_job.id,
-                status=counterparty_job.status,
-                remaining_transactions=len(all_transaction_ids),
-                estimated_completion_seconds=len(all_transaction_ids) * 1,
-                status_url=f"/api/v1/transactions/counterparty-jobs/{counterparty_job.id}/status",
-            )
-
+        """Step 4: Schedule background jobs for AI processing (currently disabled)"""
+        # AI categorization and counterparty identification services have been removed
+        # Return empty scheduled jobs
         return ScheduledJobs(
-            categorization_job_info=categorization_job_info,
-            counterparty_job_info=counterparty_job_info,
+            categorization_job_info=None,
+            counterparty_job_info=None,
         )
 
     def _build_result(
@@ -303,23 +260,3 @@ class StatementUploadService:
                 data_start_row_index=data_start_row_index,
                 account_id=account_id,
             )
-
-    def _get_unmatched_transaction_ids_from_statement(self, statement_id: UUID) -> List[UUID]:
-        """Get transaction IDs for unmatched transactions from a statement"""
-        from app.domain.models.transaction import CategorizationStatus
-
-        # Get all transactions from this statement
-        all_transactions = self.transaction_repo.get_by_statement_id(statement_id)
-
-        # Filter to only unmatched transactions
-        unmatched_ids = [t.id for t in all_transactions if t.categorization_status == CategorizationStatus.UNCATEGORIZED]
-
-        return unmatched_ids
-
-    def _get_all_transaction_ids_from_statement(self, statement_id: UUID) -> List[UUID]:
-        """Get all transaction IDs from a statement"""
-        # Get all transactions from this statement
-        all_transactions = self.transaction_repo.get_by_statement_id(statement_id)
-
-        # Return all transaction IDs
-        return [t.id for t in all_transactions]

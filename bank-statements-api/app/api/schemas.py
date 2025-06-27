@@ -6,11 +6,9 @@ from uuid import UUID
 from pydantic import BaseModel, ConfigDict, Field, field_serializer, field_validator
 
 from app.domain.models.background_job import JobStatus
+from app.domain.models.enhancement_rule import EnhancementRuleSource, MatchType
 from app.domain.models.processing import BackgroundJobInfo
-from app.domain.models.transaction import CategorizationStatus, CounterpartyStatus
-from app.domain.models.transaction_categorization import CategorizationSource
-from app.domain.models.transaction_counterparty_rule import CounterpartyRuleSource
-from app.domain.models.enhancement_rule import MatchType, EnhancementRuleSource
+from app.domain.models.transaction import CategorizationStatus
 
 
 class CategoryBase(BaseModel):
@@ -85,14 +83,12 @@ class TransactionCreate(TransactionBase):
     category_id: Optional[UUID] = None
     account_id: UUID
     counterparty_account_id: Optional[UUID] = None
-    counterparty_status: Optional[CounterpartyStatus] = None
 
 
 class TransactionUpdate(TransactionBase):
     category_id: Optional[UUID] = None
     account_id: UUID
     counterparty_account_id: Optional[UUID] = None
-    counterparty_status: Optional[CounterpartyStatus] = None
 
 
 class TransactionResponse(BaseModel):
@@ -105,7 +101,6 @@ class TransactionResponse(BaseModel):
     category_id: Optional[UUID] = None
     account_id: Optional[UUID] = None
     counterparty_account_id: Optional[UUID] = None
-    counterparty_status: CounterpartyStatus
     categorization_status: CategorizationStatus
     running_balance: Optional[Decimal] = None
     row_index: Optional[int] = None
@@ -130,7 +125,6 @@ class TransactionCreateRequest(BaseModel):
     account_id: UUID
     category_id: Optional[UUID] = None
     counterparty_account_id: Optional[UUID] = None
-    counterparty_status: Optional[CounterpartyStatus] = None
     after_transaction_id: Optional[UUID] = None
 
 
@@ -140,7 +134,6 @@ class TransactionUpdateRequest(BaseModel):
     amount: Optional[Decimal] = None
     category_id: Optional[UUID] = None
     counterparty_account_id: Optional[UUID] = None
-    counterparty_status: Optional[CounterpartyStatus] = None
 
 
 class TransactionFilters(BaseModel):
@@ -264,70 +257,6 @@ class StatementUploadResult(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-class TransactionCategorizationCreateRequest(BaseModel):
-    normalized_description: str
-    category_id: UUID
-
-
-class TransactionCategorizationUpdateRequest(BaseModel):
-    category_id: UUID
-
-
-class TransactionCategorizationResponse(BaseModel):
-    id: UUID
-    normalized_description: str
-    category_id: UUID
-    source: CategorizationSource
-    created_at: datetime
-    updated_at: datetime
-    category: Optional[CategoryResponse] = None
-    transaction_count: Optional[int] = None
-
-    model_config = ConfigDict(from_attributes=True)
-
-
-class TransactionCategorizationListResponse(BaseModel):
-    categorizations: List[TransactionCategorizationResponse]
-    total: int
-    page: int
-    page_size: int
-    total_pages: int
-
-    model_config = ConfigDict(from_attributes=True)
-
-
-class TransactionCategorizationFilters(BaseModel):
-    description_search: Optional[str] = None
-    category_ids: Optional[List[UUID]] = None
-    source: Optional[CategorizationSource] = None
-
-
-class BatchCategorizationRequest(BaseModel):
-    transaction_ids: List[UUID]
-    category_id: UUID
-
-
-class CategorizationResultResponse(BaseModel):
-    transaction_id: UUID
-    category_id: Optional[UUID] = None
-    status: CategorizationStatus
-    error_message: Optional[str] = None
-    confidence: Optional[float] = None
-
-    model_config = ConfigDict(from_attributes=True)
-
-
-class BatchCategorizationResponse(BaseModel):
-    results: List[CategorizationResultResponse]
-    total_processed: int
-    successful_count: int
-    failed_count: int
-    success: bool
-    message: str
-
-    model_config = ConfigDict(from_attributes=True)
-
-
 class CategoryCreateRequest(BaseModel):
     name: str
     parent_id: Optional[UUID] = None
@@ -385,30 +314,6 @@ class JobResultResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-# Transaction Categorization API Schemas
-class TransactionCategorizationBase(BaseModel):
-    normalized_description: str = Field(..., min_length=2, max_length=255)
-    category_id: UUID
-    source: CategorizationSource
-
-
-class TransactionCategorizationCreate(TransactionCategorizationBase):
-    pass
-
-
-class TransactionCategorizationUpdate(TransactionCategorizationBase):
-    pass
-
-
-class TransactionCategorizationStatsResponse(BaseModel):
-    summary: Dict[str, int]
-    category_usage: List[Dict]
-    top_rules_by_usage: List[Dict]
-    unused_rules: List[Dict]
-
-    model_config = ConfigDict(from_attributes=True)
-
-
 class BulkUpdateTransactionsRequest(BaseModel):
     normalized_description: str
     category_id: Optional[str] = None
@@ -417,51 +322,6 @@ class BulkUpdateTransactionsRequest(BaseModel):
 class BulkUpdateTransactionsResponse(BaseModel):
     updated_count: int
     message: str
-
-
-class CategorizationResponse(BaseModel):
-    categorized_count: int
-    success: bool
-    message: str
-
-    model_config = ConfigDict(from_attributes=True)
-
-
-# Transaction Counterparty Rule Schemas
-class TransactionCounterpartyRuleBase(BaseModel):
-    normalized_description: str
-    counterparty_account_id: UUID
-    min_amount: Optional[Decimal] = None
-    max_amount: Optional[Decimal] = None
-    source: CounterpartyRuleSource = CounterpartyRuleSource.MANUAL
-
-
-class TransactionCounterpartyRuleCreate(TransactionCounterpartyRuleBase):
-    pass
-
-
-class TransactionCounterpartyRuleUpdate(TransactionCounterpartyRuleBase):
-    pass
-
-
-class TransactionCounterpartyRuleResponse(BaseModel):
-    id: UUID
-    normalized_description: str
-    counterparty_account_id: UUID
-    min_amount: Optional[Decimal] = None
-    max_amount: Optional[Decimal] = None
-    source: CounterpartyRuleSource
-    created_at: datetime
-    updated_at: datetime
-
-    model_config = ConfigDict(from_attributes=True)
-
-
-class TransactionCounterpartyRuleListResponse(BaseModel):
-    rules: Sequence[TransactionCounterpartyRuleResponse]
-    total: int
-
-    model_config = ConfigDict(from_attributes=True)
 
 
 # Enhancement Rule Schemas
@@ -476,23 +336,23 @@ class EnhancementRuleBase(BaseModel):
     end_date: Optional[str] = None
     source: EnhancementRuleSource = EnhancementRuleSource.MANUAL
 
-    @field_validator('normalized_description_pattern')
+    @field_validator("normalized_description_pattern")
     @classmethod
     def validate_description(cls, v: str) -> str:
         if not v.strip():
-            raise ValueError('Description cannot be empty')
+            raise ValueError("Description cannot be empty")
         return v.strip()
 
-    @field_validator('min_amount', 'max_amount')
+    @field_validator("min_amount", "max_amount")
     @classmethod
     def validate_amounts(cls, v: Optional[Decimal]) -> Optional[Decimal]:
         if v is not None and v < 0:
-            raise ValueError('Amount cannot be negative')
+            raise ValueError("Amount cannot be negative")
         return v
 
 
 class EnhancementRuleCreate(EnhancementRuleBase):
-    @field_validator('category_id', 'counterparty_account_id')
+    @field_validator("category_id", "counterparty_account_id")
     @classmethod
     def validate_at_least_one_enhancement(cls, v, info):
         # This will be validated in the service layer instead

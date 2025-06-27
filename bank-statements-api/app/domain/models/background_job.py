@@ -20,8 +20,9 @@ class JobStatus(str, Enum):
 
 
 class JobType(str, Enum):
-    AI_CATEGORIZATION = "AI_CATEGORIZATION"
-    AI_COUNTERPARTY_IDENTIFICATION = "AI_COUNTERPARTY_IDENTIFICATION"
+    # Note: No job types are currently supported
+    # Background job infrastructure is kept for future use
+    PLACEHOLDER = "PLACEHOLDER"
 
 
 class BackgroundJob(Base):

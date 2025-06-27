@@ -201,26 +201,13 @@ class TransactionRepository(ABC):
         pass
 
     @abstractmethod
-    def get_transactions_without_counterparty(self, limit: int = 10) -> List[Transaction]:
-        """
-        Get transactions that don't have a counterparty account identified
-
-        Args:
-            limit: Maximum number of transactions to return
-
-        Returns:
-            List of transactions without counterparty accounts, ordered by date (oldest first)
-        """
-        pass
-
-    @abstractmethod
     def count_matching_rule(self, rule) -> int:
         """
         Count transactions that would match the given enhancement rule
-        
+
         Args:
             rule: EnhancementRule to match against
-            
+
         Returns:
             Number of transactions that match the rule
         """

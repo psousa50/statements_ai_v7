@@ -11,11 +11,12 @@ from sqlalchemy import create_engine, event
 from sqlalchemy.orm import sessionmaker
 
 from app.api.schemas import StatementUploadRequest
+from app.core.database import Base
 from app.core.dependencies import ExternalDependencies, build_internal_dependencies
 from app.domain.models.account import Account
+from app.domain.models.enhancement_rule import EnhancementRule, EnhancementRuleSource
 from app.domain.models.statement import Statement
 from app.domain.models.transaction import Transaction
-from app.domain.models.enhancement_rule import EnhancementRule, EnhancementRuleSource
 from app.domain.models.uploaded_file import UploadedFile
 
 
@@ -27,6 +28,11 @@ def db_engine():
         pytest.fail("TEST_DATABASE_URL environment variable not set")
 
     engine = create_engine(database_url)
+
+    # Ensure the database schema is up to date with current models
+    # This will create/update tables based on the current SQLAlchemy models
+    Base.metadata.create_all(engine)
+
     yield engine
 
 

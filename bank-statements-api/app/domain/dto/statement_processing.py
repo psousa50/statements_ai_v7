@@ -2,8 +2,6 @@ from datetime import datetime
 from typing import Optional, Tuple
 from uuid import UUID
 
-from app.domain.models.transaction import CounterpartyStatus
-
 
 class AnalysisResultDTO:
     def __init__(
@@ -86,7 +84,6 @@ class TransactionDTO:
         sort_index: Optional[int] = None,
         source_type: str = "upload",
         manual_position_after: Optional[UUID] = None,
-        counterparty_status: Optional[CounterpartyStatus] = None,
         counterparty_account_id: Optional[UUID] = None,
     ):
         self.id = id
@@ -103,7 +100,6 @@ class TransactionDTO:
         self.sort_index = sort_index
         self.source_type = source_type
         self.manual_position_after = manual_position_after
-        self.counterparty_status = counterparty_status
         self.counterparty_account_id = counterparty_account_id
 
     @classmethod
@@ -123,6 +119,5 @@ class TransactionDTO:
             sort_index=entity.sort_index,
             source_type=entity.source_type.value if entity.source_type else "upload",
             manual_position_after=entity.manual_position_after,
-            counterparty_status=entity.counterparty_status,
             counterparty_account_id=entity.counterparty_account_id,
         )

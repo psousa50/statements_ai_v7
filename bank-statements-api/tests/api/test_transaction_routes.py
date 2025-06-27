@@ -5,7 +5,7 @@ from uuid import uuid4
 from fastapi.encoders import jsonable_encoder
 
 from app.api.schemas import TransactionCreate, TransactionResponse
-from app.domain.models.transaction import CategorizationStatus, CounterpartyStatus, SourceType, Transaction
+from app.domain.models.transaction import CategorizationStatus, SourceType, Transaction
 from tests.api.helpers import build_client, mocked_dependencies
 
 
@@ -24,7 +24,6 @@ def test_create_transaction():
         category_id=category_id,
         account_id=account_id,
         categorization_status=CategorizationStatus.CATEGORIZED,
-        counterparty_status=CounterpartyStatus.UNPROCESSED,
         sort_index=0,
         source_type=SourceType.MANUAL,
         manual_position_after=None,
@@ -55,7 +54,6 @@ def test_create_transaction():
     assert transaction_response.amount == Decimal(100.00)
     assert transaction_response.category_id == category_id
     assert transaction_response.categorization_status == CategorizationStatus.CATEGORIZED
-    assert transaction_response.counterparty_status == CounterpartyStatus.UNPROCESSED
     assert transaction_response.created_at is not None
     assert transaction_response.sort_index == 0
     assert transaction_response.source_type == SourceType.MANUAL.value
@@ -75,7 +73,6 @@ def test_get_transaction():
         amount=Decimal(100.00),
         created_at=date(2023, 1, 1),
         categorization_status=CategorizationStatus.UNCATEGORIZED,
-        counterparty_status=CounterpartyStatus.UNPROCESSED,
         sort_index=0,
         source_type=SourceType.MANUAL,
         manual_position_after=None,
@@ -88,7 +85,6 @@ def test_get_transaction():
     assert response.status_code == 200
     transaction_response = TransactionResponse.model_validate(response.json())
     assert transaction_response.id == transaction_id
-    assert transaction_response.counterparty_status == CounterpartyStatus.UNPROCESSED
     assert transaction_response.sort_index == 0
     assert transaction_response.source_type == SourceType.MANUAL.value
     assert transaction_response.manual_position_after is None

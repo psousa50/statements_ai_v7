@@ -5,7 +5,7 @@ import pytest
 
 from app.domain.dto.statement_processing import TransactionDTO
 from app.domain.models.enhancement_rule import EnhancementRule, EnhancementRuleSource, MatchType
-from app.domain.models.transaction import CategorizationStatus, CounterpartyStatus
+from app.domain.models.transaction import CategorizationStatus
 from app.services.transaction_rule_enhancement import EnhancementResult, TransactionRuleEnhancementService
 
 
@@ -102,17 +102,14 @@ class TestTransactionRuleEnhancementService:
                 transaction.category_id = "category-1"
                 transaction.counterparty_account_id = "counterparty-1"
                 transaction.categorization_status = CategorizationStatus.CATEGORIZED
-                transaction.counterparty_status = CounterpartyStatus.INFERRED
             elif i == 1:  # ATM withdrawal doesn't match
                 transaction.category_id = None
                 transaction.counterparty_account_id = None
                 transaction.categorization_status = CategorizationStatus.UNCATEGORIZED
-                transaction.counterparty_status = CounterpartyStatus.UNPROCESSED
             elif i == 2:  # Salary matches
                 transaction.category_id = "category-2"
                 transaction.counterparty_account_id = None
                 transaction.categorization_status = CategorizationStatus.CATEGORIZED
-                transaction.counterparty_status = CounterpartyStatus.UNPROCESSED
             enhanced_transactions.append(transaction)
 
         mock_transaction_enhancer.apply_rules.return_value = enhanced_transactions
@@ -140,20 +137,17 @@ class TestTransactionRuleEnhancementService:
         assert grocery_dto.category_id == "category-1"
         assert grocery_dto.categorization_status == CategorizationStatus.CATEGORIZED
         assert grocery_dto.counterparty_account_id == "counterparty-1"
-        assert grocery_dto.counterparty_status == CounterpartyStatus.INFERRED
         assert grocery_dto.normalized_description == "grocery store purchase"
 
         salary_dto = next(dto for dto in result.enhanced_dtos if "salary" in dto.description.lower())
         assert salary_dto.category_id == "category-2"
         assert salary_dto.categorization_status == CategorizationStatus.CATEGORIZED
         assert salary_dto.counterparty_account_id is None
-        assert salary_dto.counterparty_status == CounterpartyStatus.UNPROCESSED
 
         atm_dto = next(dto for dto in result.enhanced_dtos if "atm" in dto.description.lower())
         assert atm_dto.category_id is None
         assert atm_dto.categorization_status == CategorizationStatus.UNCATEGORIZED
         assert atm_dto.counterparty_account_id is None
-        assert atm_dto.counterparty_status == CounterpartyStatus.UNPROCESSED
 
     def test_enhance_transactions_no_matches(
         self, enhancement_service, mock_transaction_enhancer, mock_enhancement_rule_repository, sample_dtos
@@ -170,7 +164,6 @@ class TestTransactionRuleEnhancementService:
             transaction.category_id = None
             transaction.counterparty_account_id = None
             transaction.categorization_status = CategorizationStatus.UNCATEGORIZED
-            transaction.counterparty_status = CounterpartyStatus.UNPROCESSED
             enhanced_transactions.append(transaction)
 
         mock_transaction_enhancer.apply_rules.return_value = enhanced_transactions
@@ -188,7 +181,6 @@ class TestTransactionRuleEnhancementService:
             assert dto.category_id is None
             assert dto.categorization_status == CategorizationStatus.UNCATEGORIZED
             assert dto.counterparty_account_id is None
-            assert dto.counterparty_status == CounterpartyStatus.UNPROCESSED
             assert dto.normalized_description is not None
 
     def test_enhance_transactions_creates_unmatched_rules(
@@ -206,7 +198,6 @@ class TestTransactionRuleEnhancementService:
             transaction.category_id = None
             transaction.counterparty_account_id = None
             transaction.categorization_status = CategorizationStatus.UNCATEGORIZED
-            transaction.counterparty_status = CounterpartyStatus.UNPROCESSED
             enhanced_transactions.append(transaction)
 
         mock_transaction_enhancer.apply_rules.return_value = enhanced_transactions
@@ -246,7 +237,6 @@ class TestTransactionRuleEnhancementService:
             transaction.category_id = None
             transaction.counterparty_account_id = None
             transaction.categorization_status = CategorizationStatus.UNCATEGORIZED
-            transaction.counterparty_status = CounterpartyStatus.UNPROCESSED
             enhanced_transactions.append(transaction)
 
         mock_transaction_enhancer.apply_rules.return_value = enhanced_transactions
@@ -256,7 +246,6 @@ class TestTransactionRuleEnhancementService:
         # Verify empty description DTO is handled correctly
         empty_dto = next(dto for dto in result.enhanced_dtos if not dto.description)
         assert empty_dto.categorization_status == CategorizationStatus.UNCATEGORIZED
-        assert empty_dto.counterparty_status == CounterpartyStatus.UNPROCESSED
 
         # Verify valid description DTO was processed
         valid_dto = next(dto for dto in result.enhanced_dtos if dto.description == "Valid Description")
@@ -305,12 +294,10 @@ class TestTransactionRuleEnhancementService:
                 transaction.category_id = "category-1"
                 transaction.counterparty_account_id = "counterparty-1"
                 transaction.categorization_status = CategorizationStatus.CATEGORIZED
-                transaction.counterparty_status = CounterpartyStatus.INFERRED
             else:  # Others don't match
                 transaction.category_id = None
                 transaction.counterparty_account_id = None
                 transaction.categorization_status = CategorizationStatus.UNCATEGORIZED
-                transaction.counterparty_status = CounterpartyStatus.UNPROCESSED
             enhanced_transactions.append(transaction)
 
         mock_transaction_enhancer.apply_rules.return_value = enhanced_transactions
@@ -333,10 +320,16 @@ class TestTransactionRuleEnhancementService:
         # Create multiple DTOs with duplicate normalized descriptions
         dtos = [
             TransactionDTO(date="2024-01-01", amount=100.0, description="Grocery Store Purchase", account_id="acc1"),
-            TransactionDTO(date="2024-01-02", amount=150.0, description="GROCERY STORE PURCHASE", account_id="acc1"), # Same normalized
-            TransactionDTO(date="2024-01-03", amount=75.0, description="grocery store purchase", account_id="acc1"),  # Same normalized
-            TransactionDTO(date="2024-01-04", amount=50.0, description="ATM Withdrawal", account_id="acc1"),         # Different normalized
-            TransactionDTO(date="2024-01-05", amount=25.0, description="atm withdrawal", account_id="acc1"),         # Same as above
+            TransactionDTO(
+                date="2024-01-02", amount=150.0, description="GROCERY STORE PURCHASE", account_id="acc1"
+            ),  # Same normalized
+            TransactionDTO(
+                date="2024-01-03", amount=75.0, description="grocery store purchase", account_id="acc1"
+            ),  # Same normalized
+            TransactionDTO(
+                date="2024-01-04", amount=50.0, description="ATM Withdrawal", account_id="acc1"
+            ),  # Different normalized
+            TransactionDTO(date="2024-01-05", amount=25.0, description="atm withdrawal", account_id="acc1"),  # Same as above
         ]
 
         mock_enhancement_rule_repository.get_all.return_value = []
@@ -349,7 +342,6 @@ class TestTransactionRuleEnhancementService:
             transaction.category_id = None
             transaction.counterparty_account_id = None
             transaction.categorization_status = CategorizationStatus.UNCATEGORIZED
-            transaction.counterparty_status = CounterpartyStatus.UNPROCESSED
             enhanced_transactions.append(transaction)
 
         mock_transaction_enhancer.apply_rules.return_value = enhanced_transactions

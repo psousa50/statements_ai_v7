@@ -1,7 +1,7 @@
 from typing import List
 
 from app.domain.models.enhancement_rule import EnhancementRule, MatchType
-from app.domain.models.transaction import CounterpartyStatus, Transaction
+from app.domain.models.transaction import Transaction
 
 
 class TransactionEnhancer:
@@ -64,4 +64,3 @@ class TransactionEnhancer:
 
         if rule.counterparty_account_id is not None:
             transaction.counterparty_account_id = rule.counterparty_account_id
-            transaction.counterparty_status = CounterpartyStatus.INFERRED

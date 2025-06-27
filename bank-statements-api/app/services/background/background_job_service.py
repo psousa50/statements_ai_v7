@@ -1,8 +1,8 @@
 import logging
-from typing import List, Optional
+from typing import Optional
 from uuid import UUID
 
-from app.domain.models.background_job import BackgroundJob, JobStatus, JobType
+from app.domain.models.background_job import BackgroundJob, JobStatus
 from app.domain.models.processing import BackgroundJobInfo, ProcessingProgress
 from app.ports.repositories.background_job import BackgroundJobRepository
 
@@ -18,64 +18,6 @@ class BackgroundJobService:
 
     def __init__(self, repository: BackgroundJobRepository):
         self.repository = repository
-
-    def queue_ai_categorization_job(self, uploaded_file_id: UUID, unmatched_transaction_ids: List[UUID]) -> BackgroundJob:
-        """Queue an AI categorization job for unmatched transactions"""
-        if not unmatched_transaction_ids:
-            raise ValueError("Cannot queue job with empty transaction list")
-
-        # Create new background job
-        job = BackgroundJob(
-            job_type=JobType.AI_CATEGORIZATION,
-            status=JobStatus.PENDING,
-            uploaded_file_id=uploaded_file_id,
-            progress={
-                "unmatched_transaction_ids": [str(tid) for tid in unmatched_transaction_ids],
-                "total_transactions": len(unmatched_transaction_ids),
-                "processed_transactions": 0,
-                "current_batch": 0,
-                "total_batches": 0,
-                "phase": "QUEUED",
-            },
-            result={},
-        )
-
-        # Save to repository
-        created_job = self.repository.create(job)
-        logger.info(f"Queued AI categorization job {created_job.id} for {len(unmatched_transaction_ids)} transactions")
-
-        return created_job
-
-    def queue_ai_counterparty_identification_job(
-        self, uploaded_file_id: UUID, unprocessed_transaction_ids: List[UUID]
-    ) -> BackgroundJob:
-        """Queue an AI counterparty identification job for unprocessed transactions"""
-        if not unprocessed_transaction_ids:
-            raise ValueError("Cannot queue job with empty transaction list")
-
-        # Create new background job
-        job = BackgroundJob(
-            job_type=JobType.AI_COUNTERPARTY_IDENTIFICATION,
-            status=JobStatus.PENDING,
-            uploaded_file_id=uploaded_file_id,
-            progress={
-                "unprocessed_transaction_ids": [str(tid) for tid in unprocessed_transaction_ids],
-                "total_transactions": len(unprocessed_transaction_ids),
-                "processed_transactions": 0,
-                "current_batch": 0,
-                "total_batches": 0,
-                "phase": "QUEUED",
-            },
-            result={},
-        )
-
-        # Save to repository
-        created_job = self.repository.create(job)
-        logger.info(
-            f"Queued AI counterparty identification job {created_job.id} for {len(unprocessed_transaction_ids)} transactions"
-        )
-
-        return created_job
 
     def get_job_status(self, job_id: UUID) -> Optional[BackgroundJob]:
         """Get job status by ID"""

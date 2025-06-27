@@ -10,15 +10,11 @@ from app.core.dependencies import InternalDependencies
 from app.services.account import AccountService
 from app.services.background.background_job_service import BackgroundJobService
 from app.services.category import CategoryService
+from app.services.enhancement_rule_management import EnhancementRuleManagementService
 from app.services.initial_balance_service import InitialBalanceService
 from app.services.statement_processing.statement_analyzer import StatementAnalyzerService
 from app.services.statement_processing.statement_upload import StatementUploadService
 from app.services.transaction import TransactionService
-from app.services.transaction_categorization.transaction_categorization import TransactionCategorizationService
-from app.services.transaction_categorization_management import TransactionCategorizationManagementService
-from app.services.transaction_counterparty_rule_management import TransactionCounterpartyRuleManagementService
-from app.services.transaction_counterparty_service import TransactionCounterpartyService
-from app.services.enhancement_rule_management import EnhancementRuleManagementService
 
 
 def mocked_dependencies(
@@ -27,10 +23,6 @@ def mocked_dependencies(
     account_service: AccountService = None,
     statement_analyzer_service: StatementAnalyzerService = None,
     statement_upload_service: StatementUploadService = None,
-    transaction_categorization_service: TransactionCategorizationService = None,
-    transaction_counterparty_service: TransactionCounterpartyService = None,
-    transaction_categorization_management_service: TransactionCategorizationManagementService = None,
-    transaction_counterparty_rule_management_service: TransactionCounterpartyRuleManagementService = None,
     enhancement_rule_management_service: EnhancementRuleManagementService = None,
     background_job_service: BackgroundJobService = None,
     background_job_repository: SQLAlchemyBackgroundJobRepository = None,
@@ -50,13 +42,6 @@ def mocked_dependencies(
         initial_balance_service=initial_balance_service,
         statement_analyzer_service=statement_analyzer_service or MagicMock(spec=StatementAnalyzerService),
         statement_upload_service=statement_upload_service or MagicMock(spec=StatementUploadService),
-        transaction_categorization_service=transaction_categorization_service
-        or MagicMock(spec=TransactionCategorizationService),
-        transaction_counterparty_service=transaction_counterparty_service or MagicMock(spec=TransactionCounterpartyService),
-        transaction_categorization_management_service=transaction_categorization_management_service
-        or MagicMock(spec=TransactionCategorizationManagementService),
-        transaction_counterparty_rule_management_service=transaction_counterparty_rule_management_service
-        or MagicMock(spec=TransactionCounterpartyRuleManagementService),
         enhancement_rule_management_service=enhancement_rule_management_service
         or MagicMock(spec=EnhancementRuleManagementService),
         background_job_service=background_job_service or MagicMock(spec=BackgroundJobService),

@@ -8,7 +8,7 @@ from uuid import uuid4
 from app.common.text_normalization import normalize_description
 from app.domain.dto.statement_processing import TransactionDTO
 from app.domain.models.enhancement_rule import EnhancementRule
-from app.domain.models.transaction import CategorizationStatus, CounterpartyStatus, SourceType, Transaction
+from app.domain.models.transaction import CategorizationStatus, SourceType, Transaction
 from app.ports.repositories.enhancement_rule import EnhancementRuleRepository
 from app.services.transaction_enhancement import TransactionEnhancer
 
@@ -97,7 +97,6 @@ class TransactionRuleEnhancementService:
             dto.category_id = transaction.category_id
             dto.categorization_status = transaction.categorization_status
             dto.counterparty_account_id = transaction.counterparty_account_id
-            dto.counterparty_status = transaction.counterparty_status
 
             # Count matches (any enhancement applied)
             if transaction.category_id or transaction.counterparty_account_id:
@@ -107,10 +106,7 @@ class TransactionRuleEnhancementService:
                 unmatched_transactions.append(transaction)
 
         # Step 5: Create enhancement rules for unique unmatched normalized descriptions
-        unique_normalized_descriptions = {
-            t.normalized_description for t in unmatched_transactions 
-            if t.normalized_description
-        }
+        unique_normalized_descriptions = {t.normalized_description for t in unmatched_transactions if t.normalized_description}
         for normalized_description in unique_normalized_descriptions:
             self._create_unmatched_rule(normalized_description)
 
@@ -156,7 +152,6 @@ class TransactionRuleEnhancementService:
             statement_id=dto.statement_id,
             source_type=SourceType.UPLOAD,
             categorization_status=CategorizationStatus.UNCATEGORIZED,
-            counterparty_status=CounterpartyStatus.UNPROCESSED,
         )
         return transaction
 

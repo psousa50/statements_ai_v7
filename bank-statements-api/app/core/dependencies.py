@@ -18,6 +18,7 @@ from app.core.database import SessionLocal
 from app.services.account import AccountService
 from app.services.background.background_job_service import BackgroundJobService
 from app.services.category import CategoryService
+from app.services.enhancement_rule_management import EnhancementRuleManagementService
 from app.services.initial_balance_service import InitialBalanceService
 from app.services.schema_detection.heuristic_schema_detector import HeuristicSchemaDetector
 from app.services.statement_processing.file_type_detector import StatementFileTypeDetector
@@ -26,15 +27,8 @@ from app.services.statement_processing.statement_parser import StatementParser
 from app.services.statement_processing.statement_upload import StatementUploadService
 from app.services.statement_processing.transaction_normalizer import TransactionNormalizer
 from app.services.transaction import TransactionService
-from app.services.transaction_categorization.llm_transaction_categorizer import LLMTransactionCategorizer
-from app.services.transaction_categorization.llm_transaction_counterparty import LLMTransactionCounterparty
-from app.services.transaction_categorization.transaction_categorization import TransactionCategorizationService
-from app.services.transaction_categorization_management import TransactionCategorizationManagementService
-from app.services.transaction_counterparty_rule_management import TransactionCounterpartyRuleManagementService
-from app.services.transaction_counterparty_service import TransactionCounterpartyService
 from app.services.transaction_enhancement import TransactionEnhancer
 from app.services.transaction_rule_enhancement import TransactionRuleEnhancementService
-from app.services.enhancement_rule_management import EnhancementRuleManagementService
 
 logger = logging.getLogger(__name__)
 
@@ -57,10 +51,6 @@ class InternalDependencies:
         initial_balance_service: InitialBalanceService,
         statement_analyzer_service: StatementAnalyzerService,
         statement_upload_service: StatementUploadService,
-        transaction_categorization_service: TransactionCategorizationService,
-        transaction_counterparty_service: TransactionCounterpartyService,
-        transaction_categorization_management_service: TransactionCategorizationManagementService,
-        transaction_counterparty_rule_management_service: TransactionCounterpartyRuleManagementService,
         enhancement_rule_management_service: EnhancementRuleManagementService,
         background_job_service: BackgroundJobService,
         background_job_repository: SQLAlchemyBackgroundJobRepository,
@@ -71,10 +61,6 @@ class InternalDependencies:
         self.initial_balance_service = initial_balance_service
         self.statement_analyzer_service = statement_analyzer_service
         self.statement_upload_service = statement_upload_service
-        self.transaction_categorization_service = transaction_categorization_service
-        self.transaction_counterparty_service = transaction_counterparty_service
-        self.transaction_categorization_management_service = transaction_categorization_management_service
-        self.transaction_counterparty_rule_management_service = transaction_counterparty_rule_management_service
         self.enhancement_rule_management_service = enhancement_rule_management_service
         self.background_job_service = background_job_service
         self.background_job_repository = background_job_repository
@@ -114,23 +100,6 @@ def build_internal_dependencies(external: ExternalDependencies) -> InternalDepen
         enhancement_rule_repository=enhancement_rule_repo,
     )
 
-    # transaction_categorizer = SimpleTransactionCategorizer(category_repo)
-    transaction_categorizer = LLMTransactionCategorizer(category_repo, external.llm_client)
-    transaction_categorization_service = TransactionCategorizationService(
-        transaction_repository=transaction_repo,
-        transaction_categorizer=transaction_categorizer,
-    )
-
-    transaction_counterparty = LLMTransactionCounterparty(account_repo, external.llm_client)
-    transaction_counterparty_service = TransactionCounterpartyService(
-        transaction_repository=transaction_repo,
-        transaction_counterparty=transaction_counterparty,
-    )
-
-    transaction_categorization_management_service = TransactionCategorizationManagementService()
-
-    transaction_counterparty_rule_management_service = TransactionCounterpartyRuleManagementService()
-
     enhancement_rule_management_service = EnhancementRuleManagementService(
         enhancement_rule_repository=enhancement_rule_repo,
         category_repository=category_repo,
@@ -166,10 +135,6 @@ def build_internal_dependencies(external: ExternalDependencies) -> InternalDepen
         initial_balance_service=initial_balance_service,
         statement_analyzer_service=statement_analyzer_service,
         statement_upload_service=statement_upload_service,
-        transaction_categorization_service=transaction_categorization_service,
-        transaction_counterparty_service=transaction_counterparty_service,
-        transaction_categorization_management_service=transaction_categorization_management_service,
-        transaction_counterparty_rule_management_service=transaction_counterparty_rule_management_service,
         enhancement_rule_management_service=enhancement_rule_management_service,
         background_job_service=background_job_service,
         background_job_repository=background_job_repo,

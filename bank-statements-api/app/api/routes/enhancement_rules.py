@@ -4,24 +4,21 @@ from typing import Callable, Iterator, List, Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, Query, status
-from fastapi.responses import JSONResponse
 
 from app.api.schemas import (
-    EnhancementRuleCreate,
-    EnhancementRuleUpdate,
-    EnhancementRuleResponse,
-    EnhancementRuleListResponse,
-    EnhancementRuleStatsResponse,
     CleanupUnusedRulesResponse,
+    EnhancementRuleCreate,
+    EnhancementRuleListResponse,
+    EnhancementRuleResponse,
+    EnhancementRuleStatsResponse,
+    EnhancementRuleUpdate,
 )
 from app.core.dependencies import InternalDependencies
-from app.domain.models.enhancement_rule import MatchType, EnhancementRuleSource
+from app.domain.models.enhancement_rule import EnhancementRuleSource, MatchType
 from app.services.enhancement_rule_management import EnhancementRuleManagementService
 
 
-def register_enhancement_rule_routes(
-    app: FastAPI, provide_dependencies: Callable[[], Iterator[InternalDependencies]]
-):
+def register_enhancement_rule_routes(app: FastAPI, provide_dependencies: Callable[[], Iterator[InternalDependencies]]):
     """Register enhancement rule routes with the FastAPI app."""
     router = APIRouter(prefix="/enhancement-rules", tags=["enhancement-rules"])
 
@@ -39,9 +36,9 @@ def register_enhancement_rule_routes(
         internal: InternalDependencies = Depends(provide_dependencies),
     ) -> EnhancementRuleListResponse:
         """List enhancement rules with filtering and pagination."""
-        
+
         service: EnhancementRuleManagementService = internal.enhancement_rule_management_service
-        
+
         try:
             offset = (page - 1) * page_size
             result = service.list_rules(
@@ -55,16 +52,15 @@ def register_enhancement_rule_routes(
                 sort_field=sort_field,
                 sort_direction=sort_direction,
             )
-            
+
             return EnhancementRuleListResponse(
                 rules=result["rules"],
                 total=result["total"],
             )
-        
+
         except Exception as e:
             raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Failed to list enhancement rules: {str(e)}"
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to list enhancement rules: {str(e)}"
             )
 
     @router.get("/stats", response_model=EnhancementRuleStatsResponse)
@@ -72,17 +68,16 @@ def register_enhancement_rule_routes(
         internal: InternalDependencies = Depends(provide_dependencies),
     ) -> EnhancementRuleStatsResponse:
         """Get comprehensive statistics about enhancement rules."""
-        
+
         service: EnhancementRuleManagementService = internal.enhancement_rule_management_service
-        
+
         try:
             stats = service.get_stats()
             return EnhancementRuleStatsResponse(**stats)
-        
+
         except Exception as e:
             raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Failed to get enhancement rule stats: {str(e)}"
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to get enhancement rule stats: {str(e)}"
             )
 
     @router.post("/cleanup-unused", response_model=CleanupUnusedRulesResponse)
@@ -90,17 +85,16 @@ def register_enhancement_rule_routes(
         internal: InternalDependencies = Depends(provide_dependencies),
     ) -> CleanupUnusedRulesResponse:
         """Delete enhancement rules that haven't been used to enhance any transactions."""
-        
+
         service: EnhancementRuleManagementService = internal.enhancement_rule_management_service
-        
+
         try:
             result = service.cleanup_unused_rules()
             return CleanupUnusedRulesResponse(**result)
-        
+
         except Exception as e:
             raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Failed to cleanup unused rules: {str(e)}"
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to cleanup unused rules: {str(e)}"
             )
 
     @router.get("/{rule_id}", response_model=EnhancementRuleResponse)
@@ -109,25 +103,23 @@ def register_enhancement_rule_routes(
         internal: InternalDependencies = Depends(provide_dependencies),
     ) -> EnhancementRuleResponse:
         """Get a specific enhancement rule by ID."""
-        
+
         service: EnhancementRuleManagementService = internal.enhancement_rule_management_service
-        
+
         try:
             rule = service.get_rule(rule_id)
             if not rule:
                 raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail=f"Enhancement rule with ID {rule_id} not found"
+                    status_code=status.HTTP_404_NOT_FOUND, detail=f"Enhancement rule with ID {rule_id} not found"
                 )
-            
+
             return EnhancementRuleResponse.model_validate(rule)
-        
+
         except HTTPException:
             raise
         except Exception as e:
             raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Failed to get enhancement rule: {str(e)}"
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to get enhancement rule: {str(e)}"
             )
 
     @router.post("", response_model=EnhancementRuleResponse, status_code=status.HTTP_201_CREATED)
@@ -136,9 +128,9 @@ def register_enhancement_rule_routes(
         internal: InternalDependencies = Depends(provide_dependencies),
     ) -> EnhancementRuleResponse:
         """Create a new enhancement rule."""
-        
+
         service: EnhancementRuleManagementService = internal.enhancement_rule_management_service
-        
+
         try:
             rule = service.create_rule(
                 normalized_description_pattern=rule_data.normalized_description_pattern,
@@ -151,18 +143,14 @@ def register_enhancement_rule_routes(
                 end_date=rule_data.end_date,
                 source=rule_data.source,
             )
-            
+
             return EnhancementRuleResponse.model_validate(rule)
-        
+
         except ValueError as e:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=str(e)
-            )
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
         except Exception as e:
             raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Failed to create enhancement rule: {str(e)}"
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to create enhancement rule: {str(e)}"
             )
 
     @router.put("/{rule_id}", response_model=EnhancementRuleResponse)
@@ -172,9 +160,9 @@ def register_enhancement_rule_routes(
         internal: InternalDependencies = Depends(provide_dependencies),
     ) -> EnhancementRuleResponse:
         """Update an existing enhancement rule."""
-        
+
         service: EnhancementRuleManagementService = internal.enhancement_rule_management_service
-        
+
         try:
             rule = service.update_rule(
                 rule_id=rule_id,
@@ -188,26 +176,21 @@ def register_enhancement_rule_routes(
                 end_date=rule_data.end_date,
                 source=rule_data.source,
             )
-            
+
             if not rule:
                 raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail=f"Enhancement rule with ID {rule_id} not found"
+                    status_code=status.HTTP_404_NOT_FOUND, detail=f"Enhancement rule with ID {rule_id} not found"
                 )
-            
+
             return EnhancementRuleResponse.model_validate(rule)
-        
+
         except ValueError as e:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=str(e)
-            )
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
         except HTTPException:
             raise
         except Exception as e:
             raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Failed to update enhancement rule: {str(e)}"
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to update enhancement rule: {str(e)}"
             )
 
     @router.delete("/{rule_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -216,23 +199,21 @@ def register_enhancement_rule_routes(
         internal: InternalDependencies = Depends(provide_dependencies),
     ):
         """Delete an enhancement rule."""
-        
+
         service: EnhancementRuleManagementService = internal.enhancement_rule_management_service
-        
+
         try:
             success = service.delete_rule(rule_id)
             if not success:
                 raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail=f"Enhancement rule with ID {rule_id} not found"
+                    status_code=status.HTTP_404_NOT_FOUND, detail=f"Enhancement rule with ID {rule_id} not found"
                 )
-        
+
         except HTTPException:
             raise
         except Exception as e:
             raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Failed to delete enhancement rule: {str(e)}"
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to delete enhancement rule: {str(e)}"
             )
 
     app.include_router(router, prefix="/api/v1")

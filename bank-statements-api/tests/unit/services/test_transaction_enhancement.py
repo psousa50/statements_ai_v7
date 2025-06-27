@@ -3,7 +3,7 @@ from datetime import date
 from decimal import Decimal
 
 from app.domain.models.enhancement_rule import EnhancementRule, EnhancementRuleSource, MatchType
-from app.domain.models.transaction import CategorizationStatus, CounterpartyStatus, Transaction
+from app.domain.models.transaction import CategorizationStatus, Transaction
 from app.services.transaction_enhancement import TransactionEnhancer
 
 
@@ -28,7 +28,6 @@ class TestTransactionEnhancer:
         transaction.category_id = category_id
         transaction.counterparty_account_id = counterparty_account_id
         transaction.categorization_status = CategorizationStatus.UNCATEGORIZED
-        transaction.counterparty_status = CounterpartyStatus.UNPROCESSED
         return transaction
 
     def create_rule(
@@ -92,7 +91,6 @@ class TestTransactionEnhancer:
         assert len(result) == 1
         assert result[0].category_id == category_id
         assert result[0].counterparty_account_id == counterparty_id
-        assert result[0].counterparty_status == CounterpartyStatus.INFERRED
         assert result[0].categorization_status == CategorizationStatus.CATEGORIZED
 
     def test_exact_match_rule_does_not_apply_when_no_match(self):
@@ -345,7 +343,6 @@ class TestTransactionEnhancer:
         assert len(result) == 1
         assert result[0].category_id is None
         assert result[0].counterparty_account_id == counterparty_id
-        assert result[0].counterparty_status == CounterpartyStatus.INFERRED
         # Should not mark as categorized if only counterparty is set
         assert result[0].categorization_status == CategorizationStatus.UNCATEGORIZED
 
@@ -364,5 +361,4 @@ class TestTransactionEnhancer:
         assert len(result) == 1
         assert result[0].category_id == category_id
         assert result[0].counterparty_account_id == counterparty_id
-        assert result[0].counterparty_status == CounterpartyStatus.INFERRED
         assert result[0].categorization_status == CategorizationStatus.CATEGORIZED

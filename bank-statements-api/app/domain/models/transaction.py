@@ -24,12 +24,6 @@ class SourceType(str, Enum):
     MANUAL = "manual"
 
 
-class CounterpartyStatus(str, Enum):
-    UNPROCESSED = "unprocessed"
-    INFERRED = "inferred"
-    CONFIRMED = "confirmed"
-
-
 class Transaction(Base):
     __tablename__ = "transactions"
 
@@ -63,12 +57,6 @@ class Transaction(Base):
     )
 
     categorization_confidence = Column(Numeric(precision=5, scale=4), nullable=True)
-
-    counterparty_status = Column(
-        SQLAlchemyEnum(CounterpartyStatus, values_callable=lambda x: [e.value for e in x]),
-        default=CounterpartyStatus.UNPROCESSED,
-        nullable=False,
-    )
 
     # New ordering fields
     row_index = Column(Integer, nullable=False)

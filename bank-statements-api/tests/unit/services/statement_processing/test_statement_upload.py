@@ -156,7 +156,7 @@ class TestStatementUploadService:
         statement_upload_service,
         mock_background_job_service,
     ):
-        """Test job scheduling when there are unmatched transactions"""
+        """Test job scheduling when there are unmatched transactions (AI services disabled)"""
         # Setup test data
         statement_id = uuid4()
         saved = SavedStatement(
@@ -175,47 +175,25 @@ class TestStatementUploadService:
             has_unmatched=True,
         )
 
-        # Mock the transaction repository calls directly
-        mock_transaction_repo = statement_upload_service.transaction_repo
-
-        # Mock transactions returned from repository
-        from app.domain.models.transaction import CategorizationStatus
-
-        unmatched_transaction = Mock()
-        unmatched_transaction.id = uuid4()
-        unmatched_transaction.categorization_status = CategorizationStatus.UNCATEGORIZED
-
-        all_transaction = Mock()
-        all_transaction.id = uuid4()
-
-        mock_transaction_repo.get_by_statement_id.return_value = [unmatched_transaction, all_transaction]
-
-        # Mock background job responses
-        categorization_job = Mock(id=uuid4(), status="PENDING")
-        counterparty_job = Mock(id=uuid4(), status="PENDING")
-
-        mock_background_job_service.queue_ai_categorization_job.return_value = categorization_job
-        mock_background_job_service.queue_ai_counterparty_identification_job.return_value = counterparty_job
-
         result = statement_upload_service.schedule_jobs(saved, enhanced)
 
-        # Verify job scheduling calls
-        mock_background_job_service.queue_ai_categorization_job.assert_called_once()
-        mock_background_job_service.queue_ai_counterparty_identification_job.assert_called_once()
+        # Verify no job scheduling calls were made (AI services disabled)
+        mock_background_job_service.queue_ai_categorization_job.assert_not_called()
+        mock_background_job_service.queue_ai_counterparty_identification_job.assert_not_called()
 
-        # Verify result
+        # Verify result shows no jobs scheduled
         assert isinstance(result, ScheduledJobs)
-        assert result.has_categorization_job
-        assert result.has_counterparty_job
-        assert result.categorization_job_info.job_id == categorization_job.id
-        assert result.counterparty_job_info.job_id == counterparty_job.id
+        assert not result.has_categorization_job
+        assert not result.has_counterparty_job
+        assert result.categorization_job_info is None
+        assert result.counterparty_job_info is None
 
     def test_schedule_jobs_without_unmatched_transactions(
         self,
         statement_upload_service,
         mock_background_job_service,
     ):
-        """Test job scheduling when all transactions are matched"""
+        """Test job scheduling when all transactions are matched (AI services disabled)"""
         # Setup test data
         statement_id = uuid4()
         saved = SavedStatement(
@@ -234,27 +212,15 @@ class TestStatementUploadService:
             has_unmatched=False,  # No unmatched transactions
         )
 
-        # Mock the transaction repository calls directly
-        mock_transaction_repo = statement_upload_service.transaction_repo
-
-        # Mock only matched transactions
-        matched_transaction = Mock()
-        matched_transaction.id = uuid4()
-
-        mock_transaction_repo.get_by_statement_id.return_value = [matched_transaction, matched_transaction]
-
-        counterparty_job = Mock(id=uuid4(), status="PENDING")
-        mock_background_job_service.queue_ai_counterparty_identification_job.return_value = counterparty_job
-
         result = statement_upload_service.schedule_jobs(saved, enhanced)
 
-        # Verify only counterparty job was scheduled
+        # Verify no job scheduling calls were made (AI services disabled)
         mock_background_job_service.queue_ai_categorization_job.assert_not_called()
-        mock_background_job_service.queue_ai_counterparty_identification_job.assert_called_once()
+        mock_background_job_service.queue_ai_counterparty_identification_job.assert_not_called()
 
-        # Verify result
+        # Verify result shows no jobs scheduled
         assert isinstance(result, ScheduledJobs)
         assert not result.has_categorization_job
-        assert result.has_counterparty_job
+        assert not result.has_counterparty_job
         assert result.categorization_job_info is None
-        assert result.counterparty_job_info.job_id == counterparty_job.id
+        assert result.counterparty_job_info is None
