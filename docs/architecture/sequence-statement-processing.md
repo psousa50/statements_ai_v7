@@ -1,6 +1,6 @@
 # Sequence Diagram - Statement Processing Flow
 
-This diagram shows the complete flow of processing a bank statement from upload to transaction import.
+This diagram shows the complete flow of processing a bank statement from upload to transaction import. AI categorization and counterparty services have been removed, but background job infrastructure remains available.
 
 ```mermaid
 sequenceDiagram
@@ -12,6 +12,7 @@ sequenceDiagram
     participant Parser as Statement Parser
     participant Normalizer as Transaction Normalizer
     participant Orchestrator as Processing Orchestrator
+    participant RuleCategorizer as Rule-Based Categorizer
     participant BackgroundJobs as Background Job Service
     participant Database as PostgreSQL
     participant GeminiAI as Google Gemini AI
@@ -55,24 +56,18 @@ sequenceDiagram
         end
     end
     
-    Orchestrator->>BackgroundJobs: Create categorization job
-    BackgroundJobs->>Database: Create background job record
-    Database-->>BackgroundJobs: Job ID
+    Orchestrator->>RuleCategorizer: Apply categorization rules
+    RuleCategorizer->>Database: Match against enhancement rules
+    Database-->>RuleCategorizer: Matching rules
+    RuleCategorizer-->>Orchestrator: Rule-based categorizations
+    
+    Orchestrator->>Database: Update transactions with categories
+    Database-->>Orchestrator: Update confirmation
     
     Orchestrator-->>API: ProcessingResult
     API-->>WebApp: StatementUploadResult
     WebApp-->>User: Upload success with statistics
     
-    Note over BackgroundJobs: Async processing starts
-    BackgroundJobs->>Database: Get uncategorized transactions
-    Database-->>BackgroundJobs: Transaction list
-    
-    BackgroundJobs->>GeminiAI: Categorize transactions batch
-    GeminiAI-->>BackgroundJobs: Category suggestions
-    
-    BackgroundJobs->>Database: Update transaction categories
-    Database-->>BackgroundJobs: Update confirmation
-    
-    BackgroundJobs->>Database: Mark job as completed
-    Database-->>BackgroundJobs: Job status updated
+    Note over BackgroundJobs: Background job infrastructure available
+    Note over BackgroundJobs: AI categorization services removed
 ```

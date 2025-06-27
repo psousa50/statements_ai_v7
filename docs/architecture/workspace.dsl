@@ -6,7 +6,7 @@ workspace "Bank Statement Analyzer" "C4 Architecture Model for Bank Statement An
         
         # External Systems
         bankSystems = softwareSystem "Bank Systems" "Banking institutions that provide CSV/XLSX statement exports" "External System"
-        geminiAI = softwareSystem "Google Gemini AI" "AI service for transaction categorization and schema detection" "External System"
+        geminiAI = softwareSystem "Google Gemini AI" "AI service for schema detection (categorization and counterparty services removed)" "External System"
         fileSystemExternal = softwareSystem "File System" "Operating system file storage for uploaded documents" "External System"
         
         # Main System
@@ -34,14 +34,11 @@ workspace "Bank Statement Analyzer" "C4 Architecture Model for Bank Statement An
                 schemaDetector = component "Schema Detector" "Heuristic and LLM-based column mapping detection" "Python"
                 transactionNormalizer = component "Transaction Normalizer" "Normalizes transaction data and handles deduplication" "Python"
                 
-                # Components - AI Services
-                llmTransactionCategorizer = component "LLM Transaction Categorizer" "AI-powered transaction categorization" "Python"
+                # Components - AI Services (Limited)
                 llmSchemaDetector = component "LLM Schema Detector" "AI-powered bank statement schema detection" "Python"
-                llmCounterpartyExtractor = component "LLM Counterparty Extractor" "AI-powered counterparty identification" "Python"
                 
                 # Components - Rule Engine
                 ruleBasedCategorizer = component "Rule-Based Categorizer" "Pattern matching for automatic categorization" "Python"
-                ruleBasedCounterparty = component "Rule-Based Counterparty" "Rule-based counterparty identification" "Python"
                 
                 # Components - Repository Ports (Hexagonal Architecture)
                 transactionPort = component "Transaction Repository Port" "Abstract interface for transaction data access" "Python Interface"
@@ -64,7 +61,7 @@ workspace "Bank Statement Analyzer" "C4 Architecture Model for Bank Statement An
             
             database = container "PostgreSQL Database" "Stores transactions, categories, accounts, statements, and processing metadata" "PostgreSQL" "Database"
             
-            backgroundWorker = container "Background Job Processor" "Processes long-running AI categorization and counterparty identification tasks" "Python, Celery-like"
+            backgroundWorker = container "Background Job Processor" "Background job processing infrastructure (AI categorization and counterparty services removed)" "Python, Celery-like"
         }
         
         # Relationships - User to System
@@ -72,15 +69,14 @@ workspace "Bank Statement Analyzer" "C4 Architecture Model for Bank Statement An
         user -> bankSystems "Downloads bank statement files" "HTTPS/Banking Portal"
         
         # Relationships - System to External
-        apiBackend -> geminiAI "Sends transaction data for categorization and schema detection" "HTTPS/JSON API"
+        apiBackend -> geminiAI "Sends schema detection requests only" "HTTPS/JSON API"
         apiBackend -> fileSystemExternal "Stores uploaded files and retrieves for processing" "File I/O"
         
         # Relationships - Container Level
         webApp -> apiBackend "Makes API calls for all operations" "JSON/HTTPS"
         apiBackend -> database "Reads from and writes to" "SQL/TCP"
-        apiBackend -> backgroundWorker "Queues background jobs" "In-process"
+        apiBackend -> backgroundWorker "Background job infrastructure available" "In-process"
         backgroundWorker -> database "Updates job status and results" "SQL/TCP"
-        backgroundWorker -> geminiAI "Processes AI categorization requests" "HTTPS/JSON API"
         
         # Relationships - Component Level (API Routes)
         webApp -> apiRoutes "HTTP requests to REST endpoints"
@@ -128,18 +124,8 @@ workspace "Bank Statement Analyzer" "C4 Architecture Model for Bank Statement An
         schemaDetector -> llmSchemaDetector "Uses for complex schema detection"
         llmSchemaDetector -> geminiAI "Sends schema detection requests"
         
-        # Relationships - Categorization Flow
+        # Relationships - Categorization Flow (Rule-based only)
         transactionProcessingOrchestrator -> ruleBasedCategorizer "Applies categorization rules"
-        transactionProcessingOrchestrator -> backgroundJobService "Creates AI categorization jobs"
-        backgroundJobService -> llmTransactionCategorizer "Performs AI categorization"
-        llmTransactionCategorizer -> geminiAI "Sends categorization requests"
-        
-        # Relationships - Counterparty Identification
-        transactionProcessingOrchestrator -> ruleBasedCounterparty "Applies counterparty rules"
-        backgroundJobService -> llmCounterpartyExtractor "Performs AI counterparty extraction"
-        backgroundJobService -> ruleBasedCategorizer "Applies rule-based categorization"
-        llmTransactionCategorizer -> llmCounterpartyExtractor "Coordinates counterparty extraction"
-        llmCounterpartyExtractor -> geminiAI "Sends counterparty extraction requests"
     }
 
     views {
@@ -173,16 +159,6 @@ workspace "Bank Statement Analyzer" "C4 Architecture Model for Bank Statement An
             webApp -> apiBackend "2. POST /statements/upload"
             apiBackend -> geminiAI "3. AI schema analysis"
             apiBackend -> database "4. Save transactions"
-            apiBackend -> backgroundWorker "5. Queue categorization job"
-            autoLayout
-        }
-        
-        dynamic bankStatementAnalyzer "CategorizationFlow" "Transaction Categorization Flow" {
-            backgroundWorker -> apiBackend "1. Get uncategorized transactions"
-            backgroundWorker -> geminiAI "2. AI categorization requests"
-            backgroundWorker -> database "3. Update categorizations"
-            backgroundWorker -> geminiAI "4. Counterparty identification"
-            backgroundWorker -> database "5. Update counterparty data"
             autoLayout
         }
         
@@ -194,14 +170,7 @@ workspace "Bank Statement Analyzer" "C4 Architecture Model for Bank Statement An
             statementService -> statementParser "4. Parse statement"
             statementService -> transactionNormalizer "5. Normalize transactions"
             statementService -> transactionProcessingOrchestrator "6. Process transactions"
-            transactionProcessingOrchestrator -> backgroundJobService "7. Create categorization job"
-            autoLayout
-        }
-        
-        dynamic apiBackend "BackendCategorizationProcessing" "Internal Backend Categorization Processing" {
-            backgroundJobService -> ruleBasedCategorizer "1. Apply categorization rules"
-            backgroundJobService -> llmTransactionCategorizer "2. AI categorize remaining"
-            llmTransactionCategorizer -> llmCounterpartyExtractor "3. Extract counterparties"
+            transactionProcessingOrchestrator -> ruleBasedCategorizer "7. Apply categorization rules"
             autoLayout
         }
         
