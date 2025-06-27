@@ -61,20 +61,6 @@ docker-compose up db                        # Start only database
 - **Hooks**: Business logic in `src/services/hooks/`
 - **Types**: TypeScript definitions in `src/types/`
 
-## Key Services
-
-### Statement Processing Flow
-1. **File Upload**: CSV/XLSX file detection and storage
-2. **Schema Detection**: Heuristic/LLM-based column mapping
-3. **Transaction Import**: Data normalization and deduplication
-4. **Background Categorization**: AI-powered transaction categorization
-
-### Transaction Categorization
-- **Hierarchical Categories**: Parent-child relationships
-- **Rule-Based**: Pattern matching for automatic categorization
-- **LLM Integration**: Google Gemini AI for intelligent categorization
-- **Batch Processing**: Bulk categorization operations
-
 ## Development Patterns
 
 ### Backend Patterns
@@ -96,10 +82,6 @@ docker-compose up db                        # Start only database
 - **Integration**: End-to-end workflow testing
 - **E2E**: Critical user journeys with Playwright
 
-## Database Schema
-
-Core entities: `Transaction`, `Category`, `Account`, `UploadedFile`, `FileAnalysisMetadata`, `BackgroundJob`. Use Alembic for migrations.
-
 ## File Organization
 
 When adding new features, follow existing patterns:
@@ -113,6 +95,13 @@ When adding new features, follow existing patterns:
 - When changing a behaviour, make sure you update the relevant tests to maintain coverage.
 - use the same format for the code as the rest of the codebase.
 
-## Development Database 
+## Development Database
 
 - The test database is called bank-statements-test and it's running on port 15432
+
+**IMPORTANT**: Depending on the task, you may also need to refer to these guides:
+- **General Code Development Rules** - `/docs/guides/development-guidelines.md`
+- **TypeScript Development Rules** - `/docs/guides/typescript-development-rules.md`
+- **Python Development Rules** - `/docs/guides/python-development-rules.md`
+- **React Development Rules** - `/docs/guides/react-development-rules.md`
+- **FastAPI Development Rules** - `/docs/guides/fastapi-development-rules.md`
