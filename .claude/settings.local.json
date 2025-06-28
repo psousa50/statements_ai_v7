@@ -22,12 +22,13 @@
       "mcp__puppeteer__puppeteer_screenshot",
       "mcp__puppeteer__puppeteer_click",
       "mcp__puppeteer__puppeteer_fill",
-      "Bash(rm:*)"
+      "Bash(rm:*)",
+      "Bash(DATABASE_URL=postgresql://postgres:postgres@localhost:15432/bank_statements_test poetry run alembic upgrade head)"
     ],
     "deny": []
   },
+  "enableAllProjectMcpServers": true,
   "enabledMcpjsonServers": [
     "postgres"
-  ],
-  "enableAllProjectMcpServers": true
+  ]
 }

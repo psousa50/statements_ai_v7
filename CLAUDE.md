@@ -1,14 +1,6 @@
-# CLAUDE.md
+# Development Commands
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
-
-## Project Overview
-
-Bank Statement Analyzer is a full-stack web application for importing, categorizing, and analyzing bank statements. It consists of a FastAPI backend (`bank-statements-api/`) and React frontend (`bank-statements-web/`) with PostgreSQL database.
-
-## Development Commands
-
-### Backend (Poetry)
+## Backend (Poetry)
 ```bash
 cd bank-statements-api
 poetry run python run.py                    # Start dev server (port 8000)
@@ -22,7 +14,7 @@ poetry run black .                          # Format code
 
 Note: isort, black and ruff needs to run inside the bank-statements-api folder
 
-### Frontend (pnpm)
+## Frontend (pnpm)
 ```bash
 cd bank-statements-web
 pnpm run dev                                 # Start dev server (port 5173)
@@ -32,62 +24,17 @@ pnpm run lint                               # Lint code
 pnpm run format                             # Format with Prettier
 ```
 
-### E2E Testing
+## E2E Testing
 ```bash
 cd e2e/bank-statements-web
 pnpm test                                   # Run Playwright E2E tests
 ```
 
-### Docker Development
+## Docker Development
 ```bash
 docker-compose up                           # Start all services
 docker-compose up db                        # Start only database
 ```
-
-## Architecture
-
-### Backend (Hexagonal Architecture)
-- **Domain Models**: Core entities in `app/domain/models/`
-- **Ports**: Repository interfaces in `app/ports/repositories/`
-- **Adapters**: Repository implementations in `app/adapters/repositories/`
-- **Services**: Business logic in `app/services/`
-- **API Routes**: FastAPI endpoints in `app/api/routes/`
-- **Background Jobs**: Async processing in `app/workers/`
-
-### Frontend (Component Architecture)
-- **Pages**: Route components in `src/pages/`
-- **Components**: Reusable UI in `src/components/`
-- **API Clients**: HTTP communication in `src/api/`
-- **Hooks**: Business logic in `src/services/hooks/`
-- **Types**: TypeScript definitions in `src/types/`
-
-## Development Patterns
-
-### Backend Patterns
-- **Dependency Injection**: Use FastAPI's `Depends()` for clean DI
-- **Repository Pattern**: Abstract data access via repository interfaces
-- **Service Layer**: Encapsulate business logic in service classes
-- **Background Jobs**: Use `BackgroundJobService` for async tasks
-
-### Frontend Patterns
-- **API Context**: Use `ApiContext` for centralized API client access
-- **Custom Hooks**: Encapsulate data fetching and state management
-- **Component Composition**: Build complex UIs from smaller components
-- **Type Safety**: Maintain strict TypeScript types across API boundaries
-
-## Testing Strategy
-
-- **Backend**: 90%+ coverage with pytest, SQLAlchemy test fixtures
-- **Frontend**: 85%+ coverage with vitest, component testing
-- **Integration**: End-to-end workflow testing
-- **E2E**: Critical user journeys with Playwright
-
-## File Organization
-
-When adding new features, follow existing patterns:
-- Backend: Create service → repository interface → adapter implementation → API route → tests
-- Frontend: Create component → hook → API client method → tests
-- Maintain separation between domain logic and infrastructure concerns
 
 ## Notes
 
@@ -98,6 +45,10 @@ When adding new features, follow existing patterns:
 ## Development Database
 
 - The test database is called bank-statements-test and it's running on port 15432
+- To run migrations on the test database, use:
+```bash
+DATABASE_URL=postgresql://postgres:postgres@localhost:15432/bank_statements_test alembic upgrade head   
+```
 
 **IMPORTANT**: Depending on the task, you may also need to refer to these guides:
 - **General Code Development Rules** - `/docs/guides/development-guidelines.md`
