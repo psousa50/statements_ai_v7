@@ -36,6 +36,56 @@
   margin-bottom: 2rem;
 }
 
+/* Rule Filter Banner */
+.transactions-page .rule-filter-banner {
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  border-radius: 6px;
+  margin-bottom: 1rem;
+}
+
+.transactions-page .rule-filter-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0.75rem;
+}
+
+.transactions-page .rule-filter-text {
+  font-size: 0.875rem;
+  color: var(--text-primary);
+}
+
+.transactions-page .rule-filter-clear-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  padding: 0.0625rem 0.125rem;
+  border-radius: 2px;
+  cursor: pointer;
+  font-size: 0.625rem;
+  transition: all 0.2s ease;
+  margin-left: 0.5rem;
+  line-height: 0.875rem;
+  min-width: auto;
+  width: auto;
+  height: auto;
+  flex-shrink: 0;
+}
+
+.transactions-page .rule-filter-clear-btn:hover {
+  background: rgba(107, 114, 128, 0.1);
+  color: var(--text-primary);
+}
+
+@media (max-width: 768px) {
+  .transactions-page .rule-filter-content {
+    flex-direction: column;
+    gap: 0.5rem;
+    text-align: center;
+  }
+}
+
 /* Layout - Changed to vertical with filters on top */
 .transactions-page .transactions-layout {
   display: flex;

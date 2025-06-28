@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { CategorizationStatus, Transaction, TransactionCreate, TransactionListResponse } from '../../types/Transaction'
 import { useApi } from '../../api/ApiContext'
 import { TransactionFilters, CategoryTotalsResponse } from '../../api/TransactionClient'
+import { EnhancementRule } from '../../types/EnhancementRule'
 
 interface TransactionPagination {
   current_page: number
@@ -15,6 +16,7 @@ export const useTransactions = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [loading, setLoading] = useState<boolean>(false)
   const [error, setError] = useState<string | null>(null)
+  const [enhancementRule, setEnhancementRule] = useState<EnhancementRule | null>(null)
   const [pagination, setPagination] = useState<TransactionPagination>({
     current_page: 1,
     total_pages: 1,
@@ -29,6 +31,7 @@ export const useTransactions = () => {
       try {
         const response = await api.transactions.getAll(filters)
         setTransactions(response.transactions)
+        setEnhancementRule(response.enhancement_rule || null)
 
         // Calculate pagination from response
         const pageSize = filters?.page_size || 20
@@ -180,6 +183,7 @@ export const useTransactions = () => {
     transactions,
     loading,
     error,
+    enhancementRule,
     pagination,
     fetchTransactions,
     addTransaction,

@@ -154,6 +154,7 @@ class TransactionListResponse(BaseModel):
     page: int
     page_size: int
     total_pages: int
+    enhancement_rule: Optional["EnhancementRuleResponse"] = None
 
     model_config = ConfigDict(from_attributes=True)
 

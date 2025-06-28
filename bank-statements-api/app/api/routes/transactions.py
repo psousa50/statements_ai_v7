@@ -55,8 +55,21 @@ def register_transaction_routes(app: FastAPI, provide_dependencies: Callable[[],
         include_running_balance: bool = Query(False, description="Include running balance in response"),
         sort_field: Optional[str] = Query(None, description="Field to sort by (date, amount, description, created_at)"),
         sort_direction: Optional[str] = Query(None, description="Sort direction (asc, desc)"),
+        enhancement_rule_id: Optional[UUID] = Query(None, description="Filter by enhancement rule ID (overrides other filters)"),
         internal: InternalDependencies = Depends(provide_dependencies),
     ):
+        # If enhancement_rule_id is provided, use rule-based filtering
+        if enhancement_rule_id:
+            transactions = internal.transaction_service.get_transactions_matching_rule_paginated(
+                enhancement_rule_id=enhancement_rule_id,
+                page=page,
+                page_size=page_size,
+                sort_field=sort_field,
+                sort_direction=sort_direction,
+                include_running_balance=include_running_balance,
+            )
+            return transactions
+
         # Parse category_ids if provided
         parsed_category_ids = None
         if category_ids:

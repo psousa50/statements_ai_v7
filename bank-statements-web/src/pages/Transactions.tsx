@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useSearchParams, useNavigate } from 'react-router-dom'
 import { useTransactions } from '../services/hooks/useTransactions'
 import { useCategories } from '../services/hooks/useCategories'
 import { useAccounts } from '../services/hooks/useAccounts'
@@ -12,6 +12,7 @@ import './TransactionsPage.css'
 
 export const TransactionsPage = () => {
   const [searchParams] = useSearchParams()
+  const navigate = useNavigate()
 
   // Initialize filters from URL parameters
   const getInitialFilters = (): FilterType => {
@@ -25,6 +26,7 @@ export const TransactionsPage = () => {
     const urlCategoryIds = searchParams.get('category_ids')
     const urlSortField = searchParams.get('sort_field')
     const urlSortDirection = searchParams.get('sort_direction')
+    const urlEnhancementRuleId = searchParams.get('enhancement_rule_id')
 
     return {
       page: 1,
@@ -39,6 +41,7 @@ export const TransactionsPage = () => {
       category_ids: urlCategoryIds ? urlCategoryIds.split(',') : undefined,
       sort_field: (urlSortField as TransactionSortField) || 'date',
       sort_direction: (urlSortDirection as TransactionSortDirection) || 'desc',
+      enhancement_rule_id: urlEnhancementRuleId || undefined,
     }
   }
 
@@ -63,6 +66,7 @@ export const TransactionsPage = () => {
     transactions,
     loading: transactionsLoading,
     error: transactionsError,
+    enhancementRule,
     pagination,
     fetchTransactions,
     categorizeTransaction,
@@ -73,6 +77,9 @@ export const TransactionsPage = () => {
 
   const loading = transactionsLoading || categoriesLoading || accountsLoading
   const error = transactionsError || categoriesError || accountsError
+
+  // Track if we're in rule filtering mode
+  const isRuleFiltering = !!filters.enhancement_rule_id
 
   // Load data on mount with initial filters from URL
   useEffect(() => {
@@ -236,6 +243,19 @@ export const TransactionsPage = () => {
     fetchTransactions(clearedFilters)
   }, [filters.page_size, fetchTransactions])
 
+  const handleClearRuleFilter = useCallback(() => {
+    const clearedFilters = {
+      page: 1,
+      page_size: filters.page_size,
+      sort_field: 'date' as TransactionSortField,
+      sort_direction: 'desc' as TransactionSortDirection,
+      include_running_balance: false,
+    }
+    setFilters(clearedFilters)
+    navigate('/transactions')
+    fetchTransactions(clearedFilters)
+  }, [filters.page_size, fetchTransactions, navigate])
+
   const handleCategorizeTransaction = async (transactionId: string, categoryId?: string) => {
     await categorizeTransaction(transactionId, categoryId)
     // Refresh the current page after categorization
@@ -250,6 +270,25 @@ export const TransactionsPage = () => {
           View and manage your bank transactions with advanced filtering and categorization
         </p>
       </header>
+
+      {/* Enhancement Rule Filter Banner */}
+      {isRuleFiltering && (
+        <div className="rule-filter-banner">
+          <div className="rule-filter-content">
+            <span className="rule-filter-text">
+              🔍 Filtered by rule: <strong>"{enhancementRule?.normalized_description_pattern || 'Loading...'}"</strong>
+              {enhancementRule?.category && <span> → {enhancementRule.category.name}</span>}
+            </span>
+            <button 
+              className="rule-filter-clear-btn"
+              onClick={handleClearRuleFilter}
+              title="Return to normal transaction view"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
 
       {error && (
         <div className="error-message">

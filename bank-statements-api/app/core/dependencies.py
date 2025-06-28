@@ -89,7 +89,7 @@ def build_internal_dependencies(external: ExternalDependencies) -> InternalDepen
     category_service = CategoryService(category_repo)
     account_service = AccountService(account_repo)
     initial_balance_service = InitialBalanceService(initial_balance_repo)
-    transaction_service = TransactionService(transaction_repo, initial_balance_repo)
+    transaction_service = TransactionService(transaction_repo, initial_balance_repo, enhancement_rule_repo)
 
     transaction_enhancer = TransactionEnhancer()
 

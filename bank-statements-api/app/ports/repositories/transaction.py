@@ -232,3 +232,27 @@ class TransactionRepository(ABC):
             List of matching transactions for the specified page
         """
         pass
+
+    @abstractmethod
+    def get_transactions_matching_rule_paginated(
+        self,
+        rule,
+        page: int = 1,
+        page_size: int = 20,
+        sort_field: Optional[str] = None,
+        sort_direction: Optional[str] = None,
+    ) -> Tuple[List[Transaction], int]:
+        """
+        Get transactions that match the given enhancement rule with pagination and sorting
+
+        Args:
+            rule: EnhancementRule to match against
+            page: Page number (1-based)
+            page_size: Number of transactions per page
+            sort_field: Optional field to sort by (date, amount, description, created_at)
+            sort_direction: Optional sort direction (asc, desc)
+
+        Returns:
+            Tuple of (transactions list, total count)
+        """
+        pass

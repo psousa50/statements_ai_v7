@@ -37,4 +37,8 @@ export interface TransactionCreate {
 export interface TransactionListResponse {
   transactions: Transaction[]
   total: number
+  page: number
+  page_size: number
+  total_pages: number
+  enhancement_rule?: import('./EnhancementRule').EnhancementRule
 }

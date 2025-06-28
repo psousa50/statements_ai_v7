@@ -8,6 +8,7 @@ from app.common.text_normalization import normalize_description
 from app.domain.models.transaction import CategorizationStatus, Transaction
 from app.ports.repositories.initial_balance import InitialBalanceRepository
 from app.ports.repositories.transaction import TransactionRepository
+from app.ports.repositories.enhancement_rule import EnhancementRuleRepository
 
 
 class TransactionService:
@@ -20,9 +21,11 @@ class TransactionService:
         self,
         transaction_repository: TransactionRepository,
         initial_balance_repository: InitialBalanceRepository,
+        enhancement_rule_repository: EnhancementRuleRepository,
     ):
         self.transaction_repository = transaction_repository
         self.initial_balance_repository = initial_balance_repository
+        self.enhancement_rule_repository = enhancement_rule_repository
 
     def create_transaction(
         self,
@@ -98,6 +101,54 @@ class TransactionService:
             page_size=page_size,
             total_pages=total_pages,
         )
+
+    def get_transactions_matching_rule_paginated(
+        self,
+        enhancement_rule_id: UUID,
+        page: int = 1,
+        page_size: int = 20,
+        sort_field: Optional[str] = None,
+        sort_direction: Optional[str] = None,
+        include_running_balance: bool = False,
+    ) -> TransactionListResponse:
+        """Get transactions that match the given enhancement rule with pagination"""
+        
+        # Get the enhancement rule
+        rule = self.enhancement_rule_repository.find_by_id(enhancement_rule_id)
+        if not rule:
+            raise ValueError(f"Enhancement rule with ID {enhancement_rule_id} not found")
+
+        # Get transactions matching the rule with pagination
+        transactions, total = self.transaction_repository.get_transactions_matching_rule_paginated(
+            rule=rule,
+            page=page,
+            page_size=page_size,
+            sort_field=sort_field,
+            sort_direction=sort_direction,
+        )
+
+        # Calculate running balance if requested (not supported for rule filtering since account may vary)
+        # Note: Running balance calculation is complex for rule-based filtering since rules can span multiple accounts
+        if include_running_balance:
+            # We could implement this if needed, but it's complex when transactions span multiple accounts
+            pass
+
+        # Calculate total pages
+        total_pages = (total + page_size - 1) // page_size if total > 0 else 1
+
+        # Add rule information to the response (we'll need to update the schema for this)
+        response = TransactionListResponse(
+            transactions=transactions,
+            total=total,
+            page=page,
+            page_size=page_size,
+            total_pages=total_pages,
+        )
+        
+        # Store rule information for the frontend to display
+        response.enhancement_rule = rule
+        
+        return response
 
     def _add_running_balance_to_transactions(self, transactions: List[Transaction], account_id: UUID):
         """Add running balance to transactions for a specific account"""

@@ -20,6 +20,7 @@ export interface TransactionFilters {
   include_running_balance?: boolean
   sort_field?: string
   sort_direction?: 'asc' | 'desc'
+  enhancement_rule_id?: string
 }
 
 export interface CategoryTotal {
@@ -105,6 +106,9 @@ export const transactionClient: TransactionClient = {
     }
     if (filters?.sort_direction) {
       params.append('sort_direction', filters.sort_direction)
+    }
+    if (filters?.enhancement_rule_id) {
+      params.append('enhancement_rule_id', filters.enhancement_rule_id)
     }
 
     const url = params.toString() ? `${API_URL}?${params.toString()}` : API_URL

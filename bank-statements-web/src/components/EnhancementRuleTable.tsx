@@ -54,7 +54,7 @@ export const EnhancementRuleTable: React.FC<EnhancementRuleTableProps> = ({
 
   const handleViewTransactions = (rule: EnhancementRule) => {
     const params = new URLSearchParams({
-      description_search: rule.normalized_description_pattern,
+      enhancement_rule_id: rule.id,
     })
     navigate(`/transactions?${params.toString()}`)
   }

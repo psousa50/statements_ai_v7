@@ -492,3 +492,48 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         query = query.offset(offset).limit(page_size)
 
         return query.all()
+
+    def get_transactions_matching_rule_paginated(
+        self,
+        rule,
+        page: int = 1,
+        page_size: int = 20,
+        sort_field: Optional[str] = None,
+        sort_direction: Optional[str] = None,
+    ) -> Tuple[List[Transaction], int]:
+        """Get transactions that match the given enhancement rule with pagination and sorting"""
+        from app.domain.models.enhancement_rule import MatchType
+
+        query = self.db_session.query(Transaction)
+
+        # Match description pattern based on rule type (same logic as count_matching_rule)
+        if rule.match_type == MatchType.EXACT:
+            query = query.filter(Transaction.normalized_description == rule.normalized_description_pattern)
+        elif rule.match_type == MatchType.PREFIX:
+            query = query.filter(Transaction.normalized_description.like(f"{rule.normalized_description_pattern}%"))
+        elif rule.match_type == MatchType.INFIX:
+            query = query.filter(Transaction.normalized_description.like(f"%{rule.normalized_description_pattern}%"))
+
+        # Apply amount constraints if specified
+        if rule.min_amount is not None:
+            query = query.filter(Transaction.amount >= rule.min_amount)
+        if rule.max_amount is not None:
+            query = query.filter(Transaction.amount <= rule.max_amount)
+
+        # Apply date constraints if specified
+        if rule.start_date is not None:
+            query = query.filter(Transaction.date >= rule.start_date)
+        if rule.end_date is not None:
+            query = query.filter(Transaction.date <= rule.end_date)
+
+        # Get total count
+        total = query.count()
+
+        # Apply sorting
+        order_clause = self._get_order_clause(sort_field, sort_direction)
+        query = query.order_by(*order_clause)
+
+        # Apply pagination
+        transactions = query.offset((page - 1) * page_size).limit(page_size).all()
+
+        return transactions, total
