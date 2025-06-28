@@ -1,5 +1,7 @@
 # Development Commands
 
+api is running at 8010, ui at 6173
+
 ## Backend (Poetry)
 ```bash
 cd bank-statements-api

@@ -297,27 +297,29 @@ export const TransactionsPage = () => {
       )}
 
       <div className="transactions-layout">
-        <div className="filters-sidebar">
-          <TransactionFilters
-            categories={categories || []}
-            accounts={accounts || []}
-            selectedCategoryIds={filters.category_ids}
-            selectedStatus={filters.status}
-            selectedAccountId={filters.account_id}
-            minAmount={localMinAmount}
-            maxAmount={localMaxAmount}
-            descriptionSearch={localDescriptionSearch}
-            startDate={localStartDate}
-            endDate={localEndDate}
-            onCategoryChange={handleCategoryFilter}
-            onStatusChange={handleStatusFilter}
-            onAccountChange={handleAccountFilter}
-            onAmountRangeChange={handleAmountRangeFilter}
-            onDescriptionSearchChange={handleDescriptionSearchFilter}
-            onDateRangeChange={handleDateRangeFilter}
-            onClearFilters={handleClearFilters}
-          />
-        </div>
+        {!isRuleFiltering && (
+          <div className="filters-sidebar">
+            <TransactionFilters
+              categories={categories || []}
+              accounts={accounts || []}
+              selectedCategoryIds={filters.category_ids}
+              selectedStatus={filters.status}
+              selectedAccountId={filters.account_id}
+              minAmount={localMinAmount}
+              maxAmount={localMaxAmount}
+              descriptionSearch={localDescriptionSearch}
+              startDate={localStartDate}
+              endDate={localEndDate}
+              onCategoryChange={handleCategoryFilter}
+              onStatusChange={handleStatusFilter}
+              onAccountChange={handleAccountFilter}
+              onAmountRangeChange={handleAmountRangeFilter}
+              onDescriptionSearchChange={handleDescriptionSearchFilter}
+              onDateRangeChange={handleDateRangeFilter}
+              onClearFilters={handleClearFilters}
+            />
+          </div>
+        )}
 
         <div className="transactions-content">
           <div className="transactions-header">
