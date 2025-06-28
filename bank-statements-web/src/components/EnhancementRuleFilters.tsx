@@ -14,11 +14,7 @@ import {
 } from '@mui/material'
 import ClearIcon from '@mui/icons-material/Clear'
 import { useApi } from '../api/ApiContext'
-import {
-  EnhancementRuleFilters,
-  EnhancementRuleSource,
-  MatchType,
-} from '../types/EnhancementRule'
+import { EnhancementRuleFilters, EnhancementRuleSource, MatchType } from '../types/EnhancementRule'
 import { Category } from '../types/Transaction'
 
 interface EnhancementRuleFiltersProps {
@@ -153,12 +149,7 @@ export const EnhancementRuleFiltersComponent: React.FC<EnhancementRuleFiltersPro
         <Box sx={{ minWidth: 120 }}>
           <FormControl fullWidth size="small">
             <InputLabel>Source</InputLabel>
-            <Select
-              value={filters.source || ''}
-              onChange={handleSourceChange}
-              disabled={loading}
-              label="Source"
-            >
+            <Select value={filters.source || ''} onChange={handleSourceChange} disabled={loading} label="Source">
               <MenuItem value="">All</MenuItem>
               <MenuItem value={EnhancementRuleSource.MANUAL}>Manual</MenuItem>
               <MenuItem value={EnhancementRuleSource.AI}>AI</MenuItem>
@@ -179,13 +170,7 @@ export const EnhancementRuleFiltersComponent: React.FC<EnhancementRuleFiltersPro
                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                   {selected.map((value) => {
                     const category = categories.find((c) => c.id === value)
-                    return (
-                      <Chip
-                        key={value}
-                        label={category?.name || value}
-                        size="small"
-                      />
-                    )
+                    return <Chip key={value} label={category?.name || value} size="small" />
                   })}
                 </Box>
               )}
@@ -212,13 +197,7 @@ export const EnhancementRuleFiltersComponent: React.FC<EnhancementRuleFiltersPro
                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                   {selected.map((value) => {
                     const account = counterpartyAccounts.find((a) => a.id === value)
-                    return (
-                      <Chip
-                        key={value}
-                        label={account?.name || value}
-                        size="small"
-                      />
-                    )
+                    return <Chip key={value} label={account?.name || value} size="small" />
                   })}
                 </Box>
               )}

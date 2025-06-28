@@ -19,7 +19,11 @@ class TestTransactionRuleEnhancementService:
         return Mock()
 
     @pytest.fixture
-    def enhancement_service(self, mock_transaction_enhancer, mock_enhancement_rule_repository):
+    def enhancement_service(
+        self,
+        mock_transaction_enhancer,
+        mock_enhancement_rule_repository,
+    ):
         return TransactionRuleEnhancementService(
             transaction_enhancer=mock_transaction_enhancer,
             enhancement_rule_repository=mock_enhancement_rule_repository,
@@ -150,7 +154,11 @@ class TestTransactionRuleEnhancementService:
         assert atm_dto.counterparty_account_id is None
 
     def test_enhance_transactions_no_matches(
-        self, enhancement_service, mock_transaction_enhancer, mock_enhancement_rule_repository, sample_dtos
+        self,
+        enhancement_service,
+        mock_transaction_enhancer,
+        mock_enhancement_rule_repository,
+        sample_dtos,
     ):
         """Test enhancement when no rules match"""
         # Setup mock responses with no matches
@@ -184,7 +192,11 @@ class TestTransactionRuleEnhancementService:
             assert dto.normalized_description is not None
 
     def test_enhance_transactions_creates_unmatched_rules(
-        self, enhancement_service, mock_transaction_enhancer, mock_enhancement_rule_repository, sample_dtos
+        self,
+        enhancement_service,
+        mock_transaction_enhancer,
+        mock_enhancement_rule_repository,
+        sample_dtos,
     ):
         """Test that unmatched transactions create enhancement rules"""
         # Setup mock responses with no matches
@@ -218,13 +230,26 @@ class TestTransactionRuleEnhancementService:
             assert rule.match_type == MatchType.EXACT
 
     def test_enhance_transactions_handles_empty_descriptions(
-        self, enhancement_service, mock_transaction_enhancer, mock_enhancement_rule_repository
+        self,
+        enhancement_service,
+        mock_transaction_enhancer,
+        mock_enhancement_rule_repository,
     ):
         """Test enhancement handles DTOs with empty descriptions gracefully"""
         # Create DTOs with empty and valid descriptions
         dtos = [
-            TransactionDTO(date="2024-01-01", amount=100.0, description="", account_id="acc1"),  # Empty description
-            TransactionDTO(date="2024-01-02", amount=50.0, description="Valid Description", account_id="acc1"),
+            TransactionDTO(
+                date="2024-01-01",
+                amount=100.0,
+                description="",
+                account_id="acc1",
+            ),  # Empty description
+            TransactionDTO(
+                date="2024-01-02",
+                amount=50.0,
+                description="Valid Description",
+                account_id="acc1",
+            ),
         ]
 
         mock_enhancement_rule_repository.get_all.return_value = []
@@ -256,7 +281,14 @@ class TestTransactionRuleEnhancementService:
 
     def test_enhancement_result_properties(self):
         """Test EnhancementResult data class properties"""
-        dtos = [TransactionDTO(date="2024-01-01", amount=100.0, description="Test", account_id="acc1")]
+        dtos = [
+            TransactionDTO(
+                date="2024-01-01",
+                amount=100.0,
+                description="Test",
+                account_id="acc1",
+            )
+        ]
 
         result = EnhancementResult(
             enhanced_dtos=dtos,
@@ -314,22 +346,44 @@ class TestTransactionRuleEnhancementService:
         assert mock_enhancement_rule_repository.save.call_count == 2
 
     def test_enhance_transactions_creates_unique_rules_only(
-        self, enhancement_service, mock_transaction_enhancer, mock_enhancement_rule_repository
+        self,
+        enhancement_service,
+        mock_transaction_enhancer,
+        mock_enhancement_rule_repository,
     ):
         """Test that only one rule is created per unique normalized description, even with duplicate transactions"""
         # Create multiple DTOs with duplicate normalized descriptions
         dtos = [
-            TransactionDTO(date="2024-01-01", amount=100.0, description="Grocery Store Purchase", account_id="acc1"),
             TransactionDTO(
-                date="2024-01-02", amount=150.0, description="GROCERY STORE PURCHASE", account_id="acc1"
+                date="2024-01-01",
+                amount=100.0,
+                description="Grocery Store Purchase",
+                account_id="acc1",
+            ),
+            TransactionDTO(
+                date="2024-01-02",
+                amount=150.0,
+                description="GROCERY STORE PURCHASE",
+                account_id="acc1",
             ),  # Same normalized
             TransactionDTO(
-                date="2024-01-03", amount=75.0, description="grocery store purchase", account_id="acc1"
+                date="2024-01-03",
+                amount=75.0,
+                description="grocery store purchase",
+                account_id="acc1",
             ),  # Same normalized
             TransactionDTO(
-                date="2024-01-04", amount=50.0, description="ATM Withdrawal", account_id="acc1"
+                date="2024-01-04",
+                amount=50.0,
+                description="ATM Withdrawal",
+                account_id="acc1",
             ),  # Different normalized
-            TransactionDTO(date="2024-01-05", amount=25.0, description="atm withdrawal", account_id="acc1"),  # Same as above
+            TransactionDTO(
+                date="2024-01-05",
+                amount=25.0,
+                description="atm withdrawal",
+                account_id="acc1",
+            ),  # Same as above
         ]
 
         mock_enhancement_rule_repository.get_all.return_value = []
@@ -355,7 +409,10 @@ class TestTransactionRuleEnhancementService:
         # Verify the unique normalized descriptions in the created rules
         save_calls = mock_enhancement_rule_repository.save.call_args_list
         created_patterns = {call[0][0].normalized_description_pattern for call in save_calls}
-        expected_patterns = {"grocery store purchase", "atm withdrawal"}
+        expected_patterns = {
+            "grocery store purchase",
+            "atm withdrawal",
+        }
         assert created_patterns == expected_patterns
 
         # Verify result metrics

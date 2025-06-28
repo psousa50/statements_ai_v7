@@ -30,10 +30,18 @@ class BackgroundJob(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     job_type = Column(SQLAlchemyEnum(JobType), nullable=False)
-    status = Column(SQLAlchemyEnum(JobStatus), default=JobStatus.PENDING, nullable=False)
+    status = Column(
+        SQLAlchemyEnum(JobStatus),
+        default=JobStatus.PENDING,
+        nullable=False,
+    )
 
     # Related entities
-    uploaded_file_id = Column(UUID(as_uuid=True), ForeignKey("uploaded_files.id"), nullable=True)
+    uploaded_file_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("uploaded_files.id"),
+        nullable=True,
+    )
     uploaded_file = relationship("UploadedFile")
 
     # Job execution data
@@ -42,7 +50,11 @@ class BackgroundJob(Base):
     error_message = Column(Text, nullable=True)
 
     # Timestamps
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
+    created_at = Column(
+        DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        nullable=False,
+    )
     started_at = Column(DateTime, nullable=True)
     completed_at = Column(DateTime, nullable=True)
 

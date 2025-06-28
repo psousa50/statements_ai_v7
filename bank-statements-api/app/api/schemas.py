@@ -347,8 +347,6 @@ class EnhancementRuleBase(BaseModel):
     @field_validator("min_amount", "max_amount")
     @classmethod
     def validate_amounts(cls, v: Optional[Decimal]) -> Optional[Decimal]:
-        if v is not None and v < 0:
-            raise ValueError("Amount cannot be negative")
         return v
 
 
@@ -362,6 +360,12 @@ class EnhancementRuleCreate(EnhancementRuleBase):
 
 class EnhancementRuleUpdate(EnhancementRuleBase):
     apply_to_existing: Optional[bool] = False
+
+
+class EnhancementRulePreview(EnhancementRuleBase):
+    """Schema for previewing enhancement rule effects without persisting the rule"""
+
+    pass
 
 
 class EnhancementRuleResponse(BaseModel):

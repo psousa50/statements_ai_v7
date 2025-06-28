@@ -41,12 +41,30 @@ class EnhancementRule(Base):
     end_date = Column(Date, nullable=True)
 
     # Enhancement fields
-    category_id = Column(UUID(as_uuid=True), ForeignKey("categories.id"), nullable=True)
-    counterparty_account_id = Column(UUID(as_uuid=True), ForeignKey("accounts.id"), nullable=True)
+    category_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("categories.id"),
+        nullable=True,
+    )
+    counterparty_account_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("accounts.id"),
+        nullable=True,
+    )
 
     # Metadata
-    source = Column(SQLAlchemyEnum(EnhancementRuleSource, name="enhancementrulesource"), nullable=False)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
+    source = Column(
+        SQLAlchemyEnum(
+            EnhancementRuleSource,
+            name="enhancementrulesource",
+        ),
+        nullable=False,
+    )
+    created_at = Column(
+        DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        nullable=False,
+    )
     updated_at = Column(
         DateTime,
         default=lambda: datetime.now(timezone.utc),

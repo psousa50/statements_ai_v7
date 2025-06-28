@@ -37,13 +37,13 @@ export const FileUploadZone: React.FC<FileUploadZoneProps> = ({ onFileSelected, 
     [onFileSelected]
   )
 
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({ 
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     accept: {
       'text/csv': ['.csv'],
-      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx']
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
     },
-    maxFiles: 1
+    maxFiles: 1,
   })
 
   return (
@@ -60,7 +60,7 @@ export const FileUploadZone: React.FC<FileUploadZoneProps> = ({ onFileSelected, 
       {...getRootProps()}
     >
       <input {...getInputProps()} />
-      
+
       {isLoading ? (
         <CircularProgress />
       ) : (
@@ -78,7 +78,7 @@ export const FileUploadZone: React.FC<FileUploadZoneProps> = ({ onFileSelected, 
           <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
             Supported formats: CSV, XLSX (max 10MB)
           </Typography>
-          
+
           {error && (
             <Typography color="error" sx={{ mt: 2 }}>
               {error}

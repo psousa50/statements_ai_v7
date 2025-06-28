@@ -5,11 +5,11 @@ import { StatementAnalysisResponse, StatementClient, StatementUploadResponse } f
 import { TransactionClient, CategoryTotalsResponse, BulkUpdateTransactionsResponse } from '@/api/TransactionClient'
 import { TransactionCategorizationClient } from '@/api/TransactionCategorizationClient'
 import { Category, Transaction, TransactionListResponse } from '@/types/Transaction'
-import { 
-  TransactionCategorization, 
+import {
+  TransactionCategorization,
   TransactionCategorizationListResponse,
   TransactionCategorizationStats,
-  CategorizationSource
+  CategorizationSource,
 } from '@/types/TransactionCategorization'
 
 // Default mock transaction
@@ -72,10 +72,11 @@ const defaultTransactionClient: TransactionClient = {
   create: () => Promise.resolve(defaultTransaction),
   update: () => Promise.resolve(defaultTransaction),
   delete: () => Promise.resolve(),
-  bulkUpdateCategory: () => Promise.resolve({
-    updated_count: 0,
-    message: 'No transactions updated'
-  } as BulkUpdateTransactionsResponse),
+  bulkUpdateCategory: () =>
+    Promise.resolve({
+      updated_count: 0,
+      message: 'No transactions updated',
+    } as BulkUpdateTransactionsResponse),
 }
 
 // Default mock category client implementation

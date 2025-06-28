@@ -9,7 +9,7 @@ import AccountTreeIcon from '@mui/icons-material/AccountTree'
 
 export const AppNavigation: React.FC = () => {
   const location = useLocation()
-  
+
   return (
     <List>
       <ListItem disablePadding>
@@ -24,7 +24,7 @@ export const AppNavigation: React.FC = () => {
           <ListItemText primary="Transactions" />
         </ListItemButton>
       </ListItem>
-      
+
       <ListItem disablePadding>
         <ListItemButton
           component={RouterLink}
@@ -37,39 +37,27 @@ export const AppNavigation: React.FC = () => {
           <ListItemText primary="Enhancement Rules" />
         </ListItemButton>
       </ListItem>
-      
+
       <ListItem disablePadding>
-        <ListItemButton
-          component={RouterLink}
-          to="/categories"
-          selected={location.pathname === '/categories'}
-        >
+        <ListItemButton component={RouterLink} to="/categories" selected={location.pathname === '/categories'}>
           <ListItemIcon>
             <AccountTreeIcon />
           </ListItemIcon>
           <ListItemText primary="Categories" />
         </ListItemButton>
       </ListItem>
-      
+
       <ListItem disablePadding>
-        <ListItemButton
-          component={RouterLink}
-          to="/charts"
-          selected={location.pathname === '/charts'}
-        >
+        <ListItemButton component={RouterLink} to="/charts" selected={location.pathname === '/charts'}>
           <ListItemIcon>
             <BarChartIcon />
           </ListItemIcon>
           <ListItemText primary="Charts" />
         </ListItemButton>
       </ListItem>
-      
+
       <ListItem disablePadding>
-        <ListItemButton
-          component={RouterLink}
-          to="/upload"
-          selected={location.pathname === '/upload'}
-        >
+        <ListItemButton component={RouterLink} to="/upload" selected={location.pathname === '/upload'}>
           <ListItemIcon>
             <UploadFileIcon />
           </ListItemIcon>

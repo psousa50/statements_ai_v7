@@ -71,7 +71,11 @@ class TestStatementUploadService:
         return StatementUploadRequest(
             uploaded_file_id=str(uuid4()),
             account_id=str(uuid4()),
-            column_mapping={"date": "Date", "amount": "Amount", "description": "Description"},
+            column_mapping={
+                "date": "Date",
+                "amount": "Amount",
+                "description": "Description",
+            },
             header_row_index=0,
             data_start_row_index=1,
         )
@@ -86,8 +90,18 @@ class TestStatementUploadService:
         parsed = ParsedStatement(
             uploaded_file_id=uuid4(),
             transaction_dtos=[
-                TransactionDTO(date="2024-01-01", amount=100.0, description="Test", account_id="acc1"),
-                TransactionDTO(date="2024-01-02", amount=-50.0, description="ATM", account_id="acc1"),
+                TransactionDTO(
+                    date="2024-01-01",
+                    amount=100.0,
+                    description="Test",
+                    account_id="acc1",
+                ),
+                TransactionDTO(
+                    date="2024-01-02",
+                    amount=-50.0,
+                    description="ATM",
+                    account_id="acc1",
+                ),
             ],
             account_id=uuid4(),
         )

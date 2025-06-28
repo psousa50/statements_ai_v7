@@ -55,7 +55,12 @@ class JobProcessor:
         logger.info(f"Job processor completed. Processed {processed_count} jobs.")
         return processed_count
 
-    async def _process_single_job_by_id(self, job_id: UUID, job_type: JobType, job_progress: dict) -> None:
+    async def _process_single_job_by_id(
+        self,
+        job_id: UUID,
+        job_type: JobType,
+        job_progress: dict,
+    ) -> None:
         """Process a single background job based on its type using job ID"""
         raise ValueError(f"No job types are supported: {job_type}")
 
@@ -68,7 +73,9 @@ class JobProcessor:
 
 
 # Convenience function for external use
-async def process_pending_jobs(internal: InternalDependencies) -> int:
+async def process_pending_jobs(
+    internal: InternalDependencies,
+) -> int:
     """
     Convenience function to process pending jobs.
 

@@ -32,7 +32,14 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         return self.db_session.query(Transaction).filter(Transaction.id == transaction_id).first()
 
     def get_all(self) -> List[Transaction]:
-        return self.db_session.query(Transaction).order_by(Transaction.date.desc(), Transaction.sort_index.asc()).all()
+        return (
+            self.db_session.query(Transaction)
+            .order_by(
+                Transaction.date.desc(),
+                Transaction.sort_index.asc(),
+            )
+            .all()
+        )
 
     def get_all_by_account_and_date_range(
         self,
@@ -50,7 +57,10 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
             query = query.filter(Transaction.date >= start_date)
 
         # Order by date and sort_index for consistent ordering
-        return query.order_by(Transaction.date.asc(), Transaction.sort_index.asc()).all()
+        return query.order_by(
+            Transaction.date.asc(),
+            Transaction.sort_index.asc(),
+        ).all()
 
     def get_paginated(
         self,
@@ -189,7 +199,11 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
 
         # Convert to the expected format
         totals = {}
-        for category_id, total_amount, transaction_count in results:
+        for (
+            category_id,
+            total_amount,
+            transaction_count,
+        ) in results:
             totals[category_id] = {
                 "total_amount": Decimal(str(total_amount)) if total_amount else Decimal("0"),
                 "transaction_count": Decimal(str(transaction_count)),
@@ -321,7 +335,10 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         return (
             self.db_session.query(Transaction)
             .filter(Transaction.categorization_status == CategorizationStatus.UNCATEGORIZED)
-            .order_by(Transaction.date.asc(), Transaction.sort_index.asc())
+            .order_by(
+                Transaction.date.asc(),
+                Transaction.sort_index.asc(),
+            )
             .limit(limit)
             .all()
         )
@@ -330,11 +347,18 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         return (
             self.db_session.query(Transaction)
             .filter(Transaction.statement_id == statement_id)
-            .order_by(Transaction.date.asc(), Transaction.sort_index.asc())
+            .order_by(
+                Transaction.date.asc(),
+                Transaction.sort_index.asc(),
+            )
             .all()
         )
 
-    def bulk_update_category_by_normalized_description(self, normalized_description: str, category_id: Optional[UUID]) -> int:
+    def bulk_update_category_by_normalized_description(
+        self,
+        normalized_description: str,
+        category_id: Optional[UUID],
+    ) -> int:
         """
         Update the category for all transactions with the given normalized description.
         """
@@ -358,17 +382,27 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         """
         result = (
             self.db_session.query(func.max(Transaction.sort_index))
-            .filter(Transaction.account_id == account_id, Transaction.date == date)
+            .filter(
+                Transaction.account_id == account_id,
+                Transaction.date == date,
+            )
             .scalar()
         )
         return result or 0
 
-    def create_transaction(self, transaction_data, after_transaction_id: Optional[UUID] = None) -> Transaction:
+    def create_transaction(
+        self,
+        transaction_data,
+        after_transaction_id: Optional[UUID] = None,
+    ) -> Transaction:
         """
         Create a transaction with proper sort_index assignment.
         """
         # Get next sort_index for the date
-        max_sort = self.get_max_sort_index_for_date(transaction_data.account_id, transaction_data.date)
+        max_sort = self.get_max_sort_index_for_date(
+            transaction_data.account_id,
+            transaction_data.date,
+        )
 
         if after_transaction_id:
             after_transaction = self.get_by_id(after_transaction_id)
@@ -395,11 +429,18 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         self.db_session.refresh(transaction)
         return transaction
 
-    def _get_order_clause(self, sort_field: Optional[str], sort_direction: Optional[str]):
+    def _get_order_clause(
+        self,
+        sort_field: Optional[str],
+        sort_direction: Optional[str],
+    ):
         """Build the ORDER BY clause based on sort parameters."""
         # Default sorting
         if not sort_field:
-            return [Transaction.date.desc(), Transaction.sort_index.asc()]
+            return [
+                Transaction.date.desc(),
+                Transaction.sort_index.asc(),
+            ]
 
         # Validate sort direction
         direction = sort_direction.lower() if sort_direction else "desc"
@@ -423,9 +464,15 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
 
         # Apply direction - use same direction for both primary and secondary sort
         if direction == "asc":
-            return [column.asc(), Transaction.sort_index.asc()]
+            return [
+                column.asc(),
+                Transaction.sort_index.asc(),
+            ]
         else:
-            return [column.desc(), Transaction.sort_index.desc()]
+            return [
+                column.desc(),
+                Transaction.sort_index.desc(),
+            ]
 
     def count_matching_rule(self, rule) -> int:
         """Count transactions that would match the given enhancement rule"""

@@ -34,7 +34,11 @@ logger = logging.getLogger(__name__)
 
 
 class ExternalDependencies:
-    def __init__(self, db: Optional[Session] = None, llm_client: Optional[LLMClient] = None):
+    def __init__(
+        self,
+        db: Optional[Session] = None,
+        llm_client: Optional[LLMClient] = None,
+    ):
         self.db: Session = db if db is not None else SessionLocal()
         self.llm_client: LLMClient = llm_client if llm_client is not None else GeminiAI()
 
@@ -70,7 +74,9 @@ def build_external_dependencies() -> ExternalDependencies:
     return ExternalDependencies()
 
 
-def build_internal_dependencies(external: ExternalDependencies) -> InternalDependencies:
+def build_internal_dependencies(
+    external: ExternalDependencies,
+) -> InternalDependencies:
     transaction_repo = SQLAlchemyTransactionRepository(external.db)
     category_repo = SQLAlchemyCategoryRepository(external.db)
     account_repo = SQLAlchemyAccountRepository(external.db)
@@ -89,7 +95,11 @@ def build_internal_dependencies(external: ExternalDependencies) -> InternalDepen
     category_service = CategoryService(category_repo)
     account_service = AccountService(account_repo)
     initial_balance_service = InitialBalanceService(initial_balance_repo)
-    transaction_service = TransactionService(transaction_repo, initial_balance_repo, enhancement_rule_repo)
+    transaction_service = TransactionService(
+        transaction_repo,
+        initial_balance_repo,
+        enhancement_rule_repo,
+    )
 
     transaction_enhancer = TransactionEnhancer()
 
@@ -142,7 +152,13 @@ def build_internal_dependencies(external: ExternalDependencies) -> InternalDepen
 
 
 @contextmanager
-def get_dependencies() -> Generator[tuple[ExternalDependencies, InternalDependencies], None, None]:
+def get_dependencies() -> (
+    Generator[
+        tuple[ExternalDependencies, InternalDependencies],
+        None,
+        None,
+    ]
+):
     external = build_external_dependencies()
     internal = build_internal_dependencies(external)
     try:

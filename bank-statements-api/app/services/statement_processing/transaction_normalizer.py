@@ -21,9 +21,18 @@ class TransactionNormalizer:
         )
 
         if has_amount:
-            required_keys = ["date", "amount", "description"]
+            required_keys = [
+                "date",
+                "amount",
+                "description",
+            ]
         elif has_debit_credit:
-            required_keys = ["date", "debit_amount", "credit_amount", "description"]
+            required_keys = [
+                "date",
+                "debit_amount",
+                "credit_amount",
+                "description",
+            ]
         else:
             raise ValueError("No valid amount fields found")
 
@@ -87,7 +96,12 @@ class TransactionNormalizer:
         return result_df
 
     def _normalize_dates(self, date_series: pd.Series) -> pd.Series:
-        normalized = pd.to_datetime(date_series, errors="coerce", dayfirst=False, utc=False)
+        normalized = pd.to_datetime(
+            date_series,
+            errors="coerce",
+            dayfirst=False,
+            utc=False,
+        )
 
         return normalized
 

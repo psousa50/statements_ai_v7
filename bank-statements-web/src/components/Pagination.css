@@ -76,18 +76,18 @@
   .pagination-container {
     gap: 12px;
   }
-  
+
   .pagination-info {
     flex-direction: column;
     gap: 8px;
     text-align: center;
   }
-  
+
   .pagination-controls {
     flex-wrap: wrap;
     justify-content: center;
   }
-  
+
   .pagination-button {
     padding: 6px 10px;
     font-size: 0.8rem;

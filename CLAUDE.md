@@ -12,7 +12,7 @@ poetry run ruff check .                     # Lint code
 poetry run black .                          # Format code
 ```
 
-Note: isort, black and ruff needs to run inside the bank-statements-api folder
+IMPORTANT: isort, black and ruff MUST run inside the bank-statements-api folder
 
 ## Frontend (pnpm)
 ```bash
@@ -41,6 +41,7 @@ docker-compose up db                        # Start only database
 - During development, the backend is always running with hot reload, so changes are reflected immediately.
 - When changing a behaviour, make sure you update the relevant tests to maintain coverage.
 - use the same format for the code as the rest of the codebase.
+- dont use prettier
 
 ## Development Database
 
@@ -56,3 +57,5 @@ DATABASE_URL=postgresql://postgres:postgres@localhost:15432/bank_statements_test
 - **Python Development Rules** - `/docs/guides/python-development-rules.md`
 - **React Development Rules** - `/docs/guides/react-development-rules.md`
 - **FastAPI Development Rules** - `/docs/guides/fastapi-development-rules.md`
+
+```

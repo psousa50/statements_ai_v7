@@ -145,7 +145,11 @@ class BackgroundJobService:
             status_url=status_url,
         )
 
-    def estimate_completion_time(self, remaining_transactions: int, avg_processing_time_per_transaction: float) -> int:
+    def estimate_completion_time(
+        self,
+        remaining_transactions: int,
+        avg_processing_time_per_transaction: float,
+    ) -> int:
         """Estimate completion time in seconds"""
         if remaining_transactions <= 0:
             return 0

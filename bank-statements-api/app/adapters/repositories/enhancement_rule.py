@@ -31,7 +31,14 @@ class SQLAlchemyEnhancementRuleRepository(EnhancementRuleRepository):
         # If sorting by usage, we need a more complex query with subquery for transaction counts
         if sort_field == "usage":
             return self._get_all_with_usage_sorting(
-                limit, offset, description_search, category_ids, counterparty_account_ids, match_type, source, sort_direction
+                limit,
+                offset,
+                description_search,
+                category_ids,
+                counterparty_account_ids,
+                match_type,
+                source,
+                sort_direction,
             )
 
         # Standard query for other sorting fields
@@ -54,7 +61,10 @@ class SQLAlchemyEnhancementRuleRepository(EnhancementRuleRepository):
             query = query.filter(EnhancementRule.source == source)
 
         # Apply sorting
-        if sort_field in ["normalized_description_pattern", "normalized_description"]:
+        if sort_field in [
+            "normalized_description_pattern",
+            "normalized_description",
+        ]:
             sort_column = EnhancementRule.normalized_description_pattern
         elif sort_field == "category":
             sort_column = EnhancementRule.category_id

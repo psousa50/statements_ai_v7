@@ -72,7 +72,10 @@ class TestLLMSchemaDetector:
 
         df = pd.DataFrame(
             {
-                "Transaction Date": ["2023-01-01", "2023-01-02"],
+                "Transaction Date": [
+                    "2023-01-01",
+                    "2023-01-02",
+                ],
                 "Value (EUR)": [100.00, 200.00],
                 "Transaction Details": ["Test 1", "Test 2"],
             }

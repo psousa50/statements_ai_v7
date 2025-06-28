@@ -29,7 +29,9 @@ class TestTextNormalization:
         assert normalize_description("Transfer from John Doe") == "transfer john doe"
         assert normalize_description("POS Purchase at WALMART") == "pos purchase walmart"
 
-    def test_normalize_description_remove_numbers_and_special_chars(self):
+    def test_normalize_description_remove_numbers_and_special_chars(
+        self,
+    ):
         """Test removal of numbers and special characters."""
         assert normalize_description("ACME Corp #12345") == "acme corp"
         assert normalize_description("Payment $123.45") == "payment"
@@ -40,7 +42,9 @@ class TestTextNormalization:
         assert normalize_description("ACME Corp 01/02/2023") == "acme corp"
         assert normalize_description("Payment date: 2023-05-28") == "payment"
 
-    def test_normalize_description_remove_reference_numbers(self):
+    def test_normalize_description_remove_reference_numbers(
+        self,
+    ):
         """Test removal of reference numbers."""
         assert normalize_description("ACME Corp REF123456") == "acme corp"
         assert normalize_description("Payment reference: 987654") == "payment"

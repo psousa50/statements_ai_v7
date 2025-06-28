@@ -114,7 +114,10 @@ class CategoryLoader:
         print()
 
         try:
-            parent_categories, subcategories = self.parse_csv(csv_file_path)
+            (
+                parent_categories,
+                subcategories,
+            ) = self.parse_csv(csv_file_path)
         except Exception as e:
             print(f"❌ Error reading CSV file: {e}")
             return False
@@ -159,7 +162,10 @@ class CategoryLoader:
 
         if failed_subcategories:
             print(f"\n⚠️  Failed to create {len(failed_subcategories)} subcategories:")
-            for parent_name, subcategory_name in failed_subcategories:
+            for (
+                parent_name,
+                subcategory_name,
+            ) in failed_subcategories:
                 print(f"   - {parent_name}: {subcategory_name}")
 
         print()

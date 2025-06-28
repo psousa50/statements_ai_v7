@@ -35,17 +35,36 @@ def normalize_description(description: str) -> str:
 
     # Remove reference numbers, dates, and transaction IDs
     # This pattern matches common formats like REF123456, #123456, 01/02/2023
-    text = re.sub(r"\b(ref|reference|#|id|date)\b[:\s]*[\w\d\-\/\.]+", "", text, flags=re.IGNORECASE)
+    text = re.sub(
+        r"\b(ref|reference|#|id|date)\b[:\s]*[\w\d\-\/\.]+",
+        "",
+        text,
+        flags=re.IGNORECASE,
+    )
 
     # Remove common date patterns
     text = re.sub(r"\b\d{1,2}[/\-]\d{1,2}[/\-]\d{2,4}\b", "", text)
-    text = re.sub(r"\bon\s+\d{1,2}[/\-]\d{1,2}[/\-]\d{2,4}\b", "", text)
+    text = re.sub(
+        r"\bon\s+\d{1,2}[/\-]\d{1,2}[/\-]\d{2,4}\b",
+        "",
+        text,
+    )
 
     # Remove all digits and special characters, keeping only letters and spaces
     text = re.sub(r"[^a-z\s]", "", text)
 
     # Remove common words that aren't meaningful for categorization
-    words_to_remove = ["id", "ref", "on", "at", "to", "from", "the", "and", "for"]
+    words_to_remove = [
+        "id",
+        "ref",
+        "on",
+        "at",
+        "to",
+        "from",
+        "the",
+        "and",
+        "for",
+    ]
     for word in words_to_remove:
         text = re.sub(r"\b" + word + r"\b", "", text)
 

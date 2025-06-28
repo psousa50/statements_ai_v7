@@ -1,6 +1,11 @@
 import React, { useState } from 'react'
 import { Category } from '../types/Transaction'
-import { TransactionCategorization, CategorizationSource, SortField, SortDirection } from '../types/TransactionCategorization'
+import {
+  TransactionCategorization,
+  CategorizationSource,
+  SortField,
+  SortDirection,
+} from '../types/TransactionCategorization'
 
 interface TransactionCategorizationTableProps {
   categorizations: TransactionCategorization[]
@@ -48,13 +53,13 @@ const getUsageIndicator = (transactionCount?: number): JSX.Element => {
   }
 }
 
-const SortableHeader = ({ 
-  field, 
-  children, 
-  currentSortField, 
-  currentSortDirection, 
-  onSort 
-}: { 
+const SortableHeader = ({
+  field,
+  children,
+  currentSortField,
+  currentSortDirection,
+  onSort,
+}: {
   field: SortField
   children: React.ReactNode
   currentSortField?: SortField
@@ -63,9 +68,9 @@ const SortableHeader = ({
 }) => {
   const isActive = currentSortField === field
   const direction = isActive ? currentSortDirection : undefined
-  
+
   return (
-    <th 
+    <th
       className={`sortable-header ${isActive ? 'active' : ''}`}
       onClick={() => onSort?.(field)}
       style={{ cursor: onSort ? 'pointer' : 'default' }}

@@ -19,17 +19,26 @@ class LLMSchemaDetector(SchemaDetectorProtocol):
         prompt = schema_detection_prompt(df)
         logger_content.debug(
             prompt,
-            extra={"prefix": "schema_detector.prompt", "ext": "json"},
+            extra={
+                "prefix": "schema_detector.prompt",
+                "ext": "json",
+            },
         )
         response = self.llm_client.generate(prompt)
         logger_content.debug(
             response,
-            extra={"prefix": "schema_detector.response", "ext": "json"},
+            extra={
+                "prefix": "schema_detector.response",
+                "ext": "json",
+            },
         )
         json_result = sanitize_json(response)
         logger_content.debug(
             json.dumps(json_result),
-            extra={"prefix": "schema_detector.json_result", "ext": "json"},
+            extra={
+                "prefix": "schema_detector.json_result",
+                "ext": "json",
+            },
         )
         if not json_result:
             raise ValueError("Failed to parse LLM response: Invalid JSON response")
@@ -39,7 +48,10 @@ class LLMSchemaDetector(SchemaDetectorProtocol):
 
             logger_content.debug(
                 json.dumps(conversion_model.__dict__),
-                extra={"prefix": "schema_detector.conversion_model", "ext": "json"},
+                extra={
+                    "prefix": "schema_detector.conversion_model",
+                    "ext": "json",
+                },
             )
             return conversion_model
         except Exception as e:

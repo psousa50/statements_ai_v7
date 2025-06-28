@@ -47,11 +47,7 @@ export const ConfirmationModal = ({
           <button className="button-secondary" onClick={onCancel}>
             {cancelText}
           </button>
-          <button
-            className={dangerous ? 'button-danger' : 'button-primary'}
-            onClick={onConfirm}
-            autoFocus
-          >
+          <button className={dangerous ? 'button-danger' : 'button-primary'} onClick={onConfirm} autoFocus>
             {confirmText}
           </button>
         </div>

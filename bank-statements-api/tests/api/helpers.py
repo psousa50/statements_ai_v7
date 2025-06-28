@@ -62,6 +62,9 @@ def build_client(
     internal_dependencies: InternalDependencies = mocked_dependencies(),
 ) -> TestClient:
     app = FastAPI()
-    register_app_routes(app, provide_mocked_dependencies(internal_dependencies))
+    register_app_routes(
+        app,
+        provide_mocked_dependencies(internal_dependencies),
+    )
     client = TestClient(app)
     return client

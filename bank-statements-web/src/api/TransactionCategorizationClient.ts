@@ -77,9 +77,7 @@ export const transactionCategorizationClient: TransactionCategorizationClient = 
   },
 
   async cleanupUnused() {
-    const response = await axios.post<{ deleted_count: number; message: string }>(
-      `${API_URL}/cleanup-unused`
-    )
+    const response = await axios.post<{ deleted_count: number; message: string }>(`${API_URL}/cleanup-unused`)
     return response.data
   },
 }

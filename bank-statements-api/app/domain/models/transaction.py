@@ -40,18 +40,42 @@ class Transaction(Base):
     description = Column(String, nullable=False)
     normalized_description = Column(String, nullable=False, index=True)
     amount = Column(Numeric(precision=10, scale=2), nullable=False)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
+    created_at = Column(
+        DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        nullable=False,
+    )
 
-    statement_id = Column(UUID(as_uuid=True), ForeignKey("statements.id"), nullable=False)
+    statement_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("statements.id"),
+        nullable=False,
+    )
     statement = relationship("Statement", back_populates="transactions")
 
-    category_id = Column(UUID(as_uuid=True), ForeignKey("categories.id"), nullable=True)
+    category_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("categories.id"),
+        nullable=True,
+    )
     category = relationship("Category")
 
-    account_id = Column(UUID(as_uuid=True), ForeignKey("accounts.id"), nullable=False)
-    account = relationship("Account", foreign_keys=[account_id], back_populates="transactions")
+    account_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("accounts.id"),
+        nullable=False,
+    )
+    account = relationship(
+        "Account",
+        foreign_keys=[account_id],
+        back_populates="transactions",
+    )
 
-    counterparty_account_id = Column(UUID(as_uuid=True), ForeignKey("accounts.id"), nullable=True)
+    counterparty_account_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("accounts.id"),
+        nullable=True,
+    )
     counterparty_account = relationship(
         "Account",
         foreign_keys=[counterparty_account_id],
@@ -76,11 +100,18 @@ class Transaction(Base):
     row_index = Column(Integer, nullable=False)
     sort_index = Column(Integer, nullable=False, default=0)
     source_type = Column(
-        SQLAlchemyEnum(SourceType, values_callable=lambda x: [e.value for e in x]),
+        SQLAlchemyEnum(
+            SourceType,
+            values_callable=lambda x: [e.value for e in x],
+        ),
         default=SourceType.UPLOAD,
         nullable=False,
     )
-    manual_position_after = Column(UUID(as_uuid=True), ForeignKey("transactions.id"), nullable=True)
+    manual_position_after = Column(
+        UUID(as_uuid=True),
+        ForeignKey("transactions.id"),
+        nullable=True,
+    )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

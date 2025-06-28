@@ -142,8 +142,16 @@ def test_get_subcategories():
     subcategory_id1 = uuid4()
     subcategory_id2 = uuid4()
     mock_subcategories = [
-        Category(id=subcategory_id1, name="Subcategory 1", parent_id=parent_id),
-        Category(id=subcategory_id2, name="Subcategory 2", parent_id=parent_id),
+        Category(
+            id=subcategory_id1,
+            name="Subcategory 1",
+            parent_id=parent_id,
+        ),
+        Category(
+            id=subcategory_id2,
+            name="Subcategory 2",
+            parent_id=parent_id,
+        ),
     ]
     internal_dependencies.category_service.get_subcategories.return_value = mock_subcategories
 

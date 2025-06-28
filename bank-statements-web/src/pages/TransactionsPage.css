@@ -259,7 +259,9 @@
   background-color: var(--bg-primary);
   font-size: 0.875rem;
   color: var(--text-primary);
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
 }
 
 .transactions-page .search-input:focus {
@@ -287,7 +289,9 @@
   background-color: var(--bg-primary);
   font-size: 0.875rem;
   color: var(--text-primary);
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
 }
 
 .transactions-page .amount-input:focus {
@@ -303,13 +307,10 @@
   white-space: nowrap;
 }
 
-
-
 /* Date Range Picker Container */
 .transactions-page .date-range-picker {
   position: relative;
 }
-
 
 .transactions-page .date-range-button {
   width: 100%;
@@ -320,7 +321,9 @@
   font-size: 0.875rem;
   color: var(--text-primary);
   cursor: pointer;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -355,7 +358,9 @@
   background: var(--bg-primary);
   border: 1px solid var(--border-primary);
   border-radius: 8px;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  box-shadow:
+    0 10px 15px -3px rgba(0, 0, 0, 0.1),
+    0 4px 6px -2px rgba(0, 0, 0, 0.05);
   margin-top: 0.25rem;
   overflow: hidden;
   min-width: 800px;
@@ -605,7 +610,9 @@
   font-size: 0.875rem;
   color: var(--text-primary);
   cursor: pointer;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
 }
 
 .transactions-page .filter-select:focus {
@@ -629,7 +636,9 @@
   flex-wrap: wrap;
   gap: 0.5rem;
   align-items: center;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
 }
 
 .transactions-page .tag-input-container:focus-within {
@@ -700,7 +709,9 @@
   background: var(--bg-primary);
   border: 1px solid var(--border-primary);
   border-radius: 8px;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  box-shadow:
+    0 10px 15px -3px rgba(0, 0, 0, 0.1),
+    0 4px 6px -2px rgba(0, 0, 0, 0.05);
   margin-top: 0.25rem;
   max-height: 200px;
   overflow-y: auto;
@@ -910,43 +921,42 @@
   .transactions-page {
     padding: 1rem;
   }
-  
+
   .transactions-page .filters-grid {
     grid-template-columns: 1fr;
     gap: 1rem;
   }
-  
+
   .transactions-page .amount-range {
     flex-direction: column;
     gap: 0.5rem;
     align-items: stretch;
   }
-  
+
   .transactions-page .amount-separator {
     text-align: center;
   }
-  
+
   .transactions-page .category-dropdown-header {
     flex-direction: column;
     gap: 0.5rem;
   }
-  
+
   .transactions-page .selected-categories {
     min-height: 60px;
   }
-  
+
   .transactions-page .transactions-summary {
     flex-direction: column;
     align-items: flex-start;
     gap: 0.5rem;
   }
-  
+
   .transactions-page .pagination-container {
     flex-direction: column !important;
     align-items: stretch !important;
   }
 }
-
 
 /* Transaction Category Picker */
 .transactions-page .transaction-category-picker {
@@ -1007,7 +1017,9 @@
   background-color: var(--bg-primary);
   font-size: 0.75rem;
   color: var(--text-primary);
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
 }
 
 .transactions-page .category-picker-input:focus {
@@ -1029,7 +1041,9 @@
   background: var(--bg-primary);
   border: 1px solid var(--border-primary);
   border-radius: 6px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -1px rgba(0, 0, 0, 0.06);
   margin-top: 0.25rem;
   max-height: 150px;
   overflow-y: auto;
@@ -1064,7 +1078,7 @@
 /* RSuite DateRangePicker Dark Mode - Override default styles */
 /* Target the actual input element classes */
 .rs-date-range-input,
-.rs-input[placeholder="Select date range"],
+.rs-input[placeholder='Select date range'],
 .date-range-picker .rs-date-range-input,
 .date-range-picker .rs-input {
   background-color: var(--bg-primary) !important;
@@ -1073,7 +1087,9 @@
   padding: 0.75rem !important;
   border-radius: 8px !important;
   font-size: 0.875rem !important;
-  transition: border-color 0.2s, box-shadow 0.2s !important;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s !important;
   width: 100% !important;
   min-height: 42px !important;
 }
@@ -1089,7 +1105,9 @@
   padding: 0.75rem !important;
   border-radius: 8px !important;
   font-size: 0.875rem !important;
-  transition: border-color 0.2s, box-shadow 0.2s !important;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s !important;
   width: 100% !important;
   min-height: 42px !important;
 }
@@ -1116,14 +1134,13 @@
   padding: 0 !important;
 }
 
-.rs-input-group.rs-input-group-md>.rs-input-group-addon {
-    height: auto;
+.rs-input-group.rs-input-group-md > .rs-input-group-addon {
+  height: auto;
 }
-
 
 /* Hover states */
 .rs-date-range-input:hover,
-.rs-input[placeholder="Select date range"]:hover,
+.rs-input[placeholder='Select date range']:hover,
 .date-range-picker .rs-date-range-input:hover,
 .date-range-picker .rs-input:hover,
 .date-range-picker-input .rs-picker-toggle:hover,
@@ -1133,7 +1150,7 @@
 
 /* Focus states */
 .rs-date-range-input:focus,
-.rs-input[placeholder="Select date range"]:focus,
+.rs-input[placeholder='Select date range']:focus,
 .date-range-picker .rs-date-range-input:focus,
 .date-range-picker .rs-input:focus,
 .date-range-picker-input .rs-picker-toggle:focus,
@@ -1222,7 +1239,7 @@
   cursor: pointer;
 }
 
-.transactions-page .running-balance-toggle input[type="checkbox"] {
+.transactions-page .running-balance-toggle input[type='checkbox'] {
   margin: 0;
 }
 
@@ -1333,4 +1350,4 @@
   background: rgba(239, 68, 68, 0.1);
   color: var(--negative-amount);
   border-color: rgba(239, 68, 68, 0.2);
-} 
+}

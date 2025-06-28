@@ -8,11 +8,18 @@ from app.core.config import settings
 from app.core.dependencies import InternalDependencies
 
 
-def register_category_routes(app: FastAPI, provide_dependencies: Callable[[], Iterator[InternalDependencies]]):
+def register_category_routes(
+    app: FastAPI,
+    provide_dependencies: Callable[[], Iterator[InternalDependencies]],
+):
     """Register category routes with the FastAPI app."""
     router = APIRouter(prefix="/categories", tags=["categories"])
 
-    @router.post("", response_model=CategoryResponse, status_code=status.HTTP_201_CREATED)
+    @router.post(
+        "",
+        response_model=CategoryResponse,
+        status_code=status.HTTP_201_CREATED,
+    )
     def create_category(
         category_data: CategoryCreate,
         internal: InternalDependencies = Depends(provide_dependencies),
@@ -66,7 +73,10 @@ def register_category_routes(app: FastAPI, provide_dependencies: Callable[[], It
             )
         return category
 
-    @router.get("/{category_id}/subcategories", response_model=CategoryListResponse)
+    @router.get(
+        "/{category_id}/subcategories",
+        response_model=CategoryListResponse,
+    )
     def get_subcategories(
         category_id: UUID,
         internal: InternalDependencies = Depends(provide_dependencies),
@@ -109,7 +119,10 @@ def register_category_routes(app: FastAPI, provide_dependencies: Callable[[], It
                 detail=str(e),
             )
 
-    @router.delete("/{category_id}", status_code=status.HTTP_204_NO_CONTENT)
+    @router.delete(
+        "/{category_id}",
+        status_code=status.HTTP_204_NO_CONTENT,
+    )
     def delete_category(
         category_id: UUID,
         internal: InternalDependencies = Depends(provide_dependencies),

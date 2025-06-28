@@ -5,6 +5,7 @@ Revises: 990e449651d8
 Create Date: 2025-06-25 19:32:00.000000
 
 """
+
 from typing import Sequence, Union
 
 from alembic import op
@@ -50,13 +51,18 @@ def upgrade() -> None:
 
     # Create index on normalized_description_pattern for faster lookups
     op.create_index(
-        "ix_enhancement_rules_normalized_description_pattern", "enhancement_rules", ["normalized_description_pattern"]
+        "ix_enhancement_rules_normalized_description_pattern",
+        "enhancement_rules",
+        ["normalized_description_pattern"],
     )
 
 
 def downgrade() -> None:
     # Drop the table and indexes
-    op.drop_index("ix_enhancement_rules_normalized_description_pattern", table_name="enhancement_rules")
+    op.drop_index(
+        "ix_enhancement_rules_normalized_description_pattern",
+        table_name="enhancement_rules",
+    )
     op.drop_table("enhancement_rules")
 
     # Drop the enum types

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import {
   Dialog,
   DialogTitle,
@@ -45,15 +45,10 @@ interface CounterpartyAccount {
   account_number?: string
 }
 
-export const EnhancementRuleModal: React.FC<EnhancementRuleModalProps> = ({
-  open,
-  rule,
-  onClose,
-  onSuccess,
-}) => {
+export const EnhancementRuleModal: React.FC<EnhancementRuleModalProps> = ({ open, rule, onClose, onSuccess }) => {
   const apiClient = useApi()
   const { createRule, updateRule, loading, error } = useEnhancementRules()
-  
+
   const isEditing = !!rule
   const [categories, setCategories] = useState<Category[]>([])
   const [counterpartyAccounts, setCounterpartyAccounts] = useState<CounterpartyAccount[]>([])
@@ -63,11 +58,15 @@ export const EnhancementRuleModal: React.FC<EnhancementRuleModalProps> = ({
     source: EnhancementRuleSource.MANUAL,
   })
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
-  
+
   // State for retroactive application
   const [applyToExisting, setApplyToExisting] = useState(false)
   const [matchingCount, setMatchingCount] = useState<MatchingTransactionsCountResponse | null>(null)
   const [fetchingCount, setFetchingCount] = useState(false)
+  const [previewError, setPreviewError] = useState<string | null>(null)
+
+  // Debounce timeout for preview updates
+  const debounceTimeoutRef = useRef<NodeJS.Timeout>()
 
   // Initialize form data when rule changes (for editing)
   useEffect(() => {
@@ -112,40 +111,68 @@ export const EnhancementRuleModal: React.FC<EnhancementRuleModalProps> = ({
     }
   }, [open, apiClient])
 
-  // Fetch matching transactions count for editing mode
-  useEffect(() => {
-    const fetchMatchingCount = async () => {
-      if (!isEditing || !rule) return
-
-      setFetchingCount(true)
-      try {
-        const count = await apiClient.enhancementRules.getMatchingTransactionsCount(rule.id)
-        setMatchingCount(count)
-      } catch (err) {
-        console.error('Failed to fetch matching count:', err)
-        setMatchingCount(null)
-      } finally {
-        setFetchingCount(false)
-      }
-    }
-
-    if (open && isEditing && rule) {
-      fetchMatchingCount()
-    }
-  }, [open, isEditing, rule, apiClient])
-
   // Smart auto-check logic: check apply_to_existing when category or counterparty changes
   useEffect(() => {
     if (!isEditing || !rule) return
 
     const categoryChanged = formData.category_id !== rule.category_id
     const counterpartyChanged = formData.counterparty_account_id !== rule.counterparty_account_id
-    
+
     // Auto-check if significant changes are made
     if (categoryChanged || counterpartyChanged) {
       setApplyToExisting(true)
     }
   }, [formData.category_id, formData.counterparty_account_id, isEditing, rule])
+
+  // Simple preview effect: always use preview endpoint for everything
+  useEffect(() => {
+    // Only run if modal is open and we have a valid description
+    if (!open || !formData.normalized_description_pattern.trim()) {
+      setMatchingCount(null)
+      return
+    }
+
+    // Clear existing timeout
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current)
+    }
+
+    // Set debounced timeout
+    debounceTimeoutRef.current = setTimeout(async () => {
+      setFetchingCount(true)
+      setPreviewError(null)
+      try {
+        console.log('Making preview API call with data:', formData)
+        const count = await apiClient.enhancementRules.previewMatchingTransactionsCount(formData)
+        console.log('Preview API response:', count)
+        setMatchingCount(count)
+      } catch (err) {
+        console.error('Failed to preview matching count:', err)
+        setMatchingCount(null)
+        setPreviewError(err instanceof Error ? err.message : 'Failed to fetch preview')
+      } finally {
+        setFetchingCount(false)
+      }
+    }, 500)
+
+    // Cleanup on unmount or dependency change
+    return () => {
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current)
+      }
+    }
+  }, [
+    open,
+    formData.normalized_description_pattern,
+    formData.match_type,
+    formData.category_id,
+    formData.counterparty_account_id,
+    formData.min_amount,
+    formData.max_amount,
+    formData.start_date,
+    formData.end_date,
+    apiClient,
+  ])
 
   const validateForm = () => {
     const errors: Record<string, string> = {}
@@ -202,12 +229,13 @@ export const EnhancementRuleModal: React.FC<EnhancementRuleModalProps> = ({
       })
     }
     setValidationErrors({})
-    
+
     // Reset retroactive application state
     setApplyToExisting(false)
     setMatchingCount(null)
     setFetchingCount(false)
-    
+    setPreviewError(null)
+
     onClose()
   }
 
@@ -254,9 +282,7 @@ export const EnhancementRuleModal: React.FC<EnhancementRuleModalProps> = ({
                 <MenuItem value={MatchType.PREFIX}>Starts With (Prefix)</MenuItem>
                 <MenuItem value={MatchType.INFIX}>Contains (Infix)</MenuItem>
               </Select>
-              <FormHelperText>
-                How to match the description pattern
-              </FormHelperText>
+              <FormHelperText>How to match the description pattern</FormHelperText>
             </FormControl>
 
             <FormControl fullWidth>
@@ -289,9 +315,7 @@ export const EnhancementRuleModal: React.FC<EnhancementRuleModalProps> = ({
                 multiple={false}
                 variant="form"
               />
-              <FormHelperText>
-                Category to assign to matching transactions
-              </FormHelperText>
+              <FormHelperText>Category to assign to matching transactions</FormHelperText>
             </FormControl>
 
             <FormControl fullWidth>
@@ -309,9 +333,7 @@ export const EnhancementRuleModal: React.FC<EnhancementRuleModalProps> = ({
                   </MenuItem>
                 ))}
               </Select>
-              <FormHelperText>
-                Counterparty to assign to matching transactions
-              </FormHelperText>
+              <FormHelperText>Counterparty to assign to matching transactions</FormHelperText>
             </FormControl>
           </Stack>
 
@@ -339,7 +361,7 @@ export const EnhancementRuleModal: React.FC<EnhancementRuleModalProps> = ({
               value={formData.max_amount || ''}
               onChange={(e) => handleFieldChange('max_amount', e.target.value ? parseFloat(e.target.value) : undefined)}
               error={!!validationErrors.amount_range}
-              helperText={validationErrors.amount_range || "Only apply rule to transactions below this amount"}
+              helperText={validationErrors.amount_range || 'Only apply rule to transactions below this amount'}
             />
           </Stack>
 
@@ -364,12 +386,76 @@ export const EnhancementRuleModal: React.FC<EnhancementRuleModalProps> = ({
               value={formData.end_date || ''}
               onChange={(e) => handleFieldChange('end_date', e.target.value || undefined)}
               error={!!validationErrors.date_range}
-              helperText={validationErrors.date_range || "Only apply rule to transactions before this date"}
+              helperText={validationErrors.date_range || 'Only apply rule to transactions before this date'}
               InputLabelProps={{
                 shrink: true,
               }}
             />
           </Stack>
+
+          {/* Single unified preview section */}
+          {(fetchingCount || matchingCount || previewError) && (
+            <>
+              <Box>
+                <Typography variant="h6" gutterBottom>
+                  Rule Preview
+                </Typography>
+              </Box>
+
+              {/* Show loading state */}
+              {fetchingCount && (
+                <Alert severity="info" sx={{ mt: 1 }}>
+                  <Stack direction="row" alignItems="center" spacing={1}>
+                    <CircularProgress size={16} />
+                    <Typography variant="body2">Checking for matching transactions...</Typography>
+                  </Stack>
+                </Alert>
+              )}
+
+              {/* Show error */}
+              {!fetchingCount && previewError && (
+                <Alert severity="warning" sx={{ mt: 1 }}>
+                  ❌ Preview failed: {previewError}
+                  <br />
+                  <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                    You may need to select a category or counterparty account for the rule to work.
+                  </Typography>
+                </Alert>
+              )}
+
+              {/* Show results */}
+              {!fetchingCount && !previewError && matchingCount && (
+                <Alert
+                  severity={isEditing && applyToExisting && matchingCount.count > 0 ? 'warning' : 'info'}
+                  sx={{ mt: 1 }}
+                >
+                  {matchingCount.count > 0 ? (
+                    <>
+                      {isEditing && applyToExisting ? '⚠️' : '📊'} This rule would{' '}
+                      {isEditing && applyToExisting ? 'update' : 'match'} <strong>{matchingCount.count}</strong>{' '}
+                      existing transactions.
+                      <br />
+                      <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                        {isEditing && applyToExisting
+                          ? "Only transactions that haven't been manually categorized will be updated."
+                          : isEditing
+                            ? 'These transactions could be updated if you apply changes to existing transactions.'
+                            : 'These transactions will be enhanced when you create this rule.'}
+                      </Typography>
+                    </>
+                  ) : (
+                    <>
+                      📊 No existing transactions match this rule pattern.
+                      <br />
+                      <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                        This rule will only apply to future transactions.
+                      </Typography>
+                    </>
+                  )}
+                </Alert>
+              )}
+            </>
+          )}
 
           {/* Retroactive Application Section - only show in edit mode */}
           {isEditing && (
@@ -390,33 +476,6 @@ export const EnhancementRuleModal: React.FC<EnhancementRuleModalProps> = ({
                 }
                 label="Apply these changes to existing matching transactions"
               />
-
-              {/* Show matching count if available */}
-              {fetchingCount && (
-                <Alert severity="info" sx={{ mt: 1 }}>
-                  <Stack direction="row" alignItems="center" spacing={1}>
-                    <CircularProgress size={16} />
-                    <Typography variant="body2">Checking for matching transactions...</Typography>
-                  </Stack>
-                </Alert>
-              )}
-
-              {!fetchingCount && matchingCount && applyToExisting && (
-                <Alert severity="info" sx={{ mt: 1 }}>
-                  {matchingCount.count > 0 ? (
-                    <>
-                      ⚠️ This will update <strong>{matchingCount.count}</strong> existing transactions 
-                      that match this rule pattern.
-                      <br />
-                      <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-                        Only transactions that haven't been manually categorized will be updated.
-                      </Typography>
-                    </>
-                  ) : (
-                    'No existing transactions match this rule pattern.'
-                  )}
-                </Alert>
-              )}
             </>
           )}
         </Stack>
@@ -431,16 +490,15 @@ export const EnhancementRuleModal: React.FC<EnhancementRuleModalProps> = ({
           disabled={loading}
           startIcon={loading ? <CircularProgress size={16} /> : undefined}
         >
-          {loading 
-            ? (isEditing ? 'Saving...' : 'Creating...') 
-            : (isEditing 
-                ? (applyToExisting && matchingCount && matchingCount.count > 0 
-                    ? `Save & Apply to ${matchingCount.count} Transactions` 
-                    : 'Save Changes'
-                  ) 
-                : 'Create Rule'
-              )
-          }
+          {loading
+            ? isEditing
+              ? 'Saving...'
+              : 'Creating...'
+            : isEditing
+              ? applyToExisting && matchingCount && matchingCount.count > 0
+                ? `Save & Apply to ${matchingCount.count} Transactions`
+                : 'Save Changes'
+              : 'Create Rule'}
         </Button>
       </DialogActions>
     </Dialog>

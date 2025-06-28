@@ -12,11 +12,19 @@ class Statement(Base):
     __tablename__ = "statements"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    account_id = Column(UUID(as_uuid=True), ForeignKey("accounts.id"), nullable=False)
+    account_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("accounts.id"),
+        nullable=False,
+    )
     filename = Column(Text, nullable=False)
     file_type = Column(String, nullable=False)
     content = Column(LargeBinary, nullable=False)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
+    created_at = Column(
+        DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        nullable=False,
+    )
 
     account = relationship("Account", back_populates="statements")
     transactions = relationship("Transaction", back_populates="statement")

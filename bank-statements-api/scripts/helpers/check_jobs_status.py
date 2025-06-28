@@ -47,7 +47,11 @@ def check_jobs_status():
 
         # Show recent jobs in detail
         print("🔍 Recent jobs (last 10):")
-        recent_jobs = sorted(all_jobs, key=lambda x: x.created_at, reverse=True)[:10]
+        recent_jobs = sorted(
+            all_jobs,
+            key=lambda x: x.created_at,
+            reverse=True,
+        )[:10]
 
         for job in recent_jobs:
             status = job.status.value if hasattr(job.status, "value") else str(job.status)

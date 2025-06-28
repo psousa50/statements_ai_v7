@@ -5,11 +5,11 @@ Revises: eb5629bab0d5
 Create Date: 2025-06-27 22:43:00.519955
 
 """
+
 from typing import Sequence, Union
 
-from alembic import op
 import sqlalchemy as sa
-
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "4784ecf59876"
@@ -20,12 +20,24 @@ depends_on: Union[str, Sequence[str], None] = None
 
 def upgrade() -> None:
     # Create the CounterpartyStatus enum
-    counterparty_status_enum = sa.Enum("UNPROCESSED", "RULE_BASED", "MANUAL", "FAILURE", name="counterpartystatus")
+    counterparty_status_enum = sa.Enum(
+        "UNPROCESSED",
+        "RULE_BASED",
+        "MANUAL",
+        "FAILURE",
+        name="counterpartystatus",
+    )
     counterparty_status_enum.create(op.get_bind(), checkfirst=True)
 
     # Add the counterparty_status column to transactions
     op.add_column(
-        "transactions", sa.Column("counterparty_status", counterparty_status_enum, nullable=False, server_default="UNPROCESSED")
+        "transactions",
+        sa.Column(
+            "counterparty_status",
+            counterparty_status_enum,
+            nullable=False,
+            server_default="UNPROCESSED",
+        ),
     )
 
     # Add new enum values to CategorizationStatus enum outside of transaction

@@ -17,7 +17,7 @@ interface Pagination {
 
 export const useTransactionCategorizations = () => {
   const api = useApi()
-  
+
   const [categorizations, setCategorizations] = useState<TransactionCategorization[]>([])
   const [stats, setStats] = useState<TransactionCategorizationStats | null>(null)
   const [loading, setLoading] = useState(false)
@@ -33,16 +33,16 @@ export const useTransactionCategorizations = () => {
     async (filters: TransactionCategorizationFilters = {}) => {
       setLoading(true)
       setError('')
-      
+
       try {
         const response = await api.transactionCategorizations.getAll(filters)
         setCategorizations(response.categorizations)
-        
+
         // Calculate pagination
         const page = filters.page || 1
         const pageSize = filters.page_size || 20
         const totalPages = Math.ceil(response.total / pageSize)
-        
+
         setPagination({
           current_page: page,
           total_pages: totalPages,
@@ -68,7 +68,7 @@ export const useTransactionCategorizations = () => {
   const fetchStats = useCallback(async () => {
     setLoading(true)
     setError('')
-    
+
     try {
       const statsData = await api.transactionCategorizations.getStats()
       setStats(statsData)
@@ -84,7 +84,7 @@ export const useTransactionCategorizations = () => {
     async (data: TransactionCategorizationCreate): Promise<TransactionCategorization> => {
       setLoading(true)
       setError('')
-      
+
       try {
         const newCategorization = await api.transactionCategorizations.create(data)
         // Refresh the list to include the new categorization
@@ -103,13 +103,11 @@ export const useTransactionCategorizations = () => {
     async (id: string, data: TransactionCategorizationUpdate): Promise<TransactionCategorization> => {
       setLoading(true)
       setError('')
-      
+
       try {
         const updatedCategorization = await api.transactionCategorizations.update(id, data)
         // Update the local state
-        setCategorizations(prev => 
-          prev.map(cat => cat.id === id ? updatedCategorization : cat)
-        )
+        setCategorizations((prev) => prev.map((cat) => (cat.id === id ? updatedCategorization : cat)))
         return updatedCategorization
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to update categorization')
@@ -125,13 +123,13 @@ export const useTransactionCategorizations = () => {
     async (id: string): Promise<void> => {
       setLoading(true)
       setError('')
-      
+
       try {
         await api.transactionCategorizations.delete(id)
         // Remove from local state
-        setCategorizations(prev => prev.filter(cat => cat.id !== id))
+        setCategorizations((prev) => prev.filter((cat) => cat.id !== id))
         // Update pagination count
-        setPagination(prev => ({
+        setPagination((prev) => ({
           ...prev,
           total_count: Math.max(0, prev.total_count - 1),
         }))
@@ -148,7 +146,7 @@ export const useTransactionCategorizations = () => {
   const cleanupUnusedRules = useCallback(async () => {
     setLoading(true)
     setError('')
-    
+
     try {
       const result = await api.transactionCategorizations.cleanupUnused()
       return result

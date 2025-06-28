@@ -14,6 +14,7 @@ export interface EnhancementRuleClient {
   getStats(): Promise<EnhancementRuleStats>
   getById(id: string): Promise<EnhancementRule>
   getMatchingTransactionsCount(id: string): Promise<MatchingTransactionsCountResponse>
+  previewMatchingTransactionsCount(data: EnhancementRuleCreate): Promise<MatchingTransactionsCountResponse>
   create(data: EnhancementRuleCreate): Promise<EnhancementRule>
   update(id: string, data: EnhancementRuleUpdate): Promise<EnhancementRule>
   delete(id: string): Promise<void>
@@ -75,6 +76,14 @@ export const enhancementRuleClient: EnhancementRuleClient = {
     return response.data
   },
 
+  async previewMatchingTransactionsCount(data: EnhancementRuleCreate) {
+    const response = await axios.post<MatchingTransactionsCountResponse>(
+      `${API_URL}/preview/matching-transactions/count`,
+      data
+    )
+    return response.data
+  },
+
   async create(data: EnhancementRuleCreate) {
     const response = await axios.post<EnhancementRule>(API_URL, data)
     return response.data
@@ -90,9 +99,7 @@ export const enhancementRuleClient: EnhancementRuleClient = {
   },
 
   async cleanupUnused() {
-    const response = await axios.post<{ deleted_count: number; message: string }>(
-      `${API_URL}/cleanup-unused`
-    )
+    const response = await axios.post<{ deleted_count: number; message: string }>(`${API_URL}/cleanup-unused`)
     return response.data
   },
 }

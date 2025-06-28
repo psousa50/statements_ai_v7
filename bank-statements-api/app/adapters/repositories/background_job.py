@@ -60,7 +60,9 @@ class SQLAlchemyBackgroundJobRepository(BackgroundJobRepository):
             .all()
         )
 
-    def claim_single_pending_job(self) -> Optional[BackgroundJob]:
+    def claim_single_pending_job(
+        self,
+    ) -> Optional[BackgroundJob]:
         """
         Atomically claim a single pending job for processing.
 
@@ -120,7 +122,13 @@ class SQLAlchemyBackgroundJobRepository(BackgroundJobRepository):
         jobs_to_delete = (
             self.db_session.query(BackgroundJob)
             .filter(
-                BackgroundJob.status.in_([JobStatus.COMPLETED, JobStatus.FAILED, JobStatus.CANCELLED]),
+                BackgroundJob.status.in_(
+                    [
+                        JobStatus.COMPLETED,
+                        JobStatus.FAILED,
+                        JobStatus.CANCELLED,
+                    ]
+                ),
                 BackgroundJob.completed_at < cutoff_date,
             )
             .all()

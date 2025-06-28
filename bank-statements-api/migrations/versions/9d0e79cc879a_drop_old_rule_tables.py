@@ -5,6 +5,7 @@ Revises: 348432665689
 Create Date: 2025-06-25 19:32:00.000000
 
 """
+
 from typing import Sequence, Union
 
 from alembic import op
@@ -18,8 +19,14 @@ depends_on: Union[str, Sequence[str], None] = None
 
 def upgrade() -> None:
     # Drop indexes first
-    op.drop_index("ix_transaction_counterparty_rules_normalized_description", table_name="transaction_counterparty_rules")
-    op.drop_index("ix_transaction_categorization_normalized_description", table_name="transaction_categorization")
+    op.drop_index(
+        "ix_transaction_counterparty_rules_normalized_description",
+        table_name="transaction_counterparty_rules",
+    )
+    op.drop_index(
+        "ix_transaction_categorization_normalized_description",
+        table_name="transaction_categorization",
+    )
 
     # Drop tables
     op.drop_table("transaction_counterparty_rules")
@@ -69,8 +76,12 @@ def downgrade() -> None:
 
     # Recreate indexes
     op.create_index(
-        "ix_transaction_categorization_normalized_description", "transaction_categorization", ["normalized_description"]
+        "ix_transaction_categorization_normalized_description",
+        "transaction_categorization",
+        ["normalized_description"],
     )
     op.create_index(
-        "ix_transaction_counterparty_rules_normalized_description", "transaction_counterparty_rules", ["normalized_description"]
+        "ix_transaction_counterparty_rules_normalized_description",
+        "transaction_counterparty_rules",
+        ["normalized_description"],
     )

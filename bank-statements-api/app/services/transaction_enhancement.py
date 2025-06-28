@@ -13,7 +13,11 @@ class TransactionEnhancer:
     persist transactions, or manage execution order.
     """
 
-    def apply_rules(self, transactions: List[Transaction], rules: List[EnhancementRule]) -> List[Transaction]:
+    def apply_rules(
+        self,
+        transactions: List[Transaction],
+        rules: List[EnhancementRule],
+    ) -> List[Transaction]:
         """
         Apply enhancement rules to transactions.
 
@@ -45,18 +49,33 @@ class TransactionEnhancer:
 
     def _sort_rules_by_precedence(self, rules: List[EnhancementRule]) -> List[EnhancementRule]:
         """Sort rules by match type precedence: exact, prefix, infix"""
-        precedence_order = {MatchType.EXACT: 1, MatchType.PREFIX: 2, MatchType.INFIX: 3}
+        precedence_order = {
+            MatchType.EXACT: 1,
+            MatchType.PREFIX: 2,
+            MatchType.INFIX: 3,
+        }
 
-        return sorted(rules, key=lambda rule: precedence_order[rule.match_type])
+        return sorted(
+            rules,
+            key=lambda rule: precedence_order[rule.match_type],
+        )
 
-    def _find_first_matching_rule(self, transaction: Transaction, rules: List[EnhancementRule]) -> EnhancementRule:
+    def _find_first_matching_rule(
+        self,
+        transaction: Transaction,
+        rules: List[EnhancementRule],
+    ) -> EnhancementRule:
         """Find the first rule that matches the transaction"""
         for rule in rules:
             if rule.matches_transaction(transaction):
                 return rule
         return None
 
-    def _apply_rule_to_transaction(self, transaction: Transaction, rule: EnhancementRule):
+    def _apply_rule_to_transaction(
+        self,
+        transaction: Transaction,
+        rule: EnhancementRule,
+    ):
         """Apply enhancement rule fields to the transaction"""
         if rule.category_id is not None:
             transaction.category_id = rule.category_id

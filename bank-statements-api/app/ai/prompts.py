@@ -15,7 +15,10 @@ class Subcategory:
     subcategory_name: str
 
 
-def categorization_prompt(transactions: List[Transaction], categories: List[Category]) -> str:
+def categorization_prompt(
+    transactions: List[Transaction],
+    categories: List[Category],
+) -> str:
     # Provide subcategories (leaf nodes) for more specific categorization
     # Include both subcategories and root categories that don't have subcategories
     root_categories_with_children = {cat.parent_id for cat in categories if cat.parent_id is not None}
@@ -128,7 +131,12 @@ def counterparty_identification_prompt(transactions: List[Transaction], accounts
 
     transaction_data = []
     for t in transactions:
-        transaction_data.append({"description": t.description, "amount": str(t.amount)})
+        transaction_data.append(
+            {
+                "description": t.description,
+                "amount": str(t.amount),
+            }
+        )
 
     prompt = f"""
 You are a bank transaction counterparty identification assistant. Your task is to identify the most likely counterparty account for each transaction based on the transaction description and amount.

@@ -20,13 +20,23 @@ from app.core.dependencies import InternalDependencies
 from app.domain.models.transaction import CategorizationStatus
 
 
-def register_transaction_routes(app: FastAPI, provide_dependencies: Callable[[], Iterator[InternalDependencies]]):
+def register_transaction_routes(
+    app: FastAPI,
+    provide_dependencies: Callable[[], Iterator[InternalDependencies]],
+):
     router = APIRouter(prefix="/transactions", tags=["transactions"])
 
-    @router.post("", response_model=TransactionResponse, status_code=status.HTTP_201_CREATED)
+    @router.post(
+        "",
+        response_model=TransactionResponse,
+        status_code=status.HTTP_201_CREATED,
+    )
     def create_transaction(
         transaction_data: TransactionCreateRequest,
-        after_transaction_id: Optional[UUID] = Query(None, description="Insert after this transaction ID for ordering"),
+        after_transaction_id: Optional[UUID] = Query(
+            None,
+            description="Insert after this transaction ID for ordering",
+        ),
         internal: InternalDependencies = Depends(provide_dependencies),
     ):
         """
@@ -43,19 +53,48 @@ def register_transaction_routes(app: FastAPI, provide_dependencies: Callable[[],
     @router.get("", response_model=TransactionListResponse)
     def get_transactions(
         page: int = Query(1, ge=1, description="Page number (1-based)"),
-        page_size: int = Query(20, ge=1, le=100, description="Number of transactions per page"),
-        category_ids: Optional[str] = Query(None, description="Comma-separated list of category IDs"),
-        status: Optional[CategorizationStatus] = Query(None, description="Filter by categorization status"),
+        page_size: int = Query(
+            20,
+            ge=1,
+            le=100,
+            description="Number of transactions per page",
+        ),
+        category_ids: Optional[str] = Query(
+            None,
+            description="Comma-separated list of category IDs",
+        ),
+        status: Optional[CategorizationStatus] = Query(
+            None,
+            description="Filter by categorization status",
+        ),
         min_amount: Optional[Decimal] = Query(None, description="Minimum transaction amount"),
         max_amount: Optional[Decimal] = Query(None, description="Maximum transaction amount"),
-        description_search: Optional[str] = Query(None, description="Search in transaction description"),
+        description_search: Optional[str] = Query(
+            None,
+            description="Search in transaction description",
+        ),
         account_id: Optional[UUID] = Query(None, description="Filter by account ID"),
-        start_date: Optional[date] = Query(None, description="Filter transactions from this date"),
-        end_date: Optional[date] = Query(None, description="Filter transactions to this date"),
-        include_running_balance: bool = Query(False, description="Include running balance in response"),
-        sort_field: Optional[str] = Query(None, description="Field to sort by (date, amount, description, created_at)"),
+        start_date: Optional[date] = Query(
+            None,
+            description="Filter transactions from this date",
+        ),
+        end_date: Optional[date] = Query(
+            None,
+            description="Filter transactions to this date",
+        ),
+        include_running_balance: bool = Query(
+            False,
+            description="Include running balance in response",
+        ),
+        sort_field: Optional[str] = Query(
+            None,
+            description="Field to sort by (date, amount, description, created_at)",
+        ),
         sort_direction: Optional[str] = Query(None, description="Sort direction (asc, desc)"),
-        enhancement_rule_id: Optional[UUID] = Query(None, description="Filter by enhancement rule ID (overrides other filters)"),
+        enhancement_rule_id: Optional[UUID] = Query(
+            None,
+            description="Filter by enhancement rule ID (overrides other filters)",
+        ),
         internal: InternalDependencies = Depends(provide_dependencies),
     ):
         # If enhancement_rule_id is provided, use rule-based filtering
@@ -76,7 +115,10 @@ def register_transaction_routes(app: FastAPI, provide_dependencies: Callable[[],
             try:
                 parsed_category_ids = [UUID(cid.strip()) for cid in category_ids.split(",") if cid.strip()]
             except ValueError:
-                raise HTTPException(status_code=400, detail="Invalid category IDs format")
+                raise HTTPException(
+                    status_code=400,
+                    detail="Invalid category IDs format",
+                )
 
         transactions = internal.transaction_service.get_transactions_paginated(
             page=page,
@@ -95,16 +137,34 @@ def register_transaction_routes(app: FastAPI, provide_dependencies: Callable[[],
         )
         return transactions
 
-    @router.get("/category-totals", response_model=CategoryTotalsResponse)
+    @router.get(
+        "/category-totals",
+        response_model=CategoryTotalsResponse,
+    )
     def get_category_totals(
-        category_ids: Optional[str] = Query(None, description="Comma-separated list of category IDs"),
-        status: Optional[CategorizationStatus] = Query(None, description="Filter by categorization status"),
+        category_ids: Optional[str] = Query(
+            None,
+            description="Comma-separated list of category IDs",
+        ),
+        status: Optional[CategorizationStatus] = Query(
+            None,
+            description="Filter by categorization status",
+        ),
         min_amount: Optional[Decimal] = Query(None, description="Minimum transaction amount"),
         max_amount: Optional[Decimal] = Query(None, description="Maximum transaction amount"),
-        description_search: Optional[str] = Query(None, description="Search in transaction description"),
+        description_search: Optional[str] = Query(
+            None,
+            description="Search in transaction description",
+        ),
         account_id: Optional[UUID] = Query(None, description="Filter by source ID"),
-        start_date: Optional[date] = Query(None, description="Filter transactions from this date"),
-        end_date: Optional[date] = Query(None, description="Filter transactions to this date"),
+        start_date: Optional[date] = Query(
+            None,
+            description="Filter transactions from this date",
+        ),
+        end_date: Optional[date] = Query(
+            None,
+            description="Filter transactions to this date",
+        ),
         internal: InternalDependencies = Depends(provide_dependencies),
     ):
         """Get aggregated totals per category for chart data. Uses the same filtering options as get_transactions."""
@@ -114,7 +174,10 @@ def register_transaction_routes(app: FastAPI, provide_dependencies: Callable[[],
             try:
                 parsed_category_ids = [UUID(cid.strip()) for cid in category_ids.split(",") if cid.strip()]
             except ValueError:
-                raise HTTPException(status_code=400, detail="Invalid category IDs format")
+                raise HTTPException(
+                    status_code=400,
+                    detail="Invalid category IDs format",
+                )
 
         totals_dict = internal.transaction_service.get_category_totals(
             category_ids=parsed_category_ids,
@@ -140,7 +203,10 @@ def register_transaction_routes(app: FastAPI, provide_dependencies: Callable[[],
         return CategoryTotalsResponse(totals=totals)
 
     # Bulk update route - MUST be defined before /{transaction_id} routes to avoid path conflicts
-    @router.put("/bulk-update-category", response_model=BulkUpdateTransactionsResponse)
+    @router.put(
+        "/bulk-update-category",
+        response_model=BulkUpdateTransactionsResponse,
+    )
     def bulk_update_transaction_category(
         request: BulkUpdateTransactionsRequest,
         internal: InternalDependencies = Depends(provide_dependencies),
@@ -175,7 +241,10 @@ def register_transaction_routes(app: FastAPI, provide_dependencies: Callable[[],
                 detail=f"Error updating transactions: {str(e)}",
             )
 
-    @router.get("/{transaction_id}", response_model=TransactionResponse)
+    @router.get(
+        "/{transaction_id}",
+        response_model=TransactionResponse,
+    )
     def get_transaction(
         transaction_id: UUID,
         internal: InternalDependencies = Depends(provide_dependencies),
@@ -188,7 +257,10 @@ def register_transaction_routes(app: FastAPI, provide_dependencies: Callable[[],
             )
         return transaction
 
-    @router.put("/{transaction_id}", response_model=TransactionResponse)
+    @router.put(
+        "/{transaction_id}",
+        response_model=TransactionResponse,
+    )
     def update_transaction(
         transaction_id: UUID,
         transaction_data: TransactionUpdateRequest,
@@ -209,7 +281,10 @@ def register_transaction_routes(app: FastAPI, provide_dependencies: Callable[[],
             )
         return updated_transaction
 
-    @router.delete("/{transaction_id}", status_code=status.HTTP_204_NO_CONTENT)
+    @router.delete(
+        "/{transaction_id}",
+        status_code=status.HTTP_204_NO_CONTENT,
+    )
     def delete_transaction(
         transaction_id: UUID,
         internal: InternalDependencies = Depends(provide_dependencies),
@@ -222,14 +297,18 @@ def register_transaction_routes(app: FastAPI, provide_dependencies: Callable[[],
             )
         return None
 
-    @router.put("/{transaction_id}/categorize", response_model=TransactionResponse)
+    @router.put(
+        "/{transaction_id}/categorize",
+        response_model=TransactionResponse,
+    )
     def categorize_transaction(
         transaction_id: UUID,
         category_id: Optional[UUID] = None,
         internal: InternalDependencies = Depends(provide_dependencies),
     ):
         updated_transaction = internal.transaction_service.categorize_transaction(
-            transaction_id=transaction_id, category_id=category_id
+            transaction_id=transaction_id,
+            category_id=category_id,
         )
         if not updated_transaction:
             raise HTTPException(
@@ -238,7 +317,10 @@ def register_transaction_routes(app: FastAPI, provide_dependencies: Callable[[],
             )
         return updated_transaction
 
-    @router.put("/{transaction_id}/mark-failure", response_model=TransactionResponse)
+    @router.put(
+        "/{transaction_id}/mark-failure",
+        response_model=TransactionResponse,
+    )
     def mark_categorization_failure(
         transaction_id: UUID,
         internal: InternalDependencies = Depends(provide_dependencies),

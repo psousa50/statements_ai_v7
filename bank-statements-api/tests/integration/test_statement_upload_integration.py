@@ -178,7 +178,10 @@ class TestStatementUploadIntegration:
 
         # Check if any enhancement rules were created during processing
         for rule in enhancement_rules:
-            assert rule.source in [EnhancementRuleSource.MANUAL, EnhancementRuleSource.AI]
+            assert rule.source in [
+                EnhancementRuleSource.MANUAL,
+                EnhancementRuleSource.AI,
+            ]
             assert rule.normalized_description_pattern is not None
             assert len(rule.normalized_description_pattern) > 0
             assert rule.created_at is not None
@@ -216,7 +219,9 @@ class TestStatementUploadIntegration:
         )
 
         upload_result = dependencies.statement_upload_service.upload_statement(
-            upload_request, background_tasks=MagicMock(), internal_deps=dependencies
+            upload_request,
+            background_tasks=MagicMock(),
+            internal_deps=dependencies,
         )
 
         # Verify processing worked
@@ -240,7 +245,10 @@ class TestStatementUploadIntegration:
 
         # For each rule, verify it has proper structure
         for rule in enhancement_rules:
-            assert rule.source in [EnhancementRuleSource.MANUAL, EnhancementRuleSource.AI]
+            assert rule.source in [
+                EnhancementRuleSource.MANUAL,
+                EnhancementRuleSource.AI,
+            ]
             assert rule.normalized_description_pattern is not None
             assert len(rule.normalized_description_pattern) > 0
             assert rule.created_at is not None
@@ -284,7 +292,9 @@ class TestStatementUploadIntegration:
         )
 
         dependencies.statement_upload_service.upload_statement(
-            upload_request, background_tasks=MagicMock(), internal_deps=dependencies
+            upload_request,
+            background_tasks=MagicMock(),
+            internal_deps=dependencies,
         )
 
         # Check enhancement rules in database
@@ -293,7 +303,10 @@ class TestStatementUploadIntegration:
         # Verify source tracking (if any rules were created)
         if enhancement_rules:
             # All sources should be valid enum values
-            valid_sources = {EnhancementRuleSource.MANUAL, EnhancementRuleSource.AI}
+            valid_sources = {
+                EnhancementRuleSource.MANUAL,
+                EnhancementRuleSource.AI,
+            }
             for rule in enhancement_rules:
                 assert rule.source in valid_sources, f"Invalid enhancement rule source: {rule.source}"
 

@@ -45,7 +45,6 @@
   color: var(--text-primary);
 }
 
-
 .form-group {
   margin-bottom: 1rem;
 }
@@ -102,7 +101,6 @@ button:disabled {
   color: var(--text-primary);
 }
 
-
 table {
   width: 100%;
   border-collapse: collapse;
@@ -155,4 +153,3 @@ td.amount-column {
   padding: 2rem;
   color: var(--text-muted);
 }
-

@@ -8,23 +8,13 @@ interface UploadFooterProps {
   onCancel: () => void
 }
 
-export const UploadFooter: React.FC<UploadFooterProps> = ({
-  isValid,
-  isUploading,
-  onFinalize,
-  onCancel,
-}) => {
+export const UploadFooter: React.FC<UploadFooterProps> = ({ isValid, isUploading, onFinalize, onCancel }) => {
   return (
     <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 4 }}>
-      <Button
-        variant="outlined"
-        color="secondary"
-        onClick={onCancel}
-        disabled={isUploading}
-      >
+      <Button variant="outlined" color="secondary" onClick={onCancel} disabled={isUploading}>
         Cancel
       </Button>
-      
+
       <Button
         variant="contained"
         color="primary"

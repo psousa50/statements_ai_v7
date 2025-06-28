@@ -5,6 +5,7 @@ Revises: 7da2fd4b37ee
 Create Date: 2025-06-21 20:08:10.283819
 
 """
+
 from typing import Sequence, Union
 
 import sqlalchemy as sa
@@ -21,12 +22,41 @@ def upgrade() -> None:
     # Create transaction_counterparty_rules table
     op.create_table(
         "transaction_counterparty_rules",
-        sa.Column("id", sa.UUID(), nullable=False, default=sa.text("gen_random_uuid()")),
-        sa.Column("normalized_description", sa.String(), nullable=False),
-        sa.Column("counterparty_account_id", sa.UUID(), nullable=False),
-        sa.Column("min_amount", sa.Numeric(precision=10, scale=2), nullable=True),
-        sa.Column("max_amount", sa.Numeric(precision=10, scale=2), nullable=True),
-        sa.Column("source", sa.Enum("MANUAL", "AI", name="counterpartyrulesource"), nullable=False),
+        sa.Column(
+            "id",
+            sa.UUID(),
+            nullable=False,
+            default=sa.text("gen_random_uuid()"),
+        ),
+        sa.Column(
+            "normalized_description",
+            sa.String(),
+            nullable=False,
+        ),
+        sa.Column(
+            "counterparty_account_id",
+            sa.UUID(),
+            nullable=False,
+        ),
+        sa.Column(
+            "min_amount",
+            sa.Numeric(precision=10, scale=2),
+            nullable=True,
+        ),
+        sa.Column(
+            "max_amount",
+            sa.Numeric(precision=10, scale=2),
+            nullable=True,
+        ),
+        sa.Column(
+            "source",
+            sa.Enum(
+                "MANUAL",
+                "AI",
+                name="counterpartyrulesource",
+            ),
+            nullable=False,
+        ),
         sa.Column("created_at", sa.DateTime(), nullable=False),
         sa.Column("updated_at", sa.DateTime(), nullable=False),
         sa.ForeignKeyConstraint(
@@ -46,6 +76,9 @@ def upgrade() -> None:
 
 def downgrade() -> None:
     # Drop the table and enum
-    op.drop_index(op.f("ix_transaction_counterparty_rules_normalized_description"), table_name="transaction_counterparty_rules")
+    op.drop_index(
+        op.f("ix_transaction_counterparty_rules_normalized_description"),
+        table_name="transaction_counterparty_rules",
+    )
     op.drop_table("transaction_counterparty_rules")
     op.execute("DROP TYPE IF EXISTS counterpartyrulesource")

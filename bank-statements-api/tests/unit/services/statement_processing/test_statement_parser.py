@@ -16,7 +16,11 @@ class TestStatementParser:
 
         assert isinstance(df, pd.DataFrame)
         assert df.shape == (1, 3)
-        assert list(df.columns) == ["date", "amount", "description"]
+        assert list(df.columns) == [
+            "date",
+            "amount",
+            "description",
+        ]
         assert df.iloc[0]["date"] == "2023-01-01"
         assert df.iloc[0]["amount"] == "100.00"
         assert df.iloc[0]["description"] == "Test transaction"
@@ -52,5 +56,8 @@ class TestStatementParser:
         file_content = b"some content"
         file_type = "UNKNOWN"
 
-        with pytest.raises(ValueError, match="Unsupported file type: UNKNOWN"):
+        with pytest.raises(
+            ValueError,
+            match="Unsupported file type: UNKNOWN",
+        ):
             parser.parse(file_content, file_type)

@@ -93,12 +93,18 @@ class TestTransactionEnhancer:
         assert result[0].counterparty_account_id == counterparty_id
         assert result[0].categorization_status == CategorizationStatus.RULE_BASED
 
-    def test_exact_match_rule_does_not_apply_when_no_match(self):
+    def test_exact_match_rule_does_not_apply_when_no_match(
+        self,
+    ):
         """Test that exact match rule doesn't apply when description doesn't match"""
         category_id = uuid.uuid4()
 
         transaction = self.create_transaction(normalized_description="starbucks coffee")
-        rule = self.create_rule(pattern="dunkin donuts", match_type=MatchType.EXACT, category_id=category_id)
+        rule = self.create_rule(
+            pattern="dunkin donuts",
+            match_type=MatchType.EXACT,
+            category_id=category_id,
+        )
 
         result = self.enhancer.apply_rules([transaction], [rule])
 
@@ -111,7 +117,11 @@ class TestTransactionEnhancer:
         category_id = uuid.uuid4()
 
         transaction = self.create_transaction(normalized_description="mbway transfer to john")
-        rule = self.create_rule(pattern="mbway", match_type=MatchType.PREFIX, category_id=category_id)
+        rule = self.create_rule(
+            pattern="mbway",
+            match_type=MatchType.PREFIX,
+            category_id=category_id,
+        )
 
         result = self.enhancer.apply_rules([transaction], [rule])
 
@@ -119,12 +129,18 @@ class TestTransactionEnhancer:
         assert result[0].category_id == category_id
         assert result[0].categorization_status == CategorizationStatus.RULE_BASED
 
-    def test_prefix_match_rule_does_not_apply_when_no_match(self):
+    def test_prefix_match_rule_does_not_apply_when_no_match(
+        self,
+    ):
         """Test that prefix match rule doesn't apply when description doesn't start with pattern"""
         category_id = uuid.uuid4()
 
         transaction = self.create_transaction(normalized_description="transfer via mbway")
-        rule = self.create_rule(pattern="mbway", match_type=MatchType.PREFIX, category_id=category_id)
+        rule = self.create_rule(
+            pattern="mbway",
+            match_type=MatchType.PREFIX,
+            category_id=category_id,
+        )
 
         result = self.enhancer.apply_rules([transaction], [rule])
 
@@ -136,7 +152,11 @@ class TestTransactionEnhancer:
         category_id = uuid.uuid4()
 
         transaction = self.create_transaction(normalized_description="purchase at mercado lisboa")
-        rule = self.create_rule(pattern="mercado", match_type=MatchType.INFIX, category_id=category_id)
+        rule = self.create_rule(
+            pattern="mercado",
+            match_type=MatchType.INFIX,
+            category_id=category_id,
+        )
 
         result = self.enhancer.apply_rules([transaction], [rule])
 
@@ -144,12 +164,18 @@ class TestTransactionEnhancer:
         assert result[0].category_id == category_id
         assert result[0].categorization_status == CategorizationStatus.RULE_BASED
 
-    def test_infix_match_rule_does_not_apply_when_no_match(self):
+    def test_infix_match_rule_does_not_apply_when_no_match(
+        self,
+    ):
         """Test that infix match rule doesn't apply when description doesn't contain pattern"""
         category_id = uuid.uuid4()
 
         transaction = self.create_transaction(normalized_description="purchase at supermarket")
-        rule = self.create_rule(pattern="mercado", match_type=MatchType.INFIX, category_id=category_id)
+        rule = self.create_rule(
+            pattern="mercado",
+            match_type=MatchType.INFIX,
+            category_id=category_id,
+        )
 
         result = self.enhancer.apply_rules([transaction], [rule])
 
@@ -161,7 +187,10 @@ class TestTransactionEnhancer:
         category_id = uuid.uuid4()
 
         # Transaction with amount 100
-        transaction = self.create_transaction(normalized_description="test", amount=Decimal("100.00"))
+        transaction = self.create_transaction(
+            normalized_description="test",
+            amount=Decimal("100.00"),
+        )
 
         # Rule that only applies to amounts between 50 and 150
         rule = self.create_rule(
@@ -182,7 +211,10 @@ class TestTransactionEnhancer:
         category_id = uuid.uuid4()
 
         # Transaction with amount 200
-        transaction = self.create_transaction(normalized_description="test", amount=Decimal("200.00"))
+        transaction = self.create_transaction(
+            normalized_description="test",
+            amount=Decimal("200.00"),
+        )
 
         # Rule that only applies to amounts between 50 and 150
         rule = self.create_rule(
@@ -203,7 +235,10 @@ class TestTransactionEnhancer:
         category_id = uuid.uuid4()
 
         # Transaction on 2024-06-15
-        transaction = self.create_transaction(normalized_description="test", transaction_date=date(2024, 6, 15))
+        transaction = self.create_transaction(
+            normalized_description="test",
+            transaction_date=date(2024, 6, 15),
+        )
 
         # Rule that applies to dates between 2024-01-01 and 2024-12-31
         rule = self.create_rule(
@@ -224,7 +259,10 @@ class TestTransactionEnhancer:
         category_id = uuid.uuid4()
 
         # Transaction on 2025-01-01
-        transaction = self.create_transaction(normalized_description="test", transaction_date=date(2025, 1, 1))
+        transaction = self.create_transaction(
+            normalized_description="test",
+            transaction_date=date(2025, 1, 1),
+        )
 
         # Rule that applies to dates between 2024-01-01 and 2024-12-31
         rule = self.create_rule(
@@ -248,10 +286,18 @@ class TestTransactionEnhancer:
         transaction = self.create_transaction(normalized_description="starbucks coffee")
 
         # Prefix rule
-        prefix_rule = self.create_rule(pattern="starbucks", match_type=MatchType.PREFIX, category_id=prefix_category_id)
+        prefix_rule = self.create_rule(
+            pattern="starbucks",
+            match_type=MatchType.PREFIX,
+            category_id=prefix_category_id,
+        )
 
         # Exact rule (should take precedence)
-        exact_rule = self.create_rule(pattern="starbucks coffee", match_type=MatchType.EXACT, category_id=exact_category_id)
+        exact_rule = self.create_rule(
+            pattern="starbucks coffee",
+            match_type=MatchType.EXACT,
+            category_id=exact_category_id,
+        )
 
         result = self.enhancer.apply_rules([transaction], [prefix_rule, exact_rule])
 
@@ -266,10 +312,18 @@ class TestTransactionEnhancer:
         transaction = self.create_transaction(normalized_description="starbucks coffee")
 
         # Infix rule
-        infix_rule = self.create_rule(pattern="coffee", match_type=MatchType.INFIX, category_id=infix_category_id)
+        infix_rule = self.create_rule(
+            pattern="coffee",
+            match_type=MatchType.INFIX,
+            category_id=infix_category_id,
+        )
 
         # Prefix rule (should take precedence)
-        prefix_rule = self.create_rule(pattern="starbucks", match_type=MatchType.PREFIX, category_id=prefix_category_id)
+        prefix_rule = self.create_rule(
+            pattern="starbucks",
+            match_type=MatchType.PREFIX,
+            category_id=prefix_category_id,
+        )
 
         result = self.enhancer.apply_rules([transaction], [infix_rule, prefix_rule])
 
@@ -284,9 +338,17 @@ class TestTransactionEnhancer:
         transaction = self.create_transaction(normalized_description="starbucks coffee")
 
         # Both rules match, but only first should apply
-        first_rule = self.create_rule(pattern="starbucks", match_type=MatchType.PREFIX, category_id=first_category_id)
+        first_rule = self.create_rule(
+            pattern="starbucks",
+            match_type=MatchType.PREFIX,
+            category_id=first_category_id,
+        )
 
-        second_rule = self.create_rule(pattern="coffee", match_type=MatchType.INFIX, category_id=second_category_id)
+        second_rule = self.create_rule(
+            pattern="coffee",
+            match_type=MatchType.INFIX,
+            category_id=second_category_id,
+        )
 
         result = self.enhancer.apply_rules([transaction], [first_rule, second_rule])
 
@@ -302,11 +364,22 @@ class TestTransactionEnhancer:
         transaction2 = self.create_transaction(normalized_description="walmart store")
         transaction3 = self.create_transaction(normalized_description="unknown merchant")
 
-        rule1 = self.create_rule(pattern="starbucks", match_type=MatchType.PREFIX, category_id=category_id1)
+        rule1 = self.create_rule(
+            pattern="starbucks",
+            match_type=MatchType.PREFIX,
+            category_id=category_id1,
+        )
 
-        rule2 = self.create_rule(pattern="walmart", match_type=MatchType.PREFIX, category_id=category_id2)
+        rule2 = self.create_rule(
+            pattern="walmart",
+            match_type=MatchType.PREFIX,
+            category_id=category_id2,
+        )
 
-        result = self.enhancer.apply_rules([transaction1, transaction2, transaction3], [rule1, rule2])
+        result = self.enhancer.apply_rules(
+            [transaction1, transaction2, transaction3],
+            [rule1, rule2],
+        )
 
         assert len(result) == 3
         assert result[0].category_id == category_id1  # starbucks
@@ -319,7 +392,10 @@ class TestTransactionEnhancer:
 
         transaction = self.create_transaction(normalized_description="test")
         rule = self.create_rule(
-            pattern="test", match_type=MatchType.EXACT, category_id=category_id, counterparty_account_id=None
+            pattern="test",
+            match_type=MatchType.EXACT,
+            category_id=category_id,
+            counterparty_account_id=None,
         )
 
         result = self.enhancer.apply_rules([transaction], [rule])
@@ -335,7 +411,10 @@ class TestTransactionEnhancer:
 
         transaction = self.create_transaction(normalized_description="test")
         rule = self.create_rule(
-            pattern="test", match_type=MatchType.EXACT, category_id=None, counterparty_account_id=counterparty_id
+            pattern="test",
+            match_type=MatchType.EXACT,
+            category_id=None,
+            counterparty_account_id=counterparty_id,
         )
 
         result = self.enhancer.apply_rules([transaction], [rule])
@@ -346,14 +425,19 @@ class TestTransactionEnhancer:
         # Should not mark as categorized if only counterparty is set
         assert result[0].categorization_status == CategorizationStatus.UNCATEGORIZED
 
-    def test_both_category_and_counterparty_rule_applies(self):
+    def test_both_category_and_counterparty_rule_applies(
+        self,
+    ):
         """Test that rule with both category_id and counterparty_account_id applies correctly"""
         category_id = uuid.uuid4()
         counterparty_id = uuid.uuid4()
 
         transaction = self.create_transaction(normalized_description="test")
         rule = self.create_rule(
-            pattern="test", match_type=MatchType.EXACT, category_id=category_id, counterparty_account_id=counterparty_id
+            pattern="test",
+            match_type=MatchType.EXACT,
+            category_id=category_id,
+            counterparty_account_id=counterparty_id,
         )
 
         result = self.enhancer.apply_rules([transaction], [rule])

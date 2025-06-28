@@ -99,7 +99,11 @@ class StatementAnalyzerService:
         account_id: Optional[str] = None,
     ) -> dict:
         try:
-            processed_df = process_dataframe(raw_df, header_row_index, data_start_row_index)
+            processed_df = process_dataframe(
+                raw_df,
+                header_row_index,
+                data_start_row_index,
+            )
 
             normalized_df = self.transaction_normalizer.normalize(processed_df, column_mapping)
 

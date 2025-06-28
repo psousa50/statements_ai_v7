@@ -89,7 +89,11 @@ export const useCategories = () => {
           name,
           parent_id: parentId,
         })
-        setCategories((prev) => prev.map((category) => (category.id === id ? updatedCategory : category)).sort((a, b) => a.name.localeCompare(b.name)))
+        setCategories((prev) =>
+          prev
+            .map((category) => (category.id === id ? updatedCategory : category))
+            .sort((a, b) => a.name.localeCompare(b.name))
+        )
         setRootCategories((prev) => {
           let updated
           // If the category was a root category and now has a parent, remove it from root categories

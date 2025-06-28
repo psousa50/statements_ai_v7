@@ -11,14 +11,7 @@ interface CategoryModalProps {
   onClose: () => void
 }
 
-export const CategoryModal = ({
-  isOpen,
-  category,
-  parentId,
-  categories,
-  onSave,
-  onClose,
-}: CategoryModalProps) => {
+export const CategoryModal = ({ isOpen, category, parentId, categories, onSave, onClose }: CategoryModalProps) => {
   const [name, setName] = useState('')
   const [selectedParentId, setSelectedParentId] = useState<string | undefined>(undefined)
   const [saving, setSaving] = useState(false)
@@ -45,7 +38,7 @@ export const CategoryModal = ({
     if (!isEditing || !category) return categories
 
     const getDescendantIds = (categoryId: string): string[] => {
-      const children = categories.filter(c => c.parent_id === categoryId)
+      const children = categories.filter((c) => c.parent_id === categoryId)
       const descendants = [categoryId]
       for (const child of children) {
         descendants.push(...getDescendantIds(child.id))
@@ -54,7 +47,7 @@ export const CategoryModal = ({
     }
 
     const excludedIds = getDescendantIds(category.id)
-    return categories.filter(c => !excludedIds.includes(c.id))
+    return categories.filter((c) => !excludedIds.includes(c.id))
   }, [categories, category, isEditing])
 
   if (!isOpen) return null
@@ -64,10 +57,9 @@ export const CategoryModal = ({
     if (!trimmedName) return
 
     // Check for duplicate names at the same level
-    const duplicateExists = categories.some(c => 
-      c.name.toLowerCase() === trimmedName.toLowerCase() &&
-      c.parent_id === selectedParentId &&
-      c.id !== category?.id // Exclude current category when editing
+    const duplicateExists = categories.some(
+      (c) =>
+        c.name.toLowerCase() === trimmedName.toLowerCase() && c.parent_id === selectedParentId && c.id !== category?.id // Exclude current category when editing
     )
 
     if (duplicateExists) {
@@ -144,7 +136,7 @@ export const CategoryModal = ({
                 <div className="category-path">
                   {category.parent_id ? (
                     <>
-                      {categories.find(c => c.id === category.parent_id)?.name || 'Unknown Parent'} → {category.name}
+                      {categories.find((c) => c.id === category.parent_id)?.name || 'Unknown Parent'} → {category.name}
                     </>
                   ) : (
                     <>Root → {category.name}</>
@@ -159,12 +151,8 @@ export const CategoryModal = ({
           <button className="button-secondary" onClick={onClose} disabled={saving}>
             Cancel
           </button>
-          <button
-            className="button-primary"
-            onClick={handleSave}
-            disabled={saving || !name.trim()}
-          >
-            {saving ? 'Saving...' : (isEditing ? 'Update Category' : 'Create Category')}
+          <button className="button-primary" onClick={handleSave} disabled={saving || !name.trim()}>
+            {saving ? 'Saving...' : isEditing ? 'Update Category' : 'Create Category'}
           </button>
         </div>
       </div>

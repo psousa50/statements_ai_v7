@@ -8,10 +8,18 @@ from app.ports.repositories.initial_balance import InitialBalanceRepository
 
 
 class InitialBalanceService:
-    def __init__(self, initial_balance_repository: InitialBalanceRepository):
+    def __init__(
+        self,
+        initial_balance_repository: InitialBalanceRepository,
+    ):
         self.initial_balance_repository = initial_balance_repository
 
-    def create_initial_balance(self, account_id: UUID, balance_date: date, balance_amount: Decimal) -> InitialBalance:
+    def create_initial_balance(
+        self,
+        account_id: UUID,
+        balance_date: date,
+        balance_amount: Decimal,
+    ) -> InitialBalance:
         """Create a new initial balance for a source"""
         initial_balance = InitialBalance(
             account_id=account_id,
@@ -33,7 +41,10 @@ class InitialBalanceService:
         return self.initial_balance_repository.get_by_account_id_and_date(account_id, balance_date)
 
     def update_initial_balance(
-        self, initial_balance_id: UUID, balance_date: date, balance_amount: Decimal
+        self,
+        initial_balance_id: UUID,
+        balance_date: date,
+        balance_amount: Decimal,
     ) -> Optional[InitialBalance]:
         """Update an existing initial balance"""
         initial_balance = self.initial_balance_repository.get_by_id(initial_balance_id)

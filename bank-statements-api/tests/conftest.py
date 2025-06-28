@@ -1,6 +1,7 @@
 """
 Common test fixtures for the bank-statements-api tests.
 """
+
 from datetime import date
 from decimal import Decimal
 from unittest.mock import MagicMock

@@ -279,7 +279,7 @@ export const TransactionsPage = () => {
               🔍 Filtered by rule: <strong>"{enhancementRule?.normalized_description_pattern || 'Loading...'}"</strong>
               {enhancementRule?.category && <span> → {enhancementRule.category.name}</span>}
             </span>
-            <button 
+            <button
               className="rule-filter-clear-btn"
               onClick={handleClearRuleFilter}
               title="Return to normal transaction view"

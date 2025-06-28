@@ -265,7 +265,11 @@ class EnhancementRuleManagementService:
             count = self._get_rule_transaction_count(rule)
             rules_with_counts.append((rule, count))
 
-        top_rules = sorted(rules_with_counts, key=lambda x: x[1], reverse=True)[:10]
+        top_rules = sorted(
+            rules_with_counts,
+            key=lambda x: x[1],
+            reverse=True,
+        )[:10]
         unused_rules = [r for r, count in rules_with_counts if count == 0]
 
         return {
@@ -339,6 +343,46 @@ class EnhancementRuleManagementService:
 
         # Get the count
         count = self.transaction_repository.count_matching_rule(rule)
+
+        # TODO: Add date_range and amount_range calculation if needed
+        return {
+            "count": count,
+            "date_range": None,
+            "amount_range": None,
+        }
+
+    def preview_matching_transactions_count(self, rule_preview: Any) -> Dict[str, Any]:
+        """Preview count of transactions that would match the given enhancement rule criteria."""
+        # Note: We allow preview without enhancements to show matching transaction counts
+        # The actual rule creation will still require at least one enhancement
+
+        # Validate category exists if provided
+        if rule_preview.category_id:
+            category = self.category_repository.find_by_id(rule_preview.category_id)
+            if not category:
+                raise ValueError(f"Category with ID {rule_preview.category_id} not found")
+
+        # Validate counterparty account exists if provided
+        if rule_preview.counterparty_account_id:
+            account = self.account_repository.find_by_id(rule_preview.counterparty_account_id)
+            if not account:
+                raise ValueError(f"Account with ID {rule_preview.counterparty_account_id} not found")
+
+        # Create a temporary rule object for counting (not persisted)
+        temp_rule = EnhancementRule(
+            normalized_description_pattern=rule_preview.normalized_description_pattern,
+            match_type=rule_preview.match_type,
+            category_id=rule_preview.category_id,
+            counterparty_account_id=rule_preview.counterparty_account_id,
+            min_amount=rule_preview.min_amount,
+            max_amount=rule_preview.max_amount,
+            start_date=rule_preview.start_date,
+            end_date=rule_preview.end_date,
+            source=rule_preview.source,
+        )
+
+        # Get the count using the temporary rule
+        count = self.transaction_repository.count_matching_rule(temp_rule)
 
         # TODO: Add date_range and amount_range calculation if needed
         return {

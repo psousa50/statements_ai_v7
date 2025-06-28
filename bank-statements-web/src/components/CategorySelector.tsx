@@ -156,8 +156,9 @@ export const CategorySelector = ({
         inputRef.current.style.setProperty('color', textPrimary, 'important')
       } else {
         // Fallback for dark mode detection
-        const isDark = document.documentElement.getAttribute('data-theme') === 'dark' ||
-                      document.body.classList.contains('rs-theme-dark')
+        const isDark =
+          document.documentElement.getAttribute('data-theme') === 'dark' ||
+          document.body.classList.contains('rs-theme-dark')
         if (isDark) {
           inputRef.current.style.setProperty('color', 'rgba(255, 255, 255, 0.87)', 'important')
         }

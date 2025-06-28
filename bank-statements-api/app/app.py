@@ -20,7 +20,10 @@ def register_root_routes(app: FastAPI):
         return {"status": "ok"}
 
 
-def register_app_routes(app: FastAPI, provide_dependencies: Callable[[], Iterator[InternalDependencies]]):
+def register_app_routes(
+    app: FastAPI,
+    provide_dependencies: Callable[[], Iterator[InternalDependencies]],
+):
     register_root_routes(app)
     register_transaction_routes(app, provide_dependencies)
     register_enhancement_rule_routes(app, provide_dependencies)

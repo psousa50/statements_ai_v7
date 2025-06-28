@@ -13,9 +13,15 @@ class Account(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     name = Column(String, nullable=False, unique=True)
 
-    transactions = relationship("Transaction", foreign_keys="Transaction.account_id", back_populates="account")
+    transactions = relationship(
+        "Transaction",
+        foreign_keys="Transaction.account_id",
+        back_populates="account",
+    )
     counterparty_transactions = relationship(
-        "Transaction", foreign_keys="Transaction.counterparty_account_id", back_populates="counterparty_account"
+        "Transaction",
+        foreign_keys="Transaction.counterparty_account_id",
+        back_populates="counterparty_account",
     )
     statements = relationship("Statement", back_populates="account")
 

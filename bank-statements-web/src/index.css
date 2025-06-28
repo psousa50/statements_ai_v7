@@ -21,7 +21,7 @@
   --button-secondary: #6c757d;
   --positive-amount: #059669;
   --negative-amount: #dc2626;
-  
+
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -95,7 +95,8 @@ button:disabled {
   font-weight: 600;
 }
 
-th, td {
+th,
+td {
   color: var(--text-primary);
   border-bottom: 1px solid var(--border-primary);
 }
@@ -135,13 +136,8 @@ h1 {
 }
 
 /* Fix any remaining tooltip positioning */
-.rs-picker-daterange-panel [role="tooltip"] {
+.rs-picker-daterange-panel [role='tooltip'] {
   background-color: var(--bg-tertiary) !important;
   color: var(--text-primary) !important;
   border: 1px solid var(--border-primary) !important;
 }
-
-
-
-
-

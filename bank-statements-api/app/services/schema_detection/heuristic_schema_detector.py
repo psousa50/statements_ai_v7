@@ -84,7 +84,10 @@ class HeuristicSchemaDetector(SchemaDetectorProtocol):
             col_data = df[col]
             i_date = find_first_valid_streak(col_data, is_probable_date)
             i_amt = find_first_valid_streak(col_data, is_probable_amount)
-            i = min([i for i in [i_date, i_amt] if i is not None], default=None)
+            i = min(
+                [i for i in [i_date, i_amt] if i is not None],
+                default=None,
+            )
             if i is not None:
                 first_data_rows.append(i)
 
@@ -95,7 +98,11 @@ class HeuristicSchemaDetector(SchemaDetectorProtocol):
         return most_common_row
 
     def _infer_standard_columns(self, df: pd.DataFrame) -> Dict[str, str]:
-        candidates = {"date": None, "description": None, "amount": None}
+        candidates = {
+            "date": None,
+            "description": None,
+            "amount": None,
+        }
         sample = df.head(10)
 
         scores = {}
@@ -112,7 +119,11 @@ class HeuristicSchemaDetector(SchemaDetectorProtocol):
             scores[col] = score
 
         for key in candidates:
-            best_col = max(scores.items(), key=lambda item: item[1][key], default=(None, {}))
+            best_col = max(
+                scores.items(),
+                key=lambda item: item[1][key],
+                default=(None, {}),
+            )
             if best_col[1].get(key, 0) >= len(sample) // 2:
                 candidates[key] = best_col[0]
 

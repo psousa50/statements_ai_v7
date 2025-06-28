@@ -42,7 +42,9 @@ class BackgroundJobRepository(ABC):
         pass
 
     @abstractmethod
-    def claim_single_pending_job(self) -> Optional[BackgroundJob]:
+    def claim_single_pending_job(
+        self,
+    ) -> Optional[BackgroundJob]:
         """
         Atomically claim a single pending job for processing.
 

@@ -20,13 +20,7 @@ import { EnhancementRuleFiltersComponent } from '../components/EnhancementRuleFi
 import { EnhancementRuleModal } from '../components/EnhancementRuleModal'
 
 export const EnhancementRules: React.FC = () => {
-  const {
-    loading,
-    error,
-    fetchRules,
-    deleteRule,
-    cleanupUnused,
-  } = useEnhancementRules()
+  const { loading, error, fetchRules, deleteRule, cleanupUnused } = useEnhancementRules()
 
   const [rules, setRules] = useState<EnhancementRule[]>([])
   const [total, setTotal] = useState(0)
@@ -132,18 +126,10 @@ export const EnhancementRules: React.FC = () => {
           Enhancement Rules
         </Typography>
         <Box sx={{ display: 'flex', gap: 2 }}>
-          <Button
-            variant="outlined"
-            startIcon={<CleanupIcon />}
-            onClick={() => setCleanupDialogOpen(true)}
-          >
+          <Button variant="outlined" startIcon={<CleanupIcon />} onClick={() => setCleanupDialogOpen(true)}>
             Cleanup Unused
           </Button>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={handleCreateRule}
-          >
+          <Button variant="contained" startIcon={<AddIcon />} onClick={handleCreateRule}>
             Create Rule
           </Button>
         </Box>
@@ -156,11 +142,7 @@ export const EnhancementRules: React.FC = () => {
       )}
 
       <Paper sx={{ p: 2, mb: 2 }}>
-        <EnhancementRuleFiltersComponent
-          filters={filters}
-          onFiltersChange={handleFiltersChange}
-          loading={loading}
-        />
+        <EnhancementRuleFiltersComponent filters={filters} onFiltersChange={handleFiltersChange} loading={loading} />
       </Paper>
 
       <Paper sx={{ p: 0 }}>
@@ -189,8 +171,8 @@ export const EnhancementRules: React.FC = () => {
         <DialogTitle>Cleanup Unused Rules</DialogTitle>
         <DialogContent>
           <Typography>
-            This will permanently delete all enhancement rules that haven't been used to categorize
-            any transactions. This action cannot be undone.
+            This will permanently delete all enhancement rules that haven't been used to categorize any transactions.
+            This action cannot be undone.
           </Typography>
         </DialogContent>
         <DialogActions>

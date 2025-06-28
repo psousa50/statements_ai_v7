@@ -7,7 +7,7 @@ export enum EnhancementRuleSource {
 
 export enum MatchType {
   EXACT = 'exact',
-  PREFIX = 'prefix', 
+  PREFIX = 'prefix',
   INFIX = 'infix',
 }
 
@@ -70,7 +70,13 @@ export interface EnhancementRuleListResponse {
   total: number
 }
 
-export type SortField = 'normalized_description_pattern' | 'category' | 'counterparty' | 'usage' | 'source' | 'created_at'
+export type SortField =
+  | 'normalized_description_pattern'
+  | 'category'
+  | 'counterparty'
+  | 'usage'
+  | 'source'
+  | 'created_at'
 export type SortDirection = 'asc' | 'desc'
 
 export interface EnhancementRuleFilters {

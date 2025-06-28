@@ -189,14 +189,14 @@
   .charts-layout {
     flex-direction: column;
   }
-  
+
   .filters-sidebar {
     flex: none;
     position: static;
     max-height: none;
     width: 100%;
   }
-  
+
   .charts-content {
     width: 100%;
   }
@@ -206,23 +206,23 @@
   .charts-page {
     padding: 1rem;
   }
-  
+
   .charts-header {
     flex-direction: column;
     align-items: flex-start;
     gap: 1rem;
   }
-  
+
   .chart-stats {
     flex-direction: column;
     gap: 0.5rem;
   }
-  
+
   .date-range-inputs {
     flex-direction: column;
     gap: 0.5rem;
   }
-  
+
   .date-shortcuts {
     justify-content: center;
   }

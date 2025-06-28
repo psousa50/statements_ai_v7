@@ -10,9 +10,15 @@ class TestTransactionNormalizer:
 
         df = pd.DataFrame(
             {
-                "Transaction Date": ["2023-01-01", "2023-01-02"],
+                "Transaction Date": [
+                    "2023-01-01",
+                    "2023-01-02",
+                ],
                 "Value (EUR)": [100.00, -200.00],
-                "Transaction Details": ["Deposit", "Withdrawal"],
+                "Transaction Details": [
+                    "Deposit",
+                    "Withdrawal",
+                ],
             }
         )
 
@@ -24,7 +30,11 @@ class TestTransactionNormalizer:
 
         normalized_df = normalizer.normalize(df, column_mapping)
 
-        assert list(normalized_df.columns) == ["date", "amount", "description"]
+        assert list(normalized_df.columns) == [
+            "date",
+            "amount",
+            "description",
+        ]
         assert len(normalized_df) == 2
         # Date is now a string for JSON serialization
         assert normalized_df["date"][0] == "2023-01-01"
@@ -43,11 +53,19 @@ class TestTransactionNormalizer:
             }
         )
 
-        column_mapping = {"date": "Data", "amount": "Valor", "description": "Descrição"}
+        column_mapping = {
+            "date": "Data",
+            "amount": "Valor",
+            "description": "Descrição",
+        }
 
         normalized_df = normalizer.normalize(df, column_mapping)
 
-        assert list(normalized_df.columns) == ["date", "amount", "description"]
+        assert list(normalized_df.columns) == [
+            "date",
+            "amount",
+            "description",
+        ]
         assert len(normalized_df) == 2
         # Date is now a string for JSON serialization
         assert normalized_df["date"][0] == "2023-01-02"
@@ -57,7 +75,12 @@ class TestTransactionNormalizer:
     def test_normalize_with_missing_columns(self):
         normalizer = TransactionNormalizer()
 
-        df = pd.DataFrame({"Date": ["2023-01-01", "2023-01-02"], "Other": ["A", "B"]})
+        df = pd.DataFrame(
+            {
+                "Date": ["2023-01-01", "2023-01-02"],
+                "Other": ["A", "B"],
+            }
+        )
 
         column_mapping = {
             "date": "Date",

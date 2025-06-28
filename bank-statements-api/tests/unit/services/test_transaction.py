@@ -24,7 +24,11 @@ class TestTransactionService:
         return repository
 
     @pytest.fixture
-    def service(self, mock_repository, mock_initial_balance_repository):
+    def service(
+        self,
+        mock_repository,
+        mock_initial_balance_repository,
+    ):
         return TransactionService(mock_repository, mock_initial_balance_repository)
 
     @pytest.fixture

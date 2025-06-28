@@ -15,7 +15,11 @@ class UploadedFile(Base):
     filename = Column(Text, nullable=False)
     content = Column(LargeBinary, nullable=False)
     file_type = Column(String, nullable=False)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
+    created_at = Column(
+        DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        nullable=False,
+    )
 
 
 class FileAnalysisMetadata(Base):
@@ -23,10 +27,18 @@ class FileAnalysisMetadata(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     file_hash = Column(Text, unique=True, nullable=False, index=True)
-    account_id = Column(UUID(as_uuid=True), ForeignKey("accounts.id"), nullable=False)
+    account_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("accounts.id"),
+        nullable=False,
+    )
     column_mapping = Column(JSONB, nullable=False)
     header_row_index = Column(Integer, nullable=False)
     data_start_row_index = Column(Integer, nullable=False)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
+    created_at = Column(
+        DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        nullable=False,
+    )
 
     account = relationship("Account")

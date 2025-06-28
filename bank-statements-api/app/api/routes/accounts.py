@@ -9,11 +9,18 @@ from app.core.dependencies import InternalDependencies
 from app.logging.utils import log_exception
 
 
-def register_account_routes(app: FastAPI, provide_dependencies: Callable[[], Iterator[InternalDependencies]]):
+def register_account_routes(
+    app: FastAPI,
+    provide_dependencies: Callable[[], Iterator[InternalDependencies]],
+):
     """Register account routes with the FastAPI app."""
     router = APIRouter(prefix="/accounts", tags=["accounts"])
 
-    @router.post("", response_model=AccountResponse, status_code=status.HTTP_201_CREATED)
+    @router.post(
+        "",
+        response_model=AccountResponse,
+        status_code=status.HTTP_201_CREATED,
+    )
     async def create_account(
         account_data: AccountCreate,
         internal: InternalDependencies = Depends(provide_dependencies),
@@ -112,7 +119,10 @@ def register_account_routes(app: FastAPI, provide_dependencies: Callable[[], Ite
                 detail=f"Error updating account: {str(e)}",
             )
 
-    @router.delete("/{account_id}", status_code=status.HTTP_204_NO_CONTENT)
+    @router.delete(
+        "/{account_id}",
+        status_code=status.HTTP_204_NO_CONTENT,
+    )
     async def delete_account(
         account_id: UUID,
         internal: InternalDependencies = Depends(provide_dependencies),
@@ -138,7 +148,11 @@ def register_account_routes(app: FastAPI, provide_dependencies: Callable[[], Ite
                 detail=f"Error deleting account: {str(e)}",
             )
 
-    @router.post("/upload", response_model=AccountUploadResponse, status_code=status.HTTP_200_OK)
+    @router.post(
+        "/upload",
+        response_model=AccountUploadResponse,
+        status_code=status.HTTP_200_OK,
+    )
     async def upload_accounts_csv(
         file: UploadFile = File(...),
         internal: InternalDependencies = Depends(provide_dependencies),
@@ -173,7 +187,12 @@ def register_account_routes(app: FastAPI, provide_dependencies: Callable[[], Ite
                 else:
                     created_count += 1
 
-            return AccountUploadResponse(accounts=accounts, total=len(accounts), created=created_count, updated=updated_count)
+            return AccountUploadResponse(
+                accounts=accounts,
+                total=len(accounts),
+                created=created_count,
+                updated=updated_count,
+            )
 
         except HTTPException:
             raise

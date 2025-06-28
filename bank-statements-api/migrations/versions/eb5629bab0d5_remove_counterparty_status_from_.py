@@ -5,6 +5,7 @@ Revises: 068134e29474
 Create Date: 2025-06-26 20:30:14.978361
 
 """
+
 from typing import Sequence, Union
 
 import sqlalchemy as sa
@@ -34,7 +35,12 @@ def downgrade() -> None:
         "transactions",
         sa.Column(
             "counterparty_status",
-            sa.Enum("unprocessed", "inferred", "confirmed", name="counterpartystatus"),
+            sa.Enum(
+                "unprocessed",
+                "inferred",
+                "confirmed",
+                name="counterpartystatus",
+            ),
             nullable=False,
             server_default="unprocessed",
         ),

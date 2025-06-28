@@ -15,28 +15,16 @@ export const CategoriesPage = () => {
   const [toast, setToast] = useState<Omit<ToastProps, 'onClose'> | null>(null)
   const [confirmDelete, setConfirmDelete] = useState<Category | null>(null)
 
-  const {
-    categories,
-    rootCategories,
-    loading,
-    error,
-    fetchCategories,
-    addCategory,
-    updateCategory,
-    deleteCategory,
-  } = useCategories()
+  const { categories, rootCategories, loading, error, fetchCategories, addCategory, updateCategory, deleteCategory } =
+    useCategories()
 
   // Filter and sort categories based on search term
   const filteredCategories = categories
-    .filter(category =>
-      category.name.toLowerCase().includes(searchTerm.toLowerCase())
-    )
+    .filter((category) => category.name.toLowerCase().includes(searchTerm.toLowerCase()))
     .sort((a, b) => a.name.localeCompare(b.name))
 
   const filteredRootCategories = rootCategories
-    .filter(category =>
-      category.name.toLowerCase().includes(searchTerm.toLowerCase())
-    )
+    .filter((category) => category.name.toLowerCase().includes(searchTerm.toLowerCase()))
     .sort((a, b) => a.name.localeCompare(b.name))
 
   const handleCreateCategory = useCallback((parentId?: string) => {
@@ -48,20 +36,23 @@ export const CategoriesPage = () => {
     setEditingCategory(category)
   }, [])
 
-  const handleDeleteCategory = useCallback((category: Category) => {
-    // Check if category has subcategories
-    const hasSubcategories = categories.some(c => c.parent_id === category.id)
-    
-    if (hasSubcategories) {
-      setToast({
-        message: 'Cannot delete category with subcategories. Please delete or move subcategories first.',
-        type: 'error'
-      })
-      return
-    }
+  const handleDeleteCategory = useCallback(
+    (category: Category) => {
+      // Check if category has subcategories
+      const hasSubcategories = categories.some((c) => c.parent_id === category.id)
 
-    setConfirmDelete(category)
-  }, [categories])
+      if (hasSubcategories) {
+        setToast({
+          message: 'Cannot delete category with subcategories. Please delete or move subcategories first.',
+          type: 'error',
+        })
+        return
+      }
+
+      setConfirmDelete(category)
+    },
+    [categories]
+  )
 
   const handleConfirmDelete = useCallback(async () => {
     if (!confirmDelete) return
@@ -70,15 +61,15 @@ export const CategoriesPage = () => {
     if (success) {
       setToast({
         message: `Category "${confirmDelete.name}" deleted successfully`,
-        type: 'success'
+        type: 'success',
       })
     } else {
       setToast({
         message: `Failed to delete category "${confirmDelete.name}". It may be in use by transactions.`,
-        type: 'error'
+        type: 'error',
       })
     }
-    
+
     setConfirmDelete(null)
   }, [confirmDelete, deleteCategory])
 
@@ -86,42 +77,41 @@ export const CategoriesPage = () => {
     setConfirmDelete(null)
   }, [])
 
-  const handleSaveCategory = useCallback(async (
-    name: string,
-    parentId?: string,
-    categoryId?: string
-  ) => {
-    try {
-      if (categoryId) {
-        // Updating existing category
-        const updatedCategory = await updateCategory(categoryId, name, parentId)
-        if (updatedCategory) {
-          setToast({
-            message: `Category "${name}" updated successfully`,
-            type: 'success'
-          })
-          setEditingCategory(null)
+  const handleSaveCategory = useCallback(
+    async (name: string, parentId?: string, categoryId?: string) => {
+      try {
+        if (categoryId) {
+          // Updating existing category
+          const updatedCategory = await updateCategory(categoryId, name, parentId)
+          if (updatedCategory) {
+            setToast({
+              message: `Category "${name}" updated successfully`,
+              type: 'success',
+            })
+            setEditingCategory(null)
+          }
+        } else {
+          // Creating new category
+          const newCategory = await addCategory(name, parentId)
+          if (newCategory) {
+            setToast({
+              message: `Category "${name}" created successfully`,
+              type: 'success',
+            })
+            setIsCreating(false)
+            setSelectedParentId(undefined)
+          }
         }
-      } else {
-        // Creating new category
-        const newCategory = await addCategory(name, parentId)
-        if (newCategory) {
-          setToast({
-            message: `Category "${name}" created successfully`,
-            type: 'success'
-          })
-          setIsCreating(false)
-          setSelectedParentId(undefined)
-        }
+      } catch (error) {
+        console.error('Failed to save category:', error)
+        setToast({
+          message: 'Failed to save category. Please try again.',
+          type: 'error',
+        })
       }
-    } catch (error) {
-      console.error('Failed to save category:', error)
-      setToast({
-        message: 'Failed to save category. Please try again.',
-        type: 'error'
-      })
-    }
-  }, [addCategory, updateCategory])
+    },
+    [addCategory, updateCategory]
+  )
 
   const handleCloseModal = useCallback(() => {
     setEditingCategory(null)
@@ -179,11 +169,7 @@ export const CategoriesPage = () => {
             />
           </div>
           <div className="action-buttons">
-            <button
-              onClick={() => handleCreateCategory()}
-              className="button-primary"
-              disabled={loading}
-            >
+            <button onClick={() => handleCreateCategory()} className="button-primary" disabled={loading}>
               + Create Root Category
             </button>
             <button
@@ -240,13 +226,7 @@ export const CategoriesPage = () => {
         dangerous={true}
       />
 
-      {toast && (
-        <Toast
-          message={toast.message}
-          type={toast.type}
-          onClose={handleCloseToast}
-        />
-      )}
+      {toast && <Toast message={toast.message} type={toast.type} onClose={handleCloseToast} />}
     </div>
   )
 }

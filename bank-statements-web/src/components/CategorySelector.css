@@ -174,7 +174,7 @@
   font-size: 14px !important;
   background: transparent !important;
   color: var(--text-primary) !important;
-  transition: border-color 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms !important;
+  transition: border-color 200ms cubic-bezier(0, 0, 0.2, 1) 0ms !important;
   box-sizing: border-box !important;
 }
 
@@ -203,7 +203,10 @@
   border: 1px solid var(--border-secondary) !important;
   border-top: none !important;
   background: var(--bg-primary) !important;
-  box-shadow: 0px 5px 5px -3px var(--shadow-light), 0px 8px 10px 1px var(--shadow-light), 0px 3px 14px 2px var(--shadow-light) !important;
+  box-shadow:
+    0px 5px 5px -3px var(--shadow-light),
+    0px 8px 10px 1px var(--shadow-light),
+    0px 3px 14px 2px var(--shadow-light) !important;
 }
 
 .category-selector.variant-form .category-suggestion {
@@ -250,27 +253,27 @@
 input.category-input,
 .category-selector .category-input,
 .category-selector-input-container .category-input,
-input[class*="category-input"],
-*[class*="category-input"] {
+input[class*='category-input'],
+*[class*='category-input'] {
   color: var(--text-primary) !important;
 }
 
 input.category-input::placeholder,
 .category-selector .category-input::placeholder,
 .category-selector-input-container .category-input::placeholder,
-input[class*="category-input"]::placeholder,
-*[class*="category-input"]::placeholder {
+input[class*='category-input']::placeholder,
+*[class*='category-input']::placeholder {
   color: var(--text-muted) !important;
 }
 
 /* Additional dark mode specific overrides */
-[data-theme="dark"] .category-input,
+[data-theme='dark'] .category-input,
 body.rs-theme-dark .category-input,
 .rs-theme-dark .category-input {
   color: rgba(255, 255, 255, 0.87) !important;
 }
 
-[data-theme="dark"] .category-input::placeholder,
+[data-theme='dark'] .category-input::placeholder,
 body.rs-theme-dark .category-input::placeholder,
 .rs-theme-dark .category-input::placeholder {
   color: rgba(255, 255, 255, 0.6) !important;
@@ -288,7 +291,7 @@ body.rs-theme-dark .category-input::placeholder,
 /* MUI dialog specific overrides */
 .MuiDialog-root .category-input,
 .MuiDialogContent-root .category-input,
-[role="dialog"] .category-input,
+[role='dialog'] .category-input,
 .MuiDialog-paper .category-input,
 .MuiDialog-container .category-input {
   color: var(--text-primary) !important;
@@ -297,7 +300,7 @@ body.rs-theme-dark .category-input::placeholder,
 
 .MuiDialog-root .category-input::placeholder,
 .MuiDialogContent-root .category-input::placeholder,
-[role="dialog"] .category-input::placeholder,
+[role='dialog'] .category-input::placeholder,
 .MuiDialog-paper .category-input::placeholder,
 .MuiDialog-container .category-input::placeholder {
   color: var(--text-muted) !important;
@@ -339,17 +342,25 @@ div.category-selector div.category-selector-input-container input.category-input
 }
 
 /* Absolute final override for MUI dialogs - Maximum specificity */
-.MuiDialog-root .MuiDialogContent-root .category-selector.variant-form .category-selector-input-container .category-input {
+.MuiDialog-root
+  .MuiDialogContent-root
+  .category-selector.variant-form
+  .category-selector-input-container
+  .category-input {
   color: var(--text-primary) !important;
   background-color: transparent !important;
 }
 
-.MuiDialog-root .MuiDialogContent-root .category-selector.variant-form .category-selector-input-container .category-input::placeholder {
+.MuiDialog-root
+  .MuiDialogContent-root
+  .category-selector.variant-form
+  .category-selector-input-container
+  .category-input::placeholder {
   color: var(--text-muted) !important;
 }
 
 /* Dark mode specific override with maximum specificity */
-[data-theme="dark"] .MuiDialog-root .category-input,
+[data-theme='dark'] .MuiDialog-root .category-input,
 body.rs-theme-dark .MuiDialog-root .category-input,
 .rs-theme-dark .MuiDialog-root .category-input {
   color: rgba(255, 255, 255, 0.87) !important;

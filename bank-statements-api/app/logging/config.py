@@ -31,8 +31,16 @@ LOGGING_CONFIG = {
         },
     },
     "loggers": {
-        "app.llm.big": {"handlers": ["big_file"], "level": "DEBUG", "propagate": False},
-        "app": {"handlers": ["console", "file"], "level": "DEBUG", "propagate": True},
+        "app.llm.big": {
+            "handlers": ["big_file"],
+            "level": "DEBUG",
+            "propagate": False,
+        },
+        "app": {
+            "handlers": ["console", "file"],
+            "level": "DEBUG",
+            "propagate": True,
+        },
     },
 }
 

@@ -22,7 +22,9 @@ class TransactionRepository(ABC):
 
     @abstractmethod
     def create_transaction(
-        self, transaction_data: TransactionCreateRequest, after_transaction_id: Optional[UUID] = None
+        self,
+        transaction_data: TransactionCreateRequest,
+        after_transaction_id: Optional[UUID] = None,
     ) -> Transaction:
         """Create a transaction with proper ordering"""
         pass
@@ -187,7 +189,11 @@ class TransactionRepository(ABC):
         pass
 
     @abstractmethod
-    def bulk_update_category_by_normalized_description(self, normalized_description: str, category_id: Optional[UUID]) -> int:
+    def bulk_update_category_by_normalized_description(
+        self,
+        normalized_description: str,
+        category_id: Optional[UUID],
+    ) -> int:
         """
         Update the category for all transactions with the given normalized description.
 

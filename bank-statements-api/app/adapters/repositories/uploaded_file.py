@@ -11,7 +11,11 @@ class SQLAlchemyUploadedFileRepository(UploadedFileRepository):
         self.session = session
 
     def save(self, filename: str, content: bytes, file_type: str) -> UploadedFileDTO:
-        uploaded_file = UploadedFile(filename=filename, content=content, file_type=file_type)
+        uploaded_file = UploadedFile(
+            filename=filename,
+            content=content,
+            file_type=file_type,
+        )
 
         self.session.add(uploaded_file)
         self.session.commit()

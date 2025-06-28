@@ -6,9 +6,9 @@ from uuid import UUID
 from app.api.schemas import TransactionCreateRequest, TransactionListResponse
 from app.common.text_normalization import normalize_description
 from app.domain.models.transaction import CategorizationStatus, Transaction
+from app.ports.repositories.enhancement_rule import EnhancementRuleRepository
 from app.ports.repositories.initial_balance import InitialBalanceRepository
 from app.ports.repositories.transaction import TransactionRepository
-from app.ports.repositories.enhancement_rule import EnhancementRuleRepository
 
 
 class TransactionService:
@@ -72,7 +72,10 @@ class TransactionService:
         sort_direction: Optional[str] = None,
     ) -> TransactionListResponse:
         """Get transactions with pagination and advanced filtering"""
-        transactions, total = self.transaction_repository.get_paginated(
+        (
+            transactions,
+            total,
+        ) = self.transaction_repository.get_paginated(
             page=page,
             page_size=page_size,
             category_ids=category_ids,
@@ -112,14 +115,17 @@ class TransactionService:
         include_running_balance: bool = False,
     ) -> TransactionListResponse:
         """Get transactions that match the given enhancement rule with pagination"""
-        
+
         # Get the enhancement rule
         rule = self.enhancement_rule_repository.find_by_id(enhancement_rule_id)
         if not rule:
             raise ValueError(f"Enhancement rule with ID {enhancement_rule_id} not found")
 
         # Get transactions matching the rule with pagination
-        transactions, total = self.transaction_repository.get_transactions_matching_rule_paginated(
+        (
+            transactions,
+            total,
+        ) = self.transaction_repository.get_transactions_matching_rule_paginated(
             rule=rule,
             page=page,
             page_size=page_size,
@@ -144,13 +150,17 @@ class TransactionService:
             page_size=page_size,
             total_pages=total_pages,
         )
-        
+
         # Store rule information for the frontend to display
         response.enhancement_rule = rule
-        
+
         return response
 
-    def _add_running_balance_to_transactions(self, transactions: List[Transaction], account_id: UUID):
+    def _add_running_balance_to_transactions(
+        self,
+        transactions: List[Transaction],
+        account_id: UUID,
+    ):
         """Add running balance to transactions for a specific account"""
         if not transactions:
             return
@@ -177,7 +187,10 @@ class TransactionService:
             starting_balance = latest_balance.balance_amount
 
         # Sort all transactions by date and then by created_at (for consistent ordering of same-date transactions)
-        sorted_transactions = sorted(all_transactions, key=lambda x: (x.date, x.created_at))
+        sorted_transactions = sorted(
+            all_transactions,
+            key=lambda x: (x.date, x.created_at),
+        )
 
         # Calculate running balance for all transactions
         balances = {}  # Keep track of running balance for each transaction
@@ -249,7 +262,11 @@ class TransactionService:
         """Delete a transaction"""
         return self.transaction_repository.delete(transaction_id)
 
-    def categorize_transaction(self, transaction_id: UUID, category_id: Optional[UUID]) -> Optional[Transaction]:
+    def categorize_transaction(
+        self,
+        transaction_id: UUID,
+        category_id: Optional[UUID],
+    ) -> Optional[Transaction]:
         """Categorize a transaction"""
         transaction = self.transaction_repository.get_by_id(transaction_id)
         if not transaction:
@@ -272,6 +289,10 @@ class TransactionService:
 
         return self.transaction_repository.update(transaction)
 
-    def bulk_update_category_by_normalized_description(self, normalized_description: str, category_id: Optional[UUID]) -> int:
+    def bulk_update_category_by_normalized_description(
+        self,
+        normalized_description: str,
+        category_id: Optional[UUID],
+    ) -> int:
         """Update the category for all transactions with the given normalized description"""
         return self.transaction_repository.bulk_update_category_by_normalized_description(normalized_description, category_id)

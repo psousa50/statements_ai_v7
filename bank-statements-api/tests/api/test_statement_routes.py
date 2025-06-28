@@ -34,7 +34,13 @@ class TestStatementRoutes:
 
         response = client.post(
             "/api/v1/statements/analyze",
-            files={"file": ("test.csv", BytesIO(file_content), "text/csv")},
+            files={
+                "file": (
+                    "test.csv",
+                    BytesIO(file_content),
+                    "text/csv",
+                )
+            },
         )
 
         analysis_result = StatementAnalysisResponse.model_validate(response.json())
@@ -59,7 +65,13 @@ class TestStatementRoutes:
 
         response = client.post(
             "/api/v1/statements/analyze",
-            files={"file": ("test.csv", BytesIO(b"test"), "text/csv")},
+            files={
+                "file": (
+                    "test.csv",
+                    BytesIO(b"test"),
+                    "text/csv",
+                )
+            },
         )
 
         assert response.status_code == 400
@@ -98,7 +110,10 @@ class TestStatementRoutes:
             account_id=str(account_id),
         )
 
-        response = client.post("/api/v1/statements/upload", json=jsonable_encoder(request_data))
+        response = client.post(
+            "/api/v1/statements/upload",
+            json=jsonable_encoder(request_data),
+        )
 
         persistence_result = StatementUploadResponse.model_validate(response.json())
 
@@ -138,7 +153,10 @@ class TestStatementRoutes:
             account_id=str(uuid4()),
         )
 
-        response = client.post("/api/v1/statements/upload", json=jsonable_encoder(request_data))
+        response = client.post(
+            "/api/v1/statements/upload",
+            json=jsonable_encoder(request_data),
+        )
 
         assert response.status_code == 400
         assert "Test error" in response.json()["detail"]
@@ -190,7 +208,10 @@ class TestStatementRoutes:
             account_id=str(account_id),
         )
 
-        response = client.post("/api/v1/statements/upload", json=jsonable_encoder(request_data))
+        response = client.post(
+            "/api/v1/statements/upload",
+            json=jsonable_encoder(request_data),
+        )
 
         upload_result = StatementUploadResponse.model_validate(response.json())
 
@@ -233,7 +254,10 @@ class TestStatementRoutes:
             account_id=str(account_id),
         )
 
-        response = client.post("/api/v1/statements/upload", json=jsonable_encoder(request_data))
+        response = client.post(
+            "/api/v1/statements/upload",
+            json=jsonable_encoder(request_data),
+        )
 
         assert response.status_code == 400
         assert "Service failed" in response.json()["detail"]

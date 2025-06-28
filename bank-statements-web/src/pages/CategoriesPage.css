@@ -361,8 +361,12 @@
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 /* Button Styles */
@@ -647,13 +651,13 @@
   .summary-cards {
     grid-template-columns: repeat(2, 1fr);
   }
-  
+
   .filter-section {
     flex-direction: column;
     align-items: stretch;
     gap: 12px;
   }
-  
+
   .search-container {
     min-width: auto;
   }
@@ -663,29 +667,29 @@
   .categories-page {
     padding: 16px;
   }
-  
+
   .categories-header {
     flex-direction: column;
     align-items: stretch;
   }
-  
+
   .summary-cards {
     grid-template-columns: 1fr;
   }
-  
+
   .category-row {
     padding: 8px;
     min-height: 44px;
   }
-  
+
   .category-name {
     font-size: 0.875rem;
   }
-  
+
   .action-buttons {
     justify-content: center;
   }
-  
+
   .category-children {
     margin-left: 12px;
     padding-left: 12px;

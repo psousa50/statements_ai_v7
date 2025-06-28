@@ -21,23 +21,21 @@ interface CategoryTreeNodeProps {
   onToggleExpand: (categoryId: string) => void
 }
 
-const CategoryTreeNode = ({ 
-  category, 
-  allCategories, 
-  level, 
-  onEdit, 
-  onDelete, 
+const CategoryTreeNode = ({
+  category,
+  allCategories,
+  level,
+  onEdit,
+  onDelete,
   onCreateSubcategory,
   expandedCategories,
-  onToggleExpand
+  onToggleExpand,
 }: CategoryTreeNodeProps) => {
-
   // Get subcategories for this category, sorted alphabetically
-  const subcategories = useMemo(() => 
-    allCategories
-      .filter(c => c.parent_id === category.id)
-      .sort((a, b) => a.name.localeCompare(b.name))
-  , [allCategories, category.id])
+  const subcategories = useMemo(
+    () => allCategories.filter((c) => c.parent_id === category.id).sort((a, b) => a.name.localeCompare(b.name)),
+    [allCategories, category.id]
+  )
 
   const hasSubcategories = subcategories.length > 0
   const isExpanded = expandedCategories.has(category.id)
@@ -52,14 +50,11 @@ const CategoryTreeNode = ({
 
   return (
     <div className="category-tree-node">
-      <div 
-        className="category-row"
-        style={{ paddingLeft: `${indentLevel}px` }}
-      >
+      <div className="category-row" style={{ paddingLeft: `${indentLevel}px` }}>
         <div className="category-info">
           <div className="category-expand">
             {hasSubcategories ? (
-              <button 
+              <button
                 onClick={handleToggleExpand}
                 className="expand-button"
                 aria-label={isExpanded ? 'Collapse' : 'Expand'}
@@ -72,11 +67,7 @@ const CategoryTreeNode = ({
           </div>
           <div className="category-name">{category.name}</div>
           <div className="category-stats">
-            {hasSubcategories && (
-              <span className="subcategory-count">
-                {subcategories.length} subcategories
-              </span>
-            )}
+            {hasSubcategories && <span className="subcategory-count">{subcategories.length} subcategories</span>}
           </div>
         </div>
         <div className="category-actions">
@@ -87,18 +78,10 @@ const CategoryTreeNode = ({
           >
             +
           </button>
-          <button
-            onClick={() => onEdit(category)}
-            className="action-button edit-button"
-            title="Edit category"
-          >
+          <button onClick={() => onEdit(category)} className="action-button edit-button" title="Edit category">
             ✏️
           </button>
-          <button
-            onClick={() => onDelete(category)}
-            className="action-button delete-button"
-            title="Delete category"
-          >
+          <button onClick={() => onDelete(category)} className="action-button delete-button" title="Delete category">
             🗑️
           </button>
         </div>
@@ -107,7 +90,7 @@ const CategoryTreeNode = ({
       {/* Render subcategories if expanded */}
       {hasSubcategories && isExpanded && (
         <div className="category-children">
-          {subcategories.map(subcategory => (
+          {subcategories.map((subcategory) => (
             <CategoryTreeNode
               key={subcategory.id}
               category={subcategory}
@@ -126,19 +109,19 @@ const CategoryTreeNode = ({
   )
 }
 
-export const CategoryTree = ({ 
-  categories, 
-  rootCategories, 
-  loading, 
-  onEdit, 
-  onDelete, 
-  onCreateSubcategory 
+export const CategoryTree = ({
+  categories,
+  rootCategories,
+  loading,
+  onEdit,
+  onDelete,
+  onCreateSubcategory,
 }: CategoryTreeProps) => {
   // Track expanded categories - start with all categories that have subcategories expanded
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(() => {
     const initialExpanded = new Set<string>()
-    categories.forEach(category => {
-      const hasSubcategories = categories.some(c => c.parent_id === category.id)
+    categories.forEach((category) => {
+      const hasSubcategories = categories.some((c) => c.parent_id === category.id)
       if (hasSubcategories) {
         initialExpanded.add(category.id)
       }
@@ -147,7 +130,7 @@ export const CategoryTree = ({
   })
 
   const handleToggleExpand = useCallback((categoryId: string) => {
-    setExpandedCategories(prev => {
+    setExpandedCategories((prev) => {
       const newSet = new Set(prev)
       if (newSet.has(categoryId)) {
         newSet.delete(categoryId)
@@ -160,8 +143,8 @@ export const CategoryTree = ({
 
   const handleExpandAll = useCallback(() => {
     const allParentCategories = new Set<string>()
-    categories.forEach(category => {
-      const hasSubcategories = categories.some(c => c.parent_id === category.id)
+    categories.forEach((category) => {
+      const hasSubcategories = categories.some((c) => c.parent_id === category.id)
       if (hasSubcategories) {
         allParentCategories.add(category.id)
       }
@@ -174,8 +157,8 @@ export const CategoryTree = ({
   }, [])
 
   // Count expanded vs total expandable categories
-  const totalExpandableCategories = categories.filter(category => 
-    categories.some(c => c.parent_id === category.id)
+  const totalExpandableCategories = categories.filter((category) =>
+    categories.some((c) => c.parent_id === category.id)
   ).length
   const expandedCount = expandedCategories.size
   const allExpanded = expandedCount === totalExpandableCategories
@@ -233,9 +216,9 @@ export const CategoryTree = ({
           </div>
         </div>
       )}
-      
+
       <div className="category-tree-content">
-        {rootCategories.map(rootCategory => (
+        {rootCategories.map((rootCategory) => (
           <CategoryTreeNode
             key={rootCategory.id}
             category={rootCategory}

@@ -99,7 +99,11 @@ class StatementUploadService:
         # Process dataframe (header/data row handling)
         from app.services.common import process_dataframe
 
-        processed_df = process_dataframe(raw_df, upload_request.header_row_index, upload_request.data_start_row_index)
+        processed_df = process_dataframe(
+            raw_df,
+            upload_request.header_row_index,
+            upload_request.data_start_row_index,
+        )
 
         # Normalize columns
         normalized_df = self.transaction_normalizer.normalize(processed_df, upload_request.column_mapping)
@@ -140,7 +144,11 @@ class StatementUploadService:
             has_unmatched=enhancement_result.has_unmatched,
         )
 
-    def save_statement(self, enhanced: EnhancedTransactions, upload_request: StatementUploadRequest) -> SavedStatement:
+    def save_statement(
+        self,
+        enhanced: EnhancedTransactions,
+        upload_request: StatementUploadRequest,
+    ) -> SavedStatement:
         """Step 3: Save statement and transactions to database"""
         logger.info(f"Saving {len(enhanced.enhanced_dtos)} transactions to database")
 
@@ -173,7 +181,10 @@ class StatementUploadService:
                 dto.statement_id = str(statement.id)
 
             # Save the batch of DTOs
-            transactions_saved, duplicated_transactions = self.transaction_repo.save_batch(enhanced.enhanced_dtos)
+            (
+                transactions_saved,
+                duplicated_transactions,
+            ) = self.transaction_repo.save_batch(enhanced.enhanced_dtos)
 
         # Save file analysis metadata for future duplicate detection
         self._save_file_analysis_metadata(
@@ -191,7 +202,11 @@ class StatementUploadService:
             duplicated_transactions=duplicated_transactions,
         )
 
-    def schedule_jobs(self, saved: SavedStatement, enhanced: EnhancedTransactions) -> ScheduledJobs:
+    def schedule_jobs(
+        self,
+        saved: SavedStatement,
+        enhanced: EnhancedTransactions,
+    ) -> ScheduledJobs:
         """Step 4: Schedule background jobs for AI processing (currently disabled)"""
         # AI categorization and counterparty identification services have been removed
         # Return empty scheduled jobs
@@ -201,7 +216,10 @@ class StatementUploadService:
         )
 
     def _build_result(
-        self, enhanced: EnhancedTransactions, saved: SavedStatement, jobs: ScheduledJobs
+        self,
+        enhanced: EnhancedTransactions,
+        saved: SavedStatement,
+        jobs: ScheduledJobs,
     ) -> StatementUploadResult:
         """Build the final result object"""
         return StatementUploadResult(

@@ -248,7 +248,10 @@ class TestAccountService:
         csv_content = "invalid_column\nValue 1"
 
         # Act & Assert
-        with pytest.raises(ValueError, match="CSV must contain 'name' column"):
+        with pytest.raises(
+            ValueError,
+            match="CSV must contain 'name' column",
+        ):
             service.upsert_accounts_from_csv(csv_content)
 
     def test_upsert_accounts_from_csv_empty_names_skipped(self, service, mock_repository):

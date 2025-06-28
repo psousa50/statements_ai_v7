@@ -39,14 +39,20 @@ class TestStatementAnalyzerService:
             {
                 "date": ["2023-01-01", "2023-01-02"],
                 "amount": [100.00, -200.00],
-                "description": ["Deposit", "Withdrawal"],
+                "description": [
+                    "Deposit",
+                    "Withdrawal",
+                ],
             }
         )
 
         uploaded_file_repo = MagicMock()
         uploaded_file_id = str(uuid.uuid4())
         uploaded_file_repo.save.return_value = UploadedFileDTO(
-            id=uploaded_file_id, filename="test.csv", file_type="CSV", created_at=None
+            id=uploaded_file_id,
+            filename="test.csv",
+            file_type="CSV",
+            created_at=None,
         )
 
         file_analysis_metadata_repo = MagicMock()
@@ -86,7 +92,10 @@ class TestStatementAnalyzerService:
         assert result.total_transactions == 2
         assert result.unique_transactions == 2
         assert result.duplicate_transactions == 0
-        assert result.date_range == ("2023-01-01", "2023-01-02")
+        assert result.date_range == (
+            "2023-01-01",
+            "2023-01-02",
+        )
         assert result.total_amount == -100.0  # 100 + (-200) = -100
         assert result.total_debit == -200.0  # Only the withdrawal
         assert result.total_credit == 100.0  # Only the deposit
@@ -106,9 +115,17 @@ class TestStatementAnalyzerService:
         # File contains two identical transactions
         statement_parser.parse.return_value = pd.DataFrame(
             {
-                "Date": ["2023-01-01", "2023-01-01", "2023-01-02"],
+                "Date": [
+                    "2023-01-01",
+                    "2023-01-01",
+                    "2023-01-02",
+                ],
                 "Amount": [100.00, 100.00, -200.00],
-                "Description": ["Deposit", "Deposit", "Withdrawal"],
+                "Description": [
+                    "Deposit",
+                    "Deposit",
+                    "Withdrawal",
+                ],
             }
         )
 
@@ -127,16 +144,27 @@ class TestStatementAnalyzerService:
         # Normalize to the same format
         transaction_normalizer.normalize.return_value = pd.DataFrame(
             {
-                "date": ["2023-01-01", "2023-01-01", "2023-01-02"],
+                "date": [
+                    "2023-01-01",
+                    "2023-01-01",
+                    "2023-01-02",
+                ],
                 "amount": [100.00, 100.00, -200.00],
-                "description": ["Deposit", "Deposit", "Withdrawal"],
+                "description": [
+                    "Deposit",
+                    "Deposit",
+                    "Withdrawal",
+                ],
             }
         )
 
         uploaded_file_repo = MagicMock()
         uploaded_file_id = str(uuid.uuid4())
         uploaded_file_repo.save.return_value = UploadedFileDTO(
-            id=uploaded_file_id, filename="test.csv", file_type="CSV", created_at=None
+            id=uploaded_file_id,
+            filename="test.csv",
+            file_type="CSV",
+            created_at=None,
         )
 
         file_analysis_metadata_repo = MagicMock()
@@ -190,7 +218,14 @@ class TestStatementAnalyzerService:
                     "2023-01-02",
                     "2023-01-03",
                 ],
-                "Amount": [100.00, 100.00, 50.00, 50.00, 50.00, -200.00],
+                "Amount": [
+                    100.00,
+                    100.00,
+                    50.00,
+                    50.00,
+                    50.00,
+                    -200.00,
+                ],
                 "Description": [
                     "DepositA",
                     "DepositA",
@@ -224,7 +259,14 @@ class TestStatementAnalyzerService:
                     "2023-01-02",
                     "2023-01-03",
                 ],
-                "amount": [100.00, 100.00, 50.00, 50.00, 50.00, -200.00],
+                "amount": [
+                    100.00,
+                    100.00,
+                    50.00,
+                    50.00,
+                    50.00,
+                    -200.00,
+                ],
                 "description": [
                     "DepositA",
                     "DepositA",
@@ -239,7 +281,10 @@ class TestStatementAnalyzerService:
         uploaded_file_repo = MagicMock()
         uploaded_file_id = str(uuid.uuid4())
         uploaded_file_repo.save.return_value = UploadedFileDTO(
-            id=uploaded_file_id, filename="test.csv", file_type="CSV", created_at=None
+            id=uploaded_file_id,
+            filename="test.csv",
+            file_type="CSV",
+            created_at=None,
         )
 
         file_analysis_metadata_repo = MagicMock()
@@ -293,7 +338,10 @@ class TestStatementAnalyzerService:
             {
                 "Date": ["2023-01-01", "2023-01-01"],
                 "Amount": [100.50, 100.50],
-                "Description": ["Coffee Shop", "Coffee Shop"],
+                "Description": [
+                    "Coffee Shop",
+                    "Coffee Shop",
+                ],
             }
         )
 
@@ -312,16 +360,28 @@ class TestStatementAnalyzerService:
         # Return the normalized data as strings (as would happen in real processing)
         transaction_normalizer.normalize.return_value = pd.DataFrame(
             {
-                "date": ["2023-01-01", "2023-01-01"],  # String dates
-                "amount": [100.50, 100.50],  # Float amounts
-                "description": ["Coffee Shop", "Coffee Shop"],
+                "date": [
+                    "2023-01-01",
+                    "2023-01-01",
+                ],  # String dates
+                "amount": [
+                    100.50,
+                    100.50,
+                ],  # Float amounts
+                "description": [
+                    "Coffee Shop",
+                    "Coffee Shop",
+                ],
             }
         )
 
         uploaded_file_repo = MagicMock()
         uploaded_file_id = str(uuid.uuid4())
         uploaded_file_repo.save.return_value = UploadedFileDTO(
-            id=uploaded_file_id, filename="test.csv", file_type="CSV", created_at=None
+            id=uploaded_file_id,
+            filename="test.csv",
+            file_type="CSV",
+            created_at=None,
         )
 
         file_analysis_metadata_repo = MagicMock()
@@ -373,7 +433,10 @@ class TestStatementAnalyzerService:
             {
                 "Date": ["2023-01-01", "2023-01-01"],
                 "Amount": [50.00, 50.00],
-                "Description": ["Transaction X", "Transaction X"],
+                "Description": [
+                    "Transaction X",
+                    "Transaction X",
+                ],
             }
         )
 
@@ -393,14 +456,20 @@ class TestStatementAnalyzerService:
             {
                 "date": ["2023-01-01", "2023-01-01"],
                 "amount": [50.00, 50.00],
-                "description": ["Transaction X", "Transaction X"],
+                "description": [
+                    "Transaction X",
+                    "Transaction X",
+                ],
             }
         )
 
         uploaded_file_repo = MagicMock()
         uploaded_file_id = str(uuid.uuid4())
         uploaded_file_repo.save.return_value = UploadedFileDTO(
-            id=uploaded_file_id, filename="test.csv", file_type="CSV", created_at=None
+            id=uploaded_file_id,
+            filename="test.csv",
+            file_type="CSV",
+            created_at=None,
         )
 
         file_analysis_metadata_repo = MagicMock()
@@ -482,11 +551,17 @@ class TestStatementAnalyzerService:
             }
         )
         uploaded_file_repo.save.return_value = UploadedFileDTO(
-            id=str(uuid.uuid4()), filename="test1.csv", file_type="CSV", created_at=None
+            id=str(uuid.uuid4()),
+            filename="test1.csv",
+            file_type="CSV",
+            created_at=None,
         )
         transaction_repo.find_matching_transactions.return_value = []  # Empty DB
 
-        result1 = analyzer.analyze("test1.csv", b"Date,Amount,Description\n2023-01-01,50.00,Coffee Shop")
+        result1 = analyzer.analyze(
+            "test1.csv",
+            b"Date,Amount,Description\n2023-01-01,50.00,Coffee Shop",
+        )
 
         assert result1.total_transactions == 1
         assert result1.duplicate_transactions == 0
@@ -498,7 +573,10 @@ class TestStatementAnalyzerService:
         mock_tx.id = uuid.uuid4()
         transaction_repo.find_matching_transactions.return_value = [mock_tx]
 
-        result2 = analyzer.analyze("test1.csv", b"Date,Amount,Description\n2023-01-01,50.00,Coffee Shop")
+        result2 = analyzer.analyze(
+            "test1.csv",
+            b"Date,Amount,Description\n2023-01-01,50.00,Coffee Shop",
+        )
 
         assert result2.total_transactions == 1
         assert result2.duplicate_transactions == 1  # Should detect 1 duplicate
@@ -509,14 +587,20 @@ class TestStatementAnalyzerService:
             {
                 "Date": ["2023-01-01", "2023-01-01"],
                 "Amount": [50.00, 50.00],
-                "Description": ["Coffee Shop", "Coffee Shop"],
+                "Description": [
+                    "Coffee Shop",
+                    "Coffee Shop",
+                ],
             }
         )
         transaction_normalizer.normalize.return_value = pd.DataFrame(
             {
                 "date": ["2023-01-01", "2023-01-01"],
                 "amount": [50.00, 50.00],
-                "description": ["Coffee Shop", "Coffee Shop"],
+                "description": [
+                    "Coffee Shop",
+                    "Coffee Shop",
+                ],
             }
         )
         # DB still has same 1 transaction

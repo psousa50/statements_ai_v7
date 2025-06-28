@@ -548,8 +548,12 @@
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 /* Error Message */
@@ -595,13 +599,13 @@
   .summary-cards {
     grid-template-columns: repeat(2, 1fr);
   }
-  
+
   .filters-top .filters-grid-horizontal {
     flex-direction: column;
     align-items: stretch;
     gap: 8px;
   }
-  
+
   .filters-top .filter-section-categories {
     flex: 1;
     min-width: auto;
@@ -612,25 +616,25 @@
   .transaction-categorizations-page {
     padding: 16px;
   }
-  
+
   .categorizations-header {
     flex-direction: column;
     align-items: stretch;
   }
-  
+
   .summary-cards {
     grid-template-columns: 1fr;
   }
-  
+
   .categorization-table {
     font-size: 0.875rem;
   }
-  
+
   .col-created,
   .col-actions {
     display: none;
   }
-  
+
   .description-text {
     font-size: 0.75rem;
   }
@@ -757,14 +761,14 @@
   color: var(--text-primary);
 }
 
-.checkbox-label input[type="checkbox"] {
+.checkbox-label input[type='checkbox'] {
   width: auto !important;
   margin: 0;
   flex-shrink: 0;
   margin-top: 2px;
 }
 
-.checkbox-label input[type="checkbox"]:disabled {
+.checkbox-label input[type='checkbox']:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
