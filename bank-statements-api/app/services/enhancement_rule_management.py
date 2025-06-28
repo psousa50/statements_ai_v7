@@ -145,6 +145,7 @@ class EnhancementRuleManagementService:
         start_date: Optional[str] = None,
         end_date: Optional[str] = None,
         source: EnhancementRuleSource = EnhancementRuleSource.MANUAL,
+        apply_to_existing: bool = False,
     ) -> Optional[EnhancementRule]:
         """Update an existing enhancement rule with validation."""
 
@@ -190,7 +191,14 @@ class EnhancementRuleManagementService:
         rule.end_date = end_date
         rule.source = source
 
-        return self.enhancement_rule_repository.save(rule)
+        # Save the updated rule
+        updated_rule = self.enhancement_rule_repository.save(rule)
+
+        # Apply to existing transactions if requested
+        if apply_to_existing:
+            self.apply_rule_to_existing_transactions(rule_id)
+
+        return updated_rule
 
     def delete_rule(self, rule_id: UUID) -> bool:
         """Delete an enhancement rule."""
@@ -321,3 +329,81 @@ class EnhancementRuleManagementService:
             return "Counterparty Only"
         else:
             return "Invalid Rule"
+
+    def get_matching_transactions_count(self, rule_id: UUID) -> Dict[str, Any]:
+        """Get count of transactions that would match this enhancement rule."""
+        # Get the rule
+        rule = self.enhancement_rule_repository.find_by_id(rule_id)
+        if not rule:
+            raise ValueError(f"Enhancement rule with ID {rule_id} not found")
+
+        # Get the count
+        count = self.transaction_repository.count_matching_rule(rule)
+
+        # TODO: Add date_range and amount_range calculation if needed
+        return {
+            "count": count,
+            "date_range": None,
+            "amount_range": None,
+        }
+
+    def apply_rule_to_existing_transactions(self, rule_id: UUID) -> int:
+        """Apply an enhancement rule to all existing matching transactions with batch processing."""
+        from app.domain.models.transaction import CategorizationStatus, CounterpartyStatus
+
+        # Get the rule
+        rule = self.enhancement_rule_repository.find_by_id(rule_id)
+        if not rule:
+            raise ValueError(f"Enhancement rule with ID {rule_id} not found")
+
+        total_updated = 0
+        page = 1
+        batch_size = 1000
+
+        while True:
+            # Get transactions matching the rule using pagination
+            matching_transactions = self.transaction_repository.find_transactions_matching_rule(
+                rule=rule, page=page, page_size=batch_size
+            )
+
+            if not matching_transactions:
+                break  # No more transactions to process
+
+            # Apply selective updates based on current status
+            for transaction in matching_transactions:
+                updated = False
+
+                # Only update category if transaction is UNCATEGORIZED, RULE_BASED, or FAILURE
+                # Never overwrite MANUAL categorizations
+                if rule.category_id and transaction.categorization_status in [
+                    CategorizationStatus.UNCATEGORIZED,
+                    CategorizationStatus.RULE_BASED,
+                    CategorizationStatus.FAILURE,
+                ]:
+                    transaction.category_id = rule.category_id
+                    transaction.categorization_status = CategorizationStatus.RULE_BASED
+                    updated = True
+
+                # Only update counterparty if it's currently unprocessed or was rule-based
+                # Never overwrite MANUAL assignments
+                if rule.counterparty_account_id and transaction.counterparty_status in [
+                    CounterpartyStatus.UNPROCESSED,
+                    CounterpartyStatus.RULE_BASED,
+                    CounterpartyStatus.FAILURE,
+                ]:
+                    transaction.counterparty_account_id = rule.counterparty_account_id
+                    transaction.counterparty_status = CounterpartyStatus.RULE_BASED
+                    updated = True
+
+                if updated:
+                    self.transaction_repository.update(transaction)
+                    total_updated += 1
+
+            page += 1
+
+            # Optional: For very large updates, this could break and continue as background job
+            # For now, let's process everything synchronously
+            if total_updated > 10000:  # Safety limit
+                break
+
+        return total_updated

@@ -360,7 +360,7 @@ class EnhancementRuleCreate(EnhancementRuleBase):
 
 
 class EnhancementRuleUpdate(EnhancementRuleBase):
-    pass
+    apply_to_existing: Optional[bool] = False
 
 
 class EnhancementRuleResponse(BaseModel):
@@ -398,6 +398,14 @@ class EnhancementRuleStatsResponse(BaseModel):
     counterparty_usage: Optional[List[Dict]] = None
     top_rules_by_usage: List[Dict]
     unused_rules: List[Dict]
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class MatchingTransactionsCountResponse(BaseModel):
+    count: int
+    date_range: Optional[Tuple[str, str]] = None
+    amount_range: Optional[Tuple[float, float]] = None
 
     model_config = ConfigDict(from_attributes=True)
 

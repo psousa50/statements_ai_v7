@@ -12,6 +12,7 @@ from app.api.schemas import (
     EnhancementRuleResponse,
     EnhancementRuleStatsResponse,
     EnhancementRuleUpdate,
+    MatchingTransactionsCountResponse,
 )
 from app.core.dependencies import InternalDependencies
 from app.domain.models.enhancement_rule import EnhancementRuleSource, MatchType
@@ -97,6 +98,26 @@ def register_enhancement_rule_routes(app: FastAPI, provide_dependencies: Callabl
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to cleanup unused rules: {str(e)}"
             )
 
+    @router.get("/{rule_id}/matching-transactions/count", response_model=MatchingTransactionsCountResponse)
+    def get_matching_transactions_count(
+        rule_id: UUID,
+        internal: InternalDependencies = Depends(provide_dependencies),
+    ) -> MatchingTransactionsCountResponse:
+        """Get count of transactions that would match this enhancement rule."""
+
+        service: EnhancementRuleManagementService = internal.enhancement_rule_management_service
+
+        try:
+            result = service.get_matching_transactions_count(rule_id)
+            return MatchingTransactionsCountResponse(**result)
+
+        except ValueError as e:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to get matching transactions count: {str(e)}"
+            )
+
     @router.get("/{rule_id}", response_model=EnhancementRuleResponse)
     def get_enhancement_rule(
         rule_id: UUID,
@@ -175,6 +196,7 @@ def register_enhancement_rule_routes(app: FastAPI, provide_dependencies: Callabl
                 start_date=rule_data.start_date,
                 end_date=rule_data.end_date,
                 source=rule_data.source,
+                apply_to_existing=rule_data.apply_to_existing,
             )
 
             if not rule:

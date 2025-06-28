@@ -454,3 +454,41 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
             query = query.filter(Transaction.date <= rule.end_date)
 
         return query.scalar() or 0
+
+    def find_transactions_matching_rule(
+        self,
+        rule,
+        page: int = 1,
+        page_size: int = 1000,
+    ) -> List[Transaction]:
+        """Find transactions that match the given enhancement rule with pagination"""
+        from app.domain.models.enhancement_rule import MatchType
+
+        query = self.db_session.query(Transaction)
+
+        # Match description pattern based on rule type (same logic as count_matching_rule)
+        if rule.match_type == MatchType.EXACT:
+            query = query.filter(Transaction.normalized_description == rule.normalized_description_pattern)
+        elif rule.match_type == MatchType.PREFIX:
+            query = query.filter(Transaction.normalized_description.like(f"{rule.normalized_description_pattern}%"))
+        elif rule.match_type == MatchType.INFIX:
+            query = query.filter(Transaction.normalized_description.like(f"%{rule.normalized_description_pattern}%"))
+
+        # Apply amount constraints if specified
+        if rule.min_amount is not None:
+            query = query.filter(Transaction.amount >= rule.min_amount)
+        if rule.max_amount is not None:
+            query = query.filter(Transaction.amount <= rule.max_amount)
+
+        # Apply date constraints if specified
+        if rule.start_date is not None:
+            query = query.filter(Transaction.date >= rule.start_date)
+        if rule.end_date is not None:
+            query = query.filter(Transaction.date <= rule.end_date)
+
+        # Add pagination
+        offset = (page - 1) * page_size
+        query = query.order_by(Transaction.date.desc(), Transaction.id.asc())
+        query = query.offset(offset).limit(page_size)
+
+        return query.all()

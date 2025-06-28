@@ -91,7 +91,7 @@ class TestTransactionEnhancer:
         assert len(result) == 1
         assert result[0].category_id == category_id
         assert result[0].counterparty_account_id == counterparty_id
-        assert result[0].categorization_status == CategorizationStatus.CATEGORIZED
+        assert result[0].categorization_status == CategorizationStatus.RULE_BASED
 
     def test_exact_match_rule_does_not_apply_when_no_match(self):
         """Test that exact match rule doesn't apply when description doesn't match"""
@@ -117,7 +117,7 @@ class TestTransactionEnhancer:
 
         assert len(result) == 1
         assert result[0].category_id == category_id
-        assert result[0].categorization_status == CategorizationStatus.CATEGORIZED
+        assert result[0].categorization_status == CategorizationStatus.RULE_BASED
 
     def test_prefix_match_rule_does_not_apply_when_no_match(self):
         """Test that prefix match rule doesn't apply when description doesn't start with pattern"""
@@ -142,7 +142,7 @@ class TestTransactionEnhancer:
 
         assert len(result) == 1
         assert result[0].category_id == category_id
-        assert result[0].categorization_status == CategorizationStatus.CATEGORIZED
+        assert result[0].categorization_status == CategorizationStatus.RULE_BASED
 
     def test_infix_match_rule_does_not_apply_when_no_match(self):
         """Test that infix match rule doesn't apply when description doesn't contain pattern"""
@@ -327,7 +327,7 @@ class TestTransactionEnhancer:
         assert len(result) == 1
         assert result[0].category_id == category_id
         assert result[0].counterparty_account_id is None
-        assert result[0].categorization_status == CategorizationStatus.CATEGORIZED
+        assert result[0].categorization_status == CategorizationStatus.RULE_BASED
 
     def test_counterparty_only_rule_applies(self):
         """Test that rule with only counterparty_account_id applies correctly"""
@@ -361,4 +361,4 @@ class TestTransactionEnhancer:
         assert len(result) == 1
         assert result[0].category_id == category_id
         assert result[0].counterparty_account_id == counterparty_id
-        assert result[0].categorization_status == CategorizationStatus.CATEGORIZED
+        assert result[0].categorization_status == CategorizationStatus.RULE_BASED

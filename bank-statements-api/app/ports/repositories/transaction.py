@@ -212,3 +212,23 @@ class TransactionRepository(ABC):
             Number of transactions that match the rule
         """
         pass
+
+    @abstractmethod
+    def find_transactions_matching_rule(
+        self,
+        rule,
+        page: int = 1,
+        page_size: int = 1000,
+    ) -> List[Transaction]:
+        """
+        Find transactions that match the given enhancement rule with pagination
+
+        Args:
+            rule: EnhancementRule to match against
+            page: Page number (1-based)
+            page_size: Number of transactions per page
+
+        Returns:
+            List of matching transactions for the specified page
+        """
+        pass

@@ -23,7 +23,7 @@ def test_create_transaction():
         created_at=datetime(2023, 1, 1),
         category_id=category_id,
         account_id=account_id,
-        categorization_status=CategorizationStatus.CATEGORIZED,
+        categorization_status=CategorizationStatus.RULE_BASED,
         sort_index=0,
         source_type=SourceType.MANUAL,
         manual_position_after=None,
@@ -53,7 +53,7 @@ def test_create_transaction():
     assert transaction_response.description == "Test transaction"
     assert transaction_response.amount == Decimal(100.00)
     assert transaction_response.category_id == category_id
-    assert transaction_response.categorization_status == CategorizationStatus.CATEGORIZED
+    assert transaction_response.categorization_status == CategorizationStatus.RULE_BASED
     assert transaction_response.created_at is not None
     assert transaction_response.sort_index == 0
     assert transaction_response.source_type == SourceType.MANUAL.value

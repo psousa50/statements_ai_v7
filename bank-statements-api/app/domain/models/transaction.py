@@ -15,13 +15,21 @@ from app.core.database import Base
 
 class CategorizationStatus(str, Enum):
     UNCATEGORIZED = "UNCATEGORIZED"
-    CATEGORIZED = "CATEGORIZED"
+    RULE_BASED = "RULE_BASED"
+    MANUAL = "MANUAL"
     FAILURE = "FAILURE"
 
 
 class SourceType(str, Enum):
     UPLOAD = "upload"
     MANUAL = "manual"
+
+
+class CounterpartyStatus(str, Enum):
+    UNPROCESSED = "UNPROCESSED"
+    RULE_BASED = "RULE_BASED"
+    MANUAL = "MANUAL"
+    FAILURE = "FAILURE"
 
 
 class Transaction(Base):
@@ -58,6 +66,12 @@ class Transaction(Base):
 
     categorization_confidence = Column(Numeric(precision=5, scale=4), nullable=True)
 
+    counterparty_status = Column(
+        SQLAlchemyEnum(CounterpartyStatus),
+        default=CounterpartyStatus.UNPROCESSED,
+        nullable=False,
+    )
+
     # New ordering fields
     row_index = Column(Integer, nullable=False)
     sort_index = Column(Integer, nullable=False, default=0)
@@ -83,8 +97,24 @@ class Transaction(Base):
         self._running_balance = value
 
     def mark_categorized(self):
-        """Mark the transaction as categorized"""
-        self.categorization_status = CategorizationStatus.CATEGORIZED
+        """Mark the transaction as categorized (for backward compatibility)"""
+        self.categorization_status = CategorizationStatus.RULE_BASED
+
+    def mark_rule_based_categorization(self):
+        """Mark the transaction as categorized by a rule"""
+        self.categorization_status = CategorizationStatus.RULE_BASED
+
+    def mark_manual_categorization(self):
+        """Mark the transaction as manually categorized"""
+        self.categorization_status = CategorizationStatus.MANUAL
+
+    def mark_rule_based_counterparty(self):
+        """Mark the counterparty as assigned by a rule"""
+        self.counterparty_status = CounterpartyStatus.RULE_BASED
+
+    def mark_manual_counterparty(self):
+        """Mark the counterparty as manually assigned"""
+        self.counterparty_status = CounterpartyStatus.MANUAL
 
     def __repr__(self):
         return f"<Transaction(id={self.id}, date={self.date}, amount={self.amount}, category_id={self.category_id}, sort_index={self.sort_index})>"

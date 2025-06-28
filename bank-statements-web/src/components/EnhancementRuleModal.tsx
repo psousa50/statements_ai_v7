@@ -16,6 +16,8 @@ import {
   FormHelperText,
   Typography,
   Box,
+  Checkbox,
+  FormControlLabel,
 } from '@mui/material'
 import { useApi } from '../api/ApiContext'
 import { useEnhancementRules } from '../services/hooks/useEnhancementRules'
@@ -25,6 +27,7 @@ import {
   EnhancementRuleUpdate,
   EnhancementRuleSource,
   MatchType,
+  MatchingTransactionsCountResponse,
 } from '../types/EnhancementRule'
 import { Category } from '../types/Transaction'
 import { CategorySelector } from './CategorySelector'
@@ -60,6 +63,11 @@ export const EnhancementRuleModal: React.FC<EnhancementRuleModalProps> = ({
     source: EnhancementRuleSource.MANUAL,
   })
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
+  
+  // State for retroactive application
+  const [applyToExisting, setApplyToExisting] = useState(false)
+  const [matchingCount, setMatchingCount] = useState<MatchingTransactionsCountResponse | null>(null)
+  const [fetchingCount, setFetchingCount] = useState(false)
 
   // Initialize form data when rule changes (for editing)
   useEffect(() => {
@@ -104,6 +112,41 @@ export const EnhancementRuleModal: React.FC<EnhancementRuleModalProps> = ({
     }
   }, [open, apiClient])
 
+  // Fetch matching transactions count for editing mode
+  useEffect(() => {
+    const fetchMatchingCount = async () => {
+      if (!isEditing || !rule) return
+
+      setFetchingCount(true)
+      try {
+        const count = await apiClient.enhancementRules.getMatchingTransactionsCount(rule.id)
+        setMatchingCount(count)
+      } catch (err) {
+        console.error('Failed to fetch matching count:', err)
+        setMatchingCount(null)
+      } finally {
+        setFetchingCount(false)
+      }
+    }
+
+    if (open && isEditing && rule) {
+      fetchMatchingCount()
+    }
+  }, [open, isEditing, rule, apiClient])
+
+  // Smart auto-check logic: check apply_to_existing when category or counterparty changes
+  useEffect(() => {
+    if (!isEditing || !rule) return
+
+    const categoryChanged = formData.category_id !== rule.category_id
+    const counterpartyChanged = formData.counterparty_account_id !== rule.counterparty_account_id
+    
+    // Auto-check if significant changes are made
+    if (categoryChanged || counterpartyChanged) {
+      setApplyToExisting(true)
+    }
+  }, [formData.category_id, formData.counterparty_account_id, isEditing, rule])
+
   const validateForm = () => {
     const errors: Record<string, string> = {}
 
@@ -134,7 +177,11 @@ export const EnhancementRuleModal: React.FC<EnhancementRuleModalProps> = ({
 
     try {
       if (isEditing && rule) {
-        await updateRule(rule.id, formData as EnhancementRuleUpdate)
+        const updateData: EnhancementRuleUpdate = {
+          ...formData,
+          apply_to_existing: applyToExisting,
+        }
+        await updateRule(rule.id, updateData)
       } else {
         await createRule(formData as EnhancementRuleCreate)
       }
@@ -155,6 +202,12 @@ export const EnhancementRuleModal: React.FC<EnhancementRuleModalProps> = ({
       })
     }
     setValidationErrors({})
+    
+    // Reset retroactive application state
+    setApplyToExisting(false)
+    setMatchingCount(null)
+    setFetchingCount(false)
+    
     onClose()
   }
 
@@ -317,6 +370,55 @@ export const EnhancementRuleModal: React.FC<EnhancementRuleModalProps> = ({
               }}
             />
           </Stack>
+
+          {/* Retroactive Application Section - only show in edit mode */}
+          {isEditing && (
+            <>
+              <Box>
+                <Typography variant="h6" gutterBottom>
+                  Apply to Existing Transactions
+                </Typography>
+              </Box>
+
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={applyToExisting}
+                    onChange={(e) => setApplyToExisting(e.target.checked)}
+                    disabled={loading}
+                  />
+                }
+                label="Apply these changes to existing matching transactions"
+              />
+
+              {/* Show matching count if available */}
+              {fetchingCount && (
+                <Alert severity="info" sx={{ mt: 1 }}>
+                  <Stack direction="row" alignItems="center" spacing={1}>
+                    <CircularProgress size={16} />
+                    <Typography variant="body2">Checking for matching transactions...</Typography>
+                  </Stack>
+                </Alert>
+              )}
+
+              {!fetchingCount && matchingCount && applyToExisting && (
+                <Alert severity="info" sx={{ mt: 1 }}>
+                  {matchingCount.count > 0 ? (
+                    <>
+                      ⚠️ This will update <strong>{matchingCount.count}</strong> existing transactions 
+                      that match this rule pattern.
+                      <br />
+                      <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                        Only transactions that haven't been manually categorized will be updated.
+                      </Typography>
+                    </>
+                  ) : (
+                    'No existing transactions match this rule pattern.'
+                  )}
+                </Alert>
+              )}
+            </>
+          )}
         </Stack>
       </DialogContent>
       <DialogActions>
@@ -329,7 +431,16 @@ export const EnhancementRuleModal: React.FC<EnhancementRuleModalProps> = ({
           disabled={loading}
           startIcon={loading ? <CircularProgress size={16} /> : undefined}
         >
-          {loading ? (isEditing ? 'Saving...' : 'Creating...') : (isEditing ? 'Save Changes' : 'Create Rule')}
+          {loading 
+            ? (isEditing ? 'Saving...' : 'Creating...') 
+            : (isEditing 
+                ? (applyToExisting && matchingCount && matchingCount.count > 0 
+                    ? `Save & Apply to ${matchingCount.count} Transactions` 
+                    : 'Save Changes'
+                  ) 
+                : 'Create Rule'
+              )
+          }
         </Button>
       </DialogActions>
     </Dialog>

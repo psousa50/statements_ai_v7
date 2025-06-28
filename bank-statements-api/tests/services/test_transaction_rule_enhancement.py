@@ -101,7 +101,7 @@ class TestTransactionRuleEnhancementService:
             if i == 0:  # Grocery store matches
                 transaction.category_id = "category-1"
                 transaction.counterparty_account_id = "counterparty-1"
-                transaction.categorization_status = CategorizationStatus.CATEGORIZED
+                transaction.categorization_status = CategorizationStatus.RULE_BASED
             elif i == 1:  # ATM withdrawal doesn't match
                 transaction.category_id = None
                 transaction.counterparty_account_id = None
@@ -109,7 +109,7 @@ class TestTransactionRuleEnhancementService:
             elif i == 2:  # Salary matches
                 transaction.category_id = "category-2"
                 transaction.counterparty_account_id = None
-                transaction.categorization_status = CategorizationStatus.CATEGORIZED
+                transaction.categorization_status = CategorizationStatus.RULE_BASED
             enhanced_transactions.append(transaction)
 
         mock_transaction_enhancer.apply_rules.return_value = enhanced_transactions
@@ -135,13 +135,13 @@ class TestTransactionRuleEnhancementService:
         # Verify DTOs were enhanced
         grocery_dto = next(dto for dto in result.enhanced_dtos if "grocery" in dto.description.lower())
         assert grocery_dto.category_id == "category-1"
-        assert grocery_dto.categorization_status == CategorizationStatus.CATEGORIZED
+        assert grocery_dto.categorization_status == CategorizationStatus.RULE_BASED
         assert grocery_dto.counterparty_account_id == "counterparty-1"
         assert grocery_dto.normalized_description == "grocery store purchase"
 
         salary_dto = next(dto for dto in result.enhanced_dtos if "salary" in dto.description.lower())
         assert salary_dto.category_id == "category-2"
-        assert salary_dto.categorization_status == CategorizationStatus.CATEGORIZED
+        assert salary_dto.categorization_status == CategorizationStatus.RULE_BASED
         assert salary_dto.counterparty_account_id is None
 
         atm_dto = next(dto for dto in result.enhanced_dtos if "atm" in dto.description.lower())
@@ -293,7 +293,7 @@ class TestTransactionRuleEnhancementService:
             if i == 0:  # Only grocery store matches
                 transaction.category_id = "category-1"
                 transaction.counterparty_account_id = "counterparty-1"
-                transaction.categorization_status = CategorizationStatus.CATEGORIZED
+                transaction.categorization_status = CategorizationStatus.RULE_BASED
             else:  # Others don't match
                 transaction.category_id = None
                 transaction.counterparty_account_id = None

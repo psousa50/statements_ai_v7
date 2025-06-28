@@ -56,6 +56,13 @@ export interface EnhancementRuleUpdate {
   start_date?: string
   end_date?: string
   source: EnhancementRuleSource
+  apply_to_existing?: boolean
+}
+
+export interface MatchingTransactionsCountResponse {
+  count: number
+  date_range?: [string, string]
+  amount_range?: [number, number]
 }
 
 export interface EnhancementRuleListResponse {

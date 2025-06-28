@@ -60,7 +60,8 @@ class TransactionEnhancer:
         """Apply enhancement rule fields to the transaction"""
         if rule.category_id is not None:
             transaction.category_id = rule.category_id
-            transaction.mark_categorized()
+            transaction.mark_rule_based_categorization()
 
         if rule.counterparty_account_id is not None:
             transaction.counterparty_account_id = rule.counterparty_account_id
+            transaction.mark_rule_based_counterparty()

@@ -6,12 +6,14 @@ import {
   EnhancementRuleListResponse,
   EnhancementRuleStats,
   EnhancementRuleUpdate,
+  MatchingTransactionsCountResponse,
 } from '../types/EnhancementRule'
 
 export interface EnhancementRuleClient {
   getAll(filters?: EnhancementRuleFilters): Promise<EnhancementRuleListResponse>
   getStats(): Promise<EnhancementRuleStats>
   getById(id: string): Promise<EnhancementRule>
+  getMatchingTransactionsCount(id: string): Promise<MatchingTransactionsCountResponse>
   create(data: EnhancementRuleCreate): Promise<EnhancementRule>
   update(id: string, data: EnhancementRuleUpdate): Promise<EnhancementRule>
   delete(id: string): Promise<void>
@@ -65,6 +67,11 @@ export const enhancementRuleClient: EnhancementRuleClient = {
 
   async getById(id: string) {
     const response = await axios.get<EnhancementRule>(`${API_URL}/${id}`)
+    return response.data
+  },
+
+  async getMatchingTransactionsCount(id: string) {
+    const response = await axios.get<MatchingTransactionsCountResponse>(`${API_URL}/${id}/matching-transactions/count`)
     return response.data
   },
 
