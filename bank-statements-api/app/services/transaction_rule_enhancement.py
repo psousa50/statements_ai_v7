@@ -158,6 +158,13 @@ class TransactionRuleEnhancementService:
     def _create_unmatched_rule(self, normalized_description: str) -> None:
         """Create an enhancement rule for an unmatched normalized description with no category/counterparty"""
         try:
+            # Check if a rule with this normalized description already exists
+            existing_rule = self.enhancement_rule_repository.find_by_normalized_description(normalized_description)
+            
+            if existing_rule:
+                logger.debug(f"Rule already exists for normalized description: {normalized_description}")
+                return
+
             rule = EnhancementRule(
                 id=uuid4(),
                 normalized_description_pattern=normalized_description,
