@@ -7,6 +7,7 @@ interface PaginationProps {
   pageSize: number
   onPageChange: (page: number) => void
   onPageSizeChange: (pageSize: number) => void
+  itemName?: string
 }
 
 export const Pagination = ({
@@ -16,6 +17,7 @@ export const Pagination = ({
   pageSize,
   onPageChange,
   onPageSizeChange,
+  itemName = 'items',
 }: PaginationProps) => {
   const getPageNumbers = () => {
     const pages = []
@@ -49,7 +51,7 @@ export const Pagination = ({
     <div className="pagination-container">
       <div className="pagination-info">
         <span>
-          Showing {startItem}-{endItem} of {totalItems} transactions
+          Showing {startItem}-{endItem} of {totalItems} {itemName}
         </span>
         <select
           value={pageSize}

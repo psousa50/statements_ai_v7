@@ -6,7 +6,6 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  TablePagination,
   TableSortLabel,
   IconButton,
   Chip,
@@ -23,10 +22,8 @@ import { EnhancementRule, EnhancementRuleFilters, EnhancementRuleSource, MatchTy
 
 interface EnhancementRuleTableProps {
   rules: EnhancementRule[]
-  total: number
   filters: EnhancementRuleFilters
   loading: boolean
-  onPageChange: (page: number) => void
   onSort: (field: string, direction: 'asc' | 'desc') => void
   onEdit: (rule: EnhancementRule) => void
   onDelete: (id: string) => void
@@ -34,10 +31,8 @@ interface EnhancementRuleTableProps {
 
 export const EnhancementRuleTable: React.FC<EnhancementRuleTableProps> = ({
   rules,
-  total,
   filters,
   loading,
-  onPageChange,
   onSort,
   onEdit,
   onDelete,
@@ -48,9 +43,6 @@ export const EnhancementRuleTable: React.FC<EnhancementRuleTableProps> = ({
     onSort(field, isAsc ? 'desc' : 'asc')
   }
 
-  const handlePageChange = (_: unknown, newPage: number) => {
-    onPageChange(newPage + 1)
-  }
 
   const handleViewTransactions = (rule: EnhancementRule) => {
     const params = new URLSearchParams({
@@ -145,8 +137,7 @@ export const EnhancementRuleTable: React.FC<EnhancementRuleTableProps> = ({
   }
 
   return (
-    <>
-      <TableContainer>
+    <TableContainer>
         <Table>
           <TableHead>
             <TableRow>
@@ -311,15 +302,5 @@ export const EnhancementRuleTable: React.FC<EnhancementRuleTableProps> = ({
           </TableBody>
         </Table>
       </TableContainer>
-      <TablePagination
-        component="div"
-        count={total}
-        page={(filters.page || 1) - 1}
-        onPageChange={handlePageChange}
-        rowsPerPage={filters.page_size || 50}
-        rowsPerPageOptions={[25, 50, 100]}
-        disabled={loading}
-      />
-    </>
   )
 }

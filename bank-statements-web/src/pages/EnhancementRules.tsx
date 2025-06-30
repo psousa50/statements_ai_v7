@@ -18,6 +18,8 @@ import { EnhancementRuleFilters, EnhancementRule } from '../types/EnhancementRul
 import { EnhancementRuleTable } from '../components/EnhancementRuleTable'
 import { EnhancementRuleFiltersComponent } from '../components/EnhancementRuleFilters'
 import { EnhancementRuleModal } from '../components/EnhancementRuleModal'
+import { Pagination } from '../components/Pagination'
+import './EnhancementRules.css'
 
 export const EnhancementRules: React.FC = () => {
   const { loading, error, fetchRules, deleteRule, cleanupUnused } = useEnhancementRules()
@@ -56,6 +58,10 @@ export const EnhancementRules: React.FC = () => {
 
   const handlePageChange = (page: number) => {
     setFilters({ ...filters, page })
+  }
+
+  const handlePageSizeChange = (page_size: number) => {
+    setFilters({ ...filters, page_size, page: 1 })
   }
 
   const handleSort = (field: string, direction: 'asc' | 'desc') => {
@@ -113,7 +119,7 @@ export const EnhancementRules: React.FC = () => {
   }
 
   return (
-    <Box sx={{ p: 3 }}>
+    <Box sx={{ p: 3 }} className="enhancement-rules-page">
       <Box
         sx={{
           display: 'flex',
@@ -148,15 +154,29 @@ export const EnhancementRules: React.FC = () => {
       <Paper sx={{ p: 0 }}>
         <EnhancementRuleTable
           rules={rules}
-          total={total}
           filters={filters}
           loading={loading}
-          onPageChange={handlePageChange}
           onSort={handleSort}
           onEdit={handleEditRule}
           onDelete={handleDeleteRule}
         />
       </Paper>
+
+      {!loading && total > 0 && (
+        <Paper sx={{ p: 0 }}>
+          <div className="transactions-pagination">
+            <Pagination
+              currentPage={filters.page || 1}
+              totalPages={Math.ceil(total / (filters.page_size || 50))}
+              totalItems={total}
+              pageSize={filters.page_size || 50}
+              onPageChange={handlePageChange}
+              onPageSizeChange={handlePageSizeChange}
+              itemName="rules"
+            />
+          </div>
+        </Paper>
+      )}
 
       {/* Enhancement Rule Modal (Create/Edit) */}
       <EnhancementRuleModal
