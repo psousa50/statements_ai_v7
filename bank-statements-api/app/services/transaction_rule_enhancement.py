@@ -160,7 +160,7 @@ class TransactionRuleEnhancementService:
         try:
             # Check if a rule with this normalized description already exists
             existing_rule = self.enhancement_rule_repository.find_by_normalized_description(normalized_description)
-            
+
             if existing_rule:
                 logger.debug(f"Rule already exists for normalized description: {normalized_description}")
                 return
