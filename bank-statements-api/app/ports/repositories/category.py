@@ -45,3 +45,8 @@ class CategoryRepository(ABC):
     def delete(self, category_id: UUID) -> bool:
         """Delete a category"""
         pass
+
+    @abstractmethod
+    def get_by_name(self, name: str, parent_id: Optional[UUID] = None) -> Optional[Category]:
+        """Get a category by name and optional parent_id"""
+        pass

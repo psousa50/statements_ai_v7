@@ -1,9 +1,9 @@
 from typing import Callable, Iterator
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, FastAPI, HTTPException, status
+from fastapi import APIRouter, Depends, FastAPI, File, HTTPException, UploadFile, status
 
-from app.api.schemas import CategoryCreate, CategoryListResponse, CategoryResponse, CategoryUpdate
+from app.api.schemas import CategoryCreate, CategoryListResponse, CategoryResponse, CategoryUpdate, CategoryUploadResponse
 from app.core.config import settings
 from app.core.dependencies import InternalDependencies
 
@@ -139,6 +139,62 @@ def register_category_routes(
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=str(e),
+            )
+
+    @router.post(
+        "/upload",
+        response_model=CategoryUploadResponse,
+        status_code=status.HTTP_200_OK,
+    )
+    async def upload_categories_csv(
+        file: UploadFile = File(...),
+        internal: InternalDependencies = Depends(provide_dependencies),
+    ):
+        """Upload categories from CSV file with parent_name and name columns"""
+        try:
+            # Validate file type
+            if not file.content_type or not file.content_type.startswith(("text/csv", "application/csv")):
+                if not file.filename or not file.filename.lower().endswith(".csv"):
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="File must be a CSV file",
+                    )
+
+            # Read file content
+            content = await file.read()
+            csv_content = content.decode("utf-8")
+
+            # Get existing categories for comparison
+            existing_categories = {(cat.name, cat.parent_id): cat for cat in internal.category_service.get_all_categories()}
+
+            # Process CSV and upsert categories
+            categories = internal.category_service.upsert_categories_from_csv(csv_content)
+
+            # Calculate statistics
+            categories_created = 0
+            categories_found = 0
+            for category in categories:
+                if (category.name, category.parent_id) in existing_categories:
+                    categories_found += 1
+                else:
+                    categories_created += 1
+
+            return CategoryUploadResponse(
+                categories_created=categories_created,
+                categories_found=categories_found,
+                total_processed=len(categories),
+                categories=categories,
+            )
+
+        except ValueError as e:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=str(e),
+            )
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Error uploading categories: {str(e)}",
             )
 
     app.include_router(router, prefix=settings.API_V1_STR)

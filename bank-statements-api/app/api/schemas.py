@@ -268,6 +268,17 @@ class CategoryUpdateRequest(BaseModel):
     parent_id: Optional[UUID] = None
 
 
+class CategoryUploadResponse(BaseModel):
+    """Response for category CSV upload"""
+
+    categories_created: int
+    categories_found: int
+    total_processed: int
+    categories: List[CategoryResponse]
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class SourceCreateRequest(BaseModel):
     name: str
 

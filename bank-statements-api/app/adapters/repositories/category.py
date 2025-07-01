@@ -46,3 +46,11 @@ class SQLAlchemyCategoryRepository(CategoryRepository):
             self.db_session.commit()
             return True
         return False
+
+    def get_by_name(self, name: str, parent_id: Optional[UUID] = None) -> Optional[Category]:
+        query = self.db_session.query(Category).filter(Category.name == name)
+        if parent_id is not None:
+            query = query.filter(Category.parent_id == parent_id)
+        else:
+            query = query.filter(Category.parent_id.is_(None))
+        return query.first()
