@@ -3,6 +3,7 @@ import { TransactionsPage } from './pages/Transactions'
 import { TransactionCategorizationsPage } from './pages/TransactionCategorizations'
 import { EnhancementRules } from './pages/EnhancementRules'
 import { CategoriesPage } from './pages/Categories'
+import { AccountsPage } from './pages/Accounts'
 import { ChartsPage } from './pages/Charts'
 import { Upload } from './pages/Upload'
 import { AppLayout } from './components/layout/AppLayout'
@@ -21,6 +22,7 @@ const router = createBrowserRouter(
         { path: 'categorizations', element: <TransactionCategorizationsPage /> },
         { path: 'enhancement-rules', element: <EnhancementRules /> },
         { path: 'categories', element: <CategoriesPage /> },
+        { path: 'accounts', element: <AccountsPage /> },
         { path: 'charts', element: <ChartsPage /> },
         { path: 'upload', element: <Upload /> },
       ],

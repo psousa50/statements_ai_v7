@@ -11,7 +11,10 @@ export interface AccountListResponse {
 
 export interface AccountClient {
   getAll: () => Promise<Account[]>
+  getById: (id: string) => Promise<Account>
   createAccount: (name: string) => Promise<Account>
+  updateAccount: (id: string, name: string) => Promise<Account>
+  deleteAccount: (id: string) => Promise<void>
 }
 
 // Use the VITE_API_URL environment variable for the base URL, or default to '' for local development
@@ -24,8 +27,22 @@ export const accountClient: AccountClient = {
     return response.data.accounts
   },
 
+  getById: async (id: string): Promise<Account> => {
+    const response = await axios.get<Account>(`${API_URL}/${id}`)
+    return response.data
+  },
+
   createAccount: async (name: string): Promise<Account> => {
     const response = await axios.post<Account>(API_URL, { name })
     return response.data
+  },
+
+  updateAccount: async (id: string, name: string): Promise<Account> => {
+    const response = await axios.put<Account>(`${API_URL}/${id}`, { name })
+    return response.data
+  },
+
+  deleteAccount: async (id: string): Promise<void> => {
+    await axios.delete(`${API_URL}/${id}`)
   },
 }
