@@ -7,7 +7,7 @@ from uuid import uuid4
 
 from app.common.text_normalization import normalize_description
 from app.domain.dto.statement_processing import TransactionDTO
-from app.domain.models.enhancement_rule import EnhancementRule
+from app.domain.models.enhancement_rule import EnhancementRule, EnhancementRuleSource, MatchType
 from app.domain.models.transaction import CategorizationStatus, SourceType, Transaction
 from app.ports.repositories.enhancement_rule import EnhancementRuleRepository
 from app.services.transaction_enhancement import TransactionEnhancer
@@ -168,10 +168,10 @@ class TransactionRuleEnhancementService:
             rule = EnhancementRule(
                 id=uuid4(),
                 normalized_description_pattern=normalized_description,
-                match_type="exact",  # Use string literal directly
+                match_type=MatchType.EXACT,
                 category_id=None,  # No category enhancement
                 counterparty_account_id=None,  # No counterparty enhancement
-                source="AI",  # Use string literal directly
+                source=EnhancementRuleSource.AI,
                 created_at=datetime.now(timezone.utc),
                 updated_at=datetime.now(timezone.utc),
             )

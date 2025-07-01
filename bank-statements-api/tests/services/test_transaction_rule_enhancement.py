@@ -201,6 +201,7 @@ class TestTransactionRuleEnhancementService:
         """Test that unmatched transactions create enhancement rules"""
         # Setup mock responses with no matches
         mock_enhancement_rule_repository.get_all.return_value = []
+        mock_enhancement_rule_repository.find_by_normalized_description.return_value = None
 
         # Mock enhanced transactions with no enhancements
         enhanced_transactions = []
@@ -253,6 +254,7 @@ class TestTransactionRuleEnhancementService:
         ]
 
         mock_enhancement_rule_repository.get_all.return_value = []
+        mock_enhancement_rule_repository.find_by_normalized_description.return_value = None
 
         # Mock enhanced transactions
         enhanced_transactions = []
@@ -316,6 +318,7 @@ class TestTransactionRuleEnhancementService:
     ):
         """Test enhancement with partial matches - some transactions enhanced, others not"""
         mock_enhancement_rule_repository.get_all.return_value = sample_enhancement_rules
+        mock_enhancement_rule_repository.find_by_normalized_description.return_value = None
 
         # Mock enhanced transactions - only first transaction matches
         enhanced_transactions = []
@@ -387,6 +390,7 @@ class TestTransactionRuleEnhancementService:
         ]
 
         mock_enhancement_rule_repository.get_all.return_value = []
+        mock_enhancement_rule_repository.find_by_normalized_description.return_value = None
 
         # Mock enhanced transactions with no enhancements (all unmatched)
         enhanced_transactions = []

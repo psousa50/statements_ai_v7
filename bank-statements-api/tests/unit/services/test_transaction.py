@@ -7,6 +7,7 @@ import pytest
 
 from app.api.schemas import TransactionCreateRequest
 from app.domain.models.transaction import Transaction
+from app.ports.repositories.enhancement_rule import EnhancementRuleRepository
 from app.ports.repositories.initial_balance import InitialBalanceRepository
 from app.ports.repositories.transaction import TransactionRepository
 from app.services.transaction import TransactionService
@@ -24,12 +25,18 @@ class TestTransactionService:
         return repository
 
     @pytest.fixture
+    def mock_enhancement_rule_repository(self):
+        repository = MagicMock(spec=EnhancementRuleRepository)
+        return repository
+
+    @pytest.fixture
     def service(
         self,
         mock_repository,
         mock_initial_balance_repository,
+        mock_enhancement_rule_repository,
     ):
-        return TransactionService(mock_repository, mock_initial_balance_repository)
+        return TransactionService(mock_repository, mock_initial_balance_repository, mock_enhancement_rule_repository)
 
     @pytest.fixture
     def sample_transaction(self):
