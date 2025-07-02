@@ -166,7 +166,9 @@ export const AccountsPage = () => {
             <div className="loading-message">Loading accounts...</div>
           ) : filteredAccounts.length === 0 ? (
             <div className="empty-message">
-              {searchTerm ? 'No accounts found matching your search.' : 'No accounts found. Create your first account to get started.'}
+              {searchTerm
+                ? 'No accounts found matching your search.'
+                : 'No accounts found. Create your first account to get started.'}
             </div>
           ) : (
             <table className="accounts-table">
