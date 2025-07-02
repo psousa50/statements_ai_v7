@@ -93,9 +93,7 @@ class EnhancementRuleManagementService:
     ) -> EnhancementRule:
         """Create a new enhancement rule with validation."""
 
-        # Validate that at least one enhancement is specified
-        if not category_id and not counterparty_account_id:
-            raise ValueError("Must specify either category_id or counterparty_account_id (or both)")
+        # Allow creating rules without enhancements (can be added later)
 
         # Validate category exists if specified
         if category_id:
@@ -152,9 +150,7 @@ class EnhancementRuleManagementService:
         if not rule:
             return None
 
-        # Validate that at least one enhancement is specified
-        if not category_id and not counterparty_account_id:
-            raise ValueError("Must specify either category_id or counterparty_account_id (or both)")
+        # Allow updating rules without enhancements (can be added later)
 
         # Validate category exists if specified
         if category_id:
