@@ -113,10 +113,8 @@ class EnhancementRuleManagementService:
         if min_amount is not None and max_amount is not None and min_amount > max_amount:
             raise ValueError("min_amount cannot be greater than max_amount")
 
-        # Check for duplicate rules
-        existing_rule = self.enhancement_rule_repository.find_by_normalized_description(normalized_description_pattern)
-        if existing_rule:
-            raise ValueError(f"Rule with pattern '{normalized_description_pattern}' already exists")
+        # Note: Multiple rules with the same pattern are allowed
+        # Rules are differentiated by their category, counterparty, and constraints
 
         # Create the rule
         rule = EnhancementRule(
@@ -174,11 +172,8 @@ class EnhancementRuleManagementService:
         if min_amount is not None and max_amount is not None and min_amount > max_amount:
             raise ValueError("min_amount cannot be greater than max_amount")
 
-        # Check for duplicate rules (excluding current rule)
-        if normalized_description_pattern != rule.normalized_description_pattern:
-            existing_rule = self.enhancement_rule_repository.find_by_normalized_description(normalized_description_pattern)
-            if existing_rule and existing_rule.id != rule_id:
-                raise ValueError(f"Rule with pattern '{normalized_description_pattern}' already exists")
+        # Note: Multiple rules with the same pattern are allowed
+        # Rules are differentiated by their category, counterparty, and constraints
 
         # Update the rule
         rule.normalized_description_pattern = normalized_description_pattern

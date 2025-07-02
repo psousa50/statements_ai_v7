@@ -35,6 +35,7 @@ export const EnhancementRules: React.FC = () => {
 
   const [modalOpen, setModalOpen] = useState(false)
   const [selectedRule, setSelectedRule] = useState<EnhancementRule | null>(null)
+  const [duplicateData, setDuplicateData] = useState<Partial<EnhancementRule> | null>(null)
   const [cleanupDialogOpen, setCleanupDialogOpen] = useState(false)
   const [cleanupLoading, setCleanupLoading] = useState(false)
 
@@ -83,6 +84,23 @@ export const EnhancementRules: React.FC = () => {
     setModalOpen(true)
   }
 
+  const handleDuplicateRule = (rule: EnhancementRule) => {
+    const duplicatedData = {
+      normalized_description_pattern: rule.normalized_description_pattern,
+      match_type: rule.match_type,
+      category_id: rule.category_id,
+      counterparty_account_id: rule.counterparty_account_id,
+      min_amount: rule.min_amount,
+      max_amount: rule.max_amount,
+      start_date: rule.start_date,
+      end_date: rule.end_date,
+      source: rule.source,
+    }
+    setSelectedRule(null) // No rule selected, this is a new rule
+    setDuplicateData(duplicatedData) // Pass the data to duplicate
+    setModalOpen(true)
+  }
+
   const handleDeleteRule = async (id: string) => {
     try {
       await deleteRule(id)
@@ -95,12 +113,14 @@ export const EnhancementRules: React.FC = () => {
   const handleModalSuccess = () => {
     setModalOpen(false)
     setSelectedRule(null)
+    setDuplicateData(null)
     loadRules()
   }
 
   const handleModalClose = () => {
     setModalOpen(false)
     setSelectedRule(null)
+    setDuplicateData(null)
   }
 
   const handleCleanupUnused = async () => {
@@ -158,6 +178,7 @@ export const EnhancementRules: React.FC = () => {
           loading={loading}
           onSort={handleSort}
           onEdit={handleEditRule}
+          onDuplicate={handleDuplicateRule}
           onDelete={handleDeleteRule}
         />
       </Paper>
@@ -182,6 +203,7 @@ export const EnhancementRules: React.FC = () => {
       <EnhancementRuleModal
         open={modalOpen}
         rule={selectedRule || undefined}
+        duplicateData={duplicateData || undefined}
         onClose={handleModalClose}
         onSuccess={handleModalSuccess}
       />

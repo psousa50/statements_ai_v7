@@ -35,6 +35,7 @@ import { CategorySelector } from './CategorySelector'
 interface EnhancementRuleModalProps {
   open: boolean
   rule?: EnhancementRule // undefined for create, defined for edit
+  duplicateData?: Partial<EnhancementRule> // data to pre-fill when duplicating
   onClose: () => void
   onSuccess: () => void
 }
@@ -45,11 +46,11 @@ interface CounterpartyAccount {
   account_number?: string
 }
 
-export const EnhancementRuleModal: React.FC<EnhancementRuleModalProps> = ({ open, rule, onClose, onSuccess }) => {
+export const EnhancementRuleModal: React.FC<EnhancementRuleModalProps> = ({ open, rule, duplicateData, onClose, onSuccess }) => {
   const apiClient = useApi()
   const { createRule, updateRule, loading, error } = useEnhancementRules()
 
-  const isEditing = !!rule
+  const isEditing = !!rule?.id
   const [categories, setCategories] = useState<Category[]>([])
   const [counterpartyAccounts, setCounterpartyAccounts] = useState<CounterpartyAccount[]>([])
   const [formData, setFormData] = useState<EnhancementRuleCreate | EnhancementRuleUpdate>({
@@ -68,9 +69,10 @@ export const EnhancementRuleModal: React.FC<EnhancementRuleModalProps> = ({ open
   // Debounce timeout for preview updates
   const debounceTimeoutRef = useRef<NodeJS.Timeout>()
 
-  // Initialize form data when rule changes (for editing)
+  // Initialize form data when rule or duplicateData changes
   useEffect(() => {
     if (rule) {
+      // Editing existing rule
       setFormData({
         normalized_description_pattern: rule.normalized_description_pattern,
         match_type: rule.match_type,
@@ -82,6 +84,19 @@ export const EnhancementRuleModal: React.FC<EnhancementRuleModalProps> = ({ open
         end_date: rule.end_date,
         source: rule.source,
       })
+    } else if (duplicateData) {
+      // Creating new rule from duplicate data
+      setFormData({
+        normalized_description_pattern: duplicateData.normalized_description_pattern || '',
+        match_type: duplicateData.match_type || MatchType.INFIX,
+        category_id: duplicateData.category_id,
+        counterparty_account_id: duplicateData.counterparty_account_id,
+        min_amount: duplicateData.min_amount,
+        max_amount: duplicateData.max_amount,
+        start_date: duplicateData.start_date,
+        end_date: duplicateData.end_date,
+        source: duplicateData.source || EnhancementRuleSource.MANUAL,
+      })
     } else {
       // Reset form for create mode
       setFormData({
@@ -90,7 +105,7 @@ export const EnhancementRuleModal: React.FC<EnhancementRuleModalProps> = ({ open
         source: EnhancementRuleSource.MANUAL,
       })
     }
-  }, [rule])
+  }, [rule, duplicateData])
 
   useEffect(() => {
     const loadData = async () => {
@@ -210,12 +225,44 @@ export const EnhancementRuleModal: React.FC<EnhancementRuleModalProps> = ({ open
         }
         await updateRule(rule.id, updateData)
       } else {
-        await createRule(formData as EnhancementRuleCreate)
+        // Clean the data by removing null and undefined values
+        const cleanedData: EnhancementRuleCreate = {
+          normalized_description_pattern: formData.normalized_description_pattern,
+          match_type: formData.match_type,
+          source: formData.source,
+        }
+        
+        // Only add optional fields if they have valid values
+        if (formData.category_id) {
+          cleanedData.category_id = formData.category_id
+        }
+        if (formData.counterparty_account_id) {
+          cleanedData.counterparty_account_id = formData.counterparty_account_id
+        }
+        if (formData.min_amount !== undefined && formData.min_amount !== null) {
+          cleanedData.min_amount = formData.min_amount
+        }
+        if (formData.max_amount !== undefined && formData.max_amount !== null) {
+          cleanedData.max_amount = formData.max_amount
+        }
+        if (formData.start_date) {
+          cleanedData.start_date = formData.start_date
+        }
+        if (formData.end_date) {
+          cleanedData.end_date = formData.end_date
+        }
+        
+        console.log('Creating enhancement rule with cleaned data:', cleanedData)
+        await createRule(cleanedData)
       }
       onSuccess()
       handleClose()
     } catch (err) {
       console.error(`Failed to ${isEditing ? 'update' : 'create'} enhancement rule:`, err)
+      if (err.response) {
+        console.error('Error response data:', err.response.data)
+        console.error('Error response status:', err.response.status)
+      }
     }
   }
 
