@@ -358,13 +358,13 @@ class EnhancementRuleManagementService:
 
         # Validate category exists if provided
         if rule_preview.category_id:
-            category = self.category_repository.find_by_id(rule_preview.category_id)
+            category = self.category_repository.get_by_id(rule_preview.category_id)
             if not category:
                 raise ValueError(f"Category with ID {rule_preview.category_id} not found")
 
         # Validate counterparty account exists if provided
         if rule_preview.counterparty_account_id:
-            account = self.account_repository.find_by_id(rule_preview.counterparty_account_id)
+            account = self.account_repository.get_by_id(rule_preview.counterparty_account_id)
             if not account:
                 raise ValueError(f"Account with ID {rule_preview.counterparty_account_id} not found")
 
