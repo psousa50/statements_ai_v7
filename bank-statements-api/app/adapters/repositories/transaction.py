@@ -500,7 +500,8 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         if rule.end_date is not None:
             query = query.filter(Transaction.date <= rule.end_date)
 
-        return query.scalar() or 0
+        result = query.scalar()
+        return int(result) if result is not None else 0
 
     def find_transactions_matching_rule(
         self,

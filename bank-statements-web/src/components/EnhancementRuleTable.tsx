@@ -245,10 +245,10 @@ export const EnhancementRuleTable: React.FC<EnhancementRuleTableProps> = ({
                   </Typography>
                 )}
               </TableCell>
-              <TableCell align="right">
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
-                  <Typography variant="body2">{rule.transaction_count || 0}</Typography>
-                  {rule.transaction_count && rule.transaction_count > 0 && (
+              <TableCell>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}>
+                  <Typography variant="body2">{rule.transaction_count ?? 0}</Typography>
+                  {rule.transaction_count > 0 && (
                     <IconButton
                       size="small"
                       onClick={() => handleViewTransactions(rule)}
@@ -269,32 +269,32 @@ export const EnhancementRuleTable: React.FC<EnhancementRuleTableProps> = ({
               </TableCell>
               <TableCell>
                 <Box sx={{ display: 'flex !important', gap: '0 !important', width: 'fit-content' }}>
-                  <IconButton 
-                    size="small" 
-                    onClick={() => onEdit(rule)} 
-                    disabled={loading} 
+                  <IconButton
+                    size="small"
+                    onClick={() => onEdit(rule)}
+                    disabled={loading}
                     title="Edit rule"
-                    sx={{ 
-                      minWidth: '0 !important', 
-                      padding: '4px !important', 
+                    sx={{
+                      minWidth: '0 !important',
+                      padding: '4px !important',
                       margin: '0 !important',
                       width: '24px !important',
-                      height: '24px !important'
+                      height: '24px !important',
                     }}
                   >
                     <EditIcon fontSize="small" />
                   </IconButton>
-                  <IconButton 
-                    size="small" 
-                    onClick={() => onDuplicate(rule)} 
-                    disabled={loading} 
+                  <IconButton
+                    size="small"
+                    onClick={() => onDuplicate(rule)}
+                    disabled={loading}
                     title="Duplicate rule"
-                    sx={{ 
-                      minWidth: '0 !important', 
-                      padding: '4px !important', 
+                    sx={{
+                      minWidth: '0 !important',
+                      padding: '4px !important',
                       margin: '0 -2px 0 -2px !important',
                       width: '24px !important',
-                      height: '24px !important'
+                      height: '24px !important',
                     }}
                   >
                     <ContentCopyIcon fontSize="small" />
@@ -305,12 +305,12 @@ export const EnhancementRuleTable: React.FC<EnhancementRuleTableProps> = ({
                     disabled={loading}
                     color="error"
                     title="Delete rule"
-                    sx={{ 
-                      minWidth: '0 !important', 
-                      padding: '4px !important', 
+                    sx={{
+                      minWidth: '0 !important',
+                      padding: '4px !important',
                       margin: '0 !important',
                       width: '24px !important',
-                      height: '24px !important'
+                      height: '24px !important',
                     }}
                   >
                     <DeleteIcon fontSize="small" />
