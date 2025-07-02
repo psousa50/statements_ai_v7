@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import {
   Box,
   TextField,
@@ -37,6 +37,14 @@ export const EnhancementRuleFiltersComponent: React.FC<EnhancementRuleFiltersPro
   const apiClient = useApi()
   const [categories, setCategories] = useState<Category[]>([])
   const [counterpartyAccounts, setCounterpartyAccounts] = useState<CounterpartyAccount[]>([])
+  const [localDescriptionSearch, setLocalDescriptionSearch] = useState(filters.description_search || '')
+  
+  const filtersRef = useRef(filters)
+  const onFiltersChangeRef = useRef(onFiltersChange)
+  
+  // Keep refs updated
+  filtersRef.current = filters
+  onFiltersChangeRef.current = onFiltersChange
 
   useEffect(() => {
     const loadCategories = async () => {
@@ -61,11 +69,31 @@ export const EnhancementRuleFiltersComponent: React.FC<EnhancementRuleFiltersPro
     loadCounterpartyAccounts()
   }, [apiClient])
 
+  // Debounce description search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const currentFilters = filtersRef.current
+      const currentOnFiltersChange = onFiltersChangeRef.current
+      
+      // Only update if the description search value has actually changed
+      if (currentFilters.description_search !== (localDescriptionSearch || undefined)) {
+        currentOnFiltersChange({
+          ...currentFilters,
+          description_search: localDescriptionSearch || undefined,
+        })
+      }
+    }, 300)
+
+    return () => clearTimeout(timer)
+  }, [localDescriptionSearch])
+
+  // Update local state when filters change externally (e.g., clear filters)
+  useEffect(() => {
+    setLocalDescriptionSearch(filters.description_search || '')
+  }, [filters.description_search])
+
   const handleDescriptionSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    onFiltersChange({
-      ...filters,
-      description_search: event.target.value || undefined,
-    })
+    setLocalDescriptionSearch(event.target.value)
   }
 
   const handleCategoryChange = (event: SelectChangeEvent<string[]>) => {
@@ -123,7 +151,7 @@ export const EnhancementRuleFiltersComponent: React.FC<EnhancementRuleFiltersPro
             label="Search Description"
             variant="outlined"
             size="small"
-            value={filters.description_search || ''}
+            value={localDescriptionSearch}
             onChange={handleDescriptionSearchChange}
             disabled={loading}
           />
