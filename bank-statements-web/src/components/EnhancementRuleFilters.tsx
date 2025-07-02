@@ -16,6 +16,7 @@ import ClearIcon from '@mui/icons-material/Clear'
 import { useApi } from '../api/ApiContext'
 import { EnhancementRuleFilters, EnhancementRuleSource, MatchType } from '../types/EnhancementRule'
 import { Category } from '../types/Transaction'
+import { CategorySelector } from './CategorySelector'
 
 interface EnhancementRuleFiltersProps {
   filters: EnhancementRuleFilters
@@ -96,11 +97,10 @@ export const EnhancementRuleFiltersComponent: React.FC<EnhancementRuleFiltersPro
     setLocalDescriptionSearch(event.target.value)
   }
 
-  const handleCategoryChange = (event: SelectChangeEvent<string[]>) => {
-    const value = event.target.value
+  const handleCategoryChange = (categoryId?: string) => {
     onFiltersChange({
       ...filters,
-      category_ids: typeof value === 'string' ? [] : value.length ? value : undefined,
+      category_id: categoryId,
     })
   }
 
@@ -137,7 +137,7 @@ export const EnhancementRuleFiltersComponent: React.FC<EnhancementRuleFiltersPro
 
   const hasActiveFilters =
     filters.description_search ||
-    filters.category_ids?.length ||
+    filters.category_id ||
     filters.counterparty_account_ids?.length ||
     filters.match_type ||
     filters.source
@@ -186,30 +186,15 @@ export const EnhancementRuleFiltersComponent: React.FC<EnhancementRuleFiltersPro
         </Box>
 
         <Box sx={{ minWidth: 200 }}>
-          <FormControl fullWidth size="small">
-            <InputLabel>Categories</InputLabel>
-            <Select
-              multiple
-              value={filters.category_ids || []}
-              onChange={handleCategoryChange}
-              input={<OutlinedInput label="Categories" />}
-              disabled={loading}
-              renderValue={(selected) => (
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                  {selected.map((value) => {
-                    const category = categories.find((c) => c.id === value)
-                    return <Chip key={value} label={category?.name || value} size="small" />
-                  })}
-                </Box>
-              )}
-            >
-              {categories.map((category) => (
-                <MenuItem key={category.id} value={category.id}>
-                  {category.name}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+          <CategorySelector
+            categories={categories}
+            selectedCategoryId={filters.category_id}
+            onCategoryChange={handleCategoryChange}
+            placeholder="Select category"
+            allowClear={true}
+            multiple={false}
+            variant="filter"
+          />
         </Box>
 
         <Box sx={{ minWidth: 200 }}>

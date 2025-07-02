@@ -83,7 +83,7 @@ export interface EnhancementRuleFilters {
   page?: number
   page_size?: number
   description_search?: string
-  category_ids?: string[]
+  category_id?: string
   counterparty_account_ids?: string[]
   match_type?: MatchType
   source?: EnhancementRuleSource
