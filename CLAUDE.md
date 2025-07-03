@@ -61,3 +61,5 @@ DATABASE_URL=postgresql://postgres:postgres@localhost:15432/bank_statements_test
 - **FastAPI Development Rules** - `/docs/guides/fastapi-development-rules.md`
 
 ```
+
+Both the frontend and backend services are running in development mode with hot reloading enabled, so changes are reflected immediately without needing to restart the server.
