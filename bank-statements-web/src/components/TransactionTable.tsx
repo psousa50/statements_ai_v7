@@ -10,7 +10,7 @@ interface TransactionTableProps {
   categories: Category[]
   accounts: Account[]
   loading: boolean
-  onCategorize?: (transactionId: string, categoryId?: string) => void
+  onCategorize?: (transactionId: string, categoryId?: string) => Promise<void>
   sortField?: TransactionSortField
   sortDirection?: TransactionSortDirection
   onSort?: (field: TransactionSortField) => void
@@ -20,12 +20,13 @@ interface TransactionTableProps {
 interface CategoryPickerProps {
   transaction: Transaction
   categories: Category[]
-  onCategorize: (transactionId: string, categoryId?: string) => void
+  onCategorize: (transactionId: string, categoryId?: string) => Promise<void>
 }
 
 const CategoryPicker = ({ transaction, categories, onCategorize }: CategoryPickerProps) => {
   const [input, setInput] = useState('')
   const [showSuggestions, setShowSuggestions] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
 
@@ -53,16 +54,39 @@ const CategoryPicker = ({ transaction, categories, onCategorize }: CategoryPicke
   }, [])
 
   const handleCategorySelect = useCallback(
-    (categoryId: string) => {
-      onCategorize(transaction.id, categoryId)
-      setInput('')
+    async (categoryId: string) => {
       setShowSuggestions(false)
+      setIsLoading(true)
+      // Don't clear input immediately - let the component re-render with updated data
+      try {
+        await onCategorize(transaction.id, categoryId)
+        setInput('') // Clear input only after successful categorization
+      } catch (error) {
+        console.error('Failed to categorize transaction:', error)
+        alert('Failed to save category. Please try again.')
+        // Keep input value on error so user can retry
+      } finally {
+        setIsLoading(false)
+      }
     },
     [transaction.id, onCategorize]
   )
 
-  const handleCategoryRemove = useCallback(() => {
-    onCategorize(transaction.id, undefined)
+  const handleCategoryRemove = useCallback(async () => {
+    // Ask for confirmation before removing category
+    if (!window.confirm('Are you sure you want to remove this category?')) {
+      return
+    }
+    
+    setIsLoading(true)
+    try {
+      await onCategorize(transaction.id, undefined)
+    } catch (error) {
+      console.error('Failed to remove category:', error)
+      alert('Failed to remove category. Please try again.')
+    } finally {
+      setIsLoading(false)
+    }
   }, [transaction.id, onCategorize])
 
   const handleInputChange = useCallback(
@@ -89,7 +113,11 @@ const CategoryPicker = ({ transaction, categories, onCategorize }: CategoryPicke
   return (
     <div className="transaction-category-picker" ref={containerRef}>
       <div className="category-picker-container">
-        {currentCategory ? (
+        {isLoading ? (
+          <div className="category-picker-loading">
+            <span>Saving...</span>
+          </div>
+        ) : currentCategory ? (
           <span className="current-category-tag">
             {currentCategory.name}
             <button onClick={handleCategoryRemove} className="category-remove-btn" type="button">

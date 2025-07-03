@@ -1032,6 +1032,20 @@
   color: var(--text-muted);
 }
 
+.transactions-page .category-picker-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-style: italic;
+  background-color: var(--bg-tertiary);
+  border: 1px solid var(--border-primary);
+  border-radius: 6px;
+  min-height: 32px;
+}
+
 .transactions-page .category-picker-suggestions {
   position: absolute;
   top: 100%;

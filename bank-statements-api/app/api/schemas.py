@@ -132,6 +132,7 @@ class TransactionUpdateRequest(BaseModel):
     date: Optional[date] = None
     description: Optional[str] = None
     amount: Optional[Decimal] = None
+    account_id: Optional[UUID] = None
     category_id: Optional[UUID] = None
     counterparty_account_id: Optional[UUID] = None
 

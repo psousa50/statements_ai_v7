@@ -49,6 +49,7 @@ export interface TransactionClient {
   getById(id: string): Promise<Transaction>
   create(transaction: TransactionCreate): Promise<Transaction>
   update(id: string, transaction: TransactionCreate): Promise<Transaction>
+  categorize(id: string, categoryId?: string): Promise<Transaction>
   delete(id: string): Promise<void>
   bulkUpdateCategory(request: BulkUpdateTransactionsRequest): Promise<BulkUpdateTransactionsResponse>
 }
@@ -161,6 +162,16 @@ export const transactionClient: TransactionClient = {
 
   async update(id: string, transaction: TransactionCreate) {
     const response = await axios.put<Transaction>(`${API_URL}/${id}`, transaction)
+    return response.data
+  },
+
+  async categorize(id: string, categoryId?: string) {
+    const params = new URLSearchParams()
+    if (categoryId) {
+      params.append('category_id', categoryId)
+    }
+    const url = params.toString() ? `${API_URL}/${id}/categorize?${params.toString()}` : `${API_URL}/${id}/categorize`
+    const response = await axios.put<Transaction>(url)
     return response.data
   },
 

@@ -274,7 +274,7 @@ class TransactionService:
 
         transaction.category_id = category_id
         transaction.categorization_status = (
-            CategorizationStatus.CATEGORIZED if category_id else CategorizationStatus.UNCATEGORIZED
+            CategorizationStatus.MANUAL if category_id else CategorizationStatus.UNCATEGORIZED
         )
 
         return self.transaction_repository.update(transaction)

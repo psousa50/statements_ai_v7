@@ -131,18 +131,7 @@ export const useTransactions = () => {
       setLoading(true)
       setError(null)
       try {
-        // In a real app, we'd have a dedicated endpoint for this
-        const transaction = transactions.find((t) => t.id === id)
-        if (!transaction) {
-          throw new Error(`Transaction with ID ${id} not found`)
-        }
-
-        const updatedTransaction = await api.transactions.update(id, {
-          date: transaction.date,
-          description: transaction.description,
-          amount: transaction.amount,
-          category_id: categoryId,
-        })
+        const updatedTransaction = await api.transactions.categorize(id, categoryId)
 
         setTransactions((prev) => prev.map((t) => (t.id === id ? updatedTransaction : t)))
 
@@ -155,7 +144,7 @@ export const useTransactions = () => {
         setLoading(false)
       }
     },
-    [api.transactions, transactions]
+    [api.transactions]
   )
 
   const getTransactionsByCategory = useCallback(
