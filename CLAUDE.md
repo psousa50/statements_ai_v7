@@ -62,4 +62,4 @@ DATABASE_URL=postgresql://postgres:postgres@localhost:15432/bank_statements_test
 
 ```
 
-Both the frontend and backend services are running in development mode with hot reloading enabled, so changes are reflected immediately without needing to restart the server.
+Both the frontend and backend services are running in development mode with hot reloading enabled, ports 8010 and 6173, so changes are reflected immediately without needing to restart the server.
