@@ -23,6 +23,7 @@ class SQLAlchemyEnhancementRuleRepository(EnhancementRuleRepository):
         counterparty_account_ids: Optional[List[UUID]] = None,
         match_type: Optional[MatchType] = None,
         source: Optional[EnhancementRuleSource] = None,
+        show_invalid_only: Optional[bool] = None,
         sort_field: str = "created_at",
         sort_direction: str = "desc",
     ) -> List[EnhancementRule]:
@@ -38,6 +39,7 @@ class SQLAlchemyEnhancementRuleRepository(EnhancementRuleRepository):
                 counterparty_account_ids,
                 match_type,
                 source,
+                show_invalid_only,
                 sort_direction,
             )
 
@@ -59,6 +61,9 @@ class SQLAlchemyEnhancementRuleRepository(EnhancementRuleRepository):
 
         if source:
             query = query.filter(EnhancementRule.source == source)
+
+        if show_invalid_only:
+            query = query.filter(and_(EnhancementRule.category_id.is_(None), EnhancementRule.counterparty_account_id.is_(None)))
 
         # Apply sorting
         if sort_field in [
@@ -92,6 +97,7 @@ class SQLAlchemyEnhancementRuleRepository(EnhancementRuleRepository):
         counterparty_account_ids: Optional[List[UUID]] = None,
         match_type: Optional[MatchType] = None,
         source: Optional[EnhancementRuleSource] = None,
+        show_invalid_only: Optional[bool] = None,
         sort_direction: str = "desc",
     ) -> List[EnhancementRule]:
         """Get enhancement rules sorted by usage count"""
@@ -118,6 +124,9 @@ class SQLAlchemyEnhancementRuleRepository(EnhancementRuleRepository):
 
         if source:
             query = query.filter(EnhancementRule.source == source)
+
+        if show_invalid_only:
+            query = query.filter(and_(EnhancementRule.category_id.is_(None), EnhancementRule.counterparty_account_id.is_(None)))
 
         # Get all rules matching the filters
         all_rules = query.all()
@@ -159,6 +168,7 @@ class SQLAlchemyEnhancementRuleRepository(EnhancementRuleRepository):
         counterparty_account_ids: Optional[List[UUID]] = None,
         match_type: Optional[MatchType] = None,
         source: Optional[EnhancementRuleSource] = None,
+        show_invalid_only: Optional[bool] = None,
     ) -> int:
         """Count enhancement rules with filters"""
         query = self.db.query(func.count(EnhancementRule.id))
@@ -178,6 +188,9 @@ class SQLAlchemyEnhancementRuleRepository(EnhancementRuleRepository):
 
         if source:
             query = query.filter(EnhancementRule.source == source)
+
+        if show_invalid_only:
+            query = query.filter(and_(EnhancementRule.category_id.is_(None), EnhancementRule.counterparty_account_id.is_(None)))
 
         return query.scalar()
 

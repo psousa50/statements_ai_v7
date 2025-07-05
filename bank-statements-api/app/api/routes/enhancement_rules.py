@@ -47,6 +47,9 @@ def register_enhancement_rule_routes(
         ),
         match_type: Optional[MatchType] = Query(None, description="Filter by match type"),
         source: Optional[EnhancementRuleSource] = Query(None, description="Filter by rule source"),
+        show_invalid_only: Optional[bool] = Query(
+            None, description="Show only invalid rules (rules with no category and no counterparty)"
+        ),
         sort_field: str = Query("created_at", description="Field to sort by"),
         sort_direction: str = Query("desc", description="Sort direction (asc/desc)"),
         internal: InternalDependencies = Depends(provide_dependencies),
@@ -65,6 +68,7 @@ def register_enhancement_rule_routes(
                 counterparty_account_ids=counterparty_account_ids,
                 match_type=match_type,
                 source=source,
+                show_invalid_only=show_invalid_only,
                 sort_field=sort_field,
                 sort_direction=sort_direction,
             )

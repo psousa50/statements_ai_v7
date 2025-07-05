@@ -11,6 +11,8 @@ import {
   Button,
   Stack,
   SelectChangeEvent,
+  FormControlLabel,
+  Checkbox,
 } from '@mui/material'
 import ClearIcon from '@mui/icons-material/Clear'
 import { useApi } from '../api/ApiContext'
@@ -126,6 +128,13 @@ export const EnhancementRuleFiltersComponent: React.FC<EnhancementRuleFiltersPro
     })
   }
 
+  const handleInvalidRulesChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    onFiltersChange({
+      ...filters,
+      show_invalid_only: event.target.checked ? true : undefined,
+    })
+  }
+
   const handleClearFilters = () => {
     onFiltersChange({
       page: 1,
@@ -140,7 +149,8 @@ export const EnhancementRuleFiltersComponent: React.FC<EnhancementRuleFiltersPro
     filters.category_id ||
     filters.counterparty_account_ids?.length ||
     filters.match_type ||
-    filters.source
+    filters.source ||
+    filters.show_invalid_only
 
   return (
     <Box>
@@ -223,6 +233,20 @@ export const EnhancementRuleFiltersComponent: React.FC<EnhancementRuleFiltersPro
               ))}
             </Select>
           </FormControl>
+        </Box>
+
+        <Box>
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={filters.show_invalid_only || false}
+                onChange={handleInvalidRulesChange}
+                disabled={loading}
+                size="small"
+              />
+            }
+            label="Show Invalid Rules Only"
+          />
         </Box>
 
         {hasActiveFilters && (

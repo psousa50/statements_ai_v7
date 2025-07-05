@@ -89,6 +89,7 @@ export interface EnhancementRuleFilters {
   source?: EnhancementRuleSource
   sort_field?: SortField
   sort_direction?: SortDirection
+  show_invalid_only?: boolean
 }
 
 export interface RuleTypeUsage {

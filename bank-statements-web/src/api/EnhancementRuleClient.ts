@@ -55,6 +55,9 @@ export const enhancementRuleClient: EnhancementRuleClient = {
     if (filters?.sort_direction) {
       params.append('sort_direction', filters.sort_direction)
     }
+    if (filters?.show_invalid_only) {
+      params.append('show_invalid_only', 'true')
+    }
 
     const url = params.toString() ? `${API_URL}?${params.toString()}` : API_URL
     const response = await axios.get<EnhancementRuleListResponse>(url)
