@@ -21,7 +21,8 @@ export const FileUploadZone: React.FC<FileUploadZoneProps> = ({ onFileSelected, 
       const file = acceptedFiles[0]
 
       // Check file type
-      if (!file.name.endsWith('.csv') && !file.name.endsWith('.xlsx')) {
+      const fileName = file.name.toLowerCase()
+      if (!fileName.endsWith('.csv') && !fileName.endsWith('.xlsx')) {
         setError('Only CSV and XLSX files are supported')
         return
       }
