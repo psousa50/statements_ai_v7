@@ -2,7 +2,7 @@ from typing import List, Optional
 from uuid import UUID
 
 from sqlalchemy import and_, func, or_
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from app.domain.models.enhancement_rule import EnhancementRule, EnhancementRuleSource, MatchType
 from app.ports.repositories.enhancement_rule import EnhancementRuleRepository
@@ -190,7 +190,12 @@ class SQLAlchemyEnhancementRuleRepository(EnhancementRuleRepository):
 
     def find_by_id(self, rule_id: UUID) -> Optional[EnhancementRule]:
         """Find enhancement rule by ID"""
-        return self.db.query(EnhancementRule).filter(EnhancementRule.id == rule_id).first()
+        return (
+            self.db.query(EnhancementRule)
+            .options(joinedload(EnhancementRule.category), joinedload(EnhancementRule.counterparty_account))
+            .filter(EnhancementRule.id == rule_id)
+            .first()
+        )
 
     def find_by_normalized_description(self, normalized_description: str) -> Optional[EnhancementRule]:
         """Find enhancement rule by exact normalized description pattern"""
