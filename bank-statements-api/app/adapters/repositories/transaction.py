@@ -76,6 +76,7 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         end_date: Optional[date] = None,
         sort_field: Optional[str] = None,
         sort_direction: Optional[str] = None,
+        exclude_transfers: Optional[bool] = None,
     ) -> Tuple[List[Transaction], int]:
         """Get transactions with pagination and advanced filtering"""
 
@@ -119,6 +120,10 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         if end_date is not None:
             filters.append(Transaction.date <= end_date)
 
+        # Exclude transfers filter (default to True)
+        if exclude_transfers is not False:
+            filters.append(Transaction.counterparty_account_id.is_(None))
+
         if filters:
             query = query.filter(and_(*filters))
 
@@ -144,6 +149,7 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         account_id: Optional[UUID] = None,
         start_date: Optional[date] = None,
         end_date: Optional[date] = None,
+        exclude_transfers: Optional[bool] = None,
     ) -> Dict[Optional[UUID], Dict[str, Decimal]]:
         """Get category totals for chart data with the same filtering options as get_paginated"""
 
@@ -190,6 +196,10 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
             filters.append(Transaction.date >= start_date)
         if end_date is not None:
             filters.append(Transaction.date <= end_date)
+
+        # Exclude transfers filter (default to True)
+        if exclude_transfers is not False:
+            filters.append(Transaction.counterparty_account_id.is_(None))
 
         if filters:
             query = query.filter(and_(*filters))

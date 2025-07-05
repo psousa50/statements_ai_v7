@@ -70,6 +70,7 @@ class TransactionService:
         include_running_balance: bool = False,
         sort_field: Optional[str] = None,
         sort_direction: Optional[str] = None,
+        exclude_transfers: Optional[bool] = None,
     ) -> TransactionListResponse:
         """Get transactions with pagination and advanced filtering"""
         (
@@ -88,6 +89,7 @@ class TransactionService:
             end_date=end_date,
             sort_field=sort_field,
             sort_direction=sort_direction,
+            exclude_transfers=exclude_transfers,
         )
 
         # Calculate running balance if requested and account is specified
@@ -216,6 +218,7 @@ class TransactionService:
         account_id: Optional[UUID] = None,
         start_date: Optional[date] = None,
         end_date: Optional[date] = None,
+        exclude_transfers: Optional[bool] = None,
     ) -> Dict[Optional[UUID], Dict[str, Decimal]]:
         """Get category totals for chart data with the same filtering options as get_transactions_paginated"""
         return self.transaction_repository.get_category_totals(
@@ -227,6 +230,7 @@ class TransactionService:
             account_id=account_id,
             start_date=start_date,
             end_date=end_date,
+            exclude_transfers=exclude_transfers,
         )
 
     def update_transaction(
@@ -273,9 +277,7 @@ class TransactionService:
             return None
 
         transaction.category_id = category_id
-        transaction.categorization_status = (
-            CategorizationStatus.MANUAL if category_id else CategorizationStatus.UNCATEGORIZED
-        )
+        transaction.categorization_status = CategorizationStatus.MANUAL if category_id else CategorizationStatus.UNCATEGORIZED
 
         return self.transaction_repository.update(transaction)
 

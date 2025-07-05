@@ -15,12 +15,14 @@ interface TransactionFiltersProps {
   descriptionSearch?: string
   startDate?: string
   endDate?: string
+  excludeTransfers?: boolean
   onCategoryChange: (categoryIds: string[]) => void
   onStatusChange: (status?: CategorizationStatus) => void
   onAccountChange: (accountId?: string) => void
   onAmountRangeChange: (minAmount?: number, maxAmount?: number) => void
   onDescriptionSearchChange: (search?: string) => void
   onDateRangeChange?: (startDate?: string, endDate?: string) => void
+  onExcludeTransfersChange: (excludeTransfers: boolean) => void
   onClearFilters: () => void
 }
 
@@ -49,12 +51,14 @@ export const TransactionFilters = ({
   descriptionSearch,
   startDate,
   endDate,
+  excludeTransfers,
   onCategoryChange,
   onStatusChange: _onStatusChange,
   onAccountChange,
   onAmountRangeChange,
   onDescriptionSearchChange,
   onDateRangeChange,
+  onExcludeTransfersChange,
   onClearFilters,
 }: TransactionFiltersProps) => {
   const [isCollapsed, setIsCollapsed] = useState(false)
@@ -85,7 +89,8 @@ export const TransactionFilters = ({
     descriptionSearch ||
     selectedAccountId ||
     startDate ||
-    endDate
+    endDate ||
+    excludeTransfers === false // Only consider it active if explicitly set to false
 
   const handleDateRangeChange = useCallback(
     (range: [Date, Date] | null) => {
@@ -205,125 +210,147 @@ export const TransactionFilters = ({
       </div>
 
       {!isCollapsed && (
-        <div className="filters-grid">
-          {/* Search Description */}
-          <div className="filter-section">
-            <label htmlFor="description-search" className="filter-label">
-              Search Description
-            </label>
-            <input
-              id="description-search"
-              type="text"
-              value={descriptionSearch || ''}
-              onChange={(e) => onDescriptionSearchChange(e.target.value || undefined)}
-              placeholder="Search transactions..."
-              className="search-input"
-            />
-          </div>
-
-          {/* Status Filter */}
-          <div className="filter-section">
-            <label htmlFor="status-filter" className="filter-label">
-              Status
-            </label>
-            <select
-              id="status-filter"
-              value={selectedStatus || ''}
-              onChange={(e) => _onStatusChange((e.target.value as CategorizationStatus) || undefined)}
-              className="filter-select"
-            >
-              <option value="">All Statuses</option>
-              <option value="CATEGORIZED">Categorized</option>
-              <option value="UNCATEGORIZED">Uncategorized</option>
-            </select>
-          </div>
-
-          {/* Account Filter */}
-          <div className="filter-section">
-            <label htmlFor="account-filter" className="filter-label">
-              Account
-            </label>
-            <select
-              id="account-filter"
-              value={selectedAccountId || ''}
-              onChange={(e) => onAccountChange(e.target.value || undefined)}
-              className="filter-select"
-            >
-              <option value="">All Accounts</option>
-              {accounts.map((account) => (
-                <option key={account.id} value={account.id}>
-                  {account.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Date Range */}
-          <div className="filter-section">
-            <label className="filter-label">Date Range</label>
-            {onDateRangeChange ? (
-              <div className="date-range-picker" ref={datePickerRef}>
-                <DateRangePicker
-                  value={dateRange}
-                  onChange={handleDateRangeChange}
-                  ranges={predefinedRanges}
-                  placeholder="Select date range"
-                  cleanable
-                  showOneCalendar={false}
-                  format="dd/MM/yyyy"
-                  character=" - "
-                  size="md"
-                  placement="bottomStart"
-                  className="date-range-picker-input"
-                />
-              </div>
-            ) : (
-              <div
-                className="filter-placeholder"
-                style={{ padding: '8px', color: 'var(--text-secondary)', fontStyle: 'italic' }}
-              >
-                Not available
-              </div>
-            )}
-          </div>
-
-          {/* Amount Range */}
-          <div className="filter-section">
-            <label className="filter-label">Amount Range</label>
-            <div className="amount-range">
+        <div className="filters-container">
+          {/* Primary Filters Row */}
+          <div className="filters-row primary-filters">
+            {/* Search */}
+            <div className="filter-group search-group">
+              <label htmlFor="description-search" className="filter-label">
+                Search
+              </label>
               <input
-                type="number"
-                value={minAmount ?? ''}
-                onChange={(e) => handleAmountChange('min', e.target.value)}
-                placeholder="Min"
-                className="amount-input"
-                step="0.01"
+                id="description-search"
+                type="text"
+                value={descriptionSearch || ''}
+                onChange={(e) => onDescriptionSearchChange(e.target.value || undefined)}
+                placeholder="Search transactions..."
+                className="filter-input search-input"
               />
-              <span className="amount-separator">to</span>
-              <input
-                type="number"
-                value={maxAmount ?? ''}
-                onChange={(e) => handleAmountChange('max', e.target.value)}
-                placeholder="Max"
-                className="amount-input"
-                step="0.01"
-              />
+            </div>
+
+            {/* Date Range */}
+            <div className="filter-group date-group">
+              <label className="filter-label">Date Range</label>
+              {onDateRangeChange ? (
+                <div className="date-range-picker" ref={datePickerRef}>
+                  <DateRangePicker
+                    value={dateRange}
+                    onChange={handleDateRangeChange}
+                    ranges={predefinedRanges}
+                    placeholder="Select date range"
+                    cleanable
+                    showOneCalendar={false}
+                    format="dd/MM/yyyy"
+                    character=" - "
+                    size="md"
+                    placement="bottomStart"
+                    className="date-range-picker-input"
+                  />
+                </div>
+              ) : (
+                <div className="filter-placeholder">
+                  Not available
+                </div>
+              )}
             </div>
           </div>
 
-          {/* Categories - Full width */}
-          <div className="filter-section filter-section-full-width">
-            <label className="filter-label">Categories</label>
-            <CategorySelector
-              categories={categories}
-              selectedCategoryIds={selectedCategoryIds}
-              onCategoryChange={() => {}} // Not used in multiple mode
-              onCategoryIdsChange={onCategoryChange}
-              placeholder="Type to add categories..."
-              multiple={true}
-              allowClear={false}
-              variant="filter"
-            />
+          {/* Secondary Filters Row */}
+          <div className="filters-row secondary-filters">
+            {/* Status */}
+            <div className="filter-group">
+              <label htmlFor="status-filter" className="filter-label">
+                Status
+              </label>
+              <select
+                id="status-filter"
+                value={selectedStatus || ''}
+                onChange={(e) => _onStatusChange((e.target.value as CategorizationStatus) || undefined)}
+                className="filter-input filter-select"
+              >
+                <option value="">All Statuses</option>
+                <option value="CATEGORIZED">Categorized</option>
+                <option value="UNCATEGORIZED">Uncategorized</option>
+              </select>
+            </div>
+
+            {/* Account */}
+            <div className="filter-group">
+              <label htmlFor="account-filter" className="filter-label">
+                Account
+              </label>
+              <select
+                id="account-filter"
+                value={selectedAccountId || ''}
+                onChange={(e) => onAccountChange(e.target.value || undefined)}
+                className="filter-input filter-select"
+              >
+                <option value="">All Accounts</option>
+                {accounts.map((account) => (
+                  <option key={account.id} value={account.id}>
+                    {account.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Amount Range */}
+            <div className="filter-group amount-group">
+              <label className="filter-label">Amount Range</label>
+              <div className="amount-range-inputs">
+                <input
+                  type="number"
+                  value={minAmount ?? ''}
+                  onChange={(e) => handleAmountChange('min', e.target.value)}
+                  placeholder="Min"
+                  className="filter-input amount-input"
+                  step="0.01"
+                />
+                <span className="amount-separator">to</span>
+                <input
+                  type="number"
+                  value={maxAmount ?? ''}
+                  onChange={(e) => handleAmountChange('max', e.target.value)}
+                  placeholder="Max"
+                  className="filter-input amount-input"
+                  step="0.01"
+                />
+              </div>
+            </div>
+
+            {/* Options */}
+            <div className="filter-group options-group">
+              <label className="filter-label">Options</label>
+              <div className="checkbox-container">
+                <label htmlFor="exclude-transfers" className="checkbox-label">
+                  <input
+                    id="exclude-transfers"
+                    type="checkbox"
+                    checked={excludeTransfers !== false}
+                    onChange={(e) => onExcludeTransfersChange(e.target.checked)}
+                    className="checkbox-input"
+                  />
+                  <span className="checkbox-text">Exclude Transfers</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          {/* Categories Row - Full width */}
+          <div className="filters-row categories-row">
+            <div className="filter-group categories-group">
+              <label className="filter-label">Categories</label>
+              <CategorySelector
+                categories={categories}
+                selectedCategoryIds={selectedCategoryIds}
+                onCategoryChange={() => {}} // Not used in multiple mode
+                onCategoryIdsChange={onCategoryChange}
+                placeholder="Type to add categories..."
+                multiple={true}
+                allowClear={false}
+                variant="filter"
+              />
+            </div>
           </div>
         </div>
       )}

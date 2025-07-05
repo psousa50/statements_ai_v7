@@ -210,13 +210,11 @@
   transform: rotate(-90deg);
 }
 
-/* Add smooth animation for filters grid */
-.transactions-page .filters-grid {
-  display: grid;
-  grid-template-columns: 1.2fr 1fr 1fr 1.8fr 1fr;
-  grid-template-rows: auto auto;
+/* NEW BEAUTIFUL FILTERS LAYOUT */
+.transactions-page .filters-container {
+  display: flex;
+  flex-direction: column;
   gap: 1.5rem;
-  align-items: start;
   animation: slideDown 0.3s ease-out;
   overflow: visible;
 }
@@ -234,21 +232,102 @@
   }
 }
 
-.transactions-page .filter-section {
-  margin-bottom: 0;
+.transactions-page .filters-row {
+  display: flex;
+  gap: 1.5rem;
+  align-items: start;
+  flex-wrap: wrap;
 }
 
-/* Categories filter spans full width on second row */
-.transactions-page .filter-section-full-width {
-  grid-column: 1 / -1;
+.transactions-page .primary-filters {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.03) 0%, rgba(16, 185, 129, 0.03) 100%);
+  border: 1px solid var(--border-secondary);
+  border-radius: 12px;
+  padding: 1.5rem;
 }
 
+.transactions-page .secondary-filters {
+  /* No special background for cleaner look */
+}
+
+.transactions-page .categories-row {
+  /* Special styling for categories */
+}
+
+.transactions-page .filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 0; /* Allow shrinking */
+}
+
+.transactions-page .search-group {
+  flex: 2;
+  min-width: 250px;
+}
+
+.transactions-page .date-group {
+  flex: 1.5;
+  min-width: 200px;
+}
+
+.transactions-page .amount-group {
+  flex: 1.5;
+  min-width: 200px;
+}
+
+.transactions-page .options-group {
+  flex: 1;
+  min-width: 150px;
+}
+
+.transactions-page .categories-group {
+  flex: 1;
+  width: 100%;
+}
+
+/* OLD GRID STYLES - Keep as fallback but hide */
+.transactions-page .filters-grid {
+  display: none;
+}
+
+/* ENHANCED FILTER STYLING */
 .transactions-page .filter-label {
   display: block;
   font-size: 0.875rem;
   font-weight: 600;
   color: var(--text-secondary);
   margin-bottom: 0.5rem;
+  letter-spacing: 0.025em;
+}
+
+.transactions-page .filter-input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--border-primary);
+  border-radius: 8px;
+  background-color: var(--bg-primary);
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.transactions-page .filter-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1), 0 1px 3px rgba(0, 0, 0, 0.1);
+  transform: translateY(-1px);
+}
+
+.transactions-page .filter-input:hover {
+  border-color: var(--border-secondary);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.transactions-page .filter-input::placeholder {
+  color: var(--text-muted);
+  font-style: italic;
 }
 
 .transactions-page .search-input {
@@ -274,37 +353,89 @@
   color: var(--text-muted);
 }
 
-/* Amount Range - compact horizontal layout */
-.transactions-page .amount-range {
+/* ENHANCED AMOUNT RANGE STYLING */
+.transactions-page .amount-range-inputs {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 1rem;
 }
 
 .transactions-page .amount-input {
   flex: 1;
-  padding: 0.75rem;
-  border: 1px solid var(--border-primary);
-  border-radius: 8px;
-  background-color: var(--bg-primary);
-  font-size: 0.875rem;
-  color: var(--text-primary);
-  transition:
-    border-color 0.2s,
-    box-shadow 0.2s;
+  /* Inherits from .filter-input styles above */
 }
 
-.transactions-page .amount-input:focus {
-  outline: none;
+.transactions-page .amount-separator {
+  color: var(--text-secondary);
+  font-weight: 600;
+  font-size: 0.875rem;
+  white-space: nowrap;
+  padding: 0 0.25rem;
+  opacity: 0.7;
+}
+
+/* ENHANCED CHECKBOX STYLING */
+.transactions-page .checkbox-container {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.transactions-page .checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  user-select: none;
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.transactions-page .checkbox-input {
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--border-primary);
+  border-radius: 4px;
+  background-color: var(--bg-primary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  margin: 0;
+}
+
+.transactions-page .checkbox-input:checked {
+  background-color: #3b82f6;
   border-color: #3b82f6;
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
-.transactions-page .amount-separator {
-  color: var(--text-muted);
+.transactions-page .checkbox-input:checked::after {
+  content: '✓';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.transactions-page .checkbox-input:hover {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.05);
+}
+
+.transactions-page .checkbox-text {
   font-weight: 500;
-  font-size: 0.875rem;
-  white-space: nowrap;
+  letter-spacing: 0.025em;
+}
+
+/* Legacy amount range styling - keep for backwards compatibility */
+.transactions-page .amount-range {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 /* Date Range Picker Container */
@@ -909,11 +1040,39 @@
   gap: 1rem;
 }
 
-/* Responsive Design */
+/* ENHANCED RESPONSIVE DESIGN */
+@media (max-width: 1200px) {
+  .transactions-page .filters-row {
+    flex-wrap: wrap;
+  }
+  
+  .transactions-page .search-group {
+    flex: 1;
+    min-width: 200px;
+  }
+  
+  .transactions-page .date-group {
+    flex: 1;
+    min-width: 180px;
+  }
+}
+
 @media (max-width: 1024px) {
-  .transactions-page .filters-grid {
-    grid-template-columns: 1fr 1fr 1fr;
+  .transactions-page .primary-filters {
+    padding: 1rem;
+  }
+  
+  .transactions-page .filters-row {
     gap: 1rem;
+  }
+  
+  .transactions-page .secondary-filters {
+    flex-wrap: wrap;
+  }
+  
+  .transactions-page .filter-group {
+    flex: 1;
+    min-width: 150px;
   }
 }
 
@@ -921,40 +1080,71 @@
   .transactions-page {
     padding: 1rem;
   }
-
-  .transactions-page .filters-grid {
-    grid-template-columns: 1fr;
+  
+  .transactions-page .filters-container {
     gap: 1rem;
   }
-
-  .transactions-page .amount-range {
+  
+  .transactions-page .primary-filters {
+    padding: 1rem;
+  }
+  
+  .transactions-page .filters-row {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .transactions-page .filter-group {
+    min-width: 0;
+    width: 100%;
+  }
+  
+  .transactions-page .amount-range-inputs {
     flex-direction: column;
     gap: 0.5rem;
     align-items: stretch;
   }
-
+  
   .transactions-page .amount-separator {
     text-align: center;
+    padding: 0.25rem 0;
   }
-
-  .transactions-page .category-dropdown-header {
-    flex-direction: column;
-    gap: 0.5rem;
+  
+  .transactions-page .checkbox-container {
+    justify-content: center;
   }
-
-  .transactions-page .selected-categories {
-    min-height: 60px;
-  }
-
+  
   .transactions-page .transactions-summary {
     flex-direction: column;
     align-items: flex-start;
     gap: 0.5rem;
   }
-
+  
   .transactions-page .pagination-container {
     flex-direction: column !important;
     align-items: stretch !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .transactions-page {
+    padding: 0.5rem;
+  }
+  
+  .transactions-page .transaction-filters-advanced {
+    padding: 1rem;
+  }
+  
+  .transactions-page .primary-filters {
+    padding: 0.75rem;
+  }
+  
+  .transactions-page .filter-input {
+    padding: 0.625rem 0.75rem;
+  }
+  
+  .transactions-page .filter-header h3 {
+    font-size: 1.1rem;
   }
 }
 

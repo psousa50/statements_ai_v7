@@ -49,7 +49,9 @@ const COLORS = [
 
 export const ChartsPage = () => {
   const navigate = useNavigate()
-  const [filters, setFilters] = useState<Omit<FilterType, 'page' | 'page_size'>>({})
+  const [filters, setFilters] = useState<Omit<FilterType, 'page' | 'page_size'>>({
+    exclude_transfers: true,
+  })
   const [chartType, setChartType] = useState<'root' | 'sub'>('root')
   const [selectedRootCategory, setSelectedRootCategory] = useState<string | null>(null)
 
@@ -149,6 +151,13 @@ export const ChartsPage = () => {
     [handleFilterChange]
   )
 
+  const handleExcludeTransfersFilter = useCallback(
+    (excludeTransfers: boolean) => {
+      handleFilterChange({ exclude_transfers: excludeTransfers })
+    },
+    [handleFilterChange]
+  )
+
   // Debounced updates
   const handleAmountRangeFilter = useCallback((minAmount?: number, maxAmount?: number) => {
     setLocalMinAmount(minAmount)
@@ -165,13 +174,14 @@ export const ChartsPage = () => {
   }, [])
 
   const handleClearFilters = useCallback(() => {
-    setFilters({})
+    const defaultFilters = { exclude_transfers: true }
+    setFilters(defaultFilters)
     setLocalDescriptionSearch('')
     setLocalMinAmount(undefined)
     setLocalMaxAmount(undefined)
     setLocalStartDate('')
     setLocalEndDate('')
-    fetchCategoryTotals({})
+    fetchCategoryTotals(defaultFilters)
   }, [fetchCategoryTotals])
 
   // Process chart data
@@ -337,6 +347,7 @@ export const ChartsPage = () => {
         if (filters.end_date) params.set('end_date', filters.end_date)
         if (filters.status) params.set('status', filters.status)
         if (filters.account_id) params.set('account_id', filters.account_id)
+        if (filters.exclude_transfers) params.set('exclude_transfers', 'true')
 
         // Add category filter - for sub-categories, use the specific category ID
         if (data.id !== 'uncategorized' && data.id !== 'other') {
@@ -419,7 +430,7 @@ export const ChartsPage = () => {
 
   // Initial load
   useEffect(() => {
-    fetchCategoryTotals({})
+    fetchCategoryTotals({ exclude_transfers: true })
   }, [fetchCategoryTotals])
 
   return (
@@ -450,12 +461,14 @@ export const ChartsPage = () => {
             descriptionSearch={localDescriptionSearch}
             startDate={localStartDate}
             endDate={localEndDate}
+            excludeTransfers={filters.exclude_transfers}
             onCategoryChange={handleCategoryFilter}
             onStatusChange={handleStatusFilter}
             onAccountChange={handleAccountFilter}
             onAmountRangeChange={handleAmountRangeFilter}
             onDescriptionSearchChange={handleDescriptionSearchFilter}
             onDateRangeChange={handleDateRangeFilter}
+            onExcludeTransfersChange={handleExcludeTransfersFilter}
             onClearFilters={handleClearFilters}
           />
         </div>

@@ -21,6 +21,7 @@ export interface TransactionFilters {
   sort_field?: string
   sort_direction?: 'asc' | 'desc'
   enhancement_rule_id?: string
+  exclude_transfers?: boolean
 }
 
 export interface CategoryTotal {
@@ -111,6 +112,9 @@ export const transactionClient: TransactionClient = {
     if (filters?.enhancement_rule_id) {
       params.append('enhancement_rule_id', filters.enhancement_rule_id)
     }
+    if (filters?.exclude_transfers) {
+      params.append('exclude_transfers', 'true')
+    }
 
     const url = params.toString() ? `${API_URL}?${params.toString()}` : API_URL
     const response = await axios.get<TransactionListResponse>(url)
@@ -143,6 +147,9 @@ export const transactionClient: TransactionClient = {
     }
     if (filters?.end_date) {
       params.append('end_date', filters.end_date)
+    }
+    if (filters?.exclude_transfers) {
+      params.append('exclude_transfers', 'true')
     }
 
     const url = params.toString() ? `${API_URL}/category-totals?${params.toString()}` : `${API_URL}/category-totals`

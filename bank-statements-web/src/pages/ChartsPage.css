@@ -1,7 +1,24 @@
+/* Extend TransactionsPage.css styles for Charts Page */
 .charts-page {
   padding: 1.5rem;
   min-height: 100vh;
   background-color: var(--bg-secondary);
+}
+
+/* Apply the same beautiful filter styles to charts page */
+.charts-page .filters-container,
+.charts-page .filters-row,
+.charts-page .primary-filters,
+.charts-page .filter-group,
+.charts-page .filter-label,
+.charts-page .filter-input,
+.charts-page .checkbox-container,
+.charts-page .checkbox-label,
+.charts-page .checkbox-input,
+.charts-page .checkbox-text,
+.charts-page .amount-range-inputs,
+.charts-page .amount-separator {
+  /* Inherit styles from transactions page */
 }
 
 .page-header {

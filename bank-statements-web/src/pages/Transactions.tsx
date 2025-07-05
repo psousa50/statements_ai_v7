@@ -27,6 +27,7 @@ export const TransactionsPage = () => {
     const urlSortField = searchParams.get('sort_field')
     const urlSortDirection = searchParams.get('sort_direction')
     const urlEnhancementRuleId = searchParams.get('enhancement_rule_id')
+    const urlExcludeTransfers = searchParams.get('exclude_transfers')
 
     return {
       page: 1,
@@ -42,6 +43,7 @@ export const TransactionsPage = () => {
       sort_field: (urlSortField as TransactionSortField) || 'date',
       sort_direction: (urlSortDirection as TransactionSortDirection) || 'desc',
       enhancement_rule_id: urlEnhancementRuleId || undefined,
+      exclude_transfers: urlExcludeTransfers === 'false' ? false : true, // Default to true
     }
   }
 
@@ -189,6 +191,13 @@ export const TransactionsPage = () => {
     [handleFilterChange]
   )
 
+  const handleExcludeTransfersFilter = useCallback(
+    (excludeTransfers: boolean) => {
+      handleFilterChange({ exclude_transfers: excludeTransfers })
+    },
+    [handleFilterChange]
+  )
+
   const handleSort = useCallback(
     (field: TransactionSortField) => {
       const currentSortField = filters.sort_field
@@ -310,12 +319,14 @@ export const TransactionsPage = () => {
               descriptionSearch={localDescriptionSearch}
               startDate={localStartDate}
               endDate={localEndDate}
+              excludeTransfers={filters.exclude_transfers}
               onCategoryChange={handleCategoryFilter}
               onStatusChange={handleStatusFilter}
               onAccountChange={handleAccountFilter}
               onAmountRangeChange={handleAmountRangeFilter}
               onDescriptionSearchChange={handleDescriptionSearchFilter}
               onDateRangeChange={handleDateRangeFilter}
+              onExcludeTransfersChange={handleExcludeTransfersFilter}
               onClearFilters={handleClearFilters}
             />
           </div>

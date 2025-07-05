@@ -95,6 +95,10 @@ def register_transaction_routes(
             None,
             description="Filter by enhancement rule ID (overrides other filters)",
         ),
+        exclude_transfers: Optional[bool] = Query(
+            True,
+            description="Exclude transfers between accounts",
+        ),
         internal: InternalDependencies = Depends(provide_dependencies),
     ):
         # If enhancement_rule_id is provided, use rule-based filtering
@@ -134,6 +138,7 @@ def register_transaction_routes(
             include_running_balance=include_running_balance,
             sort_field=sort_field,
             sort_direction=sort_direction,
+            exclude_transfers=exclude_transfers,
         )
         return transactions
 
@@ -165,6 +170,10 @@ def register_transaction_routes(
             None,
             description="Filter transactions to this date",
         ),
+        exclude_transfers: Optional[bool] = Query(
+            True,
+            description="Exclude transfers between accounts",
+        ),
         internal: InternalDependencies = Depends(provide_dependencies),
     ):
         """Get aggregated totals per category for chart data. Uses the same filtering options as get_transactions."""
@@ -188,6 +197,7 @@ def register_transaction_routes(
             account_id=account_id,
             start_date=start_date,
             end_date=end_date,
+            exclude_transfers=exclude_transfers,
         )
 
         # Convert to response format
