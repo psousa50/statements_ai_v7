@@ -67,6 +67,45 @@
   border-bottom: 1px solid var(--border-primary);
 }
 
+.charts-controls {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.transaction-type-filter {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.transaction-type-filter label {
+  color: var(--text-primary);
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+.transaction-type-select {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
+  border-radius: 4px;
+  padding: 0.5rem;
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.transaction-type-select:focus {
+  outline: none;
+  border-color: var(--button-primary);
+  box-shadow: 0 0 0 2px var(--button-primary-soft);
+}
+
+.transaction-type-select:hover {
+  border-color: var(--border-secondary);
+}
+
 .charts-summary h2 {
   margin: 0 0 0.5rem 0;
   color: var(--text-primary);
@@ -228,6 +267,24 @@
     flex-direction: column;
     align-items: flex-start;
     gap: 1rem;
+  }
+
+  .charts-controls {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+    width: 100%;
+  }
+
+  .transaction-type-filter {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+    width: 100%;
+  }
+
+  .transaction-type-select {
+    width: 100%;
   }
 
   .chart-stats {

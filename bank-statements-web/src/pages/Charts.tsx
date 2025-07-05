@@ -5,7 +5,7 @@ import { useCategoryTotals } from '../services/hooks/useTransactions'
 import { useCategories } from '../services/hooks/useCategories'
 import { useAccounts } from '../services/hooks/useAccounts'
 import { TransactionFilters } from '../components/TransactionFilters'
-import { CategorizationStatus, Category } from '../types/Transaction'
+import { Category } from '../types/Transaction'
 import { TransactionFilters as FilterType } from '../api/TransactionClient'
 import './ChartsPage.css'
 
@@ -51,14 +51,17 @@ export const ChartsPage = () => {
   const navigate = useNavigate()
   const [filters, setFilters] = useState<Omit<FilterType, 'page' | 'page_size'>>({
     exclude_transfers: true,
+    transaction_type: 'debit',
   })
   const [chartType, setChartType] = useState<'root' | 'sub'>('root')
   const [selectedRootCategory, setSelectedRootCategory] = useState<string | null>(null)
+  const [transactionType, setTransactionType] = useState<'all' | 'debit' | 'credit'>('debit')
+  const [excludeUncategorized, setExcludeUncategorized] = useState<boolean>(true)
 
   // Local state for debounced inputs
   const [localDescriptionSearch, setLocalDescriptionSearch] = useState<string>('')
-  const [localMinAmount, setLocalMinAmount] = useState<number | undefined>()
-  const [localMaxAmount, setLocalMaxAmount] = useState<number | undefined>()
+  const [localMinAmount, setLocalMinAmount] = useState<number | undefined>(undefined)
+  const [localMaxAmount, setLocalMaxAmount] = useState<number | undefined>(undefined)
   const [localStartDate, setLocalStartDate] = useState<string>('')
   const [localEndDate, setLocalEndDate] = useState<string>('')
 
@@ -99,6 +102,7 @@ export const ChartsPage = () => {
           max_amount: localMaxAmount,
           start_date: localStartDate || undefined,
           end_date: localEndDate || undefined,
+          transaction_type: transactionType, // Ensure transaction_type is always included
         }
         setFilters(updatedFilters)
         fetchCategoryTotals(updatedFilters)
@@ -118,6 +122,7 @@ export const ChartsPage = () => {
     localEndDate,
     filters,
     fetchCategoryTotals,
+    transactionType,
   ])
 
   const handleFilterChange = useCallback(
@@ -137,13 +142,6 @@ export const ChartsPage = () => {
     [handleFilterChange]
   )
 
-  const handleStatusFilter = useCallback(
-    (status?: CategorizationStatus) => {
-      handleFilterChange({ status })
-    },
-    [handleFilterChange]
-  )
-
   const handleAccountFilter = useCallback(
     (accountId?: string) => {
       handleFilterChange({ account_id: accountId })
@@ -157,6 +155,11 @@ export const ChartsPage = () => {
     },
     [handleFilterChange]
   )
+
+  const handleExcludeUncategorizedFilter = useCallback((excludeUncategorized: boolean) => {
+    setExcludeUncategorized(excludeUncategorized)
+    // We handle this in the chart data processing, not as a backend filter
+  }, [])
 
   // Debounced updates
   const handleAmountRangeFilter = useCallback((minAmount?: number, maxAmount?: number) => {
@@ -173,14 +176,27 @@ export const ChartsPage = () => {
     setLocalEndDate(endDate || '')
   }, [])
 
+  const handleTransactionTypeFilter = useCallback(
+    (type: 'all' | 'debit' | 'credit') => {
+      setTransactionType(type)
+      handleFilterChange({ transaction_type: type })
+    },
+    [handleFilterChange]
+  )
+
   const handleClearFilters = useCallback(() => {
-    const defaultFilters = { exclude_transfers: true }
+    const defaultFilters = {
+      exclude_transfers: true,
+      transaction_type: 'debit' as const,
+    }
     setFilters(defaultFilters)
     setLocalDescriptionSearch('')
     setLocalMinAmount(undefined)
     setLocalMaxAmount(undefined)
     setLocalStartDate('')
     setLocalEndDate('')
+    setTransactionType('debit')
+    setExcludeUncategorized(true)
     fetchCategoryTotals(defaultFilters)
   }, [fetchCategoryTotals])
 
@@ -235,6 +251,7 @@ export const ChartsPage = () => {
 
       return Array.from(rootCategoryData.entries())
         .filter(([_, data]) => data.value > 0)
+        .filter(([id, _]) => !(excludeUncategorized && id === 'uncategorized'))
         .map(([id, data], index) => ({
           id,
           name: id === 'uncategorized' ? 'Uncategorized' : categoryMap.get(id)?.name || 'Unknown',
@@ -315,6 +332,7 @@ export const ChartsPage = () => {
 
       return Array.from(subcategoryData.entries())
         .filter(([_, data]) => data.value > 0)
+        .filter(([id, _]) => !(excludeUncategorized && id === 'uncategorized'))
         .map(([id, data], index) => ({
           id,
           name:
@@ -328,7 +346,7 @@ export const ChartsPage = () => {
           color: COLORS[index % COLORS.length],
         }))
     }
-  }, [categoryTotals, categories, chartType, selectedRootCategory])
+  }, [categoryTotals, categories, chartType, selectedRootCategory, excludeUncategorized])
 
   const handleChartClick = useCallback(
     (data: ChartData) => {
@@ -345,9 +363,10 @@ export const ChartsPage = () => {
         if (filters.max_amount !== undefined) params.set('max_amount', filters.max_amount.toString())
         if (filters.start_date) params.set('start_date', filters.start_date)
         if (filters.end_date) params.set('end_date', filters.end_date)
-        if (filters.status) params.set('status', filters.status)
         if (filters.account_id) params.set('account_id', filters.account_id)
         if (filters.exclude_transfers) params.set('exclude_transfers', 'true')
+        if (filters.transaction_type && filters.transaction_type !== 'all')
+          params.set('transaction_type', filters.transaction_type)
 
         // Add category filter - for sub-categories, use the specific category ID
         if (data.id !== 'uncategorized' && data.id !== 'other') {
@@ -360,7 +379,7 @@ export const ChartsPage = () => {
         navigate(`/transactions?${params.toString()}`)
       }
     },
-    [chartType, filters, navigate]
+    [chartType, filters, navigate, transactionType]
   )
 
   const handleBackToRoot = useCallback(() => {
@@ -430,7 +449,10 @@ export const ChartsPage = () => {
 
   // Initial load
   useEffect(() => {
-    fetchCategoryTotals({ exclude_transfers: true })
+    fetchCategoryTotals({
+      exclude_transfers: true,
+      transaction_type: 'debit',
+    })
   }, [fetchCategoryTotals])
 
   return (
@@ -454,7 +476,6 @@ export const ChartsPage = () => {
             categories={categories || []}
             accounts={accounts || []}
             selectedCategoryIds={filters.category_ids}
-            selectedStatus={filters.status}
             selectedAccountId={filters.account_id}
             minAmount={localMinAmount}
             maxAmount={localMaxAmount}
@@ -462,13 +483,16 @@ export const ChartsPage = () => {
             startDate={localStartDate}
             endDate={localEndDate}
             excludeTransfers={filters.exclude_transfers}
+            excludeUncategorized={excludeUncategorized}
+            transactionType={transactionType}
             onCategoryChange={handleCategoryFilter}
-            onStatusChange={handleStatusFilter}
             onAccountChange={handleAccountFilter}
             onAmountRangeChange={handleAmountRangeFilter}
             onDescriptionSearchChange={handleDescriptionSearchFilter}
             onDateRangeChange={handleDateRangeFilter}
             onExcludeTransfersChange={handleExcludeTransfersFilter}
+            onExcludeUncategorizedChange={handleExcludeUncategorizedFilter}
+            onTransactionTypeChange={handleTransactionTypeFilter}
             onClearFilters={handleClearFilters}
           />
         </div>
@@ -495,11 +519,13 @@ export const ChartsPage = () => {
               )}
             </div>
 
-            {chartType === 'sub' && (
-              <button onClick={handleBackToRoot} className="back-button">
-                ← Back to All Categories
-              </button>
-            )}
+            <div className="charts-controls">
+              {chartType === 'sub' && (
+                <button onClick={handleBackToRoot} className="back-button">
+                  ← Back to All Categories
+                </button>
+              )}
+            </div>
           </div>
 
           <div className="chart-container">

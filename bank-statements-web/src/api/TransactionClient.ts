@@ -1,10 +1,4 @@
-import {
-  Transaction,
-  TransactionCreate,
-  TransactionListResponse,
-  CategorizationStatus,
-  Account,
-} from '../types/Transaction'
+import { Transaction, TransactionCreate, TransactionListResponse, CategorizationStatus } from '../types/Transaction'
 
 export interface TransactionFilters {
   page?: number
@@ -22,6 +16,7 @@ export interface TransactionFilters {
   sort_direction?: 'asc' | 'desc'
   enhancement_rule_id?: string
   exclude_transfers?: boolean
+  transaction_type?: 'all' | 'debit' | 'credit'
 }
 
 export interface CategoryTotal {
@@ -115,6 +110,9 @@ export const transactionClient: TransactionClient = {
     if (filters?.exclude_transfers) {
       params.append('exclude_transfers', 'true')
     }
+    if (filters?.transaction_type) {
+      params.append('transaction_type', filters.transaction_type)
+    }
 
     const url = params.toString() ? `${API_URL}?${params.toString()}` : API_URL
     const response = await axios.get<TransactionListResponse>(url)
@@ -122,6 +120,7 @@ export const transactionClient: TransactionClient = {
   },
 
   async getCategoryTotals(filters?: Omit<TransactionFilters, 'page' | 'page_size'>) {
+    console.log('getCategoryTotals called with filters:', filters) // Debug log
     const params = new URLSearchParams()
 
     if (filters?.category_ids && filters.category_ids.length > 0) {
@@ -151,8 +150,12 @@ export const transactionClient: TransactionClient = {
     if (filters?.exclude_transfers) {
       params.append('exclude_transfers', 'true')
     }
+    if (filters?.transaction_type) {
+      params.append('transaction_type', filters.transaction_type)
+    }
 
     const url = params.toString() ? `${API_URL}/category-totals?${params.toString()}` : `${API_URL}/category-totals`
+    console.log('Making request to URL:', url) // Debug log
     const response = await axios.get<CategoryTotalsResponse>(url)
     return response.data
   },

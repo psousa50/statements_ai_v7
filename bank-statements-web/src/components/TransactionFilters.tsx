@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { DateRangePicker } from 'rsuite'
-import { CategorizationStatus, Category, Account } from '../types/Transaction'
+import { Category, Account } from '../types/Transaction'
 import { CategorySelector } from './CategorySelector'
 import 'rsuite/dist/rsuite.min.css'
 
@@ -8,7 +8,6 @@ interface TransactionFiltersProps {
   categories: Category[]
   accounts: Account[]
   selectedCategoryIds?: string[]
-  selectedStatus?: CategorizationStatus
   selectedAccountId?: string
   minAmount?: number
   maxAmount?: number
@@ -16,13 +15,16 @@ interface TransactionFiltersProps {
   startDate?: string
   endDate?: string
   excludeTransfers?: boolean
+  excludeUncategorized?: boolean
+  transactionType?: 'all' | 'debit' | 'credit'
   onCategoryChange: (categoryIds: string[]) => void
-  onStatusChange: (status?: CategorizationStatus) => void
   onAccountChange: (accountId?: string) => void
   onAmountRangeChange: (minAmount?: number, maxAmount?: number) => void
   onDescriptionSearchChange: (search?: string) => void
   onDateRangeChange?: (startDate?: string, endDate?: string) => void
   onExcludeTransfersChange: (excludeTransfers: boolean) => void
+  onExcludeUncategorizedChange: (excludeUncategorized: boolean) => void
+  onTransactionTypeChange: (type: 'all' | 'debit' | 'credit') => void
   onClearFilters: () => void
 }
 
@@ -44,7 +46,6 @@ export const TransactionFilters = ({
   categories,
   accounts,
   selectedCategoryIds = [],
-  selectedStatus,
   selectedAccountId,
   minAmount,
   maxAmount,
@@ -52,13 +53,16 @@ export const TransactionFilters = ({
   startDate,
   endDate,
   excludeTransfers,
+  excludeUncategorized,
+  transactionType = 'all',
   onCategoryChange,
-  onStatusChange: _onStatusChange,
   onAccountChange,
   onAmountRangeChange,
   onDescriptionSearchChange,
   onDateRangeChange,
   onExcludeTransfersChange,
+  onExcludeUncategorizedChange,
+  onTransactionTypeChange,
   onClearFilters,
 }: TransactionFiltersProps) => {
   const [isCollapsed, setIsCollapsed] = useState(false)
@@ -83,14 +87,15 @@ export const TransactionFilters = ({
 
   const hasActiveFilters =
     selectedCategoryIds.length > 0 ||
-    selectedStatus ||
     minAmount !== undefined ||
     maxAmount !== undefined ||
     descriptionSearch ||
     selectedAccountId ||
     startDate ||
     endDate ||
-    excludeTransfers === false // Only consider it active if explicitly set to false
+    excludeTransfers === false || // Only consider it active if explicitly set to false
+    excludeUncategorized === true || // Only consider it active if explicitly set to true
+    transactionType !== 'all'
 
   const handleDateRangeChange = useCallback(
     (range: [Date, Date] | null) => {
@@ -248,29 +253,27 @@ export const TransactionFilters = ({
                   />
                 </div>
               ) : (
-                <div className="filter-placeholder">
-                  Not available
-                </div>
+                <div className="filter-placeholder">Not available</div>
               )}
             </div>
           </div>
 
           {/* Secondary Filters Row */}
           <div className="filters-row secondary-filters">
-            {/* Status */}
+            {/* Transaction Type */}
             <div className="filter-group">
-              <label htmlFor="status-filter" className="filter-label">
-                Status
+              <label htmlFor="transaction-type-filter" className="filter-label">
+                Transaction Type
               </label>
               <select
-                id="status-filter"
-                value={selectedStatus || ''}
-                onChange={(e) => _onStatusChange((e.target.value as CategorizationStatus) || undefined)}
+                id="transaction-type-filter"
+                value={transactionType}
+                onChange={(e) => onTransactionTypeChange(e.target.value as 'all' | 'debit' | 'credit')}
                 className="filter-input filter-select"
               >
-                <option value="">All Statuses</option>
-                <option value="CATEGORIZED">Categorized</option>
-                <option value="UNCATEGORIZED">Uncategorized</option>
+                <option value="all">All Transactions</option>
+                <option value="debit">Debits Only</option>
+                <option value="credit">Credits Only</option>
               </select>
             </div>
 
@@ -331,6 +334,16 @@ export const TransactionFilters = ({
                     className="checkbox-input"
                   />
                   <span className="checkbox-text">Exclude Transfers</span>
+                </label>
+                <label htmlFor="exclude-uncategorized" className="checkbox-label">
+                  <input
+                    id="exclude-uncategorized"
+                    type="checkbox"
+                    checked={excludeUncategorized === true}
+                    onChange={(e) => onExcludeUncategorizedChange(e.target.checked)}
+                    className="checkbox-input"
+                  />
+                  <span className="checkbox-text">Exclude Uncategorized</span>
                 </label>
               </div>
             </div>

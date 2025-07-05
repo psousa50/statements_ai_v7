@@ -77,6 +77,7 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         sort_field: Optional[str] = None,
         sort_direction: Optional[str] = None,
         exclude_transfers: Optional[bool] = None,
+        transaction_type: Optional[str] = None,
     ) -> Tuple[List[Transaction], int]:
         """Get transactions with pagination and advanced filtering"""
 
@@ -124,6 +125,13 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         if exclude_transfers is not False:
             filters.append(Transaction.counterparty_account_id.is_(None))
 
+        # Transaction type filter
+        if transaction_type == "debit":
+            filters.append(Transaction.amount < 0)
+        elif transaction_type == "credit":
+            filters.append(Transaction.amount > 0)
+        # For 'all' or None, don't add any filter
+
         if filters:
             query = query.filter(and_(*filters))
 
@@ -150,6 +158,7 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         start_date: Optional[date] = None,
         end_date: Optional[date] = None,
         exclude_transfers: Optional[bool] = None,
+        transaction_type: Optional[str] = None,
     ) -> Dict[Optional[UUID], Dict[str, Decimal]]:
         """Get category totals for chart data with the same filtering options as get_paginated"""
 
@@ -200,6 +209,13 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         # Exclude transfers filter (default to True)
         if exclude_transfers is not False:
             filters.append(Transaction.counterparty_account_id.is_(None))
+
+        # Transaction type filter
+        if transaction_type == "debit":
+            filters.append(Transaction.amount < 0)
+        elif transaction_type == "credit":
+            filters.append(Transaction.amount > 0)
+        # For 'all' or None, don't add any filter
 
         if filters:
             query = query.filter(and_(*filters))

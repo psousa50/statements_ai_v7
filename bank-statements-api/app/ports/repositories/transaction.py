@@ -64,6 +64,8 @@ class TransactionRepository(ABC):
         end_date: Optional[date] = None,
         sort_field: Optional[str] = None,
         sort_direction: Optional[str] = None,
+        exclude_transfers: Optional[bool] = None,
+        transaction_type: Optional[str] = None,
     ) -> Tuple[List[Transaction], int]:
         """
         Get transactions with pagination and advanced filtering
@@ -98,6 +100,8 @@ class TransactionRepository(ABC):
         account_id: Optional[UUID] = None,
         start_date: Optional[date] = None,
         end_date: Optional[date] = None,
+        exclude_transfers: Optional[bool] = None,
+        transaction_type: Optional[str] = None,
     ) -> Dict[Optional[UUID], Dict[str, Decimal]]:
         """
         Get category totals for chart data with the same filtering options as get_paginated.
