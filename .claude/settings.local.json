@@ -23,7 +23,10 @@
       "mcp__puppeteer__puppeteer_click",
       "mcp__puppeteer__puppeteer_fill",
       "Bash(rm:*)",
-      "Bash(DATABASE_URL=postgresql://postgres:postgres@localhost:15432/bank_statements_test poetry run alembic upgrade head)"
+      "Bash(DATABASE_URL=postgresql://postgres:postgres@localhost:15432/bank_statements_test poetry run alembic upgrade head)",
+      "mcp__postgres__query",
+      "Bash(npx tsc:*)",
+      "Bash(curl:*)"
     ],
     "deny": []
   },

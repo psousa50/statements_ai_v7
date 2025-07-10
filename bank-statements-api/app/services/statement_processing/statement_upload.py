@@ -2,10 +2,11 @@ import logging
 from uuid import UUID
 
 from app.api.schemas import StatementUploadRequest
-from app.domain.dto.statement_processing import TransactionDTO
+from app.domain.dto.statement_processing import TransactionDTO, FilterCondition, RowFilter
 from app.domain.dto.statement_upload import EnhancedTransactions, ParsedStatement, SavedStatement, ScheduledJobs
 from app.domain.models.transaction import SourceType
 from app.services.transaction_rule_enhancement import TransactionRuleEnhancementService
+from app.services.statement_processing.row_filter_service import RowFilterService
 
 logger = logging.getLogger("app")
 
@@ -43,6 +44,7 @@ class StatementUploadService:
         statement_repo,
         transaction_repo,
         background_job_service,
+        row_filter_service: RowFilterService = None,
     ):
         self.statement_parser = statement_parser
         self.transaction_normalizer = transaction_normalizer
@@ -52,6 +54,7 @@ class StatementUploadService:
         self.statement_repo = statement_repo
         self.transaction_repo = transaction_repo
         self.background_job_service = background_job_service
+        self.row_filter_service = row_filter_service or RowFilterService()
 
     def upload_statement(
         self,
@@ -105,7 +108,31 @@ class StatementUploadService:
             upload_request.data_start_row_index,
         )
 
-        # Normalize columns
+        # Apply row filters if provided (BEFORE column normalization)
+        if upload_request.row_filters:
+            # Convert API model to domain model
+            filter_conditions = []
+            for condition_request in upload_request.row_filters.conditions:
+                filter_conditions.append(FilterCondition(
+                    column_name=condition_request.column_name,
+                    operator=condition_request.operator,
+                    value=condition_request.value,
+                    case_sensitive=condition_request.case_sensitive
+                ))
+            
+            row_filter = RowFilter(
+                conditions=filter_conditions,
+                logical_operator=upload_request.row_filters.logical_operator
+            )
+            
+            # Apply the filter to the processed dataframe (with original column names)
+            original_count = len(processed_df)
+            processed_df = self.row_filter_service.apply_filters(processed_df, row_filter)
+            filtered_count = len(processed_df)
+            
+            logger.info(f"Row filtering applied: {original_count} -> {filtered_count} rows")
+
+        # Normalize columns (after filtering)
         normalized_df = self.transaction_normalizer.normalize(processed_df, upload_request.column_mapping)
 
         # Convert to DTOs

@@ -7,6 +7,7 @@ import pandas as pd
 from app.domain.dto.statement_processing import AnalysisResultDTO
 from app.services.common import compute_hash, process_dataframe
 from app.services.schema_detection.schema_detector import ConversionModel
+from app.services.statement_processing.row_filter_service import RowFilterService
 
 logger_content = logging.getLogger("app.llm.big")
 logger = logging.getLogger("app")
@@ -22,6 +23,7 @@ class StatementAnalyzerService:
         uploaded_file_repo,
         file_analysis_metadata_repo,
         transaction_repo,
+        row_filter_service: RowFilterService = None,
     ):
         self.file_type_detector = file_type_detector
         self.statement_parser = statement_parser
@@ -30,6 +32,7 @@ class StatementAnalyzerService:
         self.uploaded_file_repo = uploaded_file_repo
         self.file_analysis_metadata_repo = file_analysis_metadata_repo
         self.transaction_repo = transaction_repo
+        self.row_filter_service = row_filter_service or RowFilterService()
 
     def analyze(self, filename: str, file_content: bytes) -> AnalysisResultDTO:
         file_type = self.file_type_detector.detect(file_content)
@@ -62,6 +65,9 @@ class StatementAnalyzerService:
 
         account_id = existing_metadata.account_id if existing_metadata else None
 
+        # Generate filter suggestions
+        suggested_filters = self._generate_filter_suggestions(raw_df, conversion_model.column_mapping)
+
         return AnalysisResultDTO(
             uploaded_file_id=uploaded_file_id,
             file_type=file_type,
@@ -70,6 +76,7 @@ class StatementAnalyzerService:
             data_start_row_index=conversion_model.data_start_row_index,
             sample_data=sample_data,
             account_id=account_id,
+            suggested_filters=suggested_filters,
             **transaction_stats,  # Unpack the statistics dictionary
         )
 
@@ -188,3 +195,11 @@ class StatementAnalyzerService:
                     break  # Only count one duplicate per file transaction
 
         return duplicate_count
+
+    def _generate_filter_suggestions(self, raw_df, column_mapping):
+        """Generate filter suggestions based on the raw dataframe and column mapping"""
+        try:
+            return self.row_filter_service.suggest_common_filters(raw_df, column_mapping)
+        except Exception as e:
+            logger.warning(f"Failed to generate filter suggestions: {str(e)}")
+            return []

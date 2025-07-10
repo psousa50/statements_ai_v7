@@ -27,6 +27,7 @@ from app.services.statement_processing.statement_analyzer import StatementAnalyz
 from app.services.statement_processing.statement_parser import StatementParser
 from app.services.statement_processing.statement_upload import StatementUploadService
 from app.services.statement_processing.transaction_normalizer import TransactionNormalizer
+from app.services.statement_processing.row_filter_service import RowFilterService
 from app.services.transaction import TransactionService
 from app.services.transaction_enhancement import TransactionEnhancer
 from app.services.transaction_rule_enhancement import TransactionRuleEnhancementService
@@ -130,6 +131,9 @@ def build_internal_dependencies(
         transaction_repository=transaction_repo,
     )
 
+    # Row filter service for filtering statement rows
+    row_filter_service = RowFilterService()
+
     statement_analyzer_service = StatementAnalyzerService(
         file_type_detector=file_type_detector,
         statement_parser=statement_parser,
@@ -138,6 +142,7 @@ def build_internal_dependencies(
         uploaded_file_repo=uploaded_file_repo,
         file_analysis_metadata_repo=file_analysis_metadata_repo,
         transaction_repo=transaction_repo,
+        row_filter_service=row_filter_service,
     )
 
     statement_upload_service = StatementUploadService(
@@ -149,6 +154,7 @@ def build_internal_dependencies(
         statement_repo=statement_repo,
         transaction_repo=transaction_repo,
         background_job_service=background_job_service,
+        row_filter_service=row_filter_service,
     )
 
     return InternalDependencies(

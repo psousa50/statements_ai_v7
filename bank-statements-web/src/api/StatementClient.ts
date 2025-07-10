@@ -9,6 +9,37 @@ export interface ColumnMapping {
 
 export type SampleData = string[][]
 
+export enum FilterOperator {
+  CONTAINS = 'contains',
+  NOT_CONTAINS = 'not_contains',
+  EQUALS = 'equals',
+  NOT_EQUALS = 'not_equals',
+  GREATER_THAN = 'greater_than',
+  LESS_THAN = 'less_than',
+  GREATER_THAN_OR_EQUAL = 'greater_than_or_equal',
+  LESS_THAN_OR_EQUAL = 'less_than_or_equal',
+  REGEX = 'regex',
+  IS_EMPTY = 'is_empty',
+  IS_NOT_EMPTY = 'is_not_empty',
+}
+
+export enum LogicalOperator {
+  AND = 'and',
+  OR = 'or',
+}
+
+export interface FilterCondition {
+  column_name: string
+  operator: FilterOperator
+  value?: string
+  case_sensitive: boolean
+}
+
+export interface RowFilter {
+  conditions: FilterCondition[]
+  logical_operator: LogicalOperator
+}
+
 export interface StatementAnalysisResponse {
   uploaded_file_id: string
   file_type: string
@@ -16,7 +47,7 @@ export interface StatementAnalysisResponse {
   header_row_index: number
   data_start_row_index: number
   sample_data: string[][]
-  source_id?: string
+  account_id?: string
   total_transactions: number
   unique_transactions: number
   duplicate_transactions: number
@@ -24,14 +55,16 @@ export interface StatementAnalysisResponse {
   total_amount: number
   total_debit: number
   total_credit: number
+  suggested_filters?: FilterCondition[]
 }
 
 export interface StatementUploadRequest {
-  source_id: string
+  account_id: string
   uploaded_file_id: string
   column_mapping: Record<string, string>
   header_row_index: number
   data_start_row_index: number
+  row_filters?: RowFilter | null
 }
 
 export interface StatementUploadResponse {

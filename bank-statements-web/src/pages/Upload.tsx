@@ -9,6 +9,8 @@ import { ColumnMappingTable } from '../components/upload/ColumnMappingTable'
 import { ValidationMessages } from '../components/upload/ValidationMessages'
 import { UploadFooter } from '../components/upload/UploadFooter'
 import { AccountSelector } from '../components/upload/AccountSelector'
+import { RowFilterPanel, FilterPreview } from '../components/upload/RowFilterPanel'
+import type { RowFilter } from '../components/upload/RowFilterPanel'
 
 export const Upload: React.FC = () => {
   const navigate = useNavigate()
@@ -28,6 +30,8 @@ export const Upload: React.FC = () => {
   })
   const [headerRowIndex, setHeaderRowIndex] = useState(0)
   const [dataStartRowIndex, setDataStartRowIndex] = useState(1)
+  const [rowFilter, setRowFilter] = useState<RowFilter | null>(null)
+  const [filterPreview, setFilterPreview] = useState<FilterPreview | null>(null)
 
   // State for notifications
   const [notification, setNotification] = useState<{
@@ -97,6 +101,7 @@ export const Upload: React.FC = () => {
         header_row_index: headerRowIndex,
         data_start_row_index: dataStartRowIndex,
         account_id: selectedAccount || file?.name || 'Unknown',
+        row_filters: rowFilter,
       })
 
       // If sample_data is returned, use it for display
@@ -138,6 +143,8 @@ export const Upload: React.FC = () => {
       amount: '',
       description: '',
     })
+    setRowFilter(null)
+    setFilterPreview(null)
     // Don't reset the source selection to maintain user preference
   }
 
@@ -179,6 +186,17 @@ export const Upload: React.FC = () => {
                 onColumnMappingChange={setColumnMapping}
                 onHeaderRowIndexChange={setHeaderRowIndex}
                 onDataStartRowIndexChange={setDataStartRowIndex}
+              />
+
+              <RowFilterPanel
+                sampleData={analysisResult.sample_data}
+                columnMapping={columnMapping}
+                headerRowIndex={headerRowIndex}
+                dataStartRowIndex={dataStartRowIndex}
+                rowFilter={rowFilter}
+                onRowFilterChange={setRowFilter}
+                filterPreview={filterPreview}
+                suggestedFilters={analysisResult.suggested_filters}
               />
 
               <ValidationMessages

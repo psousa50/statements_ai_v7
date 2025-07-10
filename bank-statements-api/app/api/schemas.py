@@ -9,6 +9,7 @@ from app.domain.models.background_job import JobStatus
 from app.domain.models.enhancement_rule import EnhancementRuleSource, MatchType
 from app.domain.models.processing import BackgroundJobInfo
 from app.domain.models.transaction import CategorizationStatus
+from app.domain.dto.statement_processing import FilterOperator, LogicalOperator
 
 
 class CategoryBase(BaseModel):
@@ -193,6 +194,26 @@ class ColumnMapping(BaseModel):
     category: Optional[str] = None
 
 
+class FilterConditionRequest(BaseModel):
+    column_name: str
+    operator: FilterOperator
+    value: Optional[str] = None
+    case_sensitive: bool = False
+
+
+class RowFilterRequest(BaseModel):
+    conditions: List[FilterConditionRequest]
+    logical_operator: LogicalOperator = LogicalOperator.AND
+
+
+class FilterPreviewResponse(BaseModel):
+    total_rows: int
+    included_rows: int
+    excluded_rows: int
+    included_row_indices: List[int]
+    excluded_row_indices: List[int]
+
+
 class StatementAnalysisResponse(BaseModel):
     uploaded_file_id: str
     file_type: str
@@ -209,6 +230,8 @@ class StatementAnalysisResponse(BaseModel):
     total_amount: float
     total_debit: float
     total_credit: float
+    # Optional filter suggestions for common patterns
+    suggested_filters: Optional[List[FilterConditionRequest]] = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -219,6 +242,7 @@ class StatementUploadRequest(BaseModel):
     column_mapping: Dict[str, str]
     header_row_index: int
     data_start_row_index: int
+    row_filters: Optional[RowFilterRequest] = None
 
 
 class BackgroundJobInfoResponse(BaseModel):

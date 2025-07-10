@@ -6,6 +6,7 @@ from fastapi import APIRouter, BackgroundTasks, Depends, FastAPI, File, HTTPExce
 
 from app.api.schemas import (
     BackgroundJobInfoResponse,
+    FilterConditionRequest,
     JobStatusResponse,
     StatementAnalysisResponse,
     StatementResponse,
@@ -36,7 +37,40 @@ def register_statement_routes(
                 filename=file.filename,
                 file_content=file_content,
             )
-            return StatementAnalysisResponse.model_validate(result)
+            
+            # Convert FilterCondition objects to FilterConditionRequest for API response
+            suggested_filters = []
+            if result.suggested_filters:
+                for filter_condition in result.suggested_filters:
+                    suggested_filters.append(
+                        FilterConditionRequest(
+                            column_name=filter_condition.column_name,
+                            operator=filter_condition.operator,
+                            value=filter_condition.value,
+                            case_sensitive=filter_condition.case_sensitive,
+                        )
+                    )
+            
+            # Create response with converted filters
+            response_data = {
+                "uploaded_file_id": result.uploaded_file_id,
+                "file_type": result.file_type,
+                "column_mapping": result.column_mapping,
+                "header_row_index": result.header_row_index,
+                "data_start_row_index": result.data_start_row_index,
+                "sample_data": result.sample_data,
+                "account_id": result.account_id,
+                "total_transactions": result.total_transactions,
+                "unique_transactions": result.unique_transactions,
+                "duplicate_transactions": result.duplicate_transactions,
+                "date_range": result.date_range,
+                "total_amount": result.total_amount,
+                "total_debit": result.total_debit,
+                "total_credit": result.total_credit,
+                "suggested_filters": suggested_filters,
+            }
+            
+            return StatementAnalysisResponse.model_validate(response_data)
         except Exception as e:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,

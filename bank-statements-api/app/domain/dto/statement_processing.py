@@ -1,6 +1,7 @@
 from datetime import datetime
-from typing import Optional, Tuple
+from typing import Optional, Tuple, List
 from uuid import UUID
+from enum import Enum
 
 
 class AnalysisResultDTO:
@@ -20,6 +21,7 @@ class AnalysisResultDTO:
         total_amount: float = 0.0,
         total_debit: float = 0.0,
         total_credit: float = 0.0,
+        suggested_filters: Optional[List['FilterCondition']] = None,
     ):
         self.uploaded_file_id = uploaded_file_id
         self.file_type = file_type
@@ -35,6 +37,7 @@ class AnalysisResultDTO:
         self.total_amount = total_amount
         self.total_debit = total_debit
         self.total_credit = total_credit
+        self.suggested_filters = suggested_filters or []
 
 
 class PersistenceRequestDTO:
@@ -121,3 +124,62 @@ class TransactionDTO:
             manual_position_after=entity.manual_position_after,
             counterparty_account_id=entity.counterparty_account_id,
         )
+
+
+class FilterOperator(Enum):
+    CONTAINS = "contains"
+    NOT_CONTAINS = "not_contains"
+    EQUALS = "equals"
+    NOT_EQUALS = "not_equals"
+    GREATER_THAN = "greater_than"
+    LESS_THAN = "less_than"
+    GREATER_THAN_OR_EQUAL = "greater_than_or_equal"
+    LESS_THAN_OR_EQUAL = "less_than_or_equal"
+    REGEX = "regex"
+    IS_EMPTY = "is_empty"
+    IS_NOT_EMPTY = "is_not_empty"
+
+
+class LogicalOperator(Enum):
+    AND = "and"
+    OR = "or"
+
+
+class FilterCondition:
+    def __init__(
+        self,
+        column_name: str,
+        operator: FilterOperator,
+        value: Optional[str] = None,
+        case_sensitive: bool = False,
+    ):
+        self.column_name = column_name
+        self.operator = operator
+        self.value = value
+        self.case_sensitive = case_sensitive
+
+
+class RowFilter:
+    def __init__(
+        self,
+        conditions: List[FilterCondition],
+        logical_operator: LogicalOperator = LogicalOperator.AND,
+    ):
+        self.conditions = conditions
+        self.logical_operator = logical_operator
+
+
+class FilterPreview:
+    def __init__(
+        self,
+        total_rows: int,
+        included_rows: int,
+        excluded_rows: int,
+        included_row_indices: List[int],
+        excluded_row_indices: List[int],
+    ):
+        self.total_rows = total_rows
+        self.included_rows = included_rows
+        self.excluded_rows = excluded_rows
+        self.included_row_indices = included_row_indices
+        self.excluded_row_indices = excluded_row_indices
