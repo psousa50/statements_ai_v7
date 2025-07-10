@@ -5,6 +5,7 @@ import { EnhancementRules } from './pages/EnhancementRules'
 import { CategoriesPage } from './pages/Categories'
 import { AccountsPage } from './pages/Accounts'
 import { ChartsPage } from './pages/Charts'
+import { Statements } from './pages/Statements'
 import { Upload } from './pages/Upload'
 import { AppLayout } from './components/layout/AppLayout'
 import { RouterSafeApiProvider } from './api/RouterSafeApiProvider'
@@ -24,6 +25,7 @@ const router = createBrowserRouter(
         { path: 'categories', element: <CategoriesPage /> },
         { path: 'accounts', element: <AccountsPage /> },
         { path: 'charts', element: <ChartsPage /> },
+        { path: 'statements', element: <Statements /> },
         { path: 'upload', element: <Upload /> },
       ],
     },

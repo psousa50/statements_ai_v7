@@ -23,3 +23,15 @@ class StatementRepository(ABC):
     @abstractmethod
     def find_by_account_id(self, account_id: UUID) -> list[Statement]:
         pass
+
+    @abstractmethod
+    def find_all(self) -> list[Statement]:
+        pass
+
+    @abstractmethod
+    def delete(self, statement_id: UUID) -> None:
+        pass
+
+    @abstractmethod
+    def update_transaction_statistics(self, statement_id: UUID) -> None:
+        pass

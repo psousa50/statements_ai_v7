@@ -20,6 +20,7 @@ from app.services.background.background_job_service import BackgroundJobService
 from app.services.category import CategoryService
 from app.services.enhancement_rule_management import EnhancementRuleManagementService
 from app.services.initial_balance_service import InitialBalanceService
+from app.services.statement import StatementService
 from app.services.schema_detection.heuristic_schema_detector import HeuristicSchemaDetector
 from app.services.statement_processing.file_type_detector import StatementFileTypeDetector
 from app.services.statement_processing.statement_analyzer import StatementAnalyzerService
@@ -43,7 +44,12 @@ class ExternalDependencies:
         self.llm_client: LLMClient = llm_client if llm_client is not None else GeminiAI()
 
     def cleanup(self):
-        self.db.close()
+        try:
+            self.db.commit()
+        except Exception:
+            self.db.rollback()
+        finally:
+            self.db.close()
 
 
 class InternalDependencies:
@@ -53,21 +59,27 @@ class InternalDependencies:
         category_service: CategoryService,
         account_service: AccountService,
         initial_balance_service: InitialBalanceService,
+        statement_service: StatementService,
         statement_analyzer_service: StatementAnalyzerService,
         statement_upload_service: StatementUploadService,
         enhancement_rule_management_service: EnhancementRuleManagementService,
         background_job_service: BackgroundJobService,
         background_job_repository: SQLAlchemyBackgroundJobRepository,
+        statement_repo: SqlAlchemyStatementRepository,
+        transaction_repo: SQLAlchemyTransactionRepository,
     ):
         self.transaction_service = transaction_service
         self.category_service = category_service
         self.account_service = account_service
         self.initial_balance_service = initial_balance_service
+        self.statement_service = statement_service
         self.statement_analyzer_service = statement_analyzer_service
         self.statement_upload_service = statement_upload_service
         self.enhancement_rule_management_service = enhancement_rule_management_service
         self.background_job_service = background_job_service
         self.background_job_repository = background_job_repository
+        self.statement_repo = statement_repo
+        self.transaction_repo = transaction_repo
 
 
 def build_external_dependencies() -> ExternalDependencies:
@@ -95,6 +107,7 @@ def build_internal_dependencies(
     category_service = CategoryService(category_repo)
     account_service = AccountService(account_repo)
     initial_balance_service = InitialBalanceService(initial_balance_repo)
+    statement_service = StatementService(statement_repo, transaction_repo)
     transaction_service = TransactionService(
         transaction_repo,
         initial_balance_repo,
@@ -143,11 +156,14 @@ def build_internal_dependencies(
         category_service=category_service,
         account_service=account_service,
         initial_balance_service=initial_balance_service,
+        statement_service=statement_service,
         statement_analyzer_service=statement_analyzer_service,
         statement_upload_service=statement_upload_service,
         enhancement_rule_management_service=enhancement_rule_management_service,
         background_job_service=background_job_service,
         background_job_repository=background_job_repo,
+        statement_repo=statement_repo,
+        transaction_repo=transaction_repo,
     )
 
 

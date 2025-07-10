@@ -1,5 +1,5 @@
 import logging
-from typing import Callable, Iterator
+from typing import Callable, Iterator, List
 from uuid import UUID
 
 from fastapi import APIRouter, BackgroundTasks, Depends, FastAPI, File, HTTPException, UploadFile, status
@@ -8,6 +8,7 @@ from app.api.schemas import (
     BackgroundJobInfoResponse,
     JobStatusResponse,
     StatementAnalysisResponse,
+    StatementResponse,
     StatementUploadRequest,
     StatementUploadResponse,
 )
@@ -93,6 +94,56 @@ def register_statement_routes(
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"Error processing statement: {str(e)}",
+            )
+
+    @router.get("", response_model=List[StatementResponse])
+    async def list_statements(
+        internal: InternalDependencies = Depends(provide_dependencies),
+    ):
+        """Get all statements"""
+        try:
+            statements = internal.statement_service.get_all_statements()
+            return [
+                StatementResponse(
+                    id=stmt.id,
+                    account_id=stmt.account_id,
+                    account_name=stmt.account.name,
+                    filename=stmt.filename,
+                    file_type=stmt.file_type,
+                    transaction_count=stmt.transaction_count,
+                    date_from=stmt.date_from,
+                    date_to=stmt.date_to,
+                    created_at=stmt.created_at,
+                )
+                for stmt in statements
+            ]
+        except Exception as e:
+            log_exception("Error listing statements: %s", str(e))
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Error listing statements: {str(e)}",
+            )
+
+    @router.delete("/{statement_id}")
+    async def delete_statement(
+        statement_id: UUID,
+        internal: InternalDependencies = Depends(provide_dependencies),
+    ):
+        """Delete a statement and all its transactions"""
+        try:
+            result = internal.statement_service.delete_statement_with_transactions(statement_id)
+            return result
+        except ValueError as e:
+            # Statement not found
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=str(e),
+            )
+        except Exception as e:
+            log_exception("Error deleting statement: %s", str(e))
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Error deleting statement: {str(e)}",
             )
 
     app.include_router(router, prefix=settings.API_V1_STR)

@@ -59,9 +59,23 @@ export interface StatementUploadResponse {
   sample_data?: SampleData[]
 }
 
+export interface StatementResponse {
+  id: string
+  account_id: string
+  account_name: string
+  filename: string
+  file_type: string
+  transaction_count: number | null
+  date_from: string | null
+  date_to: string | null
+  created_at: string
+}
+
 export interface StatementClient {
   analyzeStatement: (file: File) => Promise<StatementAnalysisResponse>
   uploadStatement: (data: StatementUploadRequest) => Promise<StatementUploadResponse>
+  listStatements: () => Promise<StatementResponse[]>
+  deleteStatement: (statementId: string) => Promise<{ message: string }>
 }
 
 export const statementClient: StatementClient = {
@@ -79,6 +93,16 @@ export const statementClient: StatementClient = {
 
   uploadStatement: async (data: StatementUploadRequest): Promise<StatementUploadResponse> => {
     const response = await axios.post<StatementUploadResponse>('/api/v1/statements/upload', data)
+    return response.data
+  },
+
+  listStatements: async (): Promise<StatementResponse[]> => {
+    const response = await axios.get<StatementResponse[]>('/api/v1/statements')
+    return response.data
+  },
+
+  deleteStatement: async (statementId: string): Promise<{ message: string }> => {
+    const response = await axios.delete<{ message: string }>(`/api/v1/statements/${statementId}`)
     return response.data
   },
 }

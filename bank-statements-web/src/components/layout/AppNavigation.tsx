@@ -7,6 +7,7 @@ import BarChartIcon from '@mui/icons-material/BarChart'
 import CategoryIcon from '@mui/icons-material/Category'
 import AccountTreeIcon from '@mui/icons-material/AccountTree'
 import AccountBalanceIcon from '@mui/icons-material/AccountBalance'
+import DescriptionIcon from '@mui/icons-material/Description'
 
 export const AppNavigation: React.FC = () => {
   const location = useLocation()
@@ -63,6 +64,15 @@ export const AppNavigation: React.FC = () => {
             <BarChartIcon />
           </ListItemIcon>
           <ListItemText primary="Charts" />
+        </ListItemButton>
+      </ListItem>
+
+      <ListItem disablePadding>
+        <ListItemButton component={RouterLink} to="/statements" selected={location.pathname === '/statements'}>
+          <ListItemIcon>
+            <DescriptionIcon />
+          </ListItemIcon>
+          <ListItemText primary="Statements" />
         </ListItemButton>
       </ListItem>
 

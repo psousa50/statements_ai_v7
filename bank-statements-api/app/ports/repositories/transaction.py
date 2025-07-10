@@ -266,3 +266,16 @@ class TransactionRepository(ABC):
             Tuple of (transactions list, total count)
         """
         pass
+
+    @abstractmethod
+    def delete_by_statement_id(self, statement_id: UUID) -> int:
+        """
+        Delete all transactions associated with a statement
+
+        Args:
+            statement_id: UUID of the statement
+
+        Returns:
+            Number of transactions deleted
+        """
+        pass

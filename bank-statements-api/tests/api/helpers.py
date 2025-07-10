@@ -5,6 +5,8 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from app.adapters.repositories.background_job import SQLAlchemyBackgroundJobRepository
+from app.adapters.repositories.statement import SqlAlchemyStatementRepository
+from app.adapters.repositories.transaction import SQLAlchemyTransactionRepository
 from app.app import register_app_routes
 from app.core.dependencies import InternalDependencies
 from app.services.account import AccountService
@@ -12,6 +14,7 @@ from app.services.background.background_job_service import BackgroundJobService
 from app.services.category import CategoryService
 from app.services.enhancement_rule_management import EnhancementRuleManagementService
 from app.services.initial_balance_service import InitialBalanceService
+from app.services.statement import StatementService
 from app.services.statement_processing.statement_analyzer import StatementAnalyzerService
 from app.services.statement_processing.statement_upload import StatementUploadService
 from app.services.transaction import TransactionService
@@ -27,6 +30,9 @@ def mocked_dependencies(
     background_job_service: BackgroundJobService = None,
     background_job_repository: SQLAlchemyBackgroundJobRepository = None,
     initial_balance_service: InitialBalanceService = None,
+    statement_service: StatementService = None,
+    statement_repo: SqlAlchemyStatementRepository = None,
+    transaction_repo: SQLAlchemyTransactionRepository = None,
 ) -> InternalDependencies:
     # Create mocked transaction service with transaction_repository attribute
     if transaction_service is None:
@@ -40,12 +46,15 @@ def mocked_dependencies(
         category_service=category_service or MagicMock(spec=CategoryService),
         account_service=account_service or MagicMock(spec=AccountService),
         initial_balance_service=initial_balance_service,
+        statement_service=statement_service or MagicMock(spec=StatementService),
         statement_analyzer_service=statement_analyzer_service or MagicMock(spec=StatementAnalyzerService),
         statement_upload_service=statement_upload_service or MagicMock(spec=StatementUploadService),
         enhancement_rule_management_service=enhancement_rule_management_service
         or MagicMock(spec=EnhancementRuleManagementService),
         background_job_service=background_job_service or MagicMock(spec=BackgroundJobService),
         background_job_repository=background_job_repository or MagicMock(spec=SQLAlchemyBackgroundJobRepository),
+        statement_repo=statement_repo or MagicMock(spec=SqlAlchemyStatementRepository),
+        transaction_repo=transaction_repo or MagicMock(spec=SQLAlchemyTransactionRepository),
     )
 
 

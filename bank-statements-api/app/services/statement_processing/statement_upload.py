@@ -185,6 +185,9 @@ class StatementUploadService:
                 transactions_saved,
                 duplicated_transactions,
             ) = self.transaction_repo.save_batch(enhanced.enhanced_dtos)
+            
+            # Update statement with transaction statistics
+            self.statement_repo.update_transaction_statistics(statement.id)
 
         # Save file analysis metadata for future duplicate detection
         self._save_file_analysis_metadata(

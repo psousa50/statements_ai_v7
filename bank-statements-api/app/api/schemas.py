@@ -432,3 +432,17 @@ class CleanupUnusedRulesResponse(BaseModel):
     message: str
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class StatementResponse(BaseModel):
+    id: UUID
+    account_id: UUID
+    account_name: str
+    filename: str
+    file_type: str
+    transaction_count: Optional[int] = None
+    date_from: Optional[date] = None
+    date_to: Optional[date] = None
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)

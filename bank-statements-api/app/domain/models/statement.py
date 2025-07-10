@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from uuid import uuid4
 
-from sqlalchemy import Column, DateTime, ForeignKey, LargeBinary, String, Text
+from sqlalchemy import Column, DateTime, ForeignKey, LargeBinary, String, Text, Integer, Date
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
@@ -20,6 +20,9 @@ class Statement(Base):
     filename = Column(Text, nullable=False)
     file_type = Column(String, nullable=False)
     content = Column(LargeBinary, nullable=False)
+    transaction_count = Column(Integer, nullable=True)
+    date_from = Column(Date, nullable=True)
+    date_to = Column(Date, nullable=True)
     created_at = Column(
         DateTime,
         default=lambda: datetime.now(timezone.utc),
