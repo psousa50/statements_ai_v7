@@ -65,6 +65,9 @@ class StatementAnalyzerService:
 
         account_id = existing_metadata.account_id if existing_metadata else None
 
+        # Get saved row filters if they exist
+        saved_row_filters = existing_metadata.row_filters if existing_metadata else None
+
         # Generate filter suggestions
         suggested_filters = self._generate_filter_suggestions(raw_df, conversion_model.column_mapping)
 
@@ -77,6 +80,7 @@ class StatementAnalyzerService:
             sample_data=sample_data,
             account_id=account_id,
             suggested_filters=suggested_filters,
+            saved_row_filters=saved_row_filters,
             **transaction_stats,  # Unpack the statistics dictionary
         )
 

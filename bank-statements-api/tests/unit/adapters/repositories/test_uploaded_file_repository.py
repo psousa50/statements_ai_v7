@@ -95,7 +95,52 @@ class TestFileAnalysisMetadataRepository:
         assert result.column_mapping == column_mapping
         assert result.header_row_index == header_row_index
         assert result.data_start_row_index == data_start_row_index
-        # normalized_sample field removed
+        assert result.row_filters is None
+
+        session.add.assert_called_once()
+        session.commit.assert_called_once()
+        session.refresh.assert_called_once()
+
+    def test_save_metadata_with_row_filters(self):
+        session = MagicMock()
+        repo = SQLAlchemyFileAnalysisMetadataRepository(session)
+
+        # Mock the behavior of SQLAlchemy
+        def side_effect(metadata):
+            metadata.id = uuid.uuid4()
+            metadata.created_at = datetime.now(timezone.utc)
+            return None
+
+        session.add.side_effect = side_effect
+
+        file_hash = "abc123"
+        account_id = uuid.uuid4()
+        column_mapping = {
+            "date": "Date",
+            "amount": "Amount",
+            "description": "Description",
+        }
+        header_row_index = 0
+        data_start_row_index = 1
+        row_filters = [{"column_name": "amount", "operator": "greater_than", "value": "100", "case_sensitive": False}]
+
+        result = repo.save(
+            file_hash=file_hash,
+            column_mapping=column_mapping,
+            header_row_index=header_row_index,
+            data_start_row_index=data_start_row_index,
+            account_id=account_id,
+            row_filters=row_filters,
+        )
+
+        assert isinstance(result, FileAnalysisMetadataDTO)
+        assert result.id is not None
+        assert result.file_hash == file_hash
+        assert result.account_id == str(account_id)
+        assert result.column_mapping == column_mapping
+        assert result.header_row_index == header_row_index
+        assert result.data_start_row_index == data_start_row_index
+        assert result.row_filters == row_filters
 
         session.add.assert_called_once()
         session.commit.assert_called_once()
@@ -104,6 +149,7 @@ class TestFileAnalysisMetadataRepository:
     def test_find_by_hash(self):
         session = MagicMock()
         metadata_id = uuid.uuid4()
+        row_filters = [{"column_name": "description", "operator": "contains", "value": "test", "case_sensitive": False}]
         mock_metadata = MagicMock(
             id=metadata_id,
             file_hash="abc123",
@@ -115,6 +161,7 @@ class TestFileAnalysisMetadataRepository:
             },
             header_row_index=0,
             data_start_row_index=1,
+            row_filters=row_filters,
             created_at=datetime.now(timezone.utc),
         )
         session.query.return_value.filter.return_value.first.return_value = mock_metadata
@@ -126,6 +173,7 @@ class TestFileAnalysisMetadataRepository:
         assert result.id == str(metadata_id)
         assert result.file_hash == "abc123"
         assert result.account_id is not None
+        assert result.row_filters == row_filters
 
         session.query.assert_called_once()
         session.query.return_value.filter.assert_called_once()

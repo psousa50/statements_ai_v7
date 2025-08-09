@@ -31,13 +31,13 @@ class StatementService:
     def delete_statement_with_transactions(self, statement_id: UUID) -> dict:
         """
         Delete a statement and all its associated transactions in a single atomic operation.
-        
+
         Args:
             statement_id: UUID of the statement to delete
-            
+
         Returns:
             Dictionary with transaction count and success message
-            
+
         Raises:
             ValueError: If statement doesn't exist
         """
@@ -49,14 +49,14 @@ class StatementService:
         # Delete all transactions for this statement first
         # This must be done first due to foreign key constraints
         transaction_count = self.transaction_repository.delete_by_statement_id(statement_id)
-        
+
         # Then delete the statement
         self.statement_repository.delete(statement_id)
-        
+
         # Note: Transaction commit happens at the dependency injection level
         # through ExternalDependencies.cleanup()
-        
+
         return {
             "message": f"Statement deleted successfully. {transaction_count} transactions were also deleted.",
-            "transaction_count": transaction_count
+            "transaction_count": transaction_count,
         }

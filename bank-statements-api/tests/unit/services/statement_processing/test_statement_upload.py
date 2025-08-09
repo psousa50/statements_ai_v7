@@ -80,6 +80,21 @@ class TestStatementUploadService:
             data_start_row_index=1,
         )
 
+    @pytest.fixture
+    def sample_upload_request_with_filters(self):
+        return StatementUploadRequest(
+            uploaded_file_id=str(uuid4()),
+            account_id=str(uuid4()),
+            column_mapping={
+                "date": "Date",
+                "amount": "Amount",
+                "description": "Description",
+            },
+            header_row_index=0,
+            data_start_row_index=1,
+            row_filters=[{"column_name": "amount", "operator": "greater_than", "value": "100", "case_sensitive": False}],
+        )
+
     def test_enhance_transactions_success(
         self,
         statement_upload_service,

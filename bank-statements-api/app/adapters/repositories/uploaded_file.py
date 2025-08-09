@@ -55,6 +55,7 @@ class SQLAlchemyFileAnalysisMetadataRepository(FileAnalysisMetadataRepository):
         header_row_index: int,
         data_start_row_index: int,
         account_id: Optional[UUID] = None,
+        row_filters: Optional[dict] = None,
     ) -> FileAnalysisMetadataDTO:
         metadata = FileAnalysisMetadata(
             file_hash=file_hash,
@@ -62,6 +63,7 @@ class SQLAlchemyFileAnalysisMetadataRepository(FileAnalysisMetadataRepository):
             column_mapping=column_mapping,
             header_row_index=header_row_index,
             data_start_row_index=data_start_row_index,
+            row_filters=row_filters,
         )
 
         self.session.add(metadata)
@@ -76,6 +78,7 @@ class SQLAlchemyFileAnalysisMetadataRepository(FileAnalysisMetadataRepository):
             header_row_index=metadata.header_row_index,
             data_start_row_index=metadata.data_start_row_index,
             created_at=metadata.created_at,
+            row_filters=metadata.row_filters,
         )
 
     def find_by_hash(self, file_hash: str) -> Optional[FileAnalysisMetadataDTO]:
@@ -92,4 +95,5 @@ class SQLAlchemyFileAnalysisMetadataRepository(FileAnalysisMetadataRepository):
             header_row_index=metadata.header_row_index,
             data_start_row_index=metadata.data_start_row_index,
             created_at=metadata.created_at,
+            row_filters=metadata.row_filters,
         )

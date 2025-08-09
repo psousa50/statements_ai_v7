@@ -68,7 +68,8 @@ class TestTransactionNormalizer:
         ]
         assert len(normalized_df) == 2
         # Date is now a string for JSON serialization
-        assert normalized_df["date"][0] == "2023-01-02"
+        # "01/02/2023" with dayfirst=True should be parsed as February 1st, 2023
+        assert normalized_df["date"][0] == "2023-02-01"
         assert normalized_df["amount"][0] == 1000.50
         assert normalized_df["amount"][1] == -2000.75
 

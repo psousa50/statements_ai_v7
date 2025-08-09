@@ -103,7 +103,7 @@ class TransactionNormalizer:
             dayfirst=True,
             utc=False,
         )
-        
+
         # If many dates failed to parse, try with American format (MM/DD/YYYY)
         if normalized.isna().sum() > len(normalized) * 0.5:
             logger.info("Many dates failed with European format, trying American format")

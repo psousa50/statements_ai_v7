@@ -21,7 +21,8 @@ class AnalysisResultDTO:
         total_amount: float = 0.0,
         total_debit: float = 0.0,
         total_credit: float = 0.0,
-        suggested_filters: Optional[List['FilterCondition']] = None,
+        suggested_filters: Optional[List["FilterCondition"]] = None,
+        saved_row_filters: Optional[List[dict]] = None,
     ):
         self.uploaded_file_id = uploaded_file_id
         self.file_type = file_type
@@ -38,6 +39,7 @@ class AnalysisResultDTO:
         self.total_debit = total_debit
         self.total_credit = total_credit
         self.suggested_filters = suggested_filters or []
+        self.saved_row_filters = saved_row_filters
 
 
 class PersistenceRequestDTO:

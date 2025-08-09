@@ -24,6 +24,7 @@ class FileAnalysisMetadataRepository(ABC):
         header_row_index: int,
         data_start_row_index: int,
         account_id: Optional[UUID] = None,
+        row_filters: Optional[dict] = None,
     ) -> FileAnalysisMetadataDTO:
         pass
 

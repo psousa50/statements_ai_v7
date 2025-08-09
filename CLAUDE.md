@@ -60,6 +60,8 @@ DATABASE_URL=postgresql://postgres:postgres@localhost:15432/bank_statements_test
 - **React Development Rules** - `/docs/guides/react-development-rules.md`
 - **FastAPI Development Rules** - `/docs/guides/fastapi-development-rules.md`
 
+```bash
+# Development Status
+# Both the frontend and backend services are running in development mode with hot reloading enabled, 
+# ports 8010 and 6173, so changes are reflected immediately without needing to restart the server.
 ```
-
-Both the frontend and backend services are running in development mode with hot reloading enabled, ports 8010 and 6173, so changes are reflected immediately without needing to restart the server.

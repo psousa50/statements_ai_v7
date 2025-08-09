@@ -232,6 +232,8 @@ class StatementAnalysisResponse(BaseModel):
     total_credit: float
     # Optional filter suggestions for common patterns
     suggested_filters: Optional[List[FilterConditionRequest]] = None
+    # Previously saved row filters for this file (if any)
+    saved_row_filters: Optional[List[FilterConditionRequest]] = None
 
     model_config = ConfigDict(from_attributes=True)
 

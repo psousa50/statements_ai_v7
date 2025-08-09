@@ -149,15 +149,13 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
 
     def delete_by_statement_id(self, statement_id: UUID) -> int:
         """Delete all transactions associated with a statement"""
-        transactions_to_delete = self.db_session.query(Transaction).filter(
-            Transaction.statement_id == statement_id
-        ).all()
-        
+        transactions_to_delete = self.db_session.query(Transaction).filter(Transaction.statement_id == statement_id).all()
+
         count = len(transactions_to_delete)
-        
+
         for transaction in transactions_to_delete:
             self.db_session.delete(transaction)
-        
+
         self.db_session.flush()
         return count
 
@@ -625,4 +623,3 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         transactions = query.offset((page - 1) * page_size).limit(page_size).all()
 
         return transactions, total
-

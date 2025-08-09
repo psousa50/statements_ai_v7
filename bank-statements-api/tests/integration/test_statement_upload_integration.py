@@ -316,3 +316,260 @@ class TestStatementUploadIntegration:
                 assert rule.normalized_description_pattern is not None
                 assert rule.created_at is not None
                 # Note: category_id and counterparty_account_id can be None for unmatched rules
+
+    def test_upload_with_row_filters_integration(self, db_session, llm_client):
+        """Test complete upload flow with row filters persisted to file analysis metadata."""
+
+        # CSV content with various amounts to test filtering
+        filename = "filtered_statement.csv"
+        csv_content = b"""Date,Amount,Description
+2023-01-01,50.00,Small Purchase
+2023-01-02,150.00,Large Purchase
+2023-01-03,25.00,Tiny Purchase
+2023-01-04,300.00,Big Purchase"""
+
+        dependencies = build_internal_dependencies(ExternalDependencies(db=db_session, llm_client=llm_client))
+
+        # Analyze file first
+        analysis_result = dependencies.statement_analyzer_service.analyze(
+            filename=filename,
+            file_content=csv_content,
+        )
+
+        # Create account
+        account = Account(name="Test Account")
+        db_session.add(account)
+        db_session.flush()
+
+        # Create upload request with row filters
+        from app.api.schemas import RowFilterRequest, FilterConditionRequest
+        from app.domain.dto.statement_processing import FilterOperator, LogicalOperator
+        
+        row_filters = RowFilterRequest(
+            conditions=[
+                FilterConditionRequest(
+                    column_name="Amount",  # Use the actual CSV column name
+                    operator=FilterOperator.GREATER_THAN,
+                    value="100",
+                    case_sensitive=False
+                )
+            ],
+            logical_operator=LogicalOperator.AND
+        )
+
+        upload_request = StatementUploadRequest(
+            uploaded_file_id=analysis_result.uploaded_file_id,
+            account_id=str(account.id),
+            column_mapping=analysis_result.column_mapping,
+            header_row_index=analysis_result.header_row_index,
+            data_start_row_index=analysis_result.data_start_row_index,
+            row_filters=row_filters,
+        )
+
+        # Execute upload
+        upload_result = dependencies.statement_upload_service.upload_statement(
+            upload_request,
+            background_tasks=MagicMock(),
+            internal_deps=dependencies,
+        )
+
+        # Verify upload worked and filtered correctly
+        # Should only process transactions > 100 (2 transactions: 150.00 and 300.00)
+        assert upload_result.transactions_saved == 2
+        assert upload_result.total_processed == 2
+
+        # Verify file analysis metadata was saved with row filters
+        from app.domain.models.uploaded_file import FileAnalysisMetadata
+
+        metadata = db_session.query(FileAnalysisMetadata).first()
+        assert metadata is not None
+        assert metadata.row_filters is not None
+        # Verify the saved row filters have the expected structure
+        assert isinstance(metadata.row_filters, list)
+        assert len(metadata.row_filters) > 0
+        saved_filter = metadata.row_filters[0]
+        assert saved_filter["column_name"] == "Amount"
+        assert saved_filter["operator"] == "greater_than"
+        assert saved_filter["value"] == "100"
+
+        # Verify the actual transactions saved match the filter
+        statement = db_session.query(Statement).filter(Statement.account_id == account.id).first()
+        assert statement is not None
+
+        transactions = db_session.query(Transaction).filter(Transaction.statement_id == statement.id).all()
+        assert len(transactions) == 2
+
+        # Verify only large amounts were saved
+        amounts = [float(t.amount) for t in transactions]
+        assert 150.00 in amounts
+        assert 300.00 in amounts
+        assert 50.00 not in amounts  # Filtered out
+        assert 25.00 not in amounts  # Filtered out
+
+    def test_upload_without_row_filters_persists_null(self, db_session, llm_client):
+        """Test that uploads without row filters persist NULL in the database."""
+
+        filename = "no_filters.csv"
+        csv_content = b"""Date,Amount,Description
+2023-01-01,100.00,Test Transaction"""
+
+        dependencies = build_internal_dependencies(ExternalDependencies(db=db_session, llm_client=llm_client))
+
+        analysis_result = dependencies.statement_analyzer_service.analyze(
+            filename=filename,
+            file_content=csv_content,
+        )
+
+        account = Account(name="No Filter Account")
+        db_session.add(account)
+        db_session.flush()
+
+        # Upload request without row filters
+        upload_request = StatementUploadRequest(
+            uploaded_file_id=analysis_result.uploaded_file_id,
+            account_id=str(account.id),
+            column_mapping=analysis_result.column_mapping,
+            header_row_index=analysis_result.header_row_index,
+            data_start_row_index=analysis_result.data_start_row_index,
+            # row_filters not provided
+        )
+
+        dependencies.statement_upload_service.upload_statement(
+            upload_request,
+            background_tasks=MagicMock(),
+            internal_deps=dependencies,
+        )
+
+        # Verify file analysis metadata has null row_filters
+        from app.domain.models.uploaded_file import FileAnalysisMetadata
+
+        metadata = db_session.query(FileAnalysisMetadata).first()
+        assert metadata is not None
+        assert metadata.row_filters is None
+
+    def test_duplicate_file_upload_reuses_saved_row_filters(self, db_session, llm_client):
+        """Test that uploading the same file again automatically applies saved row filters."""
+        
+        # Step 1: Upload file WITH row filters first time
+        filename = "reuse_filters.csv"
+        csv_content = b"""Date,Amount,Description
+2023-01-01,50.00,Small Purchase
+2023-01-02,150.00,Large Purchase
+2023-01-03,25.00,Tiny Purchase
+2023-01-04,300.00,Big Purchase"""
+
+        dependencies = build_internal_dependencies(ExternalDependencies(db=db_session, llm_client=llm_client))
+
+        # First analysis
+        analysis_result = dependencies.statement_analyzer_service.analyze(
+            filename=filename,
+            file_content=csv_content,
+        )
+
+        account = Account(name="Reuse Test Account")
+        db_session.add(account)
+        db_session.flush()
+
+        # First upload WITH row filters
+        from app.api.schemas import RowFilterRequest, FilterConditionRequest
+        from app.domain.dto.statement_processing import FilterOperator, LogicalOperator
+        
+        row_filters = RowFilterRequest(
+            conditions=[
+                FilterConditionRequest(
+                    column_name="Amount",
+                    operator=FilterOperator.GREATER_THAN,
+                    value="100",
+                    case_sensitive=False
+                )
+            ],
+            logical_operator=LogicalOperator.AND
+        )
+
+        first_upload_request = StatementUploadRequest(
+            uploaded_file_id=analysis_result.uploaded_file_id,
+            account_id=str(account.id),
+            column_mapping=analysis_result.column_mapping,
+            header_row_index=analysis_result.header_row_index,
+            data_start_row_index=analysis_result.data_start_row_index,
+            row_filters=row_filters,
+        )
+
+        first_result = dependencies.statement_upload_service.upload_statement(
+            first_upload_request,
+            background_tasks=MagicMock(),
+            internal_deps=dependencies,
+        )
+
+        # Verify first upload: 2 transactions saved (150.00 and 300.00)
+        assert first_result.transactions_saved == 2
+        assert first_result.total_processed == 2
+
+        # Step 2: Upload the SAME file again WITHOUT specifying row filters
+        # Analyze the same file again (new upload)
+        second_analysis_result = dependencies.statement_analyzer_service.analyze(
+            filename=filename,
+            file_content=csv_content,
+        )
+
+        # Second upload WITHOUT row filters in request
+        second_upload_request = StatementUploadRequest(
+            uploaded_file_id=second_analysis_result.uploaded_file_id,
+            account_id=str(account.id),
+            column_mapping=second_analysis_result.column_mapping,
+            header_row_index=second_analysis_result.header_row_index,
+            data_start_row_index=second_analysis_result.data_start_row_index,
+            # NO row_filters specified - should reuse saved ones
+        )
+
+        second_result = dependencies.statement_upload_service.upload_statement(
+            second_upload_request,
+            background_tasks=MagicMock(),
+            internal_deps=dependencies,
+        )
+
+        # Verify second upload: Row filters applied (total_processed=2) but transactions are duplicates (saved=0)
+        assert second_result.total_processed == 2  # Row filters were applied correctly
+        assert second_result.transactions_saved == 0  # Transactions detected as duplicates (correct behavior)
+
+        # Verify that the saved row filters were reused
+        from app.domain.models.uploaded_file import FileAnalysisMetadata
+        metadata = db_session.query(FileAnalysisMetadata).first()
+        assert metadata is not None
+        assert metadata.row_filters is not None
+        assert len(metadata.row_filters) == 1
+        assert metadata.row_filters[0]["column_name"] == "Amount"
+        assert metadata.row_filters[0]["operator"] == "greater_than"
+        assert metadata.row_filters[0]["value"] == "100"
+
+        # Verify two statements exist (different uploaded files) but only first has transactions
+        statements = db_session.query(Statement).filter(Statement.account_id == account.id).all()
+        assert len(statements) == 2  # Two statements (different uploaded files)
+
+        # Find which statement has transactions and which doesn't
+        statement_with_transactions = None
+        statement_without_transactions = None
+        
+        for statement in statements:
+            transactions = db_session.query(Transaction).filter(Transaction.statement_id == statement.id).all()
+            if len(transactions) > 0:
+                statement_with_transactions = statement
+            else:
+                statement_without_transactions = statement
+
+        # Verify we have one statement with transactions and one without
+        assert statement_with_transactions is not None
+        assert statement_without_transactions is not None
+
+        # Verify the first statement has the correctly filtered transactions
+        transactions = db_session.query(Transaction).filter(Transaction.statement_id == statement_with_transactions.id).all()
+        assert len(transactions) == 2
+        amounts = [float(t.amount) for t in transactions]
+        assert 150.00 in amounts
+        assert 300.00 in amounts
+        assert 50.00 not in amounts  # Filtered out
+        assert 25.00 not in amounts  # Filtered out
+
+        # Verify the second statement has no transactions (duplicates were filtered out)
+        empty_transactions = db_session.query(Transaction).filter(Transaction.statement_id == statement_without_transactions.id).all()
+        assert len(empty_transactions) == 0

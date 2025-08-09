@@ -38,6 +38,7 @@ class FileAnalysisMetadataDTO:
         header_row_index: int,
         data_start_row_index: int,
         created_at: datetime,
+        row_filters: Optional[dict] = None,
     ):
         self.id = id
         self.file_hash = file_hash
@@ -46,16 +47,17 @@ class FileAnalysisMetadataDTO:
         self.header_row_index = header_row_index
         self.data_start_row_index = data_start_row_index
         self.created_at = created_at
+        self.row_filters = row_filters
 
     @classmethod
     def from_entity(cls, entity):
         return cls(
             id=str(entity.id),
-            uploaded_file_id=str(entity.uploaded_file_id),
             file_hash=entity.file_hash,
             account_id=str(entity.account_id) if entity.account_id else None,
             column_mapping=entity.column_mapping,
             header_row_index=entity.header_row_index,
             data_start_row_index=entity.data_start_row_index,
             created_at=entity.created_at,
+            row_filters=entity.row_filters,
         )

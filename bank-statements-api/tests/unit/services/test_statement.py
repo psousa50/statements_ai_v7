@@ -75,7 +75,7 @@ class TestStatementService:
         # Assert
         assert result == {
             "message": "Statement deleted successfully. 5 transactions were also deleted.",
-            "transaction_count": 5
+            "transaction_count": 5,
         }
         self.statement_repo.find_by_id.assert_called_once_with(statement_id)
         self.transaction_repo.delete_by_statement_id.assert_called_once_with(statement_id)
@@ -109,7 +109,7 @@ class TestStatementService:
         # Assert
         assert result == {
             "message": "Statement deleted successfully. 0 transactions were also deleted.",
-            "transaction_count": 0
+            "transaction_count": 0,
         }
         self.statement_repo.find_by_id.assert_called_once_with(statement_id)
         self.transaction_repo.delete_by_statement_id.assert_called_once_with(statement_id)

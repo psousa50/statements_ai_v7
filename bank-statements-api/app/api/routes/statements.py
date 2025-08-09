@@ -13,6 +13,7 @@ from app.api.schemas import (
     StatementUploadRequest,
     StatementUploadResponse,
 )
+from app.domain.dto.statement_processing import FilterOperator
 from app.core.config import settings
 from app.core.dependencies import InternalDependencies
 from app.logging.utils import log_exception
@@ -37,7 +38,7 @@ def register_statement_routes(
                 filename=file.filename,
                 file_content=file_content,
             )
-            
+
             # Convert FilterCondition objects to FilterConditionRequest for API response
             suggested_filters = []
             if result.suggested_filters:
@@ -50,7 +51,21 @@ def register_statement_routes(
                             case_sensitive=filter_condition.case_sensitive,
                         )
                     )
-            
+
+            # Convert saved row filters to FilterConditionRequest objects for API response
+            saved_row_filters = None
+            if result.saved_row_filters:
+                saved_row_filters = []
+                for filter_dict in result.saved_row_filters:
+                    saved_row_filters.append(
+                        FilterConditionRequest(
+                            column_name=filter_dict["column_name"],
+                            operator=FilterOperator(filter_dict["operator"]),
+                            value=filter_dict.get("value"),
+                            case_sensitive=filter_dict.get("case_sensitive", False),
+                        )
+                    )
+
             # Create response with converted filters
             response_data = {
                 "uploaded_file_id": result.uploaded_file_id,
@@ -68,8 +83,9 @@ def register_statement_routes(
                 "total_debit": result.total_debit,
                 "total_credit": result.total_credit,
                 "suggested_filters": suggested_filters,
+                "saved_row_filters": saved_row_filters,
             }
-            
+
             return StatementAnalysisResponse.model_validate(response_data)
         except Exception as e:
             raise HTTPException(

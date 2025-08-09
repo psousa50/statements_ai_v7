@@ -51,19 +51,17 @@ class SqlAlchemyStatementRepository(StatementRepository):
         # Get transaction statistics for this statement
         stats = (
             self.session.query(
-                func.count(Transaction.id).label('transaction_count'),
-                func.min(Transaction.date).label('date_from'),
-                func.max(Transaction.date).label('date_to')
+                func.count(Transaction.id).label("transaction_count"),
+                func.min(Transaction.date).label("date_from"),
+                func.max(Transaction.date).label("date_to"),
             )
             .filter(Transaction.statement_id == statement_id)
             .first()
         )
-        
+
         if stats and stats.transaction_count > 0:
             # Update the statement with the calculated statistics
-            self.session.query(Statement).filter(Statement.id == statement_id).update({
-                'transaction_count': stats.transaction_count,
-                'date_from': stats.date_from,
-                'date_to': stats.date_to
-            })
+            self.session.query(Statement).filter(Statement.id == statement_id).update(
+                {"transaction_count": stats.transaction_count, "date_from": stats.date_from, "date_to": stats.date_to}
+            )
             self.session.flush()

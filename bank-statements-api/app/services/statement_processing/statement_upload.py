@@ -1,4 +1,5 @@
 import logging
+from typing import List, Optional
 from uuid import UUID
 
 from app.api.schemas import StatementUploadRequest
@@ -108,28 +109,56 @@ class StatementUploadService:
             upload_request.data_start_row_index,
         )
 
-        # Apply row filters if provided (BEFORE column normalization)
-        if upload_request.row_filters:
+        # Check for saved row filters if none provided in request
+        row_filters_to_apply = upload_request.row_filters
+        if not row_filters_to_apply:
+            # Check if we have saved row filters for this file
+            from app.services.common import compute_hash
+            file_hash = compute_hash(file_type, raw_df)
+            existing_metadata = self.file_analysis_metadata_repo.find_by_hash(file_hash)
+            if existing_metadata and existing_metadata.row_filters:
+                logger.info(f"Using saved row filters for file hash {file_hash}")
+                # Convert saved filters back to API format
+                from app.api.schemas import RowFilterRequest, FilterConditionRequest
+                from app.domain.dto.statement_processing import FilterOperator, LogicalOperator
+                
+                conditions = []
+                for saved_filter in existing_metadata.row_filters:
+                    conditions.append(
+                        FilterConditionRequest(
+                            column_name=saved_filter["column_name"],
+                            operator=FilterOperator(saved_filter["operator"]),
+                            value=saved_filter["value"],
+                            case_sensitive=saved_filter["case_sensitive"],
+                        )
+                    )
+                
+                row_filters_to_apply = RowFilterRequest(
+                    conditions=conditions,
+                    logical_operator=LogicalOperator.AND  # Default logical operator
+                )
+
+        # Apply row filters if available (BEFORE column normalization)
+        if row_filters_to_apply:
             # Convert API model to domain model
             filter_conditions = []
-            for condition_request in upload_request.row_filters.conditions:
-                filter_conditions.append(FilterCondition(
-                    column_name=condition_request.column_name,
-                    operator=condition_request.operator,
-                    value=condition_request.value,
-                    case_sensitive=condition_request.case_sensitive
-                ))
-            
-            row_filter = RowFilter(
-                conditions=filter_conditions,
-                logical_operator=upload_request.row_filters.logical_operator
-            )
-            
+            for condition_request in row_filters_to_apply.conditions:
+                filter_conditions.append(
+                    FilterCondition(
+                        column_name=condition_request.column_name,
+                        operator=condition_request.operator,
+                        value=condition_request.value,
+                        case_sensitive=condition_request.case_sensitive,
+                    )
+                )
+
+            row_filter = RowFilter(conditions=filter_conditions, logical_operator=row_filters_to_apply.logical_operator)
+
             # Apply the filter to the processed dataframe (with original column names)
             original_count = len(processed_df)
             processed_df = self.row_filter_service.apply_filters(processed_df, row_filter)
             filtered_count = len(processed_df)
-            
+
             logger.info(f"Row filtering applied: {original_count} -> {filtered_count} rows")
 
         # Normalize columns (after filtering)
@@ -212,17 +241,31 @@ class StatementUploadService:
                 transactions_saved,
                 duplicated_transactions,
             ) = self.transaction_repo.save_batch(enhanced.enhanced_dtos)
-            
+
             # Update statement with transaction statistics
             self.statement_repo.update_transaction_statistics(statement.id)
 
         # Save file analysis metadata for future duplicate detection
+        # Convert row_filters to serializable format
+        row_filters_dict = None
+        if upload_request.row_filters:
+            row_filters_dict = [
+                {
+                    "column_name": condition.column_name,
+                    "operator": condition.operator.value,
+                    "value": condition.value,
+                    "case_sensitive": condition.case_sensitive,
+                }
+                for condition in upload_request.row_filters.conditions
+            ]
+        
         self._save_file_analysis_metadata(
             uploaded_file_id=upload_request.uploaded_file_id,
             column_mapping=upload_request.column_mapping,
             header_row_index=upload_request.header_row_index,
             data_start_row_index=upload_request.data_start_row_index,
             account_id=UUID(upload_request.account_id),
+            row_filters=row_filters_dict,
         )
 
         return SavedStatement(
@@ -289,6 +332,7 @@ class StatementUploadService:
         header_row_index: int,
         data_start_row_index: int,
         account_id: UUID,
+        row_filters: Optional[List[dict]] = None,
     ):
         """Save file analysis metadata for duplicate detection"""
         uploaded_file = self.uploaded_file_repo.find_by_id(uploaded_file_id)
@@ -307,4 +351,5 @@ class StatementUploadService:
                 header_row_index=header_row_index,
                 data_start_row_index=data_start_row_index,
                 account_id=account_id,
+                row_filters=row_filters,
             )
