@@ -32,12 +32,13 @@ def categorization_prompt(
     categories_info = [f"{{id: {cat.sub_category_id}, name: {cat.subcategory_name}}}" for cat in expanded_categories]
 
     transaction_descriptions = [t.description for t in transactions]
+    transactions_text = "\n".join(transaction_descriptions)
 
     prompt = f"""
 You are a bank transaction categorization assistant. Your task is to categorize the following transaction descriptions into the most specific and appropriate categories from the provided list.
 
 Transactions: 
-{"\n".join(transaction_descriptions)}
+{transactions_text}
 
 Available Categories:
 {json.dumps(categories_info, indent=2)}

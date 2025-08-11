@@ -2,16 +2,17 @@
 
 api is running at 8010, ui at 6173
 
-## Backend (Poetry)
+## Backend (uv)
 ```bash
 cd bank-statements-api
-poetry run python run.py                    # Start dev server (port 8000)
-poetry run pytest                           # Run tests
-poetry run pytest --cov                     # Run tests with coverage
-poetry run alembic upgrade head             # Run migrations
-peotry run isort .                          # Check code formatting
-poetry run ruff check .                     # Lint code
-poetry run black .                          # Format code
+uv run python run.py                        # Start dev server (port 8010)
+uv run pytest                               # Run tests
+uv run pytest --cov                         # Run tests with coverage
+uv run alembic upgrade head                 # Run migrations
+uv run isort .                              # Check code formatting
+uv run ruff check .                         # Lint code
+uv run black .                              # Format code
+uv sync                                     # Install dependencies
 ```
 
 IMPORTANT: isort, black and ruff MUST run inside the bank-statements-api folder
@@ -50,7 +51,7 @@ docker-compose up db                        # Start only database
 - The test database is called bank-statements-test and it's running on port 15432
 - To run migrations on the test database, use:
 ```bash
-DATABASE_URL=postgresql://postgres:postgres@localhost:15432/bank_statements_test alembic upgrade head   
+DATABASE_URL=postgresql://postgres:postgres@localhost:15432/bank_statements_test uv run alembic upgrade head   
 ```
 
 **IMPORTANT**: Depending on the task, you may also need to refer to these guides:

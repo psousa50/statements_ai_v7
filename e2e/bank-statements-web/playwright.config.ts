@@ -39,7 +39,7 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: "pnpm run dev",
+    command: "cd ../../bank-statements-web && pnpm run dev",
     url: "http://localhost:5173",
     reuseExistingServer: !process.env.CI,
   },

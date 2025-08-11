@@ -14,7 +14,7 @@ class Settings(BaseSettings):
     API_V1_STR: str = "/api/v1"
 
     # Database settings
-    DATABASE_URL: str = os.getenv("DATABASE_URL")
+    DATABASE_URL: str = os.getenv("DATABASE_URL", "postgresql+psycopg://postgres:postgres@localhost:5432/bank_statements")
 
     # CORS settings
     BACKEND_CORS_ORIGINS: list = [

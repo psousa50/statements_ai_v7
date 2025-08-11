@@ -8,22 +8,23 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   curl \
   && rm -rf /var/lib/apt/lists/*
 
-# Install Poetry
-ENV POETRY_VERSION=1.8.2
-RUN curl -sSL https://install.python-poetry.org | python3 -
-ENV PATH="/root/.local/bin:$PATH"
+# Install uv
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
 
-# Disable Poetry virtualenvs
-ENV POETRY_VIRTUALENVS_CREATE=false
+# Copy dependency files
+COPY pyproject.toml uv.lock* ./
 
-# Copy files
-COPY pyproject.toml poetry.lock* ./
-RUN poetry install --no-root
+# Install dependencies
+RUN uv sync --frozen --no-install-project
 
+# Copy application code
 COPY . .
+
+# Install the project
+RUN uv sync --frozen
 
 # Expose port
 EXPOSE 8000
 
 # Run the application
-CMD ["./start_app.sh"]
+CMD ["uv", "run", "./start_app.sh"]

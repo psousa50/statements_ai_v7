@@ -18,16 +18,10 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    # Delete any existing background jobs with these types before removing enum values
-    op.execute("DELETE FROM background_jobs WHERE job_type IN ('AI_CATEGORIZATION', 'AI_COUNTERPARTY_IDENTIFICATION')")
-
-    # Since we're removing all job types, we'll drop the background_jobs table entirely
-    # but keep it for future use with a placeholder enum
     op.execute("DROP TABLE IF EXISTS background_jobs")
     op.execute("DROP TYPE IF EXISTS jobtype")
     op.execute("CREATE TYPE jobtype AS ENUM ('PLACEHOLDER')")
 
-    # Recreate empty background_jobs table structure for future use
     op.execute(
         """
         CREATE TABLE background_jobs (

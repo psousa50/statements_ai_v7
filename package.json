@@ -1,0 +1,68 @@
+{
+  "name": "statements-ai-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Bank Statements AI - Monorepo",
+  "scripts": {
+    "// Development": "=== Development Scripts ===",
+    "dev": "pnpm run dev:api & pnpm run dev:web",
+    "dev:api": "cd bank-statements-api && DATABASE_URL=postgresql+psycopg://postgres:postgres@localhost:54321/bank_statements uv run python run.py",
+    "dev:web": "cd bank-statements-web && pnpm run dev",
+    "start": "pnpm run dev",
+    
+    "// Testing": "=== Testing Scripts ===",
+    "test": "pnpm run test:unit && pnpm run test:integration && pnpm run test:web && pnpm run test:e2e",
+    "test:unit": "cd bank-statements-api && uv run pytest tests/unit tests/api tests/services -v",
+    "test:integration": "pnpm run test:db:up && sleep 5 && pnpm run test:db:migrate && cd bank-statements-api && TEST_DATABASE_URL=postgresql+psycopg://postgres:postgres@localhost:15432/bank_statements_test DATABASE_URL=postgresql+psycopg://postgres:postgres@localhost:15432/bank_statements_test uv run pytest tests/integration test_saved_filters_api.py -v; pnpm run test:db:down",
+    "test:api": "cd bank-statements-api && uv run pytest tests/unit tests/api tests/services",
+    "test:api:cov": "cd bank-statements-api && uv run pytest tests/unit tests/api tests/services --cov",
+    "test:web": "cd bank-statements-web && pnpm vitest run",
+    "test:web:watch": "cd bank-statements-web && pnpm run test",
+    "test:web:ui": "cd bank-statements-web && pnpm vitest --ui",
+    "test:e2e": "cd e2e/bank-statements-web && API_BASE_URL=http://localhost:8010 VITE_API_URL=http://localhost:8010 pnpm run test",
+    "test:e2e:ui": "cd e2e/bank-statements-web && API_BASE_URL=http://localhost:8010 VITE_API_URL=http://localhost:8010 pnpm run test:ui",
+    
+    "// Linting & Formatting": "=== Linting & Formatting Scripts ===",
+    "lint": "pnpm run lint:api && pnpm run lint:web",
+    "lint:api": "cd bank-statements-api && uv run ruff check .",
+    "lint:web": "cd bank-statements-web && pnpm run lint",
+    "format": "pnpm run format:api && pnpm run format:web",
+    "format:api": "cd bank-statements-api && uv run black . && uv run isort .",
+    "format:web": "cd bank-statements-web && pnpm run format",
+    "check:api": "cd bank-statements-api && uv run isort . --check-only && uv run black . --check && uv run ruff check .",
+    
+    "// Building": "=== Build Scripts ===",
+    "build": "pnpm run build:web",
+    "build:web": "cd bank-statements-web && pnpm run build",
+    
+    "// Database": "=== Database Scripts ===",
+    "db:up": "docker-compose up db -d",
+    "db:down": "docker-compose down",
+    "db:migrate": "cd bank-statements-api && DATABASE_URL=postgresql+psycopg://postgres:postgres@localhost:54321/bank_statements uv run alembic upgrade head",
+    "test:db:up": "docker-compose --profile test up test-db -d",
+    "test:db:down": "docker-compose --profile test down",
+    "test:db:migrate": "cd bank-statements-api && DATABASE_URL=postgresql+psycopg://postgres:postgres@localhost:15432/bank_statements_test uv run alembic upgrade dc07aa0a9f15",
+    
+    "// Docker": "=== Docker Scripts ===",
+    "docker:up": "docker-compose up",
+    "docker:down": "docker-compose down",
+    "docker:build": "docker-compose build",
+    
+    "// Installation": "=== Installation Scripts ===",
+    "install": "pnpm install:web && pnpm install:e2e && pnpm install:api",
+    "install:web": "cd bank-statements-web && pnpm install",
+    "install:e2e": "cd e2e/bank-statements-web && pnpm install",
+    "install:api": "cd bank-statements-api && uv sync",
+    
+    "// Utility": "=== Utility Scripts ===",
+    "clean": "pnpm run clean:web && pnpm run clean:api",
+    "clean:web": "cd bank-statements-web && rm -rf node_modules dist",
+    "clean:api": "cd bank-statements-api && rm -rf __pycache__ .pytest_cache .coverage",
+    "reset": "pnpm run clean && pnpm run install"
+  },
+  "devDependencies": {},
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  }
+}

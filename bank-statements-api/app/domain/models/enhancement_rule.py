@@ -30,7 +30,7 @@ class EnhancementRule(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     normalized_description_pattern = Column(String, nullable=False, index=True)
-    match_type = Column(String, nullable=False)  # Temporarily disable enum validation
+    match_type = Column(SQLAlchemyEnum(MatchType, name="matchtype", values_callable=lambda x: [e.value for e in x]), nullable=False)
 
     # Optional amount constraints
     min_amount = Column(Numeric(precision=10, scale=2), nullable=True)
