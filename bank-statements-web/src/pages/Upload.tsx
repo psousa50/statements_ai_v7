@@ -197,6 +197,7 @@ export const Upload: React.FC = () => {
                 onRowFilterChange={setRowFilter}
                 filterPreview={filterPreview}
                 suggestedFilters={analysisResult.suggested_filters}
+                savedRowFilters={analysisResult.saved_row_filters}
               />
 
               <ValidationMessages

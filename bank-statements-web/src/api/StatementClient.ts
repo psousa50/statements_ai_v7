@@ -56,6 +56,7 @@ export interface StatementAnalysisResponse {
   total_debit: number
   total_credit: number
   suggested_filters?: FilterCondition[]
+  saved_row_filters?: FilterCondition[]
 }
 
 export interface StatementUploadRequest {

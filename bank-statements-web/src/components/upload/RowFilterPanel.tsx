@@ -1,15 +1,5 @@
 import React, { useState } from 'react'
-import {
-  Box,
-  Typography,
-  Paper,
-  Switch,
-  FormControlLabel,
-  Button,
-  Alert,
-  Chip,
-  Divider,
-} from '@mui/material'
+import { Box, Typography, Paper, Switch, FormControlLabel, Button, Alert, Chip, Divider } from '@mui/material'
 import { Add as AddIcon, FilterList as FilterIcon } from '@mui/icons-material'
 import { FilterConditionRow } from './FilterConditionRow'
 
@@ -36,6 +26,7 @@ interface RowFilterPanelProps {
   onRowFilterChange: (filter: RowFilter | null) => void
   filterPreview?: FilterPreview | null
   suggestedFilters?: FilterCondition[]
+  savedRowFilters?: FilterCondition[]
 }
 
 export const RowFilterPanel: React.FC<RowFilterPanelProps> = ({
@@ -47,13 +38,29 @@ export const RowFilterPanel: React.FC<RowFilterPanelProps> = ({
   onRowFilterChange,
   filterPreview,
   suggestedFilters = [],
+  savedRowFilters = [],
 }) => {
   const [isEnabled, setIsEnabled] = useState(!!rowFilter)
+  const [hasAppliedSavedFilters, setHasAppliedSavedFilters] = useState(false)
+
+  // Automatically apply saved filters on mount if they exist
+  React.useEffect(() => {
+    if (savedRowFilters && savedRowFilters.length > 0 && !rowFilter && !hasAppliedSavedFilters) {
+      // Convert saved filters to RowFilter format and apply them
+      const savedFilter: RowFilter = {
+        conditions: savedRowFilters,
+        logical_operator: LogicalOperator.AND,
+      }
+      setIsEnabled(true)
+      onRowFilterChange(savedFilter)
+      setHasAppliedSavedFilters(true)
+    }
+  }, [savedRowFilters, rowFilter, hasAppliedSavedFilters, onRowFilterChange])
 
   // Get available columns from the sample data and column mapping
   const availableColumns = React.useMemo(() => {
     if (!sampleData || sampleData.length <= headerRowIndex) return []
-    
+
     const headerRow = sampleData[headerRowIndex] || []
     return headerRow.map((colName, index) => ({
       name: colName || `Column ${index + 1}`,
@@ -64,19 +71,21 @@ export const RowFilterPanel: React.FC<RowFilterPanelProps> = ({
 
   const handleToggleFilter = (enabled: boolean) => {
     setIsEnabled(enabled)
-    
+
     if (!enabled) {
       onRowFilterChange(null)
     } else {
       // Create default filter with one condition using the first available column
       const defaultColumn = availableColumns.length > 0 ? availableColumns[0].name : 'Column 1'
       onRowFilterChange({
-        conditions: [{
-          column_name: defaultColumn,
-          operator: FilterOperator.CONTAINS,
-          value: '',
-          case_sensitive: false,
-        }],
+        conditions: [
+          {
+            column_name: defaultColumn,
+            operator: FilterOperator.CONTAINS,
+            value: '',
+            case_sensitive: false,
+          },
+        ],
         logical_operator: LogicalOperator.AND,
       })
     }
@@ -84,7 +93,7 @@ export const RowFilterPanel: React.FC<RowFilterPanelProps> = ({
 
   const handleAddCondition = () => {
     if (!rowFilter) return
-    
+
     const defaultColumn = availableColumns.length > 0 ? availableColumns[0].name : 'Column 1'
     const newCondition: FilterCondition = {
       column_name: defaultColumn,
@@ -92,7 +101,7 @@ export const RowFilterPanel: React.FC<RowFilterPanelProps> = ({
       value: '',
       case_sensitive: false,
     }
-    
+
     onRowFilterChange({
       ...rowFilter,
       conditions: [...rowFilter.conditions, newCondition],
@@ -101,9 +110,9 @@ export const RowFilterPanel: React.FC<RowFilterPanelProps> = ({
 
   const handleRemoveCondition = (index: number) => {
     if (!rowFilter) return
-    
+
     const newConditions = rowFilter.conditions.filter((_, i) => i !== index)
-    
+
     if (newConditions.length === 0) {
       setIsEnabled(false)
       onRowFilterChange(null)
@@ -117,10 +126,10 @@ export const RowFilterPanel: React.FC<RowFilterPanelProps> = ({
 
   const handleConditionChange = (index: number, updatedCondition: FilterCondition) => {
     if (!rowFilter) return
-    
+
     const newConditions = [...rowFilter.conditions]
     newConditions[index] = updatedCondition
-    
+
     onRowFilterChange({
       ...rowFilter,
       conditions: newConditions,
@@ -129,7 +138,7 @@ export const RowFilterPanel: React.FC<RowFilterPanelProps> = ({
 
   const handleLogicalOperatorChange = (operator: LogicalOperator) => {
     if (!rowFilter) return
-    
+
     onRowFilterChange({
       ...rowFilter,
       logical_operator: operator,
@@ -140,7 +149,7 @@ export const RowFilterPanel: React.FC<RowFilterPanelProps> = ({
     if (!isEnabled) {
       setIsEnabled(true)
     }
-    
+
     onRowFilterChange({
       conditions: [suggestion],
       logical_operator: LogicalOperator.AND,
@@ -149,11 +158,10 @@ export const RowFilterPanel: React.FC<RowFilterPanelProps> = ({
 
   const getFilterSummary = () => {
     if (!filterPreview) return null
-    
-    const percentage = filterPreview.total_rows > 0 
-      ? Math.round((filterPreview.included_rows / filterPreview.total_rows) * 100)
-      : 0
-    
+
+    const percentage =
+      filterPreview.total_rows > 0 ? Math.round((filterPreview.included_rows / filterPreview.total_rows) * 100) : 0
+
     return `${filterPreview.included_rows} of ${filterPreview.total_rows} rows (${percentage}%) will be included`
   }
 
@@ -163,12 +171,7 @@ export const RowFilterPanel: React.FC<RowFilterPanelProps> = ({
         <FilterIcon sx={{ mr: 1 }} />
         <Typography variant="h6">Row Filters</Typography>
         <FormControlLabel
-          control={
-            <Switch
-              checked={isEnabled}
-              onChange={(e) => handleToggleFilter(e.target.checked)}
-            />
-          }
+          control={<Switch checked={isEnabled} onChange={(e) => handleToggleFilter(e.target.checked)} />}
           label="Enable filtering"
           sx={{ ml: 'auto' }}
         />
@@ -178,6 +181,7 @@ export const RowFilterPanel: React.FC<RowFilterPanelProps> = ({
         Apply filters to exclude specific rows from your statement upload.
       </Typography>
 
+
       {/* Suggested Filters */}
       {suggestedFilters.length > 0 && (
         <Box sx={{ mb: 3, p: 2, backgroundColor: 'action.hover', borderRadius: 1 }}>
@@ -186,10 +190,11 @@ export const RowFilterPanel: React.FC<RowFilterPanelProps> = ({
           </Typography>
           <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
             {suggestedFilters.map((suggestion, index) => {
-              const label = suggestion.operator === FilterOperator.IS_NOT_EMPTY 
-                ? `Exclude empty ${suggestion.column_name}`
-                : `${suggestion.column_name} ${suggestion.operator.replace('_', ' ')} ${suggestion.value || ''}`.trim()
-              
+              const label =
+                suggestion.operator === FilterOperator.IS_NOT_EMPTY
+                  ? `Exclude empty ${suggestion.column_name}`
+                  : `${suggestion.column_name} ${suggestion.operator.replace('_', ' ')} ${suggestion.value || ''}`.trim()
+
               return (
                 <Chip
                   key={index}
@@ -197,12 +202,12 @@ export const RowFilterPanel: React.FC<RowFilterPanelProps> = ({
                   onClick={() => applySuggestedFilter(suggestion)}
                   variant="outlined"
                   size="small"
-                  sx={{ 
+                  sx={{
                     cursor: 'pointer',
                     '&:hover': {
                       backgroundColor: 'grey.100',
                       borderColor: 'grey.400',
-                    }
+                    },
                   }}
                 />
               )
@@ -214,13 +219,10 @@ export const RowFilterPanel: React.FC<RowFilterPanelProps> = ({
       {isEnabled && (
         <>
           <Divider sx={{ mb: 2 }} />
-          
+
           {/* Filter Preview */}
           {filterPreview && (
-            <Alert 
-              severity={filterPreview.included_rows > 0 ? "info" : "warning"} 
-              sx={{ mb: 2 }}
-            >
+            <Alert severity={filterPreview.included_rows > 0 ? 'info' : 'warning'} sx={{ mb: 2 }}>
               {getFilterSummary()}
             </Alert>
           )}
@@ -237,16 +239,16 @@ export const RowFilterPanel: React.FC<RowFilterPanelProps> = ({
                   <Box sx={{ display: 'flex', gap: 1 }}>
                     <Chip
                       label="AND (all conditions must match)"
-                      color={rowFilter.logical_operator === LogicalOperator.AND ? "primary" : "default"}
+                      color={rowFilter.logical_operator === LogicalOperator.AND ? 'primary' : 'default'}
                       onClick={() => handleLogicalOperatorChange(LogicalOperator.AND)}
-                      variant={rowFilter.logical_operator === LogicalOperator.AND ? "filled" : "outlined"}
+                      variant={rowFilter.logical_operator === LogicalOperator.AND ? 'filled' : 'outlined'}
                       sx={{ cursor: 'pointer' }}
                     />
                     <Chip
                       label="OR (any condition can match)"
-                      color={rowFilter.logical_operator === LogicalOperator.OR ? "primary" : "default"}
+                      color={rowFilter.logical_operator === LogicalOperator.OR ? 'primary' : 'default'}
                       onClick={() => handleLogicalOperatorChange(LogicalOperator.OR)}
-                      variant={rowFilter.logical_operator === LogicalOperator.OR ? "filled" : "outlined"}
+                      variant={rowFilter.logical_operator === LogicalOperator.OR ? 'filled' : 'outlined'}
                       sx={{ cursor: 'pointer' }}
                     />
                   </Box>
@@ -276,12 +278,12 @@ export const RowFilterPanel: React.FC<RowFilterPanelProps> = ({
                 onClick={handleAddCondition}
                 variant="outlined"
                 size="medium"
-                sx={{ 
+                sx={{
                   mt: 1,
                   '&:hover': {
                     backgroundColor: 'primary.light',
                     borderColor: 'primary.main',
-                  }
+                  },
                 }}
               >
                 Add Filter Condition
