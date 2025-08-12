@@ -41,21 +41,43 @@ export const RowFilterPanel: React.FC<RowFilterPanelProps> = ({
   savedRowFilters = [],
 }) => {
   const [isEnabled, setIsEnabled] = useState(!!rowFilter)
-  const [hasAppliedSavedFilters, setHasAppliedSavedFilters] = useState(false)
-
-  // Automatically apply saved filters on mount if they exist
-  React.useEffect(() => {
-    if (savedRowFilters && savedRowFilters.length > 0 && !rowFilter && !hasAppliedSavedFilters) {
-      // Convert saved filters to RowFilter format and apply them
-      const savedFilter: RowFilter = {
+  const [internalFilter, setInternalFilter] = useState<RowFilter>(() => {
+    // Initialize with saved filters or default
+    if (savedRowFilters && savedRowFilters.length > 0) {
+      return {
         conditions: savedRowFilters,
         logical_operator: LogicalOperator.AND,
       }
-      setIsEnabled(true)
-      onRowFilterChange(savedFilter)
-      setHasAppliedSavedFilters(true)
     }
-  }, [savedRowFilters, rowFilter, hasAppliedSavedFilters, onRowFilterChange])
+    if (rowFilter) {
+      return rowFilter
+    }
+    // Default filter
+    const defaultColumn = 'Column 1' // Will be updated when availableColumns is ready
+    return {
+      conditions: [
+        {
+          column_name: defaultColumn,
+          operator: FilterOperator.CONTAINS,
+          value: '',
+          case_sensitive: false,
+        },
+      ],
+      logical_operator: LogicalOperator.AND,
+    }
+  })
+
+  // Auto-enable if we have saved filters
+  React.useEffect(() => {
+    if (savedRowFilters && savedRowFilters.length > 0) {
+      setIsEnabled(true)
+    }
+  }, [savedRowFilters])
+
+  // Notify parent only when enabled
+  React.useEffect(() => {
+    onRowFilterChange(isEnabled ? internalFilter : null)
+  }, [isEnabled, internalFilter, onRowFilterChange])
 
   // Get available columns from the sample data and column mapping
   const availableColumns = React.useMemo(() => {
@@ -71,29 +93,10 @@ export const RowFilterPanel: React.FC<RowFilterPanelProps> = ({
 
   const handleToggleFilter = (enabled: boolean) => {
     setIsEnabled(enabled)
-
-    if (!enabled) {
-      onRowFilterChange(null)
-    } else {
-      // Create default filter with one condition using the first available column
-      const defaultColumn = availableColumns.length > 0 ? availableColumns[0].name : 'Column 1'
-      onRowFilterChange({
-        conditions: [
-          {
-            column_name: defaultColumn,
-            operator: FilterOperator.CONTAINS,
-            value: '',
-            case_sensitive: false,
-          },
-        ],
-        logical_operator: LogicalOperator.AND,
-      })
-    }
+    // The useEffect above will handle notifying the parent
   }
 
   const handleAddCondition = () => {
-    if (!rowFilter) return
-
     const defaultColumn = availableColumns.length > 0 ? availableColumns[0].name : 'Column 1'
     const newCondition: FilterCondition = {
       column_name: defaultColumn,
@@ -102,45 +105,38 @@ export const RowFilterPanel: React.FC<RowFilterPanelProps> = ({
       case_sensitive: false,
     }
 
-    onRowFilterChange({
-      ...rowFilter,
-      conditions: [...rowFilter.conditions, newCondition],
+    setInternalFilter({
+      ...internalFilter,
+      conditions: [...internalFilter.conditions, newCondition],
     })
   }
 
   const handleRemoveCondition = (index: number) => {
-    if (!rowFilter) return
-
-    const newConditions = rowFilter.conditions.filter((_, i) => i !== index)
+    const newConditions = internalFilter.conditions.filter((_, i) => i !== index)
 
     if (newConditions.length === 0) {
       setIsEnabled(false)
-      onRowFilterChange(null)
-    } else {
-      onRowFilterChange({
-        ...rowFilter,
-        conditions: newConditions,
-      })
     }
+
+    setInternalFilter({
+      ...internalFilter,
+      conditions: newConditions,
+    })
   }
 
   const handleConditionChange = (index: number, updatedCondition: FilterCondition) => {
-    if (!rowFilter) return
-
-    const newConditions = [...rowFilter.conditions]
+    const newConditions = [...internalFilter.conditions]
     newConditions[index] = updatedCondition
 
-    onRowFilterChange({
-      ...rowFilter,
+    setInternalFilter({
+      ...internalFilter,
       conditions: newConditions,
     })
   }
 
   const handleLogicalOperatorChange = (operator: LogicalOperator) => {
-    if (!rowFilter) return
-
-    onRowFilterChange({
-      ...rowFilter,
+    setInternalFilter({
+      ...internalFilter,
       logical_operator: operator,
     })
   }
@@ -150,7 +146,7 @@ export const RowFilterPanel: React.FC<RowFilterPanelProps> = ({
       setIsEnabled(true)
     }
 
-    onRowFilterChange({
+    setInternalFilter({
       conditions: [suggestion],
       logical_operator: LogicalOperator.AND,
     })
@@ -180,7 +176,6 @@ export const RowFilterPanel: React.FC<RowFilterPanelProps> = ({
       <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
         Apply filters to exclude specific rows from your statement upload.
       </Typography>
-
 
       {/* Suggested Filters */}
       {suggestedFilters.length > 0 && (
@@ -228,68 +223,66 @@ export const RowFilterPanel: React.FC<RowFilterPanelProps> = ({
           )}
 
           {/* Filter Conditions */}
-          {rowFilter && (
-            <Box>
-              {/* Logical Operator Selection (only show if multiple conditions) */}
-              {rowFilter.conditions.length > 1 && (
-                <Box sx={{ mb: 2 }}>
-                  <Typography variant="subtitle2" sx={{ mb: 1 }}>
-                    Apply conditions using:
-                  </Typography>
-                  <Box sx={{ display: 'flex', gap: 1 }}>
-                    <Chip
-                      label="AND (all conditions must match)"
-                      color={rowFilter.logical_operator === LogicalOperator.AND ? 'primary' : 'default'}
-                      onClick={() => handleLogicalOperatorChange(LogicalOperator.AND)}
-                      variant={rowFilter.logical_operator === LogicalOperator.AND ? 'filled' : 'outlined'}
-                      sx={{ cursor: 'pointer' }}
-                    />
-                    <Chip
-                      label="OR (any condition can match)"
-                      color={rowFilter.logical_operator === LogicalOperator.OR ? 'primary' : 'default'}
-                      onClick={() => handleLogicalOperatorChange(LogicalOperator.OR)}
-                      variant={rowFilter.logical_operator === LogicalOperator.OR ? 'filled' : 'outlined'}
-                      sx={{ cursor: 'pointer' }}
-                    />
-                  </Box>
-                </Box>
-              )}
-
-              {/* Filter Conditions */}
-              <Box sx={{ mb: 3 }}>
-                <Typography variant="subtitle2" sx={{ mb: 2 }}>
-                  Filter conditions:
+          <Box>
+            {/* Logical Operator Selection (only show if multiple conditions) */}
+            {internalFilter.conditions.length > 1 && (
+              <Box sx={{ mb: 2 }}>
+                <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                  Apply conditions using:
                 </Typography>
-                {rowFilter.conditions.map((condition, index) => (
-                  <FilterConditionRow
-                    key={`condition-${index}`}
-                    condition={condition}
-                    availableColumns={availableColumns}
-                    onConditionChange={(updatedCondition) => handleConditionChange(index, updatedCondition)}
-                    onRemove={() => handleRemoveCondition(index)}
-                    showRemoveButton={rowFilter.conditions.length > 1}
+                <Box sx={{ display: 'flex', gap: 1 }}>
+                  <Chip
+                    label="AND (all conditions must match)"
+                    color={internalFilter.logical_operator === LogicalOperator.AND ? 'primary' : 'default'}
+                    onClick={() => handleLogicalOperatorChange(LogicalOperator.AND)}
+                    variant={internalFilter.logical_operator === LogicalOperator.AND ? 'filled' : 'outlined'}
+                    sx={{ cursor: 'pointer' }}
                   />
-                ))}
+                  <Chip
+                    label="OR (any condition can match)"
+                    color={internalFilter.logical_operator === LogicalOperator.OR ? 'primary' : 'default'}
+                    onClick={() => handleLogicalOperatorChange(LogicalOperator.OR)}
+                    variant={internalFilter.logical_operator === LogicalOperator.OR ? 'filled' : 'outlined'}
+                    sx={{ cursor: 'pointer' }}
+                  />
+                </Box>
               </Box>
+            )}
 
-              {/* Add Condition Button */}
-              <Button
-                startIcon={<AddIcon />}
-                onClick={handleAddCondition}
-                variant="outlined"
-                size="medium"
-                sx={{
-                  mt: 1,
-                  '&:hover': {
-                    backgroundColor: 'primary.light',
-                    borderColor: 'primary.main',
-                  },
-                }}
-              >
-                Add Filter Condition
-              </Button>
+            {/* Filter Conditions */}
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="subtitle2" sx={{ mb: 2 }}>
+                Filter conditions:
+              </Typography>
+              {internalFilter.conditions.map((condition, index) => (
+                <FilterConditionRow
+                  key={`condition-${index}`}
+                  condition={condition}
+                  availableColumns={availableColumns}
+                  onConditionChange={(updatedCondition) => handleConditionChange(index, updatedCondition)}
+                  onRemove={() => handleRemoveCondition(index)}
+                  showRemoveButton={internalFilter.conditions.length > 1}
+                />
+              ))}
             </Box>
-          )}
+
+            {/* Add Condition Button */}
+            <Button
+              startIcon={<AddIcon />}
+              onClick={handleAddCondition}
+              variant="outlined"
+              size="medium"
+              sx={{
+                mt: 1,
+                '&:hover': {
+                  backgroundColor: 'primary.light',
+                  borderColor: 'primary.main',
+                },
+              }}
+            >
+              Add Filter Condition
+            </Button>
+          </Box>
         </>
       )}
     </Paper>
