@@ -56,7 +56,13 @@ export const CategorySelector = ({
 
     const filtered = !categoryInput
       ? availableCategories
-      : availableCategories.filter((category) => category.name.toLowerCase().includes(categoryInput.toLowerCase()))
+      : availableCategories.filter((category) => {
+          const searchLower = categoryInput.toLowerCase()
+          const categoryNameMatch = category.name.toLowerCase().includes(searchLower)
+          const parentCategory = categories.find((cat) => cat.id === category.parent_id)
+          const parentNameMatch = parentCategory ? parentCategory.name.toLowerCase().includes(searchLower) : false
+          return categoryNameMatch || parentNameMatch
+        })
 
     // Sort categories alphabetically
     return filtered.sort((a, b) => a.name.localeCompare(b.name))
@@ -226,8 +232,7 @@ export const CategorySelector = ({
                 className="category-suggestion"
                 type="button"
               >
-                {multiple && category.parent_id && '  └ '}
-                {multiple ? category.name : getCategoryHierarchy(category)}
+                {getCategoryHierarchy(category)}
               </button>
             ))
           ) : (

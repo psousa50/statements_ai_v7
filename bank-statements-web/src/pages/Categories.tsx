@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback } from 'react'
 import { useCategories } from '../services/hooks/useCategories'
 import { CategoryTree } from '../components/CategoryTree'
 import { CategoryModal } from '../components/CategoryModal'
@@ -18,14 +18,39 @@ export const CategoriesPage = () => {
   const { categories, rootCategories, loading, error, fetchCategories, addCategory, updateCategory, deleteCategory } =
     useCategories()
 
-  // Filter and sort categories based on search term
-  const filteredCategories = categories
-    .filter((category) => category.name.toLowerCase().includes(searchTerm.toLowerCase()))
-    .sort((a, b) => a.name.localeCompare(b.name))
+  const getCategoryHierarchy = (categoryId: string): string[] => {
+    const hierarchy: string[] = [categoryId]
+    let current = categories.find((c) => c.id === categoryId)
+    while (current?.parent_id) {
+      hierarchy.unshift(current.parent_id)
+      current = categories.find((c) => c.id === current?.parent_id)
+    }
+    return hierarchy
+  }
 
-  const filteredRootCategories = rootCategories
-    .filter((category) => category.name.toLowerCase().includes(searchTerm.toLowerCase()))
-    .sort((a, b) => a.name.localeCompare(b.name))
+  const filteredCategories = !searchTerm
+    ? categories
+    : (() => {
+        const searchLower = searchTerm.toLowerCase()
+        const matchingIds = new Set<string>()
+
+        categories.forEach((category) => {
+          const categoryNameMatch = category.name.toLowerCase().includes(searchLower)
+
+          if (categoryNameMatch) {
+            matchingIds.add(category.id)
+            getCategoryHierarchy(category.id).forEach((id) => matchingIds.add(id))
+          }
+        })
+
+        return categories.filter((c) => matchingIds.has(c.id)).sort((a, b) => a.name.localeCompare(b.name))
+      })()
+
+  const filteredRootCategories = !searchTerm
+    ? rootCategories
+    : rootCategories
+        .filter((c) => filteredCategories.some((fc) => fc.id === c.id))
+        .sort((a, b) => a.name.localeCompare(b.name))
 
   const handleCreateCategory = useCallback((parentId?: string) => {
     setSelectedParentId(parentId)
