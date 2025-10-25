@@ -237,7 +237,7 @@
   background: none;
   border: none;
   cursor: pointer;
-  padding: 4px;
+  padding: 0;
   border-radius: 4px;
   font-size: 0.875rem;
   color: var(--text-muted);
@@ -247,6 +247,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  line-height: 1;
+  transform: translateY(-7px);
 }
 
 .expand-button:hover {
@@ -265,6 +267,7 @@
   font-weight: 500;
   color: var(--text-primary);
   flex: 1;
+  line-height: 20px;
 }
 
 .category-stats {
@@ -364,6 +367,7 @@
   0% {
     transform: rotate(0deg);
   }
+
   100% {
     transform: rotate(360deg);
   }
@@ -640,6 +644,7 @@
     transform: translateX(100%);
     opacity: 0;
   }
+
   to {
     transform: translateX(0);
     opacity: 1;

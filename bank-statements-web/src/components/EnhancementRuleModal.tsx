@@ -367,6 +367,7 @@ export const EnhancementRuleModal: React.FC<EnhancementRuleModalProps> = ({
                 allowClear={true}
                 multiple={false}
                 variant="form"
+                autoFocus={true}
               />
               <FormHelperText>Category to assign to matching transactions</FormHelperText>
             </FormControl>

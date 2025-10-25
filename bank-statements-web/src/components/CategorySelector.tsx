@@ -12,6 +12,7 @@ interface CategorySelectorProps {
   allowClear?: boolean
   multiple?: boolean
   variant?: 'default' | 'filter' | 'form'
+  autoFocus?: boolean
 }
 
 export const CategorySelector = ({
@@ -24,6 +25,7 @@ export const CategorySelector = ({
   allowClear = true,
   multiple = false,
   variant = 'default',
+  autoFocus = false,
 }: CategorySelectorProps) => {
   const [categoryInput, setCategoryInput] = useState('')
   const [showSuggestions, setShowSuggestions] = useState(false)
@@ -117,7 +119,6 @@ export const CategorySelector = ({
 
   // Handle input focus
   const handleInputFocus = () => {
-    setShowSuggestions(true)
     // Clear input when focusing to allow typing search
     if (!multiple && selectedCategory) {
       setCategoryInput('')
@@ -172,6 +173,15 @@ export const CategorySelector = ({
     }
   }, [showSuggestions, variant])
 
+  // Handle autofocus
+  useEffect(() => {
+    if (autoFocus && inputRef.current) {
+      setTimeout(() => {
+        inputRef.current?.focus()
+      }, 100)
+    }
+  }, [autoFocus])
+
   // Display text for the input
   const inputDisplayValue = multiple
     ? categoryInput
@@ -208,6 +218,7 @@ export const CategorySelector = ({
           onKeyDown={handleInputKeyDown}
           placeholder={placeholderText}
           className="category-input"
+          autoFocus={autoFocus}
           style={{
             color: 'var(--text-primary)',
             backgroundColor: 'transparent',
