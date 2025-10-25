@@ -343,13 +343,14 @@ class StatementUploadService:
 
         existing_metadata = self.file_analysis_metadata_repo.find_by_hash(file_hash)
         if existing_metadata:
+            filters_to_save = row_filters if row_filters is not None else existing_metadata.row_filters
             self.file_analysis_metadata_repo.update(
                 file_hash=file_hash,
                 column_mapping=column_mapping,
                 header_row_index=header_row_index,
                 data_start_row_index=data_start_row_index,
                 account_id=account_id,
-                row_filters=row_filters,
+                row_filters=filters_to_save,
             )
         else:
             self.file_analysis_metadata_repo.save(
