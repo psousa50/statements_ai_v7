@@ -13,6 +13,8 @@ interface CategorySelectorProps {
   multiple?: boolean
   variant?: 'default' | 'filter' | 'form'
   autoFocus?: boolean
+  allowCreate?: boolean
+  onCategoryCreate?: (name: string, parentId?: string) => Promise<Category | null>
 }
 
 export const CategorySelector = ({
@@ -26,9 +28,12 @@ export const CategorySelector = ({
   multiple = false,
   variant = 'default',
   autoFocus = false,
+  allowCreate = false,
+  onCategoryCreate,
 }: CategorySelectorProps) => {
   const [categoryInput, setCategoryInput] = useState('')
   const [showSuggestions, setShowSuggestions] = useState(false)
+  const [creatingCategory, setCreatingCategory] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
 
@@ -40,6 +45,38 @@ export const CategorySelector = ({
   const selectedCategories = useMemo(() => {
     return categories.filter((cat) => selectedCategoryIds.includes(cat.id))
   }, [categories, selectedCategoryIds])
+
+  // Parse create pattern (e.g., "car > parking")
+  const createPattern = useMemo(() => {
+    if (!allowCreate || !categoryInput.includes('>')) {
+      return null
+    }
+
+    const parts = categoryInput.split('>').map((part) => part.trim())
+    if (parts.length !== 2 || !parts[0] || !parts[1]) {
+      return null
+    }
+
+    const [parentName, childName] = parts
+    const parentCategory = categories.find((cat) => cat.name.toLowerCase() === parentName.toLowerCase())
+
+    if (!parentCategory) {
+      return null
+    }
+
+    const childExists = categories.some(
+      (cat) => cat.parent_id === parentCategory.id && cat.name.toLowerCase() === childName.toLowerCase()
+    )
+
+    if (childExists) {
+      return null
+    }
+
+    return {
+      parentCategory,
+      childName,
+    }
+  }, [allowCreate, categoryInput, categories])
 
   // Filter categories based on input and availability
   const filteredCategories = useMemo(() => {
@@ -95,6 +132,23 @@ export const CategorySelector = ({
       setCategoryInput('')
       setShowSuggestions(false)
       inputRef.current?.blur()
+    }
+  }
+
+  // Handle category creation
+  const handleCreateCategory = async () => {
+    if (!createPattern || !onCategoryCreate) return
+
+    setCreatingCategory(true)
+    try {
+      const newCategory = await onCategoryCreate(createPattern.childName, createPattern.parentCategory.id)
+      if (newCategory) {
+        handleCategorySelect(newCategory)
+      }
+    } catch (error) {
+      console.error('Failed to create category:', error)
+    } finally {
+      setCreatingCategory(false)
     }
   }
 
@@ -235,6 +289,22 @@ export const CategorySelector = ({
 
       {showSuggestions && (
         <div className="category-suggestions">
+          {createPattern && (
+            <button
+              onClick={handleCreateCategory}
+              className="category-suggestion category-create"
+              type="button"
+              disabled={creatingCategory}
+            >
+              {creatingCategory ? (
+                <>Creating...</>
+              ) : (
+                <>
+                  ✨ Create "{createPattern.parentCategory.name} &gt; {createPattern.childName}"
+                </>
+              )}
+            </button>
+          )}
           {filteredCategories.length > 0 ? (
             filteredCategories.map((category) => (
               <button
@@ -246,9 +316,9 @@ export const CategorySelector = ({
                 {getCategoryHierarchy(category)}
               </button>
             ))
-          ) : (
+          ) : !createPattern ? (
             <div className="no-suggestions">No categories found</div>
-          )}
+          ) : null}
         </div>
       )}
     </div>

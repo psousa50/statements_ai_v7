@@ -152,6 +152,22 @@
   border-bottom: none;
 }
 
+.category-suggestion.category-create {
+  background: rgba(37, 99, 235, 0.05);
+  color: #2563eb;
+  font-weight: 500;
+  border-bottom: 1px solid rgba(37, 99, 235, 0.2);
+}
+
+.category-suggestion.category-create:hover:not(:disabled) {
+  background: rgba(37, 99, 235, 0.1);
+}
+
+.category-suggestion.category-create:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .no-suggestions {
   padding: 8px 12px;
   color: var(--text-secondary);

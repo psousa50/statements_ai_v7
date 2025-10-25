@@ -299,6 +299,17 @@ export const EnhancementRuleModal: React.FC<EnhancementRuleModalProps> = ({
     }
   }
 
+  const handleCreateCategory = async (name: string, parentId?: string) => {
+    try {
+      const newCategory = await apiClient.categories.create({ name, parent_id: parentId })
+      setCategories((prev) => [...prev, newCategory].sort((a, b) => a.name.localeCompare(b.name)))
+      return newCategory
+    } catch (error) {
+      console.error('Failed to create category:', error)
+      return null
+    }
+  }
+
   return (
     <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
       <DialogTitle>{isEditing ? 'Edit Enhancement Rule' : 'Create Enhancement Rule'}</DialogTitle>
@@ -368,8 +379,12 @@ export const EnhancementRuleModal: React.FC<EnhancementRuleModalProps> = ({
                 multiple={false}
                 variant="form"
                 autoFocus={true}
+                allowCreate={true}
+                onCategoryCreate={handleCreateCategory}
               />
-              <FormHelperText>Category to assign to matching transactions</FormHelperText>
+              <FormHelperText>
+                Category to assign to matching transactions. Type "Parent &gt; Child" to create a subcategory.
+              </FormHelperText>
             </FormControl>
 
             <FormControl fullWidth>
