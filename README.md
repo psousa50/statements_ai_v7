@@ -87,6 +87,35 @@ The frontend follows a modular architecture:
    npm install
 ```
 
+### Configuration
+
+The project uses a centralized configuration system. All ports, URLs, and settings are managed from a single YAML file.
+
+1. Copy the example configuration:
+
+```bash
+   cp config/settings.yaml.example config/settings.yaml
+```
+
+2. Edit `config/settings.yaml` to customise your configuration:
+
+```yaml
+   ports:
+     api: 8010    # Backend API port
+     web: 5173    # Frontend dev server port
+     database: 54321  # PostgreSQL port
+```
+
+3. Generate environment files:
+
+```bash
+   python scripts/generate_env_files.py
+```
+
+   This creates `.env` files for the root, backend, and frontend with the correct settings.
+
+4. Restart your services to apply the changes.
+
 ### Running the Application
 
 1. Start the backend:
@@ -104,6 +133,26 @@ The frontend follows a modular architecture:
 ```
 
 1. Access the application at <http://localhost:5173>
+
+### Database Backup and Restore
+
+The project includes commands for backing up and restoring your PostgreSQL database.
+
+**Creating a backup:**
+
+```bash
+pnpm db:backup
+```
+
+This creates a timestamped backup file in the `backups/` directory (e.g., `backups/bank_statements_20251025_143022.dump`). The backup uses PostgreSQL's custom format, which is compressed and supports parallel restore.
+
+**Restoring from a backup:**
+
+```bash
+FILE=backups/bank_statements_20251025_143022.dump pnpm db:restore
+```
+
+**Important:** The restore command will drop existing tables before restoring, so make sure you have a current backup before running it.
 
 ## Project Structure
 
