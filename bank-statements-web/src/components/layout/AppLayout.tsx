@@ -1,4 +1,3 @@
-import React from 'react'
 import { Outlet } from 'react-router-dom'
 import { Box, CssBaseline, Drawer, AppBar, Toolbar, Typography, Divider } from '@mui/material'
 import { AppNavigation } from './AppNavigation'

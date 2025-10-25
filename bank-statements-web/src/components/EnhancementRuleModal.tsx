@@ -265,9 +265,10 @@ export const EnhancementRuleModal: React.FC<EnhancementRuleModalProps> = ({
       handleClose()
     } catch (err) {
       console.error(`Failed to ${isEditing ? 'update' : 'create'} enhancement rule:`, err)
-      if (err.response) {
-        console.error('Error response data:', err.response.data)
-        console.error('Error response status:', err.response.status)
+      if (err && typeof err === 'object' && 'response' in err) {
+        const axiosError = err as { response: { data: unknown; status: number } }
+        console.error('Error response data:', axiosError.response.data)
+        console.error('Error response status:', axiosError.response.status)
       }
     }
   }

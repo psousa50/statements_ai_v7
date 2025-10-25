@@ -179,7 +179,7 @@ export const Statements: React.FC = () => {
         onConfirm={handleDeleteConfirm}
         onCancel={handleDeleteCancel}
         confirmText="Delete"
-        confirmButtonClass="danger"
+        dangerous={true}
       />
 
       {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}

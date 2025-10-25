@@ -1,5 +1,10 @@
 import { Transaction, TransactionCreate, TransactionListResponse, CategorizationStatus } from '../types/Transaction'
 
+export interface Source {
+  id: string
+  name: string
+}
+
 export interface TransactionFilters {
   page?: number
   page_size?: number

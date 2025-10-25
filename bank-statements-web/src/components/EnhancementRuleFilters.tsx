@@ -102,7 +102,7 @@ export const EnhancementRuleFiltersComponent: React.FC<EnhancementRuleFiltersPro
   const handleCategoryChange = (categoryId?: string) => {
     onFiltersChange({
       ...filters,
-      category_id: categoryId,
+      category_ids: categoryId ? [categoryId] : undefined,
     })
   }
 
@@ -146,7 +146,7 @@ export const EnhancementRuleFiltersComponent: React.FC<EnhancementRuleFiltersPro
 
   const hasActiveFilters =
     filters.description_search ||
-    filters.category_id ||
+    filters.category_ids?.length ||
     filters.counterparty_account_ids?.length ||
     filters.match_type ||
     filters.source ||
@@ -198,7 +198,7 @@ export const EnhancementRuleFiltersComponent: React.FC<EnhancementRuleFiltersPro
         <Box sx={{ minWidth: 200 }}>
           <CategorySelector
             categories={categories}
-            selectedCategoryId={filters.category_id}
+            selectedCategoryId={filters.category_ids?.[0]}
             onCategoryChange={handleCategoryChange}
             placeholder="Select category"
             allowClear={true}

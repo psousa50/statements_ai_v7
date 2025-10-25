@@ -134,8 +134,8 @@ export const TransactionsPage = () => {
         ...filters,
         ...newFilters,
         page: 1,
-        include_running_balance: !!newFilters.source_id,
-      } // Reset to first page when filters change
+        include_running_balance: !!newFilters.account_id,
+      }
       setFilters(updatedFilters)
       fetchTransactions(updatedFilters)
     },
@@ -173,13 +173,6 @@ export const TransactionsPage = () => {
   const handleCategoryFilter = useCallback(
     (categoryIds: string[]) => {
       handleFilterChange({ category_ids: categoryIds })
-    },
-    [handleFilterChange]
-  )
-
-  const handleStatusFilter = useCallback(
-    (status?: CategorizationStatus) => {
-      handleFilterChange({ status })
     },
     [handleFilterChange]
   )
@@ -312,7 +305,6 @@ export const TransactionsPage = () => {
               categories={categories || []}
               accounts={accounts || []}
               selectedCategoryIds={filters.category_ids}
-              selectedStatus={filters.status}
               selectedAccountId={filters.account_id}
               minAmount={localMinAmount}
               maxAmount={localMaxAmount}
@@ -320,13 +312,16 @@ export const TransactionsPage = () => {
               startDate={localStartDate}
               endDate={localEndDate}
               excludeTransfers={filters.exclude_transfers}
+              excludeUncategorized={false}
+              transactionType="all"
               onCategoryChange={handleCategoryFilter}
-              onStatusChange={handleStatusFilter}
               onAccountChange={handleAccountFilter}
               onAmountRangeChange={handleAmountRangeFilter}
               onDescriptionSearchChange={handleDescriptionSearchFilter}
               onDateRangeChange={handleDateRangeFilter}
               onExcludeTransfersChange={handleExcludeTransfersFilter}
+              onExcludeUncategorizedChange={() => {}}
+              onTransactionTypeChange={() => {}}
               onClearFilters={handleClearFilters}
             />
           </div>

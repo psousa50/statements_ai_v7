@@ -252,7 +252,7 @@ export const EnhancementRuleTable: React.FC<EnhancementRuleTableProps> = ({
               <TableCell>
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}>
                   <Typography variant="body2">{rule.transaction_count ?? 0}</Typography>
-                  {rule.transaction_count > 0 && (
+                  {(rule.transaction_count ?? 0) > 0 && (
                     <IconButton
                       size="small"
                       onClick={() => handleViewTransactions(rule)}

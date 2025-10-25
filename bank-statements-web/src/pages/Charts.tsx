@@ -553,7 +553,7 @@ export const ChartsPage = () => {
                     ))}
                   </Pie>
                   <Tooltip
-                    formatter={(value: number, name: string, props: unknown) => {
+                    formatter={(value: number, _name: string, props: unknown) => {
                       const payload = (props as { payload: ChartData }).payload
                       return [
                         [`$${value.toFixed(2)}`, 'Amount'],

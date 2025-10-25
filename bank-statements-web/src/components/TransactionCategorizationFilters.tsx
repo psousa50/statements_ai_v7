@@ -1,4 +1,3 @@
-import React from 'react'
 import { Category } from '../types/Transaction'
 import { CategorizationSource } from '../types/TransactionCategorization'
 import { CategorySelector } from './CategorySelector'
