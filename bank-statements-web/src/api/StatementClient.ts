@@ -1,5 +1,7 @@
 import axios from 'axios'
 
+const BASE_URL = import.meta.env.VITE_API_URL || ''
+
 export interface ColumnMapping {
   date: string
   amount: string
@@ -117,7 +119,7 @@ export const statementClient: StatementClient = {
     const formData = new FormData()
     formData.append('file', file)
 
-    const response = await axios.post<StatementAnalysisResponse>('/api/v1/statements/analyze', formData, {
+    const response = await axios.post<StatementAnalysisResponse>(`${BASE_URL}/api/v1/statements/analyze`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
@@ -126,17 +128,17 @@ export const statementClient: StatementClient = {
   },
 
   uploadStatement: async (data: StatementUploadRequest): Promise<StatementUploadResponse> => {
-    const response = await axios.post<StatementUploadResponse>('/api/v1/statements/upload', data)
+    const response = await axios.post<StatementUploadResponse>(`${BASE_URL}/api/v1/statements/upload`, data)
     return response.data
   },
 
   listStatements: async (): Promise<StatementResponse[]> => {
-    const response = await axios.get<StatementResponse[]>('/api/v1/statements')
+    const response = await axios.get<StatementResponse[]>(`${BASE_URL}/api/v1/statements`)
     return response.data
   },
 
   deleteStatement: async (statementId: string): Promise<{ message: string }> => {
-    const response = await axios.delete<{ message: string }>(`/api/v1/statements/${statementId}`)
+    const response = await axios.delete<{ message: string }>(`${BASE_URL}/api/v1/statements/${statementId}`)
     return response.data
   },
 }
