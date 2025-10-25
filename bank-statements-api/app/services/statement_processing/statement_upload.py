@@ -334,17 +334,24 @@ class StatementUploadService:
         account_id: UUID,
         row_filters: Optional[List[dict]] = None,
     ):
-        """Save file analysis metadata for duplicate detection"""
         uploaded_file = self.uploaded_file_repo.find_by_id(uploaded_file_id)
 
         from app.services.common import compute_hash
 
-        # Parse the file to get the dataframe for hash computation
         raw_df = self.statement_parser.parse(uploaded_file.content, uploaded_file.file_type)
         file_hash = compute_hash(uploaded_file.file_type, raw_df)
 
         existing_metadata = self.file_analysis_metadata_repo.find_by_hash(file_hash)
-        if not existing_metadata:
+        if existing_metadata:
+            self.file_analysis_metadata_repo.update(
+                file_hash=file_hash,
+                column_mapping=column_mapping,
+                header_row_index=header_row_index,
+                data_start_row_index=data_start_row_index,
+                account_id=account_id,
+                row_filters=row_filters,
+            )
+        else:
             self.file_analysis_metadata_repo.save(
                 file_hash=file_hash,
                 column_mapping=column_mapping,

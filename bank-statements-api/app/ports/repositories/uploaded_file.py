@@ -29,5 +29,17 @@ class FileAnalysisMetadataRepository(ABC):
         pass
 
     @abstractmethod
+    def update(
+        self,
+        file_hash: str,
+        column_mapping: dict,
+        header_row_index: int,
+        data_start_row_index: int,
+        account_id: Optional[UUID] = None,
+        row_filters: Optional[dict] = None,
+    ) -> FileAnalysisMetadataDTO:
+        pass
+
+    @abstractmethod
     def find_by_hash(self, file_hash: str) -> Optional[FileAnalysisMetadataDTO]:
         pass
