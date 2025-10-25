@@ -119,7 +119,10 @@ export const Upload: React.FC = () => {
       })
 
       setTimeout(() => {
-        navigate('/transactions')
+        const url = selectedAccount
+          ? `/transactions?account_id=${encodeURIComponent(selectedAccount)}`
+          : '/transactions'
+        navigate(url)
       }, 2000)
     } catch (error) {
       console.error('Error uploading file:', error)
