@@ -118,7 +118,6 @@ export const Upload: React.FC = () => {
         severity: 'success',
       })
 
-      // Navigate to transactions page after successful upload
       setTimeout(() => {
         navigate('/transactions')
       }, 2000)
@@ -129,7 +128,6 @@ export const Upload: React.FC = () => {
         message: 'Error uploading file. Please try again.',
         severity: 'error',
       })
-    } finally {
       setIsUploading(false)
     }
   }
