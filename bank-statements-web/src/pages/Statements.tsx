@@ -129,14 +129,10 @@ export const Statements: React.FC = () => {
                     <span className="account-name">{statement.account_name}</span>
                   </td>
                   <td>
-                    <span className="file-type-badge">
-                      {formatFileSize(statement.filename)}
-                    </span>
+                    <span className="file-type-badge">{formatFileSize(statement.filename)}</span>
                   </td>
                   <td>
-                    <span className="transaction-count">
-                      {statement.transaction_count || 0}
-                    </span>
+                    <span className="transaction-count">{statement.transaction_count || 0}</span>
                   </td>
                   <td>
                     <div className="date-range">
@@ -152,9 +148,7 @@ export const Statements: React.FC = () => {
                     </div>
                   </td>
                   <td>
-                    <span className="upload-date">
-                      {formatDate(statement.created_at)}
-                    </span>
+                    <span className="upload-date">{formatDate(statement.created_at)}</span>
                   </td>
                   <td>
                     <div className="actions">
@@ -188,13 +182,7 @@ export const Statements: React.FC = () => {
         confirmButtonClass="danger"
       />
 
-      {toast && (
-        <Toast
-          message={toast.message}
-          type={toast.type}
-          onClose={() => setToast(null)}
-        />
-      )}
+      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
     </div>
   )
 }

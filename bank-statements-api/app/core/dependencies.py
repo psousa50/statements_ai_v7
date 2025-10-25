@@ -20,14 +20,14 @@ from app.services.background.background_job_service import BackgroundJobService
 from app.services.category import CategoryService
 from app.services.enhancement_rule_management import EnhancementRuleManagementService
 from app.services.initial_balance_service import InitialBalanceService
-from app.services.statement import StatementService
 from app.services.schema_detection.heuristic_schema_detector import HeuristicSchemaDetector
+from app.services.statement import StatementService
 from app.services.statement_processing.file_type_detector import StatementFileTypeDetector
+from app.services.statement_processing.row_filter_service import RowFilterService
 from app.services.statement_processing.statement_analyzer import StatementAnalyzerService
 from app.services.statement_processing.statement_parser import StatementParser
 from app.services.statement_processing.statement_upload import StatementUploadService
 from app.services.statement_processing.transaction_normalizer import TransactionNormalizer
-from app.services.statement_processing.row_filter_service import RowFilterService
 from app.services.transaction import TransactionService
 from app.services.transaction_enhancement import TransactionEnhancer
 from app.services.transaction_rule_enhancement import TransactionRuleEnhancementService
@@ -174,13 +174,11 @@ def build_internal_dependencies(
 
 
 @contextmanager
-def get_dependencies() -> (
-    Generator[
-        tuple[ExternalDependencies, InternalDependencies],
-        None,
-        None,
-    ]
-):
+def get_dependencies() -> Generator[
+    tuple[ExternalDependencies, InternalDependencies],
+    None,
+    None,
+]:
     external = build_external_dependencies()
     internal = build_internal_dependencies(external)
     try:

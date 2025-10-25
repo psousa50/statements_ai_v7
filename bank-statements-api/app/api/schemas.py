@@ -5,11 +5,11 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, field_serializer, field_validator
 
+from app.domain.dto.statement_processing import FilterOperator, LogicalOperator
 from app.domain.models.background_job import JobStatus
 from app.domain.models.enhancement_rule import EnhancementRuleSource, MatchType
 from app.domain.models.processing import BackgroundJobInfo
 from app.domain.models.transaction import CategorizationStatus
-from app.domain.dto.statement_processing import FilterOperator, LogicalOperator
 
 
 class CategoryBase(BaseModel):

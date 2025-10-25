@@ -46,7 +46,13 @@ interface CounterpartyAccount {
   account_number?: string
 }
 
-export const EnhancementRuleModal: React.FC<EnhancementRuleModalProps> = ({ open, rule, duplicateData, onClose, onSuccess }) => {
+export const EnhancementRuleModal: React.FC<EnhancementRuleModalProps> = ({
+  open,
+  rule,
+  duplicateData,
+  onClose,
+  onSuccess,
+}) => {
   const apiClient = useApi()
   const { createRule, updateRule, loading, error } = useEnhancementRules()
 
@@ -231,7 +237,7 @@ export const EnhancementRuleModal: React.FC<EnhancementRuleModalProps> = ({ open
           match_type: formData.match_type,
           source: formData.source,
         }
-        
+
         // Only add optional fields if they have valid values
         if (formData.category_id) {
           cleanedData.category_id = formData.category_id
@@ -251,7 +257,7 @@ export const EnhancementRuleModal: React.FC<EnhancementRuleModalProps> = ({ open
         if (formData.end_date) {
           cleanedData.end_date = formData.end_date
         }
-        
+
         console.log('Creating enhancement rule with cleaned data:', cleanedData)
         await createRule(cleanedData)
       }

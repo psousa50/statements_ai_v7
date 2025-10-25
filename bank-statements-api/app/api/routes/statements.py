@@ -13,9 +13,9 @@ from app.api.schemas import (
     StatementUploadRequest,
     StatementUploadResponse,
 )
-from app.domain.dto.statement_processing import FilterOperator
 from app.core.config import settings
 from app.core.dependencies import InternalDependencies
+from app.domain.dto.statement_processing import FilterOperator
 from app.logging.utils import log_exception
 
 logger = logging.getLogger("app")

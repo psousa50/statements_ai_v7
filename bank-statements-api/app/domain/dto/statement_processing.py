@@ -1,7 +1,7 @@
 from datetime import datetime
-from typing import Optional, Tuple, List
-from uuid import UUID
 from enum import Enum
+from typing import List, Optional, Tuple
+from uuid import UUID
 
 
 class AnalysisResultDTO:

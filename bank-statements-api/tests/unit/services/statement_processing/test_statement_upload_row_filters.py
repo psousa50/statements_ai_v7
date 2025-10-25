@@ -1,5 +1,5 @@
 from unittest.mock import Mock, patch
-from uuid import uuid4, UUID
+from uuid import UUID, uuid4
 
 import pytest
 
@@ -65,7 +65,7 @@ class TestStatementUploadServiceRowFilters:
 
     @pytest.fixture
     def sample_upload_request_with_filters(self):
-        from app.api.schemas import RowFilterRequest, FilterConditionRequest
+        from app.api.schemas import FilterConditionRequest, RowFilterRequest
         from app.domain.dto.statement_processing import FilterOperator, LogicalOperator
 
         return StatementUploadRequest(
@@ -110,8 +110,9 @@ class TestStatementUploadServiceRowFilters:
         sample_upload_request_with_filters,
     ):
         """Test that row filters are saved in file analysis metadata"""
-        from app.domain.dto.uploaded_file import UploadedFileDTO
         from datetime import datetime, timezone
+
+        from app.domain.dto.uploaded_file import UploadedFileDTO
 
         # Setup mocks
         uploaded_file_dto = UploadedFileDTO(
@@ -155,8 +156,9 @@ class TestStatementUploadServiceRowFilters:
         sample_upload_request_without_filters,
     ):
         """Test that None row filters are handled correctly"""
-        from app.domain.dto.uploaded_file import UploadedFileDTO
         from datetime import datetime, timezone
+
+        from app.domain.dto.uploaded_file import UploadedFileDTO
 
         # Setup mocks
         uploaded_file_dto = UploadedFileDTO(
@@ -200,24 +202,19 @@ class TestStatementUploadServiceRowFilters:
         sample_upload_request_without_filters,
     ):
         """Test that saved row filters are automatically applied when uploading the same file"""
-        from unittest.mock import patch, Mock
-        from app.domain.dto.uploaded_file import FileAnalysisMetadataDTO
         from datetime import datetime, timezone
+        from unittest.mock import Mock, patch
+
         import pandas as pd
+
+        from app.domain.dto.uploaded_file import FileAnalysisMetadataDTO
 
         # Setup: Mock a file upload request without filters
         upload_request = sample_upload_request_without_filters
 
         # Mock existing metadata with saved row filters
-        saved_row_filters = [
-            {
-                "column_name": "Amount",
-                "operator": "greater_than",
-                "value": "100",
-                "case_sensitive": False
-            }
-        ]
-        
+        saved_row_filters = [{"column_name": "Amount", "operator": "greater_than", "value": "100", "case_sensitive": False}]
+
         existing_metadata = FileAnalysisMetadataDTO(
             id="metadata-id",
             file_hash="test_hash",
@@ -233,39 +230,39 @@ class TestStatementUploadServiceRowFilters:
         uploaded_file_dto = Mock()
         uploaded_file_dto.content = b"Date,Amount,Description\n2023-01-01,50.00,Small\n2023-01-02,150.00,Large"
         uploaded_file_dto.file_type = "CSV"
-        
+
         mock_uploaded_file_repo.find_by_id.return_value = uploaded_file_dto
         mock_file_analysis_metadata_repo.find_by_hash.return_value = existing_metadata
 
         # Mock the services
-        raw_df = pd.DataFrame({
-            "Date": ["2023-01-01", "2023-01-02"],
-            "Amount": ["50.00", "150.00"],
-            "Description": ["Small", "Large"]
-        })
-        
+        raw_df = pd.DataFrame(
+            {"Date": ["2023-01-01", "2023-01-02"], "Amount": ["50.00", "150.00"], "Description": ["Small", "Large"]}
+        )
+
         # Mock normalized DataFrame (after transaction normalizer)
-        normalized_df = pd.DataFrame({
-            "date": ["2023-01-01", "2023-01-02"],
-            "amount": [50.00, 150.00],
-            "description": ["Small", "Large"]
-        })
-        
+        normalized_df = pd.DataFrame(
+            {"date": ["2023-01-01", "2023-01-02"], "amount": [50.00, 150.00], "description": ["Small", "Large"]}
+        )
+
         with patch.object(statement_upload_service.statement_parser, "parse", return_value=raw_df):
             with patch("app.services.common.compute_hash", return_value="test_hash"):
                 with patch("app.services.common.process_dataframe", return_value=raw_df):
-                    with patch.object(statement_upload_service.row_filter_service, "apply_filters", return_value=raw_df) as mock_apply_filters:
-                        with patch.object(statement_upload_service.transaction_normalizer, "normalize", return_value=normalized_df):
+                    with patch.object(
+                        statement_upload_service.row_filter_service, "apply_filters", return_value=raw_df
+                    ) as mock_apply_filters:
+                        with patch.object(
+                            statement_upload_service.transaction_normalizer, "normalize", return_value=normalized_df
+                        ):
                             # Execute
                             result = statement_upload_service.parse_statement(upload_request)
 
                             # Verify that row filters were applied even though none were provided in the request
                             mock_apply_filters.assert_called_once()
-                            
+
                             # Verify the filter was constructed from saved metadata
                             called_args = mock_apply_filters.call_args
                             applied_filter = called_args[0][1]  # Second argument is the RowFilter
-                            
+
                             assert len(applied_filter.conditions) == 1
                             condition = applied_filter.conditions[0]
                             assert condition.column_name == "Amount"

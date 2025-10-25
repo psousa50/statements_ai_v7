@@ -77,7 +77,7 @@ const CategoryPicker = ({ transaction, categories, onCategorize }: CategoryPicke
     if (!window.confirm('Are you sure you want to remove this category?')) {
       return
     }
-    
+
     setIsLoading(true)
     try {
       await onCategorize(transaction.id, undefined)

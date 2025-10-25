@@ -1,9 +1,10 @@
-import pytest
 from unittest.mock import Mock
 from uuid import uuid4
 
-from app.services.statement import StatementService
+import pytest
+
 from app.domain.models.statement import Statement
+from app.services.statement import StatementService
 
 
 class TestStatementService:

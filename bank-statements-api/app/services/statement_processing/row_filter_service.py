@@ -1,9 +1,10 @@
 import logging
 import re
-from typing import List, Dict
+from typing import Dict, List
+
 import pandas as pd
 
-from app.domain.dto.statement_processing import FilterCondition, RowFilter, FilterOperator, LogicalOperator, FilterPreview
+from app.domain.dto.statement_processing import FilterCondition, FilterOperator, FilterPreview, LogicalOperator, RowFilter
 
 logger = logging.getLogger("app")
 

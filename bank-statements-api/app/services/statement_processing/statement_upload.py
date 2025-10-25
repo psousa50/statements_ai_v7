@@ -3,11 +3,11 @@ from typing import List, Optional
 from uuid import UUID
 
 from app.api.schemas import StatementUploadRequest
-from app.domain.dto.statement_processing import TransactionDTO, FilterCondition, RowFilter
+from app.domain.dto.statement_processing import FilterCondition, RowFilter, TransactionDTO
 from app.domain.dto.statement_upload import EnhancedTransactions, ParsedStatement, SavedStatement, ScheduledJobs
 from app.domain.models.transaction import SourceType
-from app.services.transaction_rule_enhancement import TransactionRuleEnhancementService
 from app.services.statement_processing.row_filter_service import RowFilterService
+from app.services.transaction_rule_enhancement import TransactionRuleEnhancementService
 
 logger = logging.getLogger("app")
 
@@ -114,14 +114,15 @@ class StatementUploadService:
         if not row_filters_to_apply:
             # Check if we have saved row filters for this file
             from app.services.common import compute_hash
+
             file_hash = compute_hash(file_type, raw_df)
             existing_metadata = self.file_analysis_metadata_repo.find_by_hash(file_hash)
             if existing_metadata and existing_metadata.row_filters:
                 logger.info(f"Using saved row filters for file hash {file_hash}")
                 # Convert saved filters back to API format
-                from app.api.schemas import RowFilterRequest, FilterConditionRequest
+                from app.api.schemas import FilterConditionRequest, RowFilterRequest
                 from app.domain.dto.statement_processing import FilterOperator, LogicalOperator
-                
+
                 conditions = []
                 for saved_filter in existing_metadata.row_filters:
                     conditions.append(
@@ -132,10 +133,9 @@ class StatementUploadService:
                             case_sensitive=saved_filter["case_sensitive"],
                         )
                     )
-                
+
                 row_filters_to_apply = RowFilterRequest(
-                    conditions=conditions,
-                    logical_operator=LogicalOperator.AND  # Default logical operator
+                    conditions=conditions, logical_operator=LogicalOperator.AND  # Default logical operator
                 )
 
         # Apply row filters if available (BEFORE column normalization)
@@ -258,7 +258,7 @@ class StatementUploadService:
                 }
                 for condition in upload_request.row_filters.conditions
             ]
-        
+
         self._save_file_analysis_metadata(
             uploaded_file_id=upload_request.uploaded_file_id,
             column_mapping=upload_request.column_mapping,

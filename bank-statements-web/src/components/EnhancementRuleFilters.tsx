@@ -41,10 +41,10 @@ export const EnhancementRuleFiltersComponent: React.FC<EnhancementRuleFiltersPro
   const [categories, setCategories] = useState<Category[]>([])
   const [counterpartyAccounts, setCounterpartyAccounts] = useState<CounterpartyAccount[]>([])
   const [localDescriptionSearch, setLocalDescriptionSearch] = useState(filters.description_search || '')
-  
+
   const filtersRef = useRef(filters)
   const onFiltersChangeRef = useRef(onFiltersChange)
-  
+
   // Keep refs updated
   filtersRef.current = filters
   onFiltersChangeRef.current = onFiltersChange
@@ -77,7 +77,7 @@ export const EnhancementRuleFiltersComponent: React.FC<EnhancementRuleFiltersPro
     const timer = setTimeout(() => {
       const currentFilters = filtersRef.current
       const currentOnFiltersChange = onFiltersChangeRef.current
-      
+
       // Only update if the description search value has actually changed
       if (currentFilters.description_search !== (localDescriptionSearch || undefined)) {
         currentOnFiltersChange({

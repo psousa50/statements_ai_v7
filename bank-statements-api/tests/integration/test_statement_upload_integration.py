@@ -342,19 +342,19 @@ class TestStatementUploadIntegration:
         db_session.flush()
 
         # Create upload request with row filters
-        from app.api.schemas import RowFilterRequest, FilterConditionRequest
+        from app.api.schemas import FilterConditionRequest, RowFilterRequest
         from app.domain.dto.statement_processing import FilterOperator, LogicalOperator
-        
+
         row_filters = RowFilterRequest(
             conditions=[
                 FilterConditionRequest(
                     column_name="Amount",  # Use the actual CSV column name
                     operator=FilterOperator.GREATER_THAN,
                     value="100",
-                    case_sensitive=False
+                    case_sensitive=False,
                 )
             ],
-            logical_operator=LogicalOperator.AND
+            logical_operator=LogicalOperator.AND,
         )
 
         upload_request = StatementUploadRequest(
@@ -449,7 +449,7 @@ class TestStatementUploadIntegration:
 
     def test_duplicate_file_upload_reuses_saved_row_filters(self, db_session, llm_client):
         """Test that uploading the same file again automatically applies saved row filters."""
-        
+
         # Step 1: Upload file WITH row filters first time
         filename = "reuse_filters.csv"
         csv_content = b"""Date,Amount,Description
@@ -471,19 +471,16 @@ class TestStatementUploadIntegration:
         db_session.flush()
 
         # First upload WITH row filters
-        from app.api.schemas import RowFilterRequest, FilterConditionRequest
+        from app.api.schemas import FilterConditionRequest, RowFilterRequest
         from app.domain.dto.statement_processing import FilterOperator, LogicalOperator
-        
+
         row_filters = RowFilterRequest(
             conditions=[
                 FilterConditionRequest(
-                    column_name="Amount",
-                    operator=FilterOperator.GREATER_THAN,
-                    value="100",
-                    case_sensitive=False
+                    column_name="Amount", operator=FilterOperator.GREATER_THAN, value="100", case_sensitive=False
                 )
             ],
-            logical_operator=LogicalOperator.AND
+            logical_operator=LogicalOperator.AND,
         )
 
         first_upload_request = StatementUploadRequest(
@@ -534,6 +531,7 @@ class TestStatementUploadIntegration:
 
         # Verify that the saved row filters were reused
         from app.domain.models.uploaded_file import FileAnalysisMetadata
+
         metadata = db_session.query(FileAnalysisMetadata).first()
         assert metadata is not None
         assert metadata.row_filters is not None
@@ -549,7 +547,7 @@ class TestStatementUploadIntegration:
         # Find which statement has transactions and which doesn't
         statement_with_transactions = None
         statement_without_transactions = None
-        
+
         for statement in statements:
             transactions = db_session.query(Transaction).filter(Transaction.statement_id == statement.id).all()
             if len(transactions) > 0:
@@ -571,5 +569,7 @@ class TestStatementUploadIntegration:
         assert 25.00 not in amounts  # Filtered out
 
         # Verify the second statement has no transactions (duplicates were filtered out)
-        empty_transactions = db_session.query(Transaction).filter(Transaction.statement_id == statement_without_transactions.id).all()
+        empty_transactions = (
+            db_session.query(Transaction).filter(Transaction.statement_id == statement_without_transactions.id).all()
+        )
         assert len(empty_transactions) == 0

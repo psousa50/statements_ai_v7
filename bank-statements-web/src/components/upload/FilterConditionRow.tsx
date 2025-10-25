@@ -34,7 +34,7 @@ export const FilterConditionRow: React.FC<FilterConditionRowProps> = ({
 }) => {
   // Operators that don't require a value
   const NO_VALUE_OPERATORS = [FilterOperator.IS_EMPTY, FilterOperator.IS_NOT_EMPTY]
-  
+
   // Operators that work with text
   const TEXT_OPERATORS = [
     FilterOperator.CONTAINS,
@@ -43,7 +43,7 @@ export const FilterConditionRow: React.FC<FilterConditionRowProps> = ({
     FilterOperator.NOT_EQUALS,
     FilterOperator.REGEX,
   ]
-  
+
   // Operators that work with numbers
   const NUMERIC_OPERATORS = [
     FilterOperator.GREATER_THAN,
@@ -146,38 +146,35 @@ export const FilterConditionRow: React.FC<FilterConditionRowProps> = ({
   const isNumericOperator = NUMERIC_OPERATORS.includes(condition.operator)
 
   return (
-    <Box sx={{ 
-      display: 'flex', 
-      alignItems: 'center', 
-      gap: 2, 
-      p: 2, 
-      border: 1, 
-      borderColor: 'divider', 
-      borderRadius: 2,
-      mb: 2,
-      backgroundColor: 'background.paper',
-      flexWrap: { xs: 'wrap', md: 'nowrap' },
-      '&:hover': {
-        borderColor: 'primary.main',
-        boxShadow: 1,
-      }
-    }}>
+    <Box
+      sx={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 2,
+        p: 2,
+        border: 1,
+        borderColor: 'divider',
+        borderRadius: 2,
+        mb: 2,
+        backgroundColor: 'background.paper',
+        flexWrap: { xs: 'wrap', md: 'nowrap' },
+        '&:hover': {
+          borderColor: 'primary.main',
+          boxShadow: 1,
+        },
+      }}
+    >
       {/* Column Selection */}
       <FormControl sx={{ minWidth: 150 }}>
         <InputLabel>Column</InputLabel>
-        <Select
-          value={condition.column_name}
-          label="Column"
-          onChange={handleColumnChange}
-          size="small"
-        >
+        <Select value={condition.column_name} label="Column" onChange={handleColumnChange} size="small">
           {availableColumns.map((column) => (
-            <MenuItem 
-              key={column.index} 
+            <MenuItem
+              key={column.index}
               value={column.name}
-              sx={{ 
+              sx={{
                 fontWeight: column.isMapped ? 'bold' : 'normal',
-                color: column.isMapped ? 'primary.main' : 'text.primary'
+                color: column.isMapped ? 'primary.main' : 'text.primary',
               }}
             >
               {column.name}
@@ -190,26 +187,21 @@ export const FilterConditionRow: React.FC<FilterConditionRowProps> = ({
       {/* Operator Selection */}
       <FormControl sx={{ minWidth: 180 }}>
         <InputLabel>Condition</InputLabel>
-        <Select
-          value={condition.operator}
-          label="Condition"
-          onChange={handleOperatorChange}
-          size="small"
-        >
+        <Select value={condition.operator} label="Condition" onChange={handleOperatorChange} size="small">
           <ListSubheader>Text Operations</ListSubheader>
           {TEXT_OPERATORS.map((operator) => (
             <MenuItem key={operator} value={operator}>
               {getOperatorLabel(operator)}
             </MenuItem>
           ))}
-          
+
           <ListSubheader>Numeric Operations</ListSubheader>
           {NUMERIC_OPERATORS.map((operator) => (
             <MenuItem key={operator} value={operator}>
               {getOperatorLabel(operator)}
             </MenuItem>
           ))}
-          
+
           <ListSubheader>Empty Check</ListSubheader>
           {[FilterOperator.IS_EMPTY, FilterOperator.IS_NOT_EMPTY].map((operator) => (
             <MenuItem key={operator} value={operator}>
@@ -229,9 +221,9 @@ export const FilterConditionRow: React.FC<FilterConditionRowProps> = ({
           sx={{ minWidth: 120 }}
           type={isNumericOperator ? 'number' : 'text'}
           placeholder={
-            isNumericOperator 
-              ? 'Enter number' 
-              : condition.operator === FilterOperator.REGEX 
+            isNumericOperator
+              ? 'Enter number'
+              : condition.operator === FilterOperator.REGEX
                 ? 'Enter regex pattern'
                 : 'Enter text'
           }
@@ -241,13 +233,7 @@ export const FilterConditionRow: React.FC<FilterConditionRowProps> = ({
       {/* Case Sensitive Checkbox (only for text operations) */}
       {needsValue && isTextOperator && (
         <FormControlLabel
-          control={
-            <Checkbox
-              checked={condition.case_sensitive}
-              onChange={handleCaseSensitiveChange}
-              size="small"
-            />
-          }
+          control={<Checkbox checked={condition.case_sensitive} onChange={handleCaseSensitiveChange} size="small" />}
           label="Case sensitive"
         />
       )}
@@ -263,12 +249,12 @@ export const FilterConditionRow: React.FC<FilterConditionRowProps> = ({
           onClick={onRemove}
           color="error"
           size="small"
-          sx={{ 
+          sx={{
             ml: 'auto',
             '&:hover': {
               backgroundColor: 'error.light',
               color: 'error.contrastText',
-            }
+            },
           }}
         >
           <DeleteIcon />

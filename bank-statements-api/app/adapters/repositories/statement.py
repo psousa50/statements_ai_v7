@@ -1,12 +1,12 @@
 from typing import Optional
 from uuid import UUID
 
-from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import func
+from sqlalchemy.orm import Session, joinedload
 
+from app.domain.models.account import Account
 from app.domain.models.statement import Statement
 from app.domain.models.transaction import Transaction
-from app.domain.models.account import Account
 from app.ports.repositories.statement import StatementRepository
 
 

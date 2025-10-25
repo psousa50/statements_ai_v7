@@ -1,12 +1,8 @@
 {
   "mcpServers": {
-    "postgres": {
-      "command": "aaa",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-postgres",
-        "postgresql://postgres:postgres@localhost:54321/bank_statements"
-      ]
+    "chrome-devtools": {
+      "command": "npx",
+      "args": ["-y", "chrome-devtools-mcp@latest"]
     }
   }
 }
