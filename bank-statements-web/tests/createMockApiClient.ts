@@ -1,7 +1,13 @@
 import { ApiClient } from '@/api/ApiClient'
+import { Account, AccountClient } from '@/api/AccountClient'
 import { CategoryClient, CategoryListResponse } from '@/api/CategoryClient'
-import { Source, SourceClient } from '@/api/SourceClient'
-import { StatementAnalysisResponse, StatementClient, StatementUploadResponse } from '@/api/StatementClient'
+import { EnhancementRuleClient } from '@/api/EnhancementRuleClient'
+import {
+  StatementAnalysisResponse,
+  StatementClient,
+  StatementUploadResponse,
+  StatementResponse,
+} from '@/api/StatementClient'
 import { TransactionClient, CategoryTotalsResponse, BulkUpdateTransactionsResponse } from '@/api/TransactionClient'
 import { TransactionCategorizationClient } from '@/api/TransactionCategorizationClient'
 import { Category, Transaction, TransactionListResponse } from '@/types/Transaction'
@@ -28,10 +34,10 @@ const defaultCategory: Category = {
   name: 'Sample Category',
 }
 
-// Default mock source
-const defaultSource: Source = {
+// Default mock account
+const defaultAccount: Account = {
   id: '1',
-  name: 'Sample Bank',
+  name: 'Sample Account',
 }
 
 // Default mock transaction categorization
@@ -52,6 +58,9 @@ const defaultTransactionClient: TransactionClient = {
     Promise.resolve({
       transactions: [defaultTransaction],
       total: 1,
+      page: 1,
+      page_size: 20,
+      total_pages: 1,
     } as TransactionListResponse),
   getCategoryTotals: () =>
     Promise.resolve({
@@ -77,6 +86,9 @@ const defaultTransactionClient: TransactionClient = {
       updated_count: 0,
       message: 'No transactions updated',
     } as BulkUpdateTransactionsResponse),
+  categorize: function (_id: string, _categoryId?: string): Promise<Transaction> {
+    throw new Error('Function not implemented.')
+  },
 }
 
 // Default mock category client implementation
@@ -102,10 +114,13 @@ const defaultCategoryClient: CategoryClient = {
   delete: () => Promise.resolve(),
 }
 
-// Default mock source client implementation
-const defaultSourceClient: SourceClient = {
-  getAll: () => Promise.resolve([defaultSource]),
-  createSource: () => Promise.resolve(defaultSource),
+// Default mock account client implementation
+const defaultAccountClient: AccountClient = {
+  getAll: () => Promise.resolve([defaultAccount]),
+  getById: () => Promise.resolve(defaultAccount),
+  createAccount: () => Promise.resolve(defaultAccount),
+  updateAccount: () => Promise.resolve(defaultAccount),
+  deleteAccount: () => Promise.resolve(),
 }
 
 // Default mock transaction categorization client implementation
@@ -166,9 +181,47 @@ const defaultStatementClient: StatementClient = {
     Promise.resolve({
       uploaded_file_id: request.uploaded_file_id,
       transactions_saved: 10,
+      duplicated_transactions: 0,
       success: true,
       message: 'Successfully saved 10 transactions',
+      total_processed: 10,
+      rule_based_matches: 5,
+      match_rate_percentage: 50,
+      processing_time_ms: 100,
     } as StatementUploadResponse),
+  listStatements: () => Promise.resolve([] as StatementResponse[]),
+  deleteStatement: () => Promise.resolve({ message: 'Statement deleted successfully' }),
+}
+
+// Default mock enhancement rule client implementation
+const defaultEnhancementRuleClient: EnhancementRuleClient = {
+  getAll: () => Promise.resolve({ rules: [], total: 0 }),
+  getStats: () =>
+    Promise.resolve({
+      summary: {
+        total_rules: 0,
+        manual_rules: 0,
+        ai_rules: 0,
+        category_only_rules: 0,
+        counterparty_only_rules: 0,
+        combined_rules: 0,
+        total_transactions_enhanced: 0,
+        transactions_with_manual_rules: 0,
+        transactions_with_ai_rules: 0,
+      },
+      rule_type_usage: [],
+      category_usage: [],
+      counterparty_usage: [],
+      top_rules_by_usage: [],
+      unused_rules: [],
+    }),
+  getById: () => Promise.reject(new Error('Not implemented')),
+  getMatchingTransactionsCount: () => Promise.resolve({ count: 0 }),
+  previewMatchingTransactionsCount: () => Promise.resolve({ count: 0 }),
+  create: () => Promise.reject(new Error('Not implemented')),
+  update: () => Promise.reject(new Error('Not implemented')),
+  delete: () => Promise.resolve(),
+  cleanupUnused: () => Promise.resolve({ deleted_count: 0, message: 'No unused rules found' }),
 }
 
 type TransactionClientOverrides = Partial<{
@@ -177,11 +230,11 @@ type TransactionClientOverrides = Partial<{
 type CategoryClientOverrides = Partial<{
   [K in keyof CategoryClient]: CategoryClient[K]
 }>
+type AccountClientOverrides = Partial<{
+  [K in keyof AccountClient]: AccountClient[K]
+}>
 type StatementClientOverrides = Partial<{
   [K in keyof StatementClient]: StatementClient[K]
-}>
-type SourceClientOverrides = Partial<{
-  [K in keyof SourceClient]: SourceClient[K]
 }>
 type TransactionCategorizationClientOverrides = Partial<{
   [K in keyof TransactionCategorizationClient]: TransactionCategorizationClient[K]
@@ -192,8 +245,8 @@ interface ApiClientOverrides {
   transactions?: TransactionClientOverrides
   transactionCategorizations?: TransactionCategorizationClientOverrides
   categories?: CategoryClientOverrides
+  accounts?: AccountClientOverrides
   statements?: StatementClientOverrides
-  sources?: SourceClientOverrides
 }
 
 // Create a mock API client with optional overrides
@@ -211,13 +264,14 @@ export const createMockApiClient = (overrides: ApiClientOverrides = {}): ApiClie
       ...defaultCategoryClient,
       ...overrides.categories,
     },
+    accounts: {
+      ...defaultAccountClient,
+      ...overrides.accounts,
+    },
     statements: {
       ...defaultStatementClient,
       ...overrides.statements,
     },
-    sources: {
-      ...defaultSourceClient,
-      ...overrides.sources,
-    },
+    enhancementRules: defaultEnhancementRuleClient,
   }
 }

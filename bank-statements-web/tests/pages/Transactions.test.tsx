@@ -21,6 +21,9 @@ test('renders transactions page with mock data', async () => {
             },
           ],
           total: 1,
+          page: 1,
+          page_size: 20,
+          total_pages: 1,
         }),
     },
   })
