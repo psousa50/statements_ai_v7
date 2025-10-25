@@ -292,7 +292,10 @@ export const EnhancementRuleModal: React.FC<EnhancementRuleModalProps> = ({
     onClose()
   }
 
-  const handleFieldChange = (field: keyof (EnhancementRuleCreate | EnhancementRuleUpdate), value: any) => {
+  const handleFieldChange = (
+    field: keyof (EnhancementRuleCreate | EnhancementRuleUpdate),
+    value: string | number | boolean | undefined
+  ) => {
     setFormData({ ...formData, [field]: value })
     if (validationErrors[field]) {
       setValidationErrors({ ...validationErrors, [field]: '' })

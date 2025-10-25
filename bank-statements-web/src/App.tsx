@@ -1,4 +1,4 @@
-import { createBrowserRouter, RouterProvider, createRoutesFromElements, Route } from 'react-router-dom'
+import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 import { TransactionsPage } from './pages/Transactions'
 import { TransactionCategorizationsPage } from './pages/TransactionCategorizations'
 import { EnhancementRules } from './pages/EnhancementRules'
@@ -31,11 +31,10 @@ const router = createBrowserRouter(
     },
   ],
   {
-    // Future flags configuration with type assertion to bypass TypeScript errors
     future: {
       v7_relativeSplatPath: true,
       v7_startTransition: true,
-    } as any,
+    } as Record<string, boolean>,
   }
 )
 

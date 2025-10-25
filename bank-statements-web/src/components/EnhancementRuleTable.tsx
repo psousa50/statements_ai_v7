@@ -65,7 +65,9 @@ export const EnhancementRuleTable: React.FC<EnhancementRuleTableProps> = ({
     }
   }
 
-  const getMatchTypeColor = (matchType: MatchType) => {
+  const getMatchTypeColor = (
+    matchType: MatchType
+  ): 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning' => {
     switch (matchType) {
       case MatchType.EXACT:
         return 'success'
@@ -92,7 +94,9 @@ export const EnhancementRuleTable: React.FC<EnhancementRuleTableProps> = ({
     return 'Invalid Rule'
   }
 
-  const getRuleTypeColor = (rule: EnhancementRule) => {
+  const getRuleTypeColor = (
+    rule: EnhancementRule
+  ): 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning' => {
     const hasCategory = rule.category_id
     const hasCounterparty = rule.counterparty_account_id
 
@@ -196,12 +200,12 @@ export const EnhancementRuleTable: React.FC<EnhancementRuleTableProps> = ({
               <TableCell>
                 <Chip
                   label={getMatchTypeLabel(rule.match_type)}
-                  color={getMatchTypeColor(rule.match_type) as any}
+                  color={getMatchTypeColor(rule.match_type)}
                   size="small"
                 />
               </TableCell>
               <TableCell>
-                <Chip label={getRuleTypeDisplay(rule)} color={getRuleTypeColor(rule) as any} size="small" />
+                <Chip label={getRuleTypeDisplay(rule)} color={getRuleTypeColor(rule)} size="small" />
               </TableCell>
               <TableCell>
                 {rule.category ? (

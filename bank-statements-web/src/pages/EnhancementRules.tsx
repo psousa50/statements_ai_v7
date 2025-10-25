@@ -14,7 +14,7 @@ import {
 import AddIcon from '@mui/icons-material/Add'
 import CleanupIcon from '@mui/icons-material/CleaningServices'
 import { useEnhancementRules } from '../services/hooks/useEnhancementRules'
-import { EnhancementRuleFilters, EnhancementRule } from '../types/EnhancementRule'
+import { EnhancementRuleFilters, EnhancementRule, SortField } from '../types/EnhancementRule'
 import { EnhancementRuleTable } from '../components/EnhancementRuleTable'
 import { EnhancementRuleFiltersComponent } from '../components/EnhancementRuleFilters'
 import { EnhancementRuleModal } from '../components/EnhancementRuleModal'
@@ -69,7 +69,7 @@ export const EnhancementRules: React.FC = () => {
   const handleSort = (field: string, direction: 'asc' | 'desc') => {
     setFilters({
       ...filters,
-      sort_field: field as any,
+      sort_field: field as SortField,
       sort_direction: direction,
       page: 1,
     })

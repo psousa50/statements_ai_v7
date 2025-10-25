@@ -254,7 +254,7 @@ class TestStatementUploadServiceRowFilters:
                             statement_upload_service.transaction_normalizer, "normalize", return_value=normalized_df
                         ):
                             # Execute
-                            result = statement_upload_service.parse_statement(upload_request)
+                            statement_upload_service.parse_statement(upload_request)
 
                             # Verify that row filters were applied even though none were provided in the request
                             mock_apply_filters.assert_called_once()

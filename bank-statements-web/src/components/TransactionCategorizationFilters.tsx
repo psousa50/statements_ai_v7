@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect } from 'react'
+import React from 'react'
 import { Category } from '../types/Transaction'
 import { CategorizationSource } from '../types/TransactionCategorization'
 import { CategorySelector } from './CategorySelector'

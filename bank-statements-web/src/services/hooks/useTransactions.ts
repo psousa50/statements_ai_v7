@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { CategorizationStatus, Transaction, TransactionCreate, TransactionListResponse } from '../../types/Transaction'
+import { CategorizationStatus, Transaction } from '../../types/Transaction'
 import { useApi } from '../../api/ApiContext'
 import { TransactionFilters, CategoryTotalsResponse } from '../../api/TransactionClient'
 import { EnhancementRule } from '../../types/EnhancementRule'

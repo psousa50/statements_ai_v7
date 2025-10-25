@@ -15,7 +15,6 @@ from sqlalchemy.orm import sessionmaker
 from app.api.routes.statements import register_statement_routes
 from app.core.database import Base
 from app.core.dependencies import ExternalDependencies, build_internal_dependencies
-from app.domain.models.account import Account
 from app.domain.models.uploaded_file import FileAnalysisMetadata
 
 

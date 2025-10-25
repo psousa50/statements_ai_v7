@@ -30,7 +30,7 @@ export const Pagination = ({
     } else {
       const half = Math.floor(maxPagesToShow / 2)
       let start = Math.max(1, currentPage - half)
-      let end = Math.min(totalPages, start + maxPagesToShow - 1)
+      const end = Math.min(totalPages, start + maxPagesToShow - 1)
 
       if (end - start < maxPagesToShow - 1) {
         start = Math.max(1, end - maxPagesToShow + 1)

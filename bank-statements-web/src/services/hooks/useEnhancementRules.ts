@@ -1,12 +1,6 @@
 import { useState, useCallback } from 'react'
 import { useApi } from '../../api/ApiContext'
-import {
-  EnhancementRule,
-  EnhancementRuleCreate,
-  EnhancementRuleFilters,
-  EnhancementRuleStats,
-  EnhancementRuleUpdate,
-} from '../../types/EnhancementRule'
+import { EnhancementRuleCreate, EnhancementRuleFilters, EnhancementRuleUpdate } from '../../types/EnhancementRule'
 
 export const useEnhancementRules = () => {
   const apiClient = useApi()
