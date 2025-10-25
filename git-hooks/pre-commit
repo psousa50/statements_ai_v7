@@ -1,0 +1,60 @@
+#!/bin/bash
+
+set -e
+
+echo "🔍 Running pre-commit checks..."
+
+ROOT_DIR="$(git rev-parse --show-toplevel)"
+cd "$ROOT_DIR"
+
+BACKEND_DIR="$ROOT_DIR/bank-statements-api"
+FRONTEND_DIR="$ROOT_DIR/bank-statements-web"
+
+BACKEND_CHANGED=$(git diff --cached --name-only --diff-filter=ACM | grep "^bank-statements-api/" || true)
+FRONTEND_CHANGED=$(git diff --cached --name-only --diff-filter=ACM | grep "^bank-statements-web/" || true)
+
+if [ -n "$BACKEND_CHANGED" ]; then
+  echo ""
+  echo "📦 Backend changes detected"
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+  cd "$BACKEND_DIR"
+
+  echo "🔧 Running isort..."
+  uv run isort .
+
+  echo "🔧 Running black..."
+  uv run black .
+
+  echo "🔍 Running ruff..."
+  uv run ruff check .
+
+  echo "✅ Backend checks passed"
+fi
+
+if [ -n "$FRONTEND_CHANGED" ]; then
+  echo ""
+  echo "🌐 Frontend changes detected"
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+  cd "$FRONTEND_DIR"
+
+  echo "🔧 Running prettier..."
+  pnpm run format
+
+  echo "🔍 Running eslint..."
+  pnpm run lint
+
+  echo "✅ Frontend checks passed"
+fi
+
+if [ -z "$BACKEND_CHANGED" ] && [ -z "$FRONTEND_CHANGED" ]; then
+  echo "ℹ️  No backend or frontend changes detected"
+fi
+
+cd "$ROOT_DIR"
+git diff --cached --name-only | xargs git add 2>/dev/null || true
+
+echo ""
+echo "✅ All pre-commit checks passed!"
+echo ""
