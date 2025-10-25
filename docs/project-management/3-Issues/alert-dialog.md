@@ -1,0 +1,1 @@
+alert dialog when removing a category from a transaction
