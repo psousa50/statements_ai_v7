@@ -294,14 +294,6 @@
   padding: 0.75rem;
 }
 
-.transactions-page .secondary-filters {
-  /* No special background for cleaner look */
-}
-
-.transactions-page .categories-row {
-  /* Special styling for categories */
-}
-
 .transactions-page .filter-group {
   display: flex;
   flex-direction: column;

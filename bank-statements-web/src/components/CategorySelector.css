@@ -7,16 +7,19 @@
 
 .category-selector-input-container {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
-  gap: 4px;
-  padding: 8px 12px;
+  gap: 3px;
+  padding: 0.5rem 0.75rem;
   border: 1px solid var(--border-primary);
-  border-radius: 4px;
+  border-radius: 8px;
   background: var(--bg-primary);
-  min-height: 40px;
+  min-height: 38px;
+  height: 38px;
   cursor: text;
   color: var(--text-primary);
+  overflow-x: auto;
+  overflow-y: hidden;
 }
 
 /* Fix double border when CategorySelector is inside a form-group */
@@ -41,30 +44,33 @@
 .category-selector .category-tag {
   display: inline-flex !important;
   align-items: center;
-  gap: 4px;
-  padding: 4px 8px !important;
+  gap: 2px;
+  padding: 2px 6px !important;
   background: #eff6ff !important;
   color: #1e40af !important;
-  border-radius: 4px !important;
-  font-size: 12px !important;
+  border-radius: 3px !important;
+  font-size: 0.75rem !important;
   font-weight: 500;
   white-space: nowrap;
   border: 1px solid rgba(30, 64, 175, 0.2) !important;
+  line-height: 1;
+  height: 20px;
+  flex-shrink: 0;
 }
 
 .category-selector .category-tag-remove {
   background: none !important;
   border: none !important;
   color: #1e40af !important;
-  font-size: 14px !important;
+  font-size: 12px !important;
   font-weight: bold;
   cursor: pointer;
   padding: 0;
   margin: 0;
   line-height: 1;
   border-radius: 50%;
-  width: 16px;
-  height: 16px;
+  width: 14px;
+  height: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -84,9 +90,11 @@
   background: transparent;
   flex: 1;
   min-width: 120px;
-  font-size: 14px;
+  font-size: 0.875rem;
   color: var(--text-primary) !important;
   padding: 0;
+  line-height: 1.2;
+  height: auto;
 }
 
 .category-input::placeholder {
@@ -98,15 +106,19 @@
   background: none;
   border: none;
   color: var(--text-secondary);
-  font-size: 18px;
+  font-size: 16px;
   cursor: pointer;
-  padding: 2px;
+  padding: 0;
+  margin: 0;
   border-radius: 2px;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  line-height: 1;
+  align-self: center;
 }
 
 .category-clear-button:hover {
@@ -134,11 +146,11 @@
 .category-suggestion {
   display: block;
   width: 100%;
-  padding: 8px 12px;
+  padding: 0.5rem 0.75rem;
   border: none;
   background: none;
   text-align: left;
-  font-size: 14px;
+  font-size: 0.875rem;
   color: var(--text-primary);
   cursor: pointer;
   border-bottom: 1px solid var(--border-light);
@@ -169,15 +181,37 @@
 }
 
 .no-suggestions {
-  padding: 8px 12px;
+  padding: 0.5rem 0.75rem;
   color: var(--text-secondary);
-  font-size: 14px;
+  font-size: 0.875rem;
   text-align: center;
 }
 
 /* Multiple mode specific styles */
 .category-selector.multiple .category-input {
   min-width: 80px;
+}
+
+/* Default variant - compact styling for tables */
+.category-selector.variant-default .category-selector-input-container,
+.category-selector.single .category-selector-input-container {
+  padding: 0.5rem !important;
+  min-height: 32px !important;
+  height: 32px !important;
+  border-radius: 6px !important;
+  align-items: center !important;
+}
+
+.category-selector.variant-default .category-input,
+.category-selector.single .category-input {
+  font-size: 0.75rem !important;
+  line-height: 1.2 !important;
+  align-self: center;
+}
+
+.category-selector.variant-default .category-clear-button,
+.category-selector.single .category-clear-button {
+  margin-left: auto;
 }
 
 /* Form variant - matches MUI styling with dark mode support */
@@ -236,17 +270,30 @@
 
 /* Filter variant - matches TransactionFilters styling */
 .category-selector.variant-filter .category-selector-input-container {
-  border: 1px solid var(--border-secondary) !important;
-  border-radius: 4px !important;
-  padding: 8px 12px !important;
-  min-height: 40px !important;
+  border: 1px solid var(--border-primary) !important;
+  border-radius: 8px !important;
+  padding: 0.5rem 0.75rem !important;
+  min-height: 38px !important;
+  height: 38px !important;
   background: var(--bg-primary) !important;
-  transition: border-color 0.2s !important;
+  transition: all 0.2s ease !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  overflow-x: auto;
+  overflow-y: hidden;
+  flex-wrap: nowrap;
+}
+
+.category-selector.variant-filter .category-selector-input-container:hover {
+  border-color: var(--border-secondary) !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 .category-selector.variant-filter .category-selector-input-container:focus-within {
-  border-color: var(--text-accent) !important;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1) !important;
+  border-color: #3b82f6 !important;
+  box-shadow:
+    0 0 0 3px rgba(59, 130, 246, 0.1),
+    0 1px 3px rgba(0, 0, 0, 0.1) !important;
+  transform: translateY(-1px);
 }
 
 .category-selector.variant-filter .category-selector-input-container .category-input {
