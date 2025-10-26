@@ -7,7 +7,7 @@ import { TransactionTable, TransactionSortField, TransactionSortDirection } from
 import { TransactionFilters } from '../components/TransactionFilters'
 import { TransactionModal } from '../components/TransactionModal'
 import { Pagination } from '../components/Pagination'
-import { CategorizationStatus, TransactionCreate } from '../types/Transaction'
+import { CategorizationStatus, TransactionCreate, Transaction } from '../types/Transaction'
 import { TransactionFilters as FilterType } from '../api/TransactionClient'
 import './TransactionsPage.css'
 
@@ -77,6 +77,7 @@ export const TransactionsPage = () => {
     pagination,
     fetchTransactions,
     addTransaction,
+    updateTransaction,
     categorizeTransaction,
   } = useTransactions()
 
@@ -87,6 +88,7 @@ export const TransactionsPage = () => {
   const error = transactionsError || categoriesError || accountsError
 
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [editingTransaction, setEditingTransaction] = useState<Transaction | undefined>(undefined)
 
   const isRuleFiltering = !!filters.enhancement_rule_id
 
@@ -297,12 +299,30 @@ export const TransactionsPage = () => {
     fetchTransactions({ ...filters, include_running_balance: !!filters.account_id })
   }
 
-  const handleCreateTransaction = async (transaction: TransactionCreate) => {
-    const createdTransaction = await addTransaction(transaction)
-    if (createdTransaction) {
-      fetchTransactions({ ...filters, include_running_balance: !!filters.account_id })
+  const handleSaveTransaction = async (transactionData: TransactionCreate, transactionId?: string) => {
+    if (transactionId) {
+      const updatedTransaction = await updateTransaction(transactionId, transactionData)
+      if (updatedTransaction) {
+        fetchTransactions({ ...filters, include_running_balance: !!filters.account_id })
+      }
+      return updatedTransaction
+    } else {
+      const createdTransaction = await addTransaction(transactionData)
+      if (createdTransaction) {
+        fetchTransactions({ ...filters, include_running_balance: !!filters.account_id })
+      }
+      return createdTransaction
     }
-    return createdTransaction
+  }
+
+  const handleEditTransaction = (transaction: Transaction) => {
+    setEditingTransaction(transaction)
+    setIsModalOpen(true)
+  }
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false)
+    setEditingTransaction(undefined)
   }
 
   return (
@@ -390,6 +410,7 @@ export const TransactionsPage = () => {
               accounts={accounts || []}
               loading={loading}
               onCategorize={handleCategorizeTransaction}
+              onEdit={handleEditTransaction}
               sortField={filters.sort_field as TransactionSortField}
               sortDirection={filters.sort_direction}
               onSort={handleSort}
@@ -417,8 +438,9 @@ export const TransactionsPage = () => {
         isOpen={isModalOpen}
         categories={categories || []}
         accounts={accounts || []}
-        onSave={handleCreateTransaction}
-        onClose={() => setIsModalOpen(false)}
+        onSave={handleSaveTransaction}
+        onClose={handleCloseModal}
+        transaction={editingTransaction}
       />
     </div>
   )

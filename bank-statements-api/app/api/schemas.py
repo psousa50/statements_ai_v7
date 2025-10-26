@@ -145,10 +145,10 @@ class EnhancementPreviewResponse(BaseModel):
 
 
 class TransactionUpdateRequest(BaseModel):
-    date: Optional[date] = None
-    description: Optional[str] = None
-    amount: Optional[Decimal] = None
-    account_id: Optional[UUID] = None
+    date: date
+    description: str
+    amount: Decimal
+    account_id: UUID
     category_id: Optional[UUID] = None
     counterparty_account_id: Optional[UUID] = None
 

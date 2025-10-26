@@ -14,6 +14,7 @@ interface TransactionTableProps {
   accounts: Account[]
   loading: boolean
   onCategorize?: (transactionId: string, categoryId?: string) => Promise<void>
+  onEdit?: (transaction: Transaction) => void
   sortField?: TransactionSortField
   sortDirection?: TransactionSortDirection
   onSort?: (field: TransactionSortField) => void
@@ -158,6 +159,7 @@ export const TransactionTable = ({
   accounts,
   loading,
   onCategorize,
+  onEdit,
   sortField,
   sortDirection,
   onSort,
@@ -214,10 +216,11 @@ export const TransactionTable = ({
       <table>
         <colgroup>
           <col style={{ width: '15%' }} />
-          <col style={{ width: '35%' }} />
+          <col style={{ width: '30%' }} />
           {onCategorize && <col style={{ width: '20%' }} />}
           <col style={{ width: '15%' }} />
           <col style={{ width: '15%' }} />
+          {onEdit && <col style={{ width: '5%' }} />}
         </colgroup>
         <thead>
           <tr>
@@ -252,6 +255,7 @@ export const TransactionTable = ({
             ) : (
               <th style={{ textAlign: 'left' }}>Source</th>
             )}
+            {onEdit && <th style={{ textAlign: 'center' }}>Actions</th>}
           </tr>
         </thead>
         <tbody>
@@ -288,6 +292,13 @@ export const TransactionTable = ({
                 </td>
               ) : (
                 <td>{getAccountName(transaction.account_id)}</td>
+              )}
+              {onEdit && (
+                <td style={{ textAlign: 'center' }}>
+                  <button className="edit-button" onClick={() => onEdit(transaction)} title="Edit transaction">
+                    ✏️
+                  </button>
+                </td>
               )}
             </tr>
           ))}

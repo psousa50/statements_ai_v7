@@ -309,6 +309,7 @@ class TransactionService:
         amount: Decimal,
         account_id: UUID,
         category_id: Optional[UUID] = None,
+        counterparty_account_id: Optional[UUID] = None,
     ) -> Optional[Transaction]:
         """Update a transaction"""
         transaction = self.transaction_repository.get_by_id(transaction_id)
@@ -321,11 +322,14 @@ class TransactionService:
             # Update category and categorization status
             transaction.category_id = category_id
             transaction.categorization_status = (
-                CategorizationStatus.CATEGORIZED if category_id else CategorizationStatus.UNCATEGORIZED
+                CategorizationStatus.MANUAL if category_id else CategorizationStatus.UNCATEGORIZED
             )
 
             # Update account
             transaction.account_id = account_id  # type: ignore
+
+            # Update counterparty account
+            transaction.counterparty_account_id = counterparty_account_id  # type: ignore
 
             return self.transaction_repository.update(transaction)
         return None

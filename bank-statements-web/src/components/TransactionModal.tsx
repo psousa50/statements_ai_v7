@@ -6,13 +6,22 @@ interface TransactionModalProps {
   isOpen: boolean
   categories: Category[]
   accounts: Account[]
-  onSave: (transaction: TransactionCreate) => Promise<Transaction | null>
+  onSave: (transaction: TransactionCreate, transactionId?: string) => Promise<Transaction | null>
   onClose: () => void
+  transaction?: Transaction
 }
 
-export const TransactionModal = ({ isOpen, categories, accounts, onSave, onClose }: TransactionModalProps) => {
+export const TransactionModal = ({
+  isOpen,
+  categories,
+  accounts,
+  onSave,
+  onClose,
+  transaction,
+}: TransactionModalProps) => {
   const [saving, setSaving] = useState(false)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
+  const isEditing = !!transaction
 
   useEffect(() => {
     if (isOpen) {
@@ -22,21 +31,25 @@ export const TransactionModal = ({ isOpen, categories, accounts, onSave, onClose
 
   if (!isOpen) return null
 
-  const handleSave = async (transaction: TransactionCreate) => {
+  const handleSave = async (transactionData: TransactionCreate) => {
     setSaving(true)
     try {
-      const createdTransaction = await onSave(transaction)
+      const savedTransaction = await onSave(transactionData, transaction?.id)
 
-      if (createdTransaction) {
-        if (createdTransaction.category_id && !transaction.category_id) {
-          const category = categories.find((c) => c.id === createdTransaction.category_id)
-          setSuccessMessage(
-            `Transaction created! Category auto-assigned by rule: ${category?.name || 'Unknown Category'}`
-          )
-        } else if (createdTransaction.category_id) {
-          setSuccessMessage('Transaction created successfully!')
+      if (savedTransaction) {
+        if (isEditing) {
+          setSuccessMessage('Transaction updated successfully!')
         } else {
-          setSuccessMessage('Transaction created! No matching rule found - you can categorize it manually.')
+          if (savedTransaction.category_id && !transactionData.category_id) {
+            const category = categories.find((c) => c.id === savedTransaction.category_id)
+            setSuccessMessage(
+              `Transaction created! Category auto-assigned by rule: ${category?.name || 'Unknown Category'}`
+            )
+          } else if (savedTransaction.category_id) {
+            setSuccessMessage('Transaction created successfully!')
+          } else {
+            setSuccessMessage('Transaction created! No matching rule found - you can categorise it manually.')
+          }
         }
 
         setTimeout(() => {
@@ -44,8 +57,8 @@ export const TransactionModal = ({ isOpen, categories, accounts, onSave, onClose
         }, 2000)
       }
     } catch (error) {
-      console.error('Failed to create transaction:', error)
-      alert('Failed to create transaction. Please try again.')
+      console.error(`Failed to ${isEditing ? 'update' : 'create'} transaction:`, error)
+      alert(`Failed to ${isEditing ? 'update' : 'create'} transaction. Please try again.`)
     } finally {
       setSaving(false)
     }
@@ -61,7 +74,7 @@ export const TransactionModal = ({ isOpen, categories, accounts, onSave, onClose
     <div className="modal-overlay" onClick={onClose} onKeyDown={handleKeyPress}>
       <div className="modal-content transaction-modal" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
-          <h2>Add New Transaction</h2>
+          <h2>{isEditing ? 'Edit Transaction' : 'Add New Transaction'}</h2>
           <button className="modal-close" onClick={onClose}>
             ×
           </button>
@@ -74,7 +87,13 @@ export const TransactionModal = ({ isOpen, categories, accounts, onSave, onClose
               <p>{successMessage}</p>
             </div>
           ) : (
-            <TransactionForm onSubmit={handleSave} categories={categories} accounts={accounts} isLoading={saving} />
+            <TransactionForm
+              onSubmit={handleSave}
+              categories={categories}
+              accounts={accounts}
+              isLoading={saving}
+              initialTransaction={transaction}
+            />
           )}
         </div>
       </div>

@@ -362,6 +362,7 @@ def register_transaction_routes(
             amount=transaction_data.amount,
             account_id=transaction_data.account_id,
             category_id=transaction_data.category_id,
+            counterparty_account_id=transaction_data.counterparty_account_id,
         )
         if not updated_transaction:
             raise HTTPException(
