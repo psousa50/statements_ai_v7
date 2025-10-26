@@ -1,14 +1,16 @@
-from datetime import date
+from datetime import date, datetime, timezone
 from decimal import Decimal
 from typing import Dict, List, Optional
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from app.api.schemas import TransactionCreateRequest, TransactionListResponse
 from app.common.text_normalization import normalize_description
-from app.domain.models.transaction import CategorizationStatus, Transaction
+from app.domain.models.enhancement_rule import EnhancementRule, EnhancementRuleSource, MatchType
+from app.domain.models.transaction import CategorizationStatus, SourceType, Transaction
 from app.ports.repositories.enhancement_rule import EnhancementRuleRepository
 from app.ports.repositories.initial_balance import InitialBalanceRepository
 from app.ports.repositories.transaction import TransactionRepository
+from app.services.transaction_enhancement import TransactionEnhancer
 
 
 class TransactionService:
@@ -22,10 +24,12 @@ class TransactionService:
         transaction_repository: TransactionRepository,
         initial_balance_repository: InitialBalanceRepository,
         enhancement_rule_repository: EnhancementRuleRepository,
+        transaction_enhancer: TransactionEnhancer,
     ):
         self.transaction_repository = transaction_repository
         self.initial_balance_repository = initial_balance_repository
         self.enhancement_rule_repository = enhancement_rule_repository
+        self.transaction_enhancer = transaction_enhancer
 
     def create_transaction(
         self,
@@ -33,19 +37,73 @@ class TransactionService:
         after_transaction_id: Optional[UUID] = None,
     ) -> Transaction:
         """
-        Create a transaction with proper ordering.
+        Create a transaction with proper ordering and automatic rule enhancement.
 
         Args:
             transaction_data: The transaction data to create
             after_transaction_id: Optional transaction ID to insert after for ordering
 
         Returns:
-            The created transaction with proper sort_index
+            The created transaction with proper sort_index and applied enhancement rules
         """
+        enhanced_data = transaction_data
+
+        if transaction_data.category_id is None:
+            normalized_description = normalize_description(transaction_data.description)
+
+            rules = self.enhancement_rule_repository.get_all()
+
+            temp_transaction = Transaction(
+                id=uuid4(),
+                date=transaction_data.date,
+                description=transaction_data.description,
+                normalized_description=normalized_description,
+                amount=transaction_data.amount,
+                account_id=transaction_data.account_id,
+                statement_id=None,
+                source_type=SourceType.MANUAL,
+                categorization_status=CategorizationStatus.UNCATEGORIZED,
+            )
+
+            enhanced_transactions = self.transaction_enhancer.apply_rules([temp_transaction], rules)
+            enhanced_transaction = enhanced_transactions[0]
+
+            if enhanced_transaction.category_id or enhanced_transaction.counterparty_account_id:
+                enhanced_data = TransactionCreateRequest(
+                    date=transaction_data.date,
+                    description=transaction_data.description,
+                    amount=transaction_data.amount,
+                    account_id=transaction_data.account_id,
+                    category_id=enhanced_transaction.category_id,
+                    counterparty_account_id=enhanced_transaction.counterparty_account_id,
+                    after_transaction_id=transaction_data.after_transaction_id,
+                )
+            else:
+                self._create_unmatched_rule(normalized_description)
+
         return self.transaction_repository.create_transaction(
-            transaction_data=transaction_data,
+            transaction_data=enhanced_data,
             after_transaction_id=after_transaction_id,
         )
+
+    def _create_unmatched_rule(self, normalized_description: str) -> None:
+        existing_rule = self.enhancement_rule_repository.find_by_normalized_description(normalized_description)
+
+        if existing_rule:
+            return
+
+        rule = EnhancementRule(
+            id=uuid4(),
+            normalized_description_pattern=normalized_description,
+            match_type=MatchType.EXACT,
+            category_id=None,
+            counterparty_account_id=None,
+            source=EnhancementRuleSource.AI,
+            created_at=datetime.now(timezone.utc),
+            updated_at=datetime.now(timezone.utc),
+        )
+
+        self.enhancement_rule_repository.save(rule)
 
     def get_transaction(self, transaction_id: UUID) -> Optional[Transaction]:
         """Get a transaction by ID"""
