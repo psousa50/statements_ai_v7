@@ -4,7 +4,10 @@ from unittest.mock import MagicMock
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
+from app.adapters.repositories.account import SQLAlchemyAccountRepository
 from app.adapters.repositories.background_job import SQLAlchemyBackgroundJobRepository
+from app.adapters.repositories.category import SQLAlchemyCategoryRepository
+from app.adapters.repositories.enhancement_rule import SQLAlchemyEnhancementRuleRepository
 from app.adapters.repositories.statement import SqlAlchemyStatementRepository
 from app.adapters.repositories.transaction import SQLAlchemyTransactionRepository
 from app.app import register_app_routes
@@ -18,6 +21,7 @@ from app.services.statement import StatementService
 from app.services.statement_processing.statement_analyzer import StatementAnalyzerService
 from app.services.statement_processing.statement_upload import StatementUploadService
 from app.services.transaction import TransactionService
+from app.services.transaction_enhancement import TransactionEnhancer
 
 
 def mocked_dependencies(
@@ -33,8 +37,11 @@ def mocked_dependencies(
     statement_service: StatementService = None,
     statement_repo: SqlAlchemyStatementRepository = None,
     transaction_repo: SQLAlchemyTransactionRepository = None,
+    enhancement_rule_repository: SQLAlchemyEnhancementRuleRepository = None,
+    transaction_enhancer: TransactionEnhancer = None,
+    category_repository: SQLAlchemyCategoryRepository = None,
+    account_repository: SQLAlchemyAccountRepository = None,
 ) -> InternalDependencies:
-    # Create mocked transaction service with transaction_repository attribute
     if transaction_service is None:
         transaction_service = MagicMock(spec=TransactionService)
         transaction_service.transaction_repository = MagicMock()
@@ -55,6 +62,10 @@ def mocked_dependencies(
         background_job_repository=background_job_repository or MagicMock(spec=SQLAlchemyBackgroundJobRepository),
         statement_repo=statement_repo or MagicMock(spec=SqlAlchemyStatementRepository),
         transaction_repo=transaction_repo or MagicMock(spec=SQLAlchemyTransactionRepository),
+        enhancement_rule_repository=enhancement_rule_repository or MagicMock(spec=SQLAlchemyEnhancementRuleRepository),
+        transaction_enhancer=transaction_enhancer or MagicMock(spec=TransactionEnhancer),
+        category_repository=category_repository or MagicMock(spec=SQLAlchemyCategoryRepository),
+        account_repository=account_repository or MagicMock(spec=SQLAlchemyAccountRepository),
     )
 
 

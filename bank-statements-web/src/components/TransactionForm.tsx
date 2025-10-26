@@ -1,7 +1,10 @@
-import { useState, FormEvent } from 'react'
+import { useState, FormEvent, useEffect, useCallback } from 'react'
 import { Category, Account, TransactionCreate } from '../types/Transaction'
 import { CategorySelector } from './CategorySelector'
 import { AccountSelector } from './AccountSelector'
+import { useApi } from '../api/ApiContext'
+import { EnhancementPreviewResponse } from '../api/TransactionClient'
+import './TransactionForm.css'
 
 interface TransactionFormProps {
   onSubmit: (transaction: TransactionCreate) => Promise<void>
@@ -11,12 +14,54 @@ interface TransactionFormProps {
 }
 
 export const TransactionForm = ({ onSubmit, categories, accounts, isLoading }: TransactionFormProps) => {
+  const api = useApi()
   const [date, setDate] = useState<string>('')
   const [description, setDescription] = useState<string>('')
   const [amount, setAmount] = useState<string>('')
   const [accountId, setAccountId] = useState<string>('')
   const [categoryId, setCategoryId] = useState<string>('')
   const [counterpartyAccountId, setCounterpartyAccountId] = useState<string>('')
+  const [preview, setPreview] = useState<EnhancementPreviewResponse | null>(null)
+
+  const fetchPreview = useCallback(async () => {
+    if (!description.trim()) {
+      setPreview(null)
+      return
+    }
+
+    try {
+      const previewResponse = await api.transactions.previewEnhancement({
+        description: description.trim(),
+        amount: amount ? parseFloat(amount) : undefined,
+        transaction_date: date || undefined,
+      })
+      setPreview(previewResponse)
+    } catch (error) {
+      setPreview(null)
+    }
+  }, [description, amount, date, accountId, api.transactions])
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchPreview()
+    }, 500)
+
+    return () => clearTimeout(timer)
+  }, [fetchPreview])
+
+  useEffect(() => {
+    if (preview && preview.matched) {
+      if (preview.category_id) {
+        setCategoryId(preview.category_id)
+      }
+      if (preview.counterparty_account_id) {
+        setCounterpartyAccountId(preview.counterparty_account_id)
+      }
+    } else if (preview && !preview.matched) {
+      setCategoryId('')
+      setCounterpartyAccountId('')
+    }
+  }, [preview])
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
@@ -49,6 +94,7 @@ export const TransactionForm = ({ onSubmit, categories, accounts, isLoading }: T
     setAccountId('')
     setCategoryId('')
     setCounterpartyAccountId('')
+    setPreview(null)
   }
 
   return (

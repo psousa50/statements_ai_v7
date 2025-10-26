@@ -44,6 +44,21 @@ export interface BulkUpdateTransactionsResponse {
   message: string
 }
 
+export interface EnhancementPreviewRequest {
+  description: string
+  amount?: number
+  transaction_date?: string
+}
+
+export interface EnhancementPreviewResponse {
+  matched: boolean
+  rule_pattern?: string
+  category_id?: string
+  category_name?: string
+  counterparty_account_id?: string
+  counterparty_account_name?: string
+}
+
 export interface TransactionClient {
   getAll(filters?: TransactionFilters): Promise<TransactionListResponse>
   getCategoryTotals(filters?: Omit<TransactionFilters, 'page' | 'page_size'>): Promise<CategoryTotalsResponse>
@@ -53,6 +68,7 @@ export interface TransactionClient {
   categorize(id: string, categoryId?: string): Promise<Transaction>
   delete(id: string): Promise<void>
   bulkUpdateCategory(request: BulkUpdateTransactionsRequest): Promise<BulkUpdateTransactionsResponse>
+  previewEnhancement(request: EnhancementPreviewRequest): Promise<EnhancementPreviewResponse>
 }
 
 export interface SourceClient {
@@ -125,7 +141,6 @@ export const transactionClient: TransactionClient = {
   },
 
   async getCategoryTotals(filters?: Omit<TransactionFilters, 'page' | 'page_size'>) {
-    console.log('getCategoryTotals called with filters:', filters) // Debug log
     const params = new URLSearchParams()
 
     if (filters?.category_ids && filters.category_ids.length > 0) {
@@ -160,7 +175,6 @@ export const transactionClient: TransactionClient = {
     }
 
     const url = params.toString() ? `${API_URL}/category-totals?${params.toString()}` : `${API_URL}/category-totals`
-    console.log('Making request to URL:', url) // Debug log
     const response = await axios.get<CategoryTotalsResponse>(url)
     return response.data
   },
@@ -196,6 +210,11 @@ export const transactionClient: TransactionClient = {
 
   async bulkUpdateCategory(request: BulkUpdateTransactionsRequest) {
     const response = await axios.put<BulkUpdateTransactionsResponse>(`${API_URL}/bulk-update-category`, request)
+    return response.data
+  },
+
+  async previewEnhancement(request: EnhancementPreviewRequest) {
+    const response = await axios.post<EnhancementPreviewResponse>(`${API_URL}/preview-enhancement`, request)
     return response.data
   },
 }

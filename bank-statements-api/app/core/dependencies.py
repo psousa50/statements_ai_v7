@@ -68,6 +68,10 @@ class InternalDependencies:
         background_job_repository: SQLAlchemyBackgroundJobRepository,
         statement_repo: SqlAlchemyStatementRepository,
         transaction_repo: SQLAlchemyTransactionRepository,
+        enhancement_rule_repository: SQLAlchemyEnhancementRuleRepository,
+        transaction_enhancer: TransactionEnhancer,
+        category_repository: SQLAlchemyCategoryRepository,
+        account_repository: SQLAlchemyAccountRepository,
     ):
         self.transaction_service = transaction_service
         self.category_service = category_service
@@ -81,6 +85,10 @@ class InternalDependencies:
         self.background_job_repository = background_job_repository
         self.statement_repo = statement_repo
         self.transaction_repo = transaction_repo
+        self.enhancement_rule_repository = enhancement_rule_repository
+        self.transaction_enhancer = transaction_enhancer
+        self.category_repository = category_repository
+        self.account_repository = account_repository
 
 
 def build_external_dependencies() -> ExternalDependencies:
@@ -171,6 +179,10 @@ def build_internal_dependencies(
         background_job_repository=background_job_repo,
         statement_repo=statement_repo,
         transaction_repo=transaction_repo,
+        enhancement_rule_repository=enhancement_rule_repo,
+        transaction_enhancer=transaction_enhancer,
+        category_repository=category_repo,
+        account_repository=account_repo,
     )
 
 

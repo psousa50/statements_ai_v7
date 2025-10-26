@@ -98,7 +98,7 @@ class TransactionResponse(BaseModel):
     description: str
     normalized_description: str
     amount: Decimal
-    created_at: "date"
+    created_at: date
     category_id: Optional[UUID] = None
     account_id: Optional[UUID] = None
     counterparty_account_id: Optional[UUID] = None
@@ -127,6 +127,21 @@ class TransactionCreateRequest(BaseModel):
     category_id: Optional[UUID] = None
     counterparty_account_id: Optional[UUID] = None
     after_transaction_id: Optional[UUID] = None
+
+
+class EnhancementPreviewRequest(BaseModel):
+    description: str
+    amount: Optional[Decimal] = None
+    transaction_date: Optional[date] = None
+
+
+class EnhancementPreviewResponse(BaseModel):
+    matched: bool
+    rule_pattern: Optional[str] = None
+    category_id: Optional[UUID] = None
+    category_name: Optional[str] = None
+    counterparty_account_id: Optional[UUID] = None
+    counterparty_account_name: Optional[str] = None
 
 
 class TransactionUpdateRequest(BaseModel):

@@ -5,6 +5,9 @@ from uuid import uuid4
 from fastapi.encoders import jsonable_encoder
 
 from app.api.schemas import TransactionCreate, TransactionResponse
+from app.domain.models.account import Account
+from app.domain.models.category import Category
+from app.domain.models.enhancement_rule import EnhancementRule, EnhancementRuleSource, MatchType
 from app.domain.models.transaction import CategorizationStatus, SourceType, Transaction
 from tests.api.helpers import build_client, mocked_dependencies
 
@@ -156,3 +159,392 @@ def test_get_category_totals():
     assert totals_by_id[None]["transaction_count"] == 1
 
     internal_dependencies.transaction_service.get_category_totals.assert_called_once()
+
+
+def test_preview_enhancement_with_exact_match():
+    internal_dependencies = mocked_dependencies()
+
+    category_id = uuid4()
+    rule_id = uuid4()
+
+    mock_category = Category(id=category_id, name="Groceries")
+    mock_rule = EnhancementRule(
+        id=rule_id,
+        normalized_description_pattern="tesco",
+        match_type=MatchType.EXACT,
+        category_id=category_id,
+        source=EnhancementRuleSource.MANUAL,
+    )
+
+    internal_dependencies.enhancement_rule_repository.find_matching_rules.return_value = [mock_rule]
+    internal_dependencies.category_repository.get_by_id.return_value = mock_category
+
+    def mock_apply_rules(transactions, rules):
+        transaction = transactions[0]
+        transaction.category_id = category_id
+        return [transaction]
+
+    internal_dependencies.transaction_enhancer.apply_rules.side_effect = mock_apply_rules
+
+    client = build_client(internal_dependencies)
+
+    request_data = {
+        "description": "Tesco Store",
+        "amount": "25.50",
+        "transaction_date": "2023-01-15",
+    }
+
+    response = client.post(
+        "/api/v1/transactions/preview-enhancement",
+        json=request_data,
+    )
+
+    assert response.status_code == 200
+    response_data = response.json()
+
+    assert response_data["matched"] is True
+    assert response_data["rule_pattern"] == "tesco"
+    assert response_data["category_id"] == str(category_id)
+    assert response_data["category_name"] == "Groceries"
+    assert response_data["counterparty_account_id"] is None
+    assert response_data["counterparty_account_name"] is None
+
+
+def test_preview_enhancement_with_prefix_match():
+    internal_dependencies = mocked_dependencies()
+
+    category_id = uuid4()
+    account_id = uuid4()
+    rule_id = uuid4()
+
+    mock_category = Category(id=category_id, name="Transport")
+    mock_rule = EnhancementRule(
+        id=rule_id,
+        normalized_description_pattern="uber",
+        match_type=MatchType.PREFIX,
+        category_id=category_id,
+        source=EnhancementRuleSource.MANUAL,
+    )
+
+    internal_dependencies.enhancement_rule_repository.find_matching_rules.return_value = [mock_rule]
+    internal_dependencies.category_repository.get_by_id.return_value = mock_category
+
+    def mock_apply_rules(transactions, rules):
+        transaction = transactions[0]
+        transaction.category_id = category_id
+        return [transaction]
+
+    internal_dependencies.transaction_enhancer.apply_rules.side_effect = mock_apply_rules
+
+    client = build_client(internal_dependencies)
+
+    request_data = {
+        "description": "Uber Trip London",
+        "amount": "12.30",
+        "account_id": str(account_id),
+    }
+
+    response = client.post(
+        "/api/v1/transactions/preview-enhancement",
+        json=request_data,
+    )
+
+    assert response.status_code == 200
+    response_data = response.json()
+
+    assert response_data["matched"] is True
+    assert response_data["category_id"] == str(category_id)
+    assert response_data["category_name"] == "Transport"
+
+
+def test_preview_enhancement_with_infix_match():
+    internal_dependencies = mocked_dependencies()
+
+    category_id = uuid4()
+    account_id = uuid4()
+    rule_id = uuid4()
+
+    mock_category = Category(id=category_id, name="Dining")
+    mock_rule = EnhancementRule(
+        id=rule_id,
+        normalized_description_pattern="restaurant",
+        match_type=MatchType.INFIX,
+        category_id=category_id,
+        source=EnhancementRuleSource.MANUAL,
+    )
+
+    internal_dependencies.enhancement_rule_repository.find_matching_rules.return_value = [mock_rule]
+    internal_dependencies.category_repository.get_by_id.return_value = mock_category
+
+    def mock_apply_rules(transactions, rules):
+        transaction = transactions[0]
+        transaction.category_id = category_id
+        return [transaction]
+
+    internal_dependencies.transaction_enhancer.apply_rules.side_effect = mock_apply_rules
+
+    client = build_client(internal_dependencies)
+
+    request_data = {
+        "description": "The Best Restaurant in Town",
+        "amount": "45.00",
+        "account_id": str(account_id),
+    }
+
+    response = client.post(
+        "/api/v1/transactions/preview-enhancement",
+        json=request_data,
+    )
+
+    assert response.status_code == 200
+    response_data = response.json()
+
+    assert response_data["matched"] is True
+    assert response_data["category_id"] == str(category_id)
+    assert response_data["category_name"] == "Dining"
+
+
+def test_preview_enhancement_with_counterparty():
+    internal_dependencies = mocked_dependencies()
+
+    account_id = uuid4()
+    counterparty_account_id = uuid4()
+    rule_id = uuid4()
+
+    mock_counterparty = Account(id=counterparty_account_id, name="Savings Account")
+    mock_rule = EnhancementRule(
+        id=rule_id,
+        normalized_description_pattern="transfer to savings",
+        match_type=MatchType.EXACT,
+        counterparty_account_id=counterparty_account_id,
+        source=EnhancementRuleSource.MANUAL,
+    )
+
+    internal_dependencies.enhancement_rule_repository.find_matching_rules.return_value = [mock_rule]
+    internal_dependencies.account_repository.get_by_id.return_value = mock_counterparty
+
+    def mock_apply_rules(transactions, rules):
+        transaction = transactions[0]
+        transaction.counterparty_account_id = counterparty_account_id
+        return [transaction]
+
+    internal_dependencies.transaction_enhancer.apply_rules.side_effect = mock_apply_rules
+
+    client = build_client(internal_dependencies)
+
+    request_data = {
+        "description": "Transfer to Savings",
+        "amount": "500.00",
+        "account_id": str(account_id),
+    }
+
+    response = client.post(
+        "/api/v1/transactions/preview-enhancement",
+        json=request_data,
+    )
+
+    assert response.status_code == 200
+    response_data = response.json()
+
+    assert response_data["matched"] is True
+    assert response_data["category_id"] is None
+    assert response_data["category_name"] is None
+    assert response_data["counterparty_account_id"] == str(counterparty_account_id)
+    assert response_data["counterparty_account_name"] == "Savings Account"
+
+
+def test_preview_enhancement_with_amount_constraint():
+    internal_dependencies = mocked_dependencies()
+
+    category_id = uuid4()
+    account_id = uuid4()
+    rule_id = uuid4()
+
+    mock_category = Category(id=category_id, name="Large Purchases")
+    mock_rule = EnhancementRule(
+        id=rule_id,
+        normalized_description_pattern="amazon",
+        match_type=MatchType.PREFIX,
+        category_id=category_id,
+        min_amount=Decimal("100.00"),
+        source=EnhancementRuleSource.MANUAL,
+    )
+
+    internal_dependencies.enhancement_rule_repository.find_matching_rules.return_value = [mock_rule]
+    internal_dependencies.category_repository.get_by_id.return_value = mock_category
+
+    def mock_apply_rules(transactions, rules):
+        transaction = transactions[0]
+        if transaction.amount >= Decimal("100.00"):
+            transaction.category_id = category_id
+        return [transaction]
+
+    internal_dependencies.transaction_enhancer.apply_rules.side_effect = mock_apply_rules
+
+    client = build_client(internal_dependencies)
+
+    request_data = {
+        "description": "Amazon Purchase",
+        "amount": "150.00",
+        "account_id": str(account_id),
+    }
+
+    response = client.post(
+        "/api/v1/transactions/preview-enhancement",
+        json=request_data,
+    )
+
+    assert response.status_code == 200
+    response_data = response.json()
+
+    assert response_data["matched"] is True
+    assert response_data["category_id"] == str(category_id)
+
+
+def test_preview_enhancement_with_date_constraint():
+    internal_dependencies = mocked_dependencies()
+
+    category_id = uuid4()
+    account_id = uuid4()
+    rule_id = uuid4()
+
+    mock_category = Category(id=category_id, name="Holiday Shopping")
+    mock_rule = EnhancementRule(
+        id=rule_id,
+        normalized_description_pattern="shop",
+        match_type=MatchType.INFIX,
+        category_id=category_id,
+        start_date=date(2023, 12, 1),
+        end_date=date(2023, 12, 31),
+        source=EnhancementRuleSource.MANUAL,
+    )
+
+    internal_dependencies.enhancement_rule_repository.find_matching_rules.return_value = [mock_rule]
+    internal_dependencies.category_repository.get_by_id.return_value = mock_category
+
+    def mock_apply_rules(transactions, rules):
+        transaction = transactions[0]
+        if date(2023, 12, 1) <= transaction.date <= date(2023, 12, 31):
+            transaction.category_id = category_id
+        return [transaction]
+
+    internal_dependencies.transaction_enhancer.apply_rules.side_effect = mock_apply_rules
+
+    client = build_client(internal_dependencies)
+
+    request_data = {
+        "description": "Shop Purchase",
+        "amount": "50.00",
+        "transaction_date": "2023-12-15",
+        "account_id": str(account_id),
+    }
+
+    response = client.post(
+        "/api/v1/transactions/preview-enhancement",
+        json=request_data,
+    )
+
+    assert response.status_code == 200
+    response_data = response.json()
+
+    assert response_data["matched"] is True
+    assert response_data["category_id"] == str(category_id)
+
+
+def test_preview_enhancement_no_match():
+    internal_dependencies = mocked_dependencies()
+
+    account_id = uuid4()
+    rule_id = uuid4()
+
+    mock_rule = EnhancementRule(
+        id=rule_id,
+        normalized_description_pattern="tesco",
+        match_type=MatchType.EXACT,
+        category_id=uuid4(),
+        source=EnhancementRuleSource.MANUAL,
+    )
+
+    internal_dependencies.enhancement_rule_repository.find_matching_rules.return_value = [mock_rule]
+
+    def mock_apply_rules(transactions, rules):
+        return transactions
+
+    internal_dependencies.transaction_enhancer.apply_rules.side_effect = mock_apply_rules
+
+    client = build_client(internal_dependencies)
+
+    request_data = {
+        "description": "Random Store",
+        "amount": "25.00",
+        "account_id": str(account_id),
+    }
+
+    response = client.post(
+        "/api/v1/transactions/preview-enhancement",
+        json=request_data,
+    )
+
+    assert response.status_code == 200
+    response_data = response.json()
+
+    assert response_data["matched"] is False
+    assert response_data["rule_pattern"] is None
+    assert response_data["category_id"] is None
+    assert response_data["category_name"] is None
+
+
+def test_preview_enhancement_rule_precedence():
+    internal_dependencies = mocked_dependencies()
+
+    category_exact_id = uuid4()
+    category_prefix_id = uuid4()
+    account_id = uuid4()
+
+    mock_category_exact = Category(id=category_exact_id, name="Exact Match Category")
+
+    exact_rule = EnhancementRule(
+        id=uuid4(),
+        normalized_description_pattern="tesco supermarket",
+        match_type=MatchType.EXACT,
+        category_id=category_exact_id,
+        source=EnhancementRuleSource.MANUAL,
+    )
+
+    prefix_rule = EnhancementRule(
+        id=uuid4(),
+        normalized_description_pattern="tesco",
+        match_type=MatchType.PREFIX,
+        category_id=category_prefix_id,
+        source=EnhancementRuleSource.MANUAL,
+    )
+
+    internal_dependencies.enhancement_rule_repository.find_matching_rules.return_value = [prefix_rule, exact_rule]
+    internal_dependencies.category_repository.get_by_id.return_value = mock_category_exact
+
+    def mock_apply_rules(transactions, rules):
+        transaction = transactions[0]
+        transaction.category_id = category_exact_id
+        return [transaction]
+
+    internal_dependencies.transaction_enhancer.apply_rules.side_effect = mock_apply_rules
+
+    client = build_client(internal_dependencies)
+
+    request_data = {
+        "description": "Tesco Supermarket",
+        "amount": "35.00",
+        "account_id": str(account_id),
+    }
+
+    response = client.post(
+        "/api/v1/transactions/preview-enhancement",
+        json=request_data,
+    )
+
+    assert response.status_code == 200
+    response_data = response.json()
+
+    assert response_data["matched"] is True
+    assert response_data["category_id"] == str(category_exact_id)
+    assert response_data["category_name"] == "Exact Match Category"

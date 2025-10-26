@@ -1,7 +1,7 @@
 from datetime import date
 from decimal import Decimal
 from typing import Callable, Iterator, Optional
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, Query, status
 
@@ -10,14 +10,17 @@ from app.api.schemas import (
     BulkUpdateTransactionsResponse,
     CategoryTotalResponse,
     CategoryTotalsResponse,
+    EnhancementPreviewRequest,
+    EnhancementPreviewResponse,
     TransactionCreateRequest,
     TransactionListResponse,
     TransactionResponse,
     TransactionUpdateRequest,
 )
+from app.common.text_normalization import normalize_description
 from app.core.config import settings
 from app.core.dependencies import InternalDependencies
-from app.domain.models.transaction import CategorizationStatus
+from app.domain.models.transaction import CategorizationStatus, SourceType, Transaction
 
 
 def register_transaction_routes(
@@ -221,6 +224,60 @@ def register_transaction_routes(
         ]
 
         return CategoryTotalsResponse(totals=totals)
+
+    @router.post(
+        "/preview-enhancement",
+        response_model=EnhancementPreviewResponse,
+    )
+    def preview_enhancement(
+        request: EnhancementPreviewRequest,
+        internal: InternalDependencies = Depends(provide_dependencies),
+    ):
+        normalized_desc = normalize_description(request.description)
+        rules = internal.enhancement_rule_repository.find_matching_rules(normalized_desc)
+
+        temp_transaction = Transaction(
+            id=uuid4(),
+            date=request.transaction_date or date.today(),
+            description=request.description,
+            normalized_description=normalized_desc,
+            amount=request.amount or Decimal("0"),
+            account_id=uuid4(),
+            statement_id=None,
+            source_type=SourceType.MANUAL,
+            categorization_status=CategorizationStatus.UNCATEGORIZED,
+        )
+
+        enhanced = internal.transaction_enhancer.apply_rules([temp_transaction], rules)
+        enhanced_transaction = enhanced[0]
+
+        if not enhanced_transaction.category_id and not enhanced_transaction.counterparty_account_id:
+            return EnhancementPreviewResponse(matched=False)
+
+        category_name = None
+        if enhanced_transaction.category_id:
+            category = internal.category_repository.get_by_id(enhanced_transaction.category_id)
+            category_name = category.name if category else None
+
+        counterparty_name = None
+        if enhanced_transaction.counterparty_account_id:
+            counterparty = internal.account_repository.get_by_id(enhanced_transaction.counterparty_account_id)
+            counterparty_name = counterparty.name if counterparty else None
+
+        matched_rule = None
+        for rule in rules:
+            if rule.normalized_description_pattern in normalized_desc:
+                matched_rule = rule
+                break
+
+        return EnhancementPreviewResponse(
+            matched=True,
+            rule_pattern=matched_rule.normalized_description_pattern if matched_rule else normalized_desc,
+            category_id=enhanced_transaction.category_id,
+            category_name=category_name,
+            counterparty_account_id=enhanced_transaction.counterparty_account_id,
+            counterparty_account_name=counterparty_name,
+        )
 
     # Bulk update route - MUST be defined before /{transaction_id} routes to avoid path conflicts
     @router.put(

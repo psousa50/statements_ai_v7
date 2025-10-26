@@ -1,0 +1,35 @@
+.preview-loading {
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  background-color: #f0f0f0;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  color: #666;
+}
+
+.preview-match {
+  margin-top: 0.5rem;
+  padding: 0.75rem;
+  background-color: #e8f5e9;
+  border-left: 3px solid #4caf50;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  color: #2e7d32;
+  line-height: 1.5;
+}
+
+.preview-category {
+  font-weight: 600;
+  color: #1b5e20;
+}
+
+.preview-counterparty {
+  font-weight: 600;
+  color: #1565c0;
+}
+
+.preview-pattern {
+  font-style: italic;
+  color: #555;
+  font-size: 0.8rem;
+}

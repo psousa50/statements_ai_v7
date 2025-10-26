@@ -8,7 +8,12 @@ import {
   StatementUploadResponse,
   StatementResponse,
 } from '@/api/StatementClient'
-import { TransactionClient, CategoryTotalsResponse, BulkUpdateTransactionsResponse } from '@/api/TransactionClient'
+import {
+  TransactionClient,
+  CategoryTotalsResponse,
+  BulkUpdateTransactionsResponse,
+  EnhancementPreviewResponse,
+} from '@/api/TransactionClient'
 import { TransactionCategorizationClient } from '@/api/TransactionCategorizationClient'
 import { Category, Transaction, TransactionListResponse } from '@/types/Transaction'
 import {
@@ -89,6 +94,10 @@ const defaultTransactionClient: TransactionClient = {
   categorize: function (_id: string, _categoryId?: string): Promise<Transaction> {
     throw new Error('Function not implemented.')
   },
+  previewEnhancement: () =>
+    Promise.resolve({
+      matched: false,
+    } as EnhancementPreviewResponse),
 }
 
 // Default mock category client implementation
