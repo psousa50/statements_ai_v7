@@ -102,6 +102,10 @@ def register_transaction_routes(
             True,
             description="Exclude transfers between accounts",
         ),
+        exclude_uncategorized: Optional[bool] = Query(
+            False,
+            description="Exclude uncategorized transactions",
+        ),
         transaction_type: Optional[str] = Query(
             None,
             description="Filter by transaction type: 'debit', 'credit', or 'all'",
@@ -146,6 +150,7 @@ def register_transaction_routes(
             sort_field=sort_field,
             sort_direction=sort_direction,
             exclude_transfers=exclude_transfers,
+            exclude_uncategorized=exclude_uncategorized,
             transaction_type=transaction_type,
         )
         return transactions
@@ -182,6 +187,10 @@ def register_transaction_routes(
             True,
             description="Exclude transfers between accounts",
         ),
+        exclude_uncategorized: Optional[bool] = Query(
+            False,
+            description="Exclude uncategorized transactions",
+        ),
         transaction_type: Optional[str] = Query(
             None,
             description="Filter by transaction type: 'debit', 'credit', or 'all'",
@@ -210,6 +219,7 @@ def register_transaction_routes(
             start_date=start_date,
             end_date=end_date,
             exclude_transfers=exclude_transfers,
+            exclude_uncategorized=exclude_uncategorized,
             transaction_type=transaction_type,
         )
 

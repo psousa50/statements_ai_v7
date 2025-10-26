@@ -129,6 +129,7 @@ class TransactionService:
         sort_field: Optional[str] = None,
         sort_direction: Optional[str] = None,
         exclude_transfers: Optional[bool] = None,
+        exclude_uncategorized: Optional[bool] = None,
         transaction_type: Optional[str] = None,
     ) -> TransactionListResponse:
         """Get transactions with pagination and advanced filtering"""
@@ -149,6 +150,7 @@ class TransactionService:
             sort_field=sort_field,
             sort_direction=sort_direction,
             exclude_transfers=exclude_transfers,
+            exclude_uncategorized=exclude_uncategorized,
             transaction_type=transaction_type,
         )
 
@@ -279,6 +281,7 @@ class TransactionService:
         start_date: Optional[date] = None,
         end_date: Optional[date] = None,
         exclude_transfers: Optional[bool] = None,
+        exclude_uncategorized: Optional[bool] = None,
         transaction_type: Optional[str] = None,
     ) -> Dict[Optional[UUID], Dict[str, Decimal]]:
         """Get category totals for chart data with the same filtering options as get_transactions_paginated"""
@@ -292,6 +295,7 @@ class TransactionService:
             start_date=start_date,
             end_date=end_date,
             exclude_transfers=exclude_transfers,
+            exclude_uncategorized=exclude_uncategorized,
             transaction_type=transaction_type,
         )
 

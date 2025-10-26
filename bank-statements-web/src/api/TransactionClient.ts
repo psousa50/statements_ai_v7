@@ -21,6 +21,7 @@ export interface TransactionFilters {
   sort_direction?: 'asc' | 'desc'
   enhancement_rule_id?: string
   exclude_transfers?: boolean
+  exclude_uncategorized?: boolean
   transaction_type?: 'all' | 'debit' | 'credit'
 }
 
@@ -128,8 +129,11 @@ export const transactionClient: TransactionClient = {
     if (filters?.enhancement_rule_id) {
       params.append('enhancement_rule_id', filters.enhancement_rule_id)
     }
-    if (filters?.exclude_transfers) {
-      params.append('exclude_transfers', 'true')
+    if (filters?.exclude_transfers !== undefined) {
+      params.append('exclude_transfers', filters.exclude_transfers.toString())
+    }
+    if (filters?.exclude_uncategorized !== undefined) {
+      params.append('exclude_uncategorized', filters.exclude_uncategorized.toString())
     }
     if (filters?.transaction_type) {
       params.append('transaction_type', filters.transaction_type)
@@ -167,8 +171,11 @@ export const transactionClient: TransactionClient = {
     if (filters?.end_date) {
       params.append('end_date', filters.end_date)
     }
-    if (filters?.exclude_transfers) {
-      params.append('exclude_transfers', 'true')
+    if (filters?.exclude_transfers !== undefined) {
+      params.append('exclude_transfers', filters.exclude_transfers.toString())
+    }
+    if (filters?.exclude_uncategorized !== undefined) {
+      params.append('exclude_uncategorized', filters.exclude_uncategorized.toString())
     }
     if (filters?.transaction_type) {
       params.append('transaction_type', filters.transaction_type)

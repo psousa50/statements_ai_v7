@@ -29,6 +29,8 @@ export const TransactionsPage = () => {
     const urlSortDirection = searchParams.get('sort_direction')
     const urlEnhancementRuleId = searchParams.get('enhancement_rule_id')
     const urlExcludeTransfers = searchParams.get('exclude_transfers')
+    const urlExcludeUncategorized = searchParams.get('exclude_uncategorized')
+    const urlTransactionType = searchParams.get('transaction_type')
 
     return {
       page: 1,
@@ -44,7 +46,9 @@ export const TransactionsPage = () => {
       sort_field: (urlSortField as TransactionSortField) || 'date',
       sort_direction: (urlSortDirection as TransactionSortDirection) || 'desc',
       enhancement_rule_id: urlEnhancementRuleId || undefined,
-      exclude_transfers: urlExcludeTransfers === 'false' ? false : true, // Default to true
+      exclude_transfers: urlExcludeTransfers === 'false' ? false : true,
+      exclude_uncategorized: urlExcludeUncategorized === 'true' ? true : false,
+      transaction_type: (urlTransactionType as 'all' | 'debit' | 'credit') || 'all',
     }
   }
 
@@ -194,6 +198,20 @@ export const TransactionsPage = () => {
     [handleFilterChange]
   )
 
+  const handleExcludeUncategorizedFilter = useCallback(
+    (excludeUncategorized: boolean) => {
+      handleFilterChange({ exclude_uncategorized: excludeUncategorized })
+    },
+    [handleFilterChange]
+  )
+
+  const handleTransactionTypeFilter = useCallback(
+    (transactionType: 'all' | 'debit' | 'credit') => {
+      handleFilterChange({ transaction_type: transactionType })
+    },
+    [handleFilterChange]
+  )
+
   const handleSort = useCallback(
     (field: TransactionSortField) => {
       const currentSortField = filters.sort_field
@@ -329,16 +347,16 @@ export const TransactionsPage = () => {
               startDate={localStartDate}
               endDate={localEndDate}
               excludeTransfers={filters.exclude_transfers}
-              excludeUncategorized={false}
-              transactionType="all"
+              excludeUncategorized={filters.exclude_uncategorized}
+              transactionType={filters.transaction_type || 'all'}
               onCategoryChange={handleCategoryFilter}
               onAccountChange={handleAccountFilter}
               onAmountRangeChange={handleAmountRangeFilter}
               onDescriptionSearchChange={handleDescriptionSearchFilter}
               onDateRangeChange={handleDateRangeFilter}
               onExcludeTransfersChange={handleExcludeTransfersFilter}
-              onExcludeUncategorizedChange={() => {}}
-              onTransactionTypeChange={() => {}}
+              onExcludeUncategorizedChange={handleExcludeUncategorizedFilter}
+              onTransactionTypeChange={handleTransactionTypeFilter}
               onClearFilters={handleClearFilters}
             />
           </div>
