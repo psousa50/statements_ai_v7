@@ -244,7 +244,7 @@ export const EnhancementRuleFiltersComponent: React.FC<EnhancementRuleFiltersPro
                 size="small"
               />
             }
-            label="Show Invalid Rules Only"
+            label="Show Unconfigured Rules Only"
           />
         </Box>
 

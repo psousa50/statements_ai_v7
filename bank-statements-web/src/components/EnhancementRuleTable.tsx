@@ -80,34 +80,21 @@ export const EnhancementRuleTable: React.FC<EnhancementRuleTableProps> = ({
     }
   }
 
-  const getRuleTypeDisplay = (rule: EnhancementRule) => {
-    const hasCategory = rule.category_id
-    const hasCounterparty = rule.counterparty_account_id
-
-    if (hasCategory && hasCounterparty) {
-      return 'Category + Counterparty'
-    } else if (hasCategory) {
-      return 'Category Only'
-    } else if (hasCounterparty) {
-      return 'Counterparty Only'
-    }
-    return 'Invalid Rule'
-  }
-
   const getRuleTypeColor = (
-    rule: EnhancementRule
+    ruleType: string
   ): 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning' => {
-    const hasCategory = rule.category_id
-    const hasCounterparty = rule.counterparty_account_id
-
-    if (hasCategory && hasCounterparty) {
-      return 'primary'
-    } else if (hasCategory) {
-      return 'secondary'
-    } else if (hasCounterparty) {
-      return 'info'
+    switch (ruleType) {
+      case 'Category + Counterparty':
+        return 'primary'
+      case 'Category Only':
+        return 'secondary'
+      case 'Counterparty Only':
+        return 'info'
+      case 'Unconfigured':
+        return 'error'
+      default:
+        return 'default'
     }
-    return 'error'
   }
 
   const formatConstraints = (rule: EnhancementRule) => {
@@ -205,7 +192,7 @@ export const EnhancementRuleTable: React.FC<EnhancementRuleTableProps> = ({
                 />
               </TableCell>
               <TableCell>
-                <Chip label={getRuleTypeDisplay(rule)} color={getRuleTypeColor(rule)} size="small" />
+                <Chip label={rule.rule_type} color={getRuleTypeColor(rule.rule_type)} size="small" />
               </TableCell>
               <TableCell>
                 {rule.category ? (

@@ -434,6 +434,7 @@ class EnhancementRuleResponse(BaseModel):
     source: EnhancementRuleSource
     created_at: datetime
     updated_at: datetime
+    rule_type: str
     # Optional populated fields
     category: Optional[CategoryResponse] = None
     counterparty_account: Optional[AccountResponse] = None

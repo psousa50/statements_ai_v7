@@ -78,6 +78,20 @@ class EnhancementRule(Base):
     category = relationship("Category")
     counterparty_account = relationship("Account")
 
+    @property
+    def rule_type(self) -> str:
+        has_category = self.category_id is not None
+        has_counterparty = self.counterparty_account_id is not None
+
+        if has_category and has_counterparty:
+            return "Category + Counterparty"
+        elif has_category:
+            return "Category Only"
+        elif has_counterparty:
+            return "Counterparty Only"
+        else:
+            return "Unconfigured"
+
     def matches_transaction(self, transaction) -> bool:
         """Check if this rule matches the given transaction"""
         # Check description pattern

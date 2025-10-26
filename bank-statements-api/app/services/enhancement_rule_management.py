@@ -286,7 +286,7 @@ class EnhancementRuleManagementService:
                     "counterparty_name": rule.counterparty_account.name if rule.counterparty_account else None,
                     "transaction_count": count,
                     "source": rule.source.value,
-                    "rule_type": self._get_rule_type_display(rule),
+                    "rule_type": rule.rule_type,
                 }
                 for rule, count in top_rules
             ],
@@ -298,7 +298,7 @@ class EnhancementRuleManagementService:
                     "counterparty_name": rule.counterparty_account.name if rule.counterparty_account else None,
                     "source": rule.source.value,
                     "created_at": rule.created_at.isoformat(),
-                    "rule_type": self._get_rule_type_display(rule),
+                    "rule_type": rule.rule_type,
                 }
                 for rule in unused_rules
             ],
@@ -313,20 +313,6 @@ class EnhancementRuleManagementService:
         except Exception:
             # Fallback if the repository doesn't have this method yet
             return 0
-
-    def _get_rule_type_display(self, rule: EnhancementRule) -> str:
-        """Get a display string for the rule type."""
-        has_category = rule.category_id is not None
-        has_counterparty = rule.counterparty_account_id is not None
-
-        if has_category and has_counterparty:
-            return "Category + Counterparty"
-        elif has_category:
-            return "Category Only"
-        elif has_counterparty:
-            return "Counterparty Only"
-        else:
-            return "Invalid Rule"
 
     def get_matching_transactions_count(self, rule_id: UUID) -> Dict[str, Any]:
         """Get count of transactions that would match this enhancement rule."""

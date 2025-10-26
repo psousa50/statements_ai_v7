@@ -24,6 +24,7 @@ export interface EnhancementRule {
   source: EnhancementRuleSource
   created_at: string
   updated_at: string
+  rule_type: string
   // Populated from joins
   category?: Category
   counterparty_account?: {
