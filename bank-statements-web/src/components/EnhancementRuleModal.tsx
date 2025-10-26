@@ -199,10 +199,12 @@ export const EnhancementRuleModal: React.FC<EnhancementRuleModalProps> = ({
       errors.normalized_description_pattern = 'Description is required'
     }
 
-    if (formData.min_amount !== undefined && formData.max_amount !== undefined) {
-      if (formData.min_amount > formData.max_amount) {
-        errors.amount_range = 'Minimum amount cannot be greater than maximum amount'
-      }
+    if (
+      typeof formData.min_amount === 'number' &&
+      typeof formData.max_amount === 'number' &&
+      formData.min_amount > formData.max_amount
+    ) {
+      errors.amount_range = 'Minimum amount cannot be greater than maximum amount'
     }
 
     if (formData.start_date && formData.end_date) {
