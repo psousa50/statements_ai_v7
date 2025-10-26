@@ -30,8 +30,9 @@ export interface TransactionCreate {
   date: string
   description: string
   amount: number
-  account_id?: string
+  account_id: string
   category_id?: string
+  counterparty_account_id?: string
 }
 
 export interface TransactionListResponse {

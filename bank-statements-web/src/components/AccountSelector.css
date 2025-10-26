@@ -1,0 +1,36 @@
+.account-selector {
+  width: 100%;
+}
+
+.account-selector-dropdown {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border-secondary);
+  border-radius: 6px;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: 14px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.account-selector-dropdown:hover {
+  border-color: var(--border-primary);
+}
+
+.account-selector-dropdown:focus {
+  outline: none;
+  border-color: var(--text-accent);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.account-selector-dropdown:disabled {
+  background-color: var(--bg-secondary);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.account-selector-dropdown option {
+  padding: 8px;
+}

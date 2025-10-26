@@ -5,8 +5,9 @@ import { useCategories } from '../services/hooks/useCategories'
 import { useAccounts } from '../services/hooks/useAccounts'
 import { TransactionTable, TransactionSortField, TransactionSortDirection } from '../components/TransactionTable'
 import { TransactionFilters } from '../components/TransactionFilters'
+import { TransactionModal } from '../components/TransactionModal'
 import { Pagination } from '../components/Pagination'
-import { CategorizationStatus } from '../types/Transaction'
+import { CategorizationStatus, TransactionCreate } from '../types/Transaction'
 import { TransactionFilters as FilterType } from '../api/TransactionClient'
 import './TransactionsPage.css'
 
@@ -71,6 +72,7 @@ export const TransactionsPage = () => {
     enhancementRule,
     pagination,
     fetchTransactions,
+    addTransaction,
     categorizeTransaction,
   } = useTransactions()
 
@@ -80,7 +82,8 @@ export const TransactionsPage = () => {
   const loading = transactionsLoading || categoriesLoading || accountsLoading
   const error = transactionsError || categoriesError || accountsError
 
-  // Track if we're in rule filtering mode
+  const [isModalOpen, setIsModalOpen] = useState(false)
+
   const isRuleFiltering = !!filters.enhancement_rule_id
 
   // Load data on mount with initial filters from URL
@@ -260,17 +263,31 @@ export const TransactionsPage = () => {
 
   const handleCategorizeTransaction = async (transactionId: string, categoryId?: string) => {
     await categorizeTransaction(transactionId, categoryId)
-    // Refresh the current page after categorization
     fetchTransactions({ ...filters, include_running_balance: !!filters.account_id })
+  }
+
+  const handleCreateTransaction = async (transaction: TransactionCreate) => {
+    const createdTransaction = await addTransaction(transaction)
+    if (createdTransaction) {
+      fetchTransactions({ ...filters, include_running_balance: !!filters.account_id })
+    }
+    return createdTransaction
   }
 
   return (
     <div className="transactions-page">
       <header className="page-header">
-        <h1>Transactions</h1>
-        <p className="page-description">
-          View and manage your bank transactions with advanced filtering and categorization
-        </p>
+        <div className="page-header-content">
+          <div>
+            <h1>Transactions</h1>
+            <p className="page-description">
+              View and manage your bank transactions with advanced filtering and categorization
+            </p>
+          </div>
+          <button className="button-primary" onClick={() => setIsModalOpen(true)}>
+            + New Transaction
+          </button>
+        </div>
       </header>
 
       {/* Enhancement Rule Filter Banner */}
@@ -364,6 +381,14 @@ export const TransactionsPage = () => {
           )}
         </div>
       </div>
+
+      <TransactionModal
+        isOpen={isModalOpen}
+        categories={categories || []}
+        accounts={accounts || []}
+        onSave={handleCreateTransaction}
+        onClose={() => setIsModalOpen(false)}
+      />
     </div>
   )
 }
