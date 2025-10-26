@@ -163,7 +163,6 @@ export const EnhancementRuleFiltersComponent: React.FC<EnhancementRuleFiltersPro
             size="small"
             value={localDescriptionSearch}
             onChange={handleDescriptionSearchChange}
-            disabled={loading}
           />
         </Box>
 
