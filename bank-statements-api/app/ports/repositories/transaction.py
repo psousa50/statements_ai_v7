@@ -252,6 +252,7 @@ class TransactionRepository(ABC):
         page_size: int = 20,
         sort_field: Optional[str] = None,
         sort_direction: Optional[str] = None,
+        uncategorized_only: bool = False,
     ) -> Tuple[List[Transaction], int]:
         """
         Get transactions that match the given enhancement rule with pagination and sorting
@@ -262,6 +263,7 @@ class TransactionRepository(ABC):
             page_size: Number of transactions per page
             sort_field: Optional field to sort by (date, amount, description, created_at)
             sort_direction: Optional sort direction (asc, desc)
+            uncategorized_only: If True, only return transactions without a category
 
         Returns:
             Tuple of (transactions list, total count)

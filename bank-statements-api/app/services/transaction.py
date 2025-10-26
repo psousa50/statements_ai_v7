@@ -177,6 +177,7 @@ class TransactionService:
         sort_field: Optional[str] = None,
         sort_direction: Optional[str] = None,
         include_running_balance: bool = False,
+        uncategorized_only: bool = False,
     ) -> TransactionListResponse:
         """Get transactions that match the given enhancement rule with pagination"""
 
@@ -195,6 +196,7 @@ class TransactionService:
             page_size=page_size,
             sort_field=sort_field,
             sort_direction=sort_direction,
+            uncategorized_only=uncategorized_only,
         )
 
         # Calculate running balance if requested (not supported for rule filtering since account may vary)

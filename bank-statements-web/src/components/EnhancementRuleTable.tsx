@@ -46,9 +46,13 @@ export const EnhancementRuleTable: React.FC<EnhancementRuleTableProps> = ({
   }
 
   const handleViewTransactions = (rule: EnhancementRule) => {
+    const isUnconfigured = !rule.category_id && !rule.counterparty_account_id
     const params = new URLSearchParams({
       enhancement_rule_id: rule.id,
     })
+    if (isUnconfigured) {
+      params.set('status', 'UNCATEGORIZED')
+    }
     navigate(`/transactions?${params.toString()}`)
   }
 

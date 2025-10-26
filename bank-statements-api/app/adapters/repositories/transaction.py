@@ -599,6 +599,7 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         page_size: int = 20,
         sort_field: Optional[str] = None,
         sort_direction: Optional[str] = None,
+        uncategorized_only: bool = False,
     ) -> Tuple[List[Transaction], int]:
         """Get transactions that match the given enhancement rule with pagination and sorting"""
         from app.domain.models.enhancement_rule import MatchType
@@ -624,6 +625,9 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
             query = query.filter(Transaction.date >= rule.start_date)
         if rule.end_date is not None:
             query = query.filter(Transaction.date <= rule.end_date)
+
+        if uncategorized_only:
+            query = query.filter(Transaction.category_id.is_(None))
 
         # Get total count
         total = query.count()

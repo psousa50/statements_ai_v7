@@ -90,6 +90,19 @@ export const TransactionsPage = () => {
 
   const isRuleFiltering = !!filters.enhancement_rule_id
 
+  // Update filters when URL changes
+  useEffect(() => {
+    const newFilters = getInitialFilters()
+    setFilters(newFilters)
+
+    // Update local state for debounced inputs
+    setLocalDescriptionSearch(searchParams.get('description_search') || '')
+    setLocalMinAmount(searchParams.get('min_amount') ? parseFloat(searchParams.get('min_amount')!) : undefined)
+    setLocalMaxAmount(searchParams.get('max_amount') ? parseFloat(searchParams.get('max_amount')!) : undefined)
+    setLocalStartDate(searchParams.get('start_date') || '')
+    setLocalEndDate(searchParams.get('end_date') || '')
+  }, [searchParams])
+
   // Load data on mount with initial filters from URL
   useEffect(() => {
     fetchTransactions({

@@ -114,6 +114,7 @@ def register_transaction_routes(
     ):
         # If enhancement_rule_id is provided, use rule-based filtering
         if enhancement_rule_id:
+            uncategorized_only = status == CategorizationStatus.UNCATEGORIZED
             transactions = internal.transaction_service.get_transactions_matching_rule_paginated(
                 enhancement_rule_id=enhancement_rule_id,
                 page=page,
@@ -121,6 +122,7 @@ def register_transaction_routes(
                 sort_field=sort_field,
                 sort_direction=sort_direction,
                 include_running_balance=include_running_balance,
+                uncategorized_only=uncategorized_only,
             )
             return transactions
 
