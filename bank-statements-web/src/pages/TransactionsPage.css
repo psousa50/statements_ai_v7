@@ -1,14 +1,14 @@
 /* Transactions Page Layout - Uses CSS Variables for Theming */
 .transactions-page {
   margin: 0 auto;
-  padding: 2rem;
+  padding: 1rem;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
   background-color: var(--bg-secondary);
   min-height: 100vh;
 }
 
 .transactions-page .page-header {
-  margin-bottom: 2rem;
+  margin-bottom: 1rem;
 }
 
 .transactions-page .page-header-content {
@@ -25,23 +25,23 @@
 
 .transactions-page .page-header-content .button-primary {
   white-space: nowrap;
-  padding: 0.75rem 1.5rem;
-  font-size: 0.95rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
   flex-shrink: 0;
   width: auto;
   max-width: fit-content;
 }
 
 .transactions-page .page-header h1 {
-  font-size: 2.5rem;
+  font-size: 1.75rem;
   font-weight: 700;
   color: var(--text-primary);
-  margin: 0 0 0.5rem 0;
+  margin: 0 0 0.25rem 0;
   text-align: left;
 }
 
 .transactions-page .page-description {
-  font-size: 1.1rem;
+  font-size: 0.875rem;
   color: var(--text-muted);
   margin: 0;
   text-align: left;
@@ -138,7 +138,7 @@
 .transactions-page .transactions-layout {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 0.75rem;
 }
 
 /* Filters moved to top - horizontal layout */
@@ -155,32 +155,32 @@
 }
 
 .transactions-page .transaction-filters-advanced {
-  padding: 1.5rem;
+  padding: 0.75rem 1rem;
   transition: padding 0.3s ease;
 }
 
 /* Compact padding when collapsed */
 .transactions-page .transaction-filters-advanced.collapsed {
-  padding: 0.75rem 1.5rem;
+  padding: 0.5rem 1rem;
 }
 
 .transactions-page .filter-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1.5rem;
-  padding-bottom: 1rem;
+  margin-bottom: 0.5rem;
+  padding-bottom: 0.25rem;
   border-bottom: 1px solid var(--border-primary);
   flex-wrap: nowrap;
-  min-height: 50px;
+  min-height: 28px;
   transition: all 0.3s ease;
 }
 
 /* Compact header when collapsed */
 .transactions-page .transaction-filters-advanced.collapsed .filter-header {
   margin-bottom: 0;
-  padding-bottom: 0.5rem;
-  min-height: 40px;
+  padding-bottom: 0.125rem;
+  min-height: 24px;
 }
 
 /* Hide border when collapsed */
@@ -189,7 +189,7 @@
 }
 
 .transactions-page .filter-header h3 {
-  font-size: 1.25rem;
+  font-size: 1rem;
   font-weight: 600;
   color: var(--text-primary);
   margin: 0;
@@ -199,7 +199,7 @@
 
 /* Smaller title when collapsed */
 .transactions-page .transaction-filters-advanced.collapsed .filter-header h3 {
-  font-size: 1.1rem;
+  font-size: 0.875rem;
 }
 
 .transactions-page .filter-header-actions {
@@ -212,9 +212,9 @@
   background: #ef4444;
   color: #ffffff;
   border: none;
-  padding: 0.5rem 1rem;
+  padding: 0.375rem 0.75rem;
   border-radius: 6px;
-  font-size: 0.875rem;
+  font-size: 0.75rem;
   font-weight: 500;
   cursor: pointer;
   transition: background-color 0.2s;
@@ -232,14 +232,14 @@
   background: var(--bg-tertiary);
   border: 1px solid var(--border-primary);
   border-radius: 6px;
-  padding: 0.5rem;
+  padding: 0.375rem;
   cursor: pointer;
   transition: all 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
+  width: 28px;
+  height: 28px;
 }
 
 .transactions-page .collapse-toggle-button:hover {
@@ -262,7 +262,7 @@
 .transactions-page .filters-container {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 0.75rem;
   animation: slideDown 0.3s ease-out;
   overflow: visible;
 }
@@ -282,7 +282,7 @@
 
 .transactions-page .filters-row {
   display: flex;
-  gap: 1.5rem;
+  gap: 0.75rem;
   align-items: start;
   flex-wrap: wrap;
 }
@@ -291,7 +291,7 @@
   background: linear-gradient(135deg, rgba(59, 130, 246, 0.03) 0%, rgba(16, 185, 129, 0.03) 100%);
   border: 1px solid var(--border-secondary);
   border-radius: 12px;
-  padding: 1.5rem;
+  padding: 0.75rem;
 }
 
 .transactions-page .secondary-filters {
@@ -305,7 +305,7 @@
 .transactions-page .filter-group {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.25rem;
   min-width: 0; /* Allow shrinking */
 }
 
@@ -342,16 +342,16 @@
 /* ENHANCED FILTER STYLING */
 .transactions-page .filter-label {
   display: block;
-  font-size: 0.875rem;
+  font-size: 0.75rem;
   font-weight: 600;
   color: var(--text-secondary);
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.25rem;
   letter-spacing: 0.025em;
 }
 
 .transactions-page .filter-input {
   width: 100%;
-  padding: 0.75rem 1rem;
+  padding: 0.5rem 0.75rem;
   border: 1px solid var(--border-primary);
   border-radius: 8px;
   background-color: var(--bg-primary);
@@ -382,7 +382,7 @@
 
 .transactions-page .search-input {
   width: 100%;
-  padding: 0.75rem;
+  padding: 0.5rem 0.75rem;
   border: 1px solid var(--border-primary);
   border-radius: 8px;
   background-color: var(--bg-primary);
@@ -407,7 +407,7 @@
 .transactions-page .amount-range-inputs {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 0.5rem;
 }
 
 .transactions-page .amount-input {
@@ -428,16 +428,16 @@
 .transactions-page .checkbox-container {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.5rem;
 }
 
 .transactions-page .checkbox-label {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.375rem;
   cursor: pointer;
   user-select: none;
-  font-size: 0.875rem;
+  font-size: 0.75rem;
   color: var(--text-primary);
   font-weight: 500;
 }
@@ -495,7 +495,7 @@
 
 .transactions-page .date-range-button {
   width: 100%;
-  padding: 0.75rem;
+  padding: 0.5rem 0.75rem;
   border: 1px solid var(--border-primary);
   border-radius: 8px;
   background-color: var(--bg-primary);
@@ -950,7 +950,7 @@
 }
 
 .transactions-page .transactions-header {
-  padding: 1.5rem 2rem;
+  padding: 0.5rem 0.75rem;
   border-bottom: 1px solid var(--border-primary);
   background-color: var(--bg-tertiary);
 }
@@ -962,14 +962,14 @@
 }
 
 .transactions-page .transactions-summary h2 {
-  font-size: 1.5rem;
+  font-size: 1rem;
   font-weight: 600;
   color: var(--text-primary);
   margin: 0;
 }
 
 .transactions-page .transaction-count {
-  font-size: 0.875rem;
+  font-size: 0.75rem;
   color: var(--text-muted);
   font-weight: 500;
 }
@@ -992,13 +992,13 @@
   width: 100%;
   border-collapse: collapse;
   table-layout: fixed;
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   background-color: var(--bg-primary);
 }
 
 .transactions-page .transaction-table th,
 .transactions-page .transaction-table td {
-  padding: 1rem;
+  padding: 0.5rem 0.75rem;
   text-align: left;
   border-bottom: 1px solid var(--border-primary);
   color: var(--text-primary);
@@ -1014,7 +1014,7 @@
   background-color: var(--bg-tertiary);
   font-weight: 600;
   color: var(--text-secondary);
-  font-size: 0.75rem;
+  font-size: 0.6875rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
@@ -1076,7 +1076,7 @@
 
 /* Pagination Container - Page Specific Layout */
 .transactions-page .transactions-pagination {
-  padding: 1.5rem 2rem;
+  padding: 0.5rem 0.75rem;
   border-top: 1px solid var(--border-primary);
   background-color: var(--bg-tertiary);
 }
@@ -1561,7 +1561,7 @@
   background-color: var(--bg-tertiary);
   font-weight: 600;
   color: var(--text-secondary);
-  font-size: 0.75rem;
+  font-size: 0.6875rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
@@ -1579,7 +1579,7 @@
 .transactions-page .transaction-description {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.25rem;
 }
 
 .transactions-page .counterparty-badge {

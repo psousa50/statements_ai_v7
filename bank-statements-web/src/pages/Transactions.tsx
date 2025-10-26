@@ -365,7 +365,7 @@ export const TransactionsPage = () => {
         <div className="transactions-content">
           <div className="transactions-header">
             <div className="transactions-summary">
-              <h2>Transaction History</h2>
+              <h2>Transactions</h2>
               {!loading && <span className="transaction-count">{pagination.total_count} transactions found</span>}
             </div>
           </div>
