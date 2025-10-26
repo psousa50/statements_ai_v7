@@ -37,7 +37,7 @@ test('renders transactions page with mock data', async () => {
   )
 
   // Check that the page title is rendered
-  expect(screen.getByText('Transactions')).toBeInTheDocument()
+  expect(screen.getByRole('heading', { name: 'Transactions', level: 1 })).toBeInTheDocument()
 
   // Wait for the transaction to be loaded and displayed
   expect(await screen.findByText('Test Transaction')).toBeInTheDocument()
