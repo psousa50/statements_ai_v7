@@ -163,12 +163,9 @@ export const EnhancementRuleModal: React.FC<EnhancementRuleModalProps> = ({
       setFetchingCount(true)
       setPreviewError(null)
       try {
-        console.log('Making preview API call with data:', formData)
         const count = await apiClient.enhancementRules.previewMatchingTransactionsCount(formData)
-        console.log('Preview API response:', count)
         setMatchingCount(count)
       } catch (err) {
-        console.error('Failed to preview matching count:', err)
         setMatchingCount(null)
         setPreviewError(err instanceof Error ? err.message : 'Failed to fetch preview')
       } finally {
@@ -258,7 +255,6 @@ export const EnhancementRuleModal: React.FC<EnhancementRuleModalProps> = ({
           cleanedData.end_date = formData.end_date
         }
 
-        console.log('Creating enhancement rule with cleaned data:', cleanedData)
         await createRule(cleanedData)
       }
       onSuccess()

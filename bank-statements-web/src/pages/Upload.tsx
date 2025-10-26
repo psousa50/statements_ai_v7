@@ -104,11 +104,6 @@ export const Upload: React.FC = () => {
         row_filters: rowFilter,
       })
 
-      // If sample_data is returned, use it for display
-      if (result.sample_data) {
-        console.log('Using sample_data from upload response:', result.sample_data)
-      }
-
       setNotification({
         open: true,
         message:

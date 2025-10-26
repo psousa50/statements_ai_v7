@@ -127,11 +127,9 @@ export const EnhancementRules: React.FC = () => {
   const handleCleanupUnused = async () => {
     setCleanupLoading(true)
     try {
-      const result = await cleanupUnused()
+      await cleanupUnused()
       setCleanupDialogOpen(false)
       await loadRules()
-      // You might want to show a success message here
-      console.log(`Cleanup completed: ${result.message}`)
     } catch (err) {
       console.error('Failed to cleanup unused rules:', err)
     } finally {

@@ -88,7 +88,6 @@ export const enhancementRuleClient: EnhancementRuleClient = {
   },
 
   async create(data: EnhancementRuleCreate) {
-    console.log('API: Creating enhancement rule with payload:', data)
     const response = await axios.post<EnhancementRule>(API_URL, data)
     return response.data
   },
