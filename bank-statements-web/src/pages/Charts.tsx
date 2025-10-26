@@ -102,7 +102,8 @@ export const ChartsPage = () => {
           max_amount: localMaxAmount,
           start_date: localStartDate || undefined,
           end_date: localEndDate || undefined,
-          transaction_type: transactionType, // Ensure transaction_type is always included
+          transaction_type: transactionType,
+          exclude_transfers: filters.exclude_transfers,
         }
         setFilters(updatedFilters)
         fetchCategoryTotals(updatedFilters)
@@ -547,6 +548,7 @@ export const ChartsPage = () => {
                     dataKey="value"
                     onClick={handleChartClick}
                     style={{ cursor: 'pointer' }}
+                    animationDuration={300}
                   >
                     {chartData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
