@@ -5,17 +5,23 @@ export interface ToastProps {
   type?: 'success' | 'error' | 'info'
   duration?: number
   onClose: () => void
+  onUndo?: () => void
 }
 
-export const Toast = ({ message, type = 'success', duration = 4000, onClose }: ToastProps) => {
+export const Toast = ({ message, type = 'success', duration = 4000, onClose, onUndo }: ToastProps) => {
   useEffect(() => {
     const timer = setTimeout(onClose, duration)
     return () => clearTimeout(timer)
   }, [duration, onClose])
 
+  const handleUndo = () => {
+    onUndo?.()
+    onClose()
+  }
+
   return (
     <div className={`toast toast-${type}`}>
-      <div className="toast-content">
+      <div className="toast-header">
         <span className="toast-icon">
           {type === 'success' && '✓'}
           {type === 'error' && '✗'}
@@ -26,6 +32,13 @@ export const Toast = ({ message, type = 'success', duration = 4000, onClose }: T
           ×
         </button>
       </div>
+      {onUndo && (
+        <div className="toast-actions">
+          <button className="toast-undo" onClick={handleUndo}>
+            Undo
+          </button>
+        </div>
+      )}
     </div>
   )
 }

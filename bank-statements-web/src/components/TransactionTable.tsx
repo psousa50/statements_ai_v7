@@ -1,6 +1,7 @@
 import { format } from 'date-fns'
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react'
 import { Category, Transaction, Account } from '../types/Transaction'
+import { Toast, ToastProps } from './Toast'
 
 export type TransactionSortField = 'date' | 'description' | 'amount' | 'created_at'
 export type TransactionSortDirection = 'asc' | 'desc'
@@ -21,9 +22,10 @@ interface CategoryPickerProps {
   transaction: Transaction
   categories: Category[]
   onCategorize: (transactionId: string, categoryId?: string) => Promise<void>
+  onShowToast: (toast: Omit<ToastProps, 'onClose'>) => void
 }
 
-const CategoryPicker = ({ transaction, categories, onCategorize }: CategoryPickerProps) => {
+const CategoryPicker = ({ transaction, categories, onCategorize, onShowToast }: CategoryPickerProps) => {
   const [input, setInput] = useState('')
   const [showSuggestions, setShowSuggestions] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
@@ -57,37 +59,55 @@ const CategoryPicker = ({ transaction, categories, onCategorize }: CategoryPicke
     async (categoryId: string) => {
       setShowSuggestions(false)
       setIsLoading(true)
-      // Don't clear input immediately - let the component re-render with updated data
       try {
         await onCategorize(transaction.id, categoryId)
-        setInput('') // Clear input only after successful categorization
+        setInput('')
       } catch (error) {
         console.error('Failed to categorize transaction:', error)
-        alert('Failed to save category. Please try again.')
-        // Keep input value on error so user can retry
+        onShowToast({
+          message: 'Failed to save category. Please try again.',
+          type: 'error',
+        })
       } finally {
         setIsLoading(false)
       }
     },
-    [transaction.id, onCategorize]
+    [transaction.id, onCategorize, onShowToast]
   )
 
   const handleCategoryRemove = useCallback(async () => {
-    // Ask for confirmation before removing category
-    if (!window.confirm('Are you sure you want to remove this category?')) {
-      return
-    }
+    const previousCategoryId = transaction.category_id
+    if (!previousCategoryId) return
 
     setIsLoading(true)
     try {
       await onCategorize(transaction.id, undefined)
+      const categoryName = categories.find((c) => c.id === previousCategoryId)?.name || 'Category'
+      onShowToast({
+        message: `${categoryName} removed`,
+        type: 'info',
+        onUndo: async () => {
+          try {
+            await onCategorize(transaction.id, previousCategoryId)
+          } catch (error) {
+            console.error('Failed to restore category:', error)
+            onShowToast({
+              message: 'Failed to restore category. Please try again.',
+              type: 'error',
+            })
+          }
+        },
+      })
     } catch (error) {
       console.error('Failed to remove category:', error)
-      alert('Failed to remove category. Please try again.')
+      onShowToast({
+        message: 'Failed to remove category. Please try again.',
+        type: 'error',
+      })
     } finally {
       setIsLoading(false)
     }
-  }, [transaction.id, onCategorize])
+  }, [transaction.id, transaction.category_id, categories, onCategorize, onShowToast])
 
   const handleInputChange = useCallback(
     (value: string) => {
@@ -206,6 +226,12 @@ export const TransactionTable = ({
   onSort,
   showRunningBalance = false,
 }: TransactionTableProps) => {
+  const [toast, setToast] = useState<Omit<ToastProps, 'onClose'> | null>(null)
+
+  const handleShowToast = useCallback((toastProps: Omit<ToastProps, 'onClose'>) => {
+    setToast(toastProps)
+  }, [])
+
   if (loading) {
     return <div className="loading">Loading transactions...</div>
   }
@@ -298,7 +324,12 @@ export const TransactionTable = ({
               </td>
               {onCategorize && (
                 <td>
-                  <CategoryPicker transaction={transaction} categories={categories} onCategorize={onCategorize} />
+                  <CategoryPicker
+                    transaction={transaction}
+                    categories={categories}
+                    onCategorize={onCategorize}
+                    onShowToast={handleShowToast}
+                  />
                 </td>
               )}
               <td className={`text-right ${transaction.amount < 0 ? 'negative' : 'positive'}`}>
@@ -315,6 +346,7 @@ export const TransactionTable = ({
           ))}
         </tbody>
       </table>
+      {toast && <Toast {...toast} onClose={() => setToast(null)} />}
     </div>
   )
 }
