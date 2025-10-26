@@ -211,12 +211,13 @@ class TransactionRepository(ABC):
         pass
 
     @abstractmethod
-    def count_matching_rule(self, rule) -> int:
+    def count_matching_rule(self, rule, uncategorized_only: bool = False) -> int:
         """
         Count transactions that would match the given enhancement rule
 
         Args:
             rule: EnhancementRule to match against
+            uncategorized_only: If True, only count transactions without a category
 
         Returns:
             Number of transactions that match the rule

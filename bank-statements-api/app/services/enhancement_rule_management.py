@@ -306,12 +306,10 @@ class EnhancementRuleManagementService:
 
     def _get_rule_transaction_count(self, rule: EnhancementRule) -> int:
         """Get the number of transactions that would match this rule."""
-        # This is a simplified implementation
-        # In a real system, you might want to cache these counts or use more efficient queries
         try:
-            return self.transaction_repository.count_matching_rule(rule)
+            is_unconfigured = not rule.category_id and not rule.counterparty_account_id
+            return self.transaction_repository.count_matching_rule(rule, uncategorized_only=is_unconfigured)
         except Exception:
-            # Fallback if the repository doesn't have this method yet
             return 0
 
     def get_matching_transactions_count(self, rule_id: UUID) -> Dict[str, Any]:

@@ -522,7 +522,7 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
                 Transaction.sort_index.desc(),
             ]
 
-    def count_matching_rule(self, rule) -> int:
+    def count_matching_rule(self, rule, uncategorized_only: bool = False) -> int:
         """Count transactions that would match the given enhancement rule"""
         from app.domain.models.enhancement_rule import MatchType
 
@@ -547,6 +547,9 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
             query = query.filter(Transaction.date >= rule.start_date)
         if rule.end_date is not None:
             query = query.filter(Transaction.date <= rule.end_date)
+
+        if uncategorized_only:
+            query = query.filter(Transaction.category_id.is_(None))
 
         result = query.scalar()
         return int(result) if result is not None else 0
