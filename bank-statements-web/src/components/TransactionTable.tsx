@@ -1,7 +1,9 @@
 import { format } from 'date-fns'
-import { useState, useMemo, useCallback, useRef, useEffect } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { Category, Transaction, Account } from '../types/Transaction'
 import { Toast, ToastProps } from './Toast'
+import { CategorySelector } from './CategorySelector'
+import { useApi } from '../api/ApiContext'
 
 export type TransactionSortField = 'date' | 'description' | 'amount' | 'created_at'
 export type TransactionSortDirection = 'asc' | 'desc'
@@ -18,50 +20,48 @@ interface TransactionTableProps {
   showRunningBalance?: boolean
 }
 
-interface CategoryPickerProps {
+interface CategoryCellProps {
   transaction: Transaction
   categories: Category[]
   onCategorize: (transactionId: string, categoryId?: string) => Promise<void>
   onShowToast: (toast: Omit<ToastProps, 'onClose'>) => void
+  onCategoryCreated: (category: Category) => void
 }
 
-const CategoryPicker = ({ transaction, categories, onCategorize, onShowToast }: CategoryPickerProps) => {
-  const [input, setInput] = useState('')
-  const [showSuggestions, setShowSuggestions] = useState(false)
+const CategoryCell = ({ transaction, categories, onCategorize, onShowToast, onCategoryCreated }: CategoryCellProps) => {
   const [isLoading, setIsLoading] = useState(false)
-  const inputRef = useRef<HTMLInputElement>(null)
-  const containerRef = useRef<HTMLDivElement>(null)
+  const apiClient = useApi()
 
-  // Get current category
-  const currentCategory = useMemo(() => {
-    return transaction.category_id ? categories.find((c) => c.id === transaction.category_id) : null
-  }, [transaction.category_id, categories])
+  const handleCategoryChange = useCallback(
+    async (categoryId?: string) => {
+      const previousCategoryId = transaction.category_id
 
-  // Filter categories based on input
-  const filteredCategories = useMemo(() => {
-    return categories.filter((category) => category.name.toLowerCase().includes(input.toLowerCase()))
-  }, [categories, input])
-
-  // Close suggestions when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-        setShowSuggestions(false)
-        setInput('')
+      if (categoryId === previousCategoryId) {
+        return
       }
-    }
 
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
-
-  const handleCategorySelect = useCallback(
-    async (categoryId: string) => {
-      setShowSuggestions(false)
       setIsLoading(true)
       try {
         await onCategorize(transaction.id, categoryId)
-        setInput('')
+
+        if (!categoryId && previousCategoryId) {
+          const categoryName = categories.find((c) => c.id === previousCategoryId)?.name || 'Category'
+          onShowToast({
+            message: `${categoryName} removed`,
+            type: 'info',
+            onUndo: async () => {
+              try {
+                await onCategorize(transaction.id, previousCategoryId)
+              } catch (error) {
+                console.error('Failed to restore category:', error)
+                onShowToast({
+                  message: 'Failed to restore category. Please try again.',
+                  type: 'error',
+                })
+              }
+            },
+          })
+        }
       } catch (error) {
         console.error('Failed to categorize transaction:', error)
         onShowToast({
@@ -72,108 +72,45 @@ const CategoryPicker = ({ transaction, categories, onCategorize, onShowToast }: 
         setIsLoading(false)
       }
     },
-    [transaction.id, onCategorize, onShowToast]
+    [transaction.id, transaction.category_id, categories, onCategorize, onShowToast]
   )
 
-  const handleCategoryRemove = useCallback(async () => {
-    const previousCategoryId = transaction.category_id
-    if (!previousCategoryId) return
-
-    setIsLoading(true)
-    try {
-      await onCategorize(transaction.id, undefined)
-      const categoryName = categories.find((c) => c.id === previousCategoryId)?.name || 'Category'
-      onShowToast({
-        message: `${categoryName} removed`,
-        type: 'info',
-        onUndo: async () => {
-          try {
-            await onCategorize(transaction.id, previousCategoryId)
-          } catch (error) {
-            console.error('Failed to restore category:', error)
-            onShowToast({
-              message: 'Failed to restore category. Please try again.',
-              type: 'error',
-            })
-          }
-        },
-      })
-    } catch (error) {
-      console.error('Failed to remove category:', error)
-      onShowToast({
-        message: 'Failed to remove category. Please try again.',
-        type: 'error',
-      })
-    } finally {
-      setIsLoading(false)
-    }
-  }, [transaction.id, transaction.category_id, categories, onCategorize, onShowToast])
-
-  const handleInputChange = useCallback(
-    (value: string) => {
-      setInput(value)
-      setShowSuggestions(value.length > 0 && filteredCategories.length > 0)
-    },
-    [filteredCategories.length]
-  )
-
-  const handleInputKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
-      if (e.key === 'Enter' && filteredCategories.length > 0) {
-        e.preventDefault()
-        handleCategorySelect(filteredCategories[0].id)
-      } else if (e.key === 'Escape') {
-        setShowSuggestions(false)
-        setInput('')
+  const handleCreateCategory = useCallback(
+    async (name: string, parentId?: string) => {
+      try {
+        const newCategory = await apiClient.categories.create({ name, parent_id: parentId })
+        onCategoryCreated(newCategory)
+        return newCategory
+      } catch (error) {
+        console.error('Failed to create category:', error)
+        onShowToast({
+          message: 'Failed to create category. Please try again.',
+          type: 'error',
+        })
+        return null
       }
     },
-    [filteredCategories, handleCategorySelect]
+    [apiClient, onCategoryCreated, onShowToast]
   )
 
-  return (
-    <div className="transaction-category-picker" ref={containerRef}>
-      <div className="category-picker-container">
-        {isLoading ? (
-          <div className="category-picker-loading">
-            <span>Saving...</span>
-          </div>
-        ) : currentCategory ? (
-          <span className="current-category-tag">
-            {currentCategory.name}
-            <button onClick={handleCategoryRemove} className="category-remove-btn" type="button">
-              ×
-            </button>
-          </span>
-        ) : (
-          <input
-            ref={inputRef}
-            type="text"
-            value={input}
-            onChange={(e) => handleInputChange(e.target.value)}
-            onKeyDown={handleInputKeyDown}
-            onFocus={() => setShowSuggestions(input.length > 0 && filteredCategories.length > 0)}
-            placeholder="Search category..."
-            className="category-picker-input"
-          />
-        )}
+  if (isLoading) {
+    return (
+      <div className="category-picker-loading">
+        <span>Saving...</span>
       </div>
+    )
+  }
 
-      {showSuggestions && filteredCategories.length > 0 && (
-        <div className="category-picker-suggestions">
-          {filteredCategories.slice(0, 6).map((category) => (
-            <button
-              key={category.id}
-              onClick={() => handleCategorySelect(category.id)}
-              className="category-picker-suggestion"
-              type="button"
-            >
-              {category.parent_id && '  └ '}
-              {category.name}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
+  return (
+    <CategorySelector
+      categories={categories}
+      selectedCategoryId={transaction.category_id}
+      onCategoryChange={handleCategoryChange}
+      placeholder="Select category..."
+      allowClear={true}
+      allowCreate={true}
+      onCategoryCreate={handleCreateCategory}
+    />
   )
 }
 
@@ -227,9 +164,18 @@ export const TransactionTable = ({
   showRunningBalance = false,
 }: TransactionTableProps) => {
   const [toast, setToast] = useState<Omit<ToastProps, 'onClose'> | null>(null)
+  const [localCategories, setLocalCategories] = useState<Category[]>(categories)
+
+  useEffect(() => {
+    setLocalCategories(categories)
+  }, [categories])
 
   const handleShowToast = useCallback((toastProps: Omit<ToastProps, 'onClose'>) => {
     setToast(toastProps)
+  }, [])
+
+  const handleCategoryCreated = useCallback((newCategory: Category) => {
+    setLocalCategories((prev) => [...prev, newCategory].sort((a, b) => a.name.localeCompare(b.name)))
   }, [])
 
   if (loading) {
@@ -324,11 +270,12 @@ export const TransactionTable = ({
               </td>
               {onCategorize && (
                 <td>
-                  <CategoryPicker
+                  <CategoryCell
                     transaction={transaction}
-                    categories={categories}
+                    categories={localCategories}
                     onCategorize={onCategorize}
                     onShowToast={handleShowToast}
+                    onCategoryCreated={handleCategoryCreated}
                   />
                 </td>
               )}

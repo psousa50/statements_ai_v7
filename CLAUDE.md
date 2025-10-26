@@ -28,10 +28,8 @@ pnpm run format                             # Format with Prettier
 ```
 
 ## E2E Testing
-```bash
-cd e2e/bank-statements-web
-pnpm test                                   # Run Playwright E2E tests
-```
+
+No E2E tests for now
 
 ## Docker Development
 ```bash
