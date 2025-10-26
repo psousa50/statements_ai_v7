@@ -272,7 +272,7 @@ export const EnhancementRuleModal: React.FC<EnhancementRuleModalProps> = ({
         await createRule(cleanedData)
       }
 
-      if (createEmptyCopy) {
+      if (createEmptyCopy && hasConstraints()) {
         const emptyCopyData: EnhancementRuleCreate = {
           normalized_description_pattern: formData.normalized_description_pattern,
           match_type: formData.match_type,
