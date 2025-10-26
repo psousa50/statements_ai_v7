@@ -5,6 +5,8 @@ import { CategoryModal } from '../components/CategoryModal'
 import { ConfirmationModal } from '../components/ConfirmationModal'
 import { Toast, ToastProps } from '../components/Toast'
 import { Category } from '../types/Transaction'
+import { Button } from '@mui/material'
+import AddIcon from '@mui/icons-material/Add'
 import './CategoriesPage.css'
 
 export const CategoriesPage = () => {
@@ -15,8 +17,7 @@ export const CategoriesPage = () => {
   const [toast, setToast] = useState<Omit<ToastProps, 'onClose'> | null>(null)
   const [confirmDelete, setConfirmDelete] = useState<Category | null>(null)
 
-  const { categories, rootCategories, loading, error, fetchCategories, addCategory, updateCategory, deleteCategory } =
-    useCategories()
+  const { categories, rootCategories, loading, error, addCategory, updateCategory, deleteCategory } = useCategories()
 
   const getCategoryHierarchy = (categoryId: string): string[] => {
     const hierarchy: string[] = [categoryId]
@@ -194,17 +195,15 @@ export const CategoriesPage = () => {
             />
           </div>
           <div className="action-buttons">
-            <button onClick={() => handleCreateCategory()} className="button-primary" disabled={loading}>
-              + Create Root Category
-            </button>
-            <button
-              onClick={() => fetchCategories()}
-              className="button-secondary"
+            <Button
+              onClick={() => handleCreateCategory()}
+              variant="contained"
               disabled={loading}
-              title="Refresh categories"
+              startIcon={<AddIcon />}
+              sx={{ textTransform: 'none' }}
             >
-              🔄 Refresh
-            </button>
+              Create Root Category
+            </Button>
           </div>
         </div>
       </div>

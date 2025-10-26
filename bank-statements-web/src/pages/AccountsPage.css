@@ -227,21 +227,11 @@
   color: var(--text-primary);
 }
 
-.account-id {
-  font-family: 'Monaco', 'Menlo', monospace;
-  font-size: 0.875rem;
-  color: #666;
-}
-
 .account-actions {
   display: flex;
-  gap: 8px;
-}
-
-.account-actions .button-secondary,
-.account-actions .button-danger {
-  padding: 6px 12px;
-  font-size: 0.75rem;
+  gap: 4px;
+  justify-content: center;
+  align-items: center;
 }
 
 /* Responsive Design */

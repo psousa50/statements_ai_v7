@@ -1,23 +1,32 @@
 .app {
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
-  padding: 2rem;
-  font-family: Arial, sans-serif;
+  padding: 1.5rem;
+  font-family: inherit;
 }
 
 .transactions-page h1 {
   text-align: center;
   margin-bottom: 2rem;
   color: var(--text-primary);
+  background: linear-gradient(135deg, var(--text-primary) 0%, var(--text-secondary) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .error-message {
-  background-color: #fee2e2;
-  color: #dc2626;
-  padding: 1rem;
+  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+  color: #991b1b;
+  padding: 1rem 1.25rem;
   margin-bottom: 1rem;
-  border-radius: 4px;
+  border-radius: var(--radius-lg);
   border: 1px solid #fca5a5;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-weight: 500;
 }
 
 .transactions-container {
@@ -33,37 +42,55 @@
 }
 
 .transaction-form {
-  background-color: var(--bg-tertiary);
-  padding: 1.5rem;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px var(--shadow-light);
+  background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-tertiary) 100%);
+  padding: 1.75rem;
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--border-primary);
+  transition: all var(--transition-base);
+}
+
+.transaction-form:hover {
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-2px);
 }
 
 .transaction-form h2 {
   margin-top: 0;
   margin-bottom: 1.5rem;
   color: var(--text-primary);
+  font-weight: 600;
+  font-size: 1.25rem;
 }
 
 .form-group {
-  margin-bottom: 1rem;
+  margin-bottom: 1.25rem;
 }
 
 .form-group label {
   display: block;
   margin-bottom: 0.5rem;
-  font-weight: bold;
+  font-weight: 600;
   color: var(--text-secondary);
+  font-size: 0.875rem;
+  letter-spacing: 0.025em;
 }
 
 .form-group input {
   width: 100%;
-  padding: 0.5rem;
-  border: 1px solid var(--border-secondary);
-  border-radius: 4px;
-  font-size: 1rem;
+  padding: 0.625rem 0.875rem;
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
   background-color: var(--bg-primary);
   color: var(--text-primary);
+  transition: all var(--transition-base);
+}
+
+.form-group input:focus {
+  border-color: var(--border-accent);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  outline: none;
 }
 
 button {
@@ -90,15 +117,26 @@ button:disabled {
 
 .transaction-table {
   background-color: var(--bg-primary);
-  border-radius: 8px;
-  box-shadow: 0 2px 4px var(--shadow-light);
-  padding: 1.5rem;
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-md);
+  padding: 0;
+  border: 1px solid var(--border-primary);
+  overflow: hidden;
+  transition: all var(--transition-base);
+}
+
+.transaction-table:hover {
+  box-shadow: var(--shadow-lg);
 }
 
 .transaction-table h2 {
-  margin-top: 0;
-  margin-bottom: 1.5rem;
+  margin: 0;
+  padding: 1.25rem 1.5rem;
   color: var(--text-primary);
+  font-weight: 600;
+  font-size: 1.25rem;
+  background: linear-gradient(135deg, var(--bg-tertiary) 0%, var(--bg-secondary) 100%);
+  border-bottom: 1px solid var(--border-primary);
 }
 
 table {
@@ -108,19 +146,30 @@ table {
 
 th,
 td {
-  padding: 0.75rem;
+  padding: 1rem 1.25rem;
   text-align: left;
   border-bottom: 1px solid var(--border-primary);
   color: var(--text-primary);
+  transition: background-color var(--transition-fast);
 }
 
 th {
-  background-color: var(--bg-tertiary);
-  font-weight: bold;
+  background: linear-gradient(180deg, var(--bg-tertiary) 0%, var(--bg-secondary) 100%);
+  font-weight: 600;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+  border-bottom: 2px solid var(--border-secondary);
+}
+
+tr {
+  transition: all var(--transition-fast);
 }
 
 tr:hover {
-  background-color: var(--bg-tertiary);
+  background-color: var(--bg-hover);
+  transform: scale(1.001);
 }
 
 th.text-right,

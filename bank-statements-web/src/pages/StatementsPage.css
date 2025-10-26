@@ -145,28 +145,8 @@
 
 .actions {
   display: flex;
-  gap: 0.5rem;
-}
-
-.delete-button {
-  padding: 0.5rem 1rem;
-  background-color: #fff;
-  color: #d32f2f;
-  border: 1px solid #d32f2f;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 0.9rem;
-  font-weight: 500;
-  transition: all 0.2s ease;
-}
-
-.delete-button:hover {
-  background-color: #d32f2f;
-  color: white;
-}
-
-.delete-button:active {
-  transform: translateY(1px);
+  justify-content: center;
+  align-items: center;
 }
 
 /* Responsive design */

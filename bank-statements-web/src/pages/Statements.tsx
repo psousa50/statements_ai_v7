@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react'
 import { statementClient, StatementResponse } from '../api/StatementClient'
 import { ConfirmationModal } from '../components/ConfirmationModal'
 import { Toast } from '../components/Toast'
+import { ActionIconButton } from '../components/ActionIconButton'
+import DeleteIcon from '@mui/icons-material/Delete'
 import './StatementsPage.css'
 
 export const Statements: React.FC = () => {
@@ -114,7 +116,7 @@ export const Statements: React.FC = () => {
                 <th>Transactions</th>
                 <th>Date Range</th>
                 <th>Uploaded</th>
-                <th>Actions</th>
+                <th style={{ textAlign: 'center', width: '80px' }}>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -152,13 +154,12 @@ export const Statements: React.FC = () => {
                   </td>
                   <td>
                     <div className="actions">
-                      <button
-                        className="delete-button"
+                      <ActionIconButton
                         onClick={() => handleDeleteClick(statement)}
                         title="Delete statement"
-                      >
-                        Delete
-                      </button>
+                        icon={<DeleteIcon fontSize="small" />}
+                        color="error"
+                      />
                     </div>
                   </td>
                 </tr>

@@ -1,5 +1,13 @@
 import { useState, useMemo, useCallback } from 'react'
 import { Category } from '../types/Transaction'
+import EditIcon from '@mui/icons-material/Edit'
+import DeleteIcon from '@mui/icons-material/Delete'
+import AddIcon from '@mui/icons-material/Add'
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
+import ChevronRightIcon from '@mui/icons-material/ChevronRight'
+import ExpandLessIcon from '@mui/icons-material/ExpandLess'
+import { ActionIconButton } from './ActionIconButton'
+import { IconButton } from '@mui/material'
 
 interface CategoryTreeProps {
   categories: Category[]
@@ -54,15 +62,23 @@ const CategoryTreeNode = ({
         <div className="category-info">
           <div className="category-expand">
             {hasSubcategories ? (
-              <button
+              <IconButton
                 onClick={handleToggleExpand}
-                className="expand-button"
+                size="small"
                 aria-label={isExpanded ? 'Collapse' : 'Expand'}
+                sx={{
+                  padding: '2px',
+                  color: 'var(--text-muted)',
+                  '&:hover': {
+                    backgroundColor: 'var(--bg-hover)',
+                    color: 'var(--text-primary)',
+                  },
+                }}
               >
-                {isExpanded ? '▼' : '▶'}
-              </button>
+                {isExpanded ? <ExpandMoreIcon fontSize="small" /> : <ChevronRightIcon fontSize="small" />}
+              </IconButton>
             ) : (
-              <span className="expand-spacer">•</span>
+              <span className="expand-spacer" style={{ width: '28px', display: 'inline-block' }}></span>
             )}
           </div>
           <div className="category-name">{category.name}</div>
@@ -71,19 +87,24 @@ const CategoryTreeNode = ({
           </div>
         </div>
         <div className="category-actions">
-          <button
+          <ActionIconButton
             onClick={() => onCreateSubcategory(category.id)}
-            className="action-button create-button"
             title="Add subcategory"
-          >
-            +
-          </button>
-          <button onClick={() => onEdit(category)} className="action-button edit-button" title="Edit category">
-            ✏️
-          </button>
-          <button onClick={() => onDelete(category)} className="action-button delete-button" title="Delete category">
-            🗑️
-          </button>
+            icon={<AddIcon fontSize="small" />}
+            color="success"
+          />
+          <ActionIconButton
+            onClick={() => onEdit(category)}
+            title="Edit category"
+            icon={<EditIcon fontSize="small" />}
+            color="primary"
+          />
+          <ActionIconButton
+            onClick={() => onDelete(category)}
+            title="Delete category"
+            icon={<DeleteIcon fontSize="small" />}
+            color="error"
+          />
         </div>
       </div>
 
@@ -200,7 +221,7 @@ export const CategoryTree = ({
               className="control-button expand-all-button"
               title="Expand all categories"
             >
-              ⬇ Expand All
+              <ExpandMoreIcon sx={{ fontSize: '16px', mr: 0.5 }} /> Expand All
             </button>
             <button
               onClick={handleCollapseAll}
@@ -208,7 +229,7 @@ export const CategoryTree = ({
               className="control-button collapse-all-button"
               title="Collapse all categories"
             >
-              ⬆ Collapse All
+              <ExpandLessIcon sx={{ fontSize: '16px', mr: 0.5 }} /> Collapse All
             </button>
           </div>
           <div className="expand-status">

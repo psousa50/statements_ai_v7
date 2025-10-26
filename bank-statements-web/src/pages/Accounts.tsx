@@ -4,6 +4,11 @@ import { AccountModal } from '../components/AccountModal'
 import { ConfirmationModal } from '../components/ConfirmationModal'
 import { Toast, ToastProps } from '../components/Toast'
 import { Account } from '../types/Transaction'
+import { ActionIconButton } from '../components/ActionIconButton'
+import EditIcon from '@mui/icons-material/Edit'
+import DeleteIcon from '@mui/icons-material/Delete'
+import AddIcon from '@mui/icons-material/Add'
+import { Button } from '@mui/material'
 import './AccountsPage.css'
 
 export const AccountsPage = () => {
@@ -13,7 +18,7 @@ export const AccountsPage = () => {
   const [toast, setToast] = useState<Omit<ToastProps, 'onClose'> | null>(null)
   const [confirmDelete, setConfirmDelete] = useState<Account | null>(null)
 
-  const { accounts, loading, error, fetchAccounts, addAccount, updateAccount, deleteAccount } = useAccounts()
+  const { accounts, loading, error, addAccount, updateAccount, deleteAccount } = useAccounts()
 
   // Filter and sort accounts based on search term
   const filteredAccounts = accounts
@@ -136,17 +141,15 @@ export const AccountsPage = () => {
             />
           </div>
           <div className="action-buttons">
-            <button onClick={handleCreateAccount} className="button-primary" disabled={loading}>
-              + Create Account
-            </button>
-            <button
-              onClick={() => fetchAccounts()}
-              className="button-secondary"
+            <Button
+              onClick={handleCreateAccount}
+              variant="contained"
               disabled={loading}
-              title="Refresh accounts"
+              startIcon={<AddIcon />}
+              sx={{ textTransform: 'none' }}
             >
-              🔄 Refresh
-            </button>
+              Create Account
+            </Button>
           </div>
         </div>
       </div>
@@ -175,30 +178,26 @@ export const AccountsPage = () => {
               <thead>
                 <tr>
                   <th>Name</th>
-                  <th>ID</th>
-                  <th>Actions</th>
+                  <th style={{ textAlign: 'center', width: '120px' }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredAccounts.map((account) => (
                   <tr key={account.id}>
                     <td className="account-name">{account.name}</td>
-                    <td className="account-id">{account.id}</td>
                     <td className="account-actions">
-                      <button
+                      <ActionIconButton
                         onClick={() => handleEditAccount(account)}
-                        className="button-secondary"
                         title="Edit account"
-                      >
-                        ✏️ Edit
-                      </button>
-                      <button
+                        icon={<EditIcon fontSize="small" />}
+                        color="primary"
+                      />
+                      <ActionIconButton
                         onClick={() => handleDeleteAccount(account)}
-                        className="button-danger"
                         title="Delete account"
-                      >
-                        🗑️ Delete
-                      </button>
+                        icon={<DeleteIcon fontSize="small" />}
+                        color="error"
+                      />
                     </td>
                   </tr>
                 ))}

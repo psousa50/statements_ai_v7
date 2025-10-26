@@ -4,6 +4,11 @@ import { Category, Transaction, Account } from '../types/Transaction'
 import { Toast, ToastProps } from './Toast'
 import { CategorySelector } from './CategorySelector'
 import { useApi } from '../api/ApiContext'
+import EditIcon from '@mui/icons-material/Edit'
+import UnfoldMoreIcon from '@mui/icons-material/UnfoldMore'
+import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward'
+import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward'
+import { ActionIconButton } from './ActionIconButton'
 
 export type TransactionSortField = 'date' | 'description' | 'amount' | 'created_at'
 export type TransactionSortDirection = 'asc' | 'desc'
@@ -143,9 +148,9 @@ const SortableHeader = ({
         <span>{children}</span>
         {onSort && (
           <span className="sort-indicator">
-            {isActive && direction === 'asc' && '↑'}
-            {isActive && direction === 'desc' && '↓'}
-            {!isActive && '⇅'}
+            {isActive && direction === 'asc' && <ArrowUpwardIcon sx={{ fontSize: '16px' }} />}
+            {isActive && direction === 'desc' && <ArrowDownwardIcon sx={{ fontSize: '16px' }} />}
+            {!isActive && <UnfoldMoreIcon sx={{ fontSize: '16px' }} />}
           </span>
         )}
       </div>
@@ -295,9 +300,12 @@ export const TransactionTable = ({
               )}
               {onEdit && (
                 <td style={{ textAlign: 'center' }}>
-                  <button className="edit-button" onClick={() => onEdit(transaction)} title="Edit transaction">
-                    ✏️
-                  </button>
+                  <ActionIconButton
+                    onClick={() => onEdit(transaction)}
+                    title="Edit transaction"
+                    icon={<EditIcon fontSize="small" />}
+                    color="primary"
+                  />
                 </td>
               )}
             </tr>
