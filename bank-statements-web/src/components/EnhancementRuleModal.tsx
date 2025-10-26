@@ -72,6 +72,9 @@ export const EnhancementRuleModal: React.FC<EnhancementRuleModalProps> = ({
   const [fetchingCount, setFetchingCount] = useState(false)
   const [previewError, setPreviewError] = useState<string | null>(null)
 
+  // State for creating empty copy
+  const [createEmptyCopy, setCreateEmptyCopy] = useState(true)
+
   // Debounce timeout for preview updates
   const debounceTimeoutRef = useRef<NodeJS.Timeout>()
 
@@ -192,6 +195,15 @@ export const EnhancementRuleModal: React.FC<EnhancementRuleModalProps> = ({
     apiClient,
   ])
 
+  const hasConstraints = () => {
+    return !!(
+      (formData.min_amount !== undefined && formData.min_amount !== null) ||
+      (formData.max_amount !== undefined && formData.max_amount !== null) ||
+      formData.start_date ||
+      formData.end_date
+    )
+  }
+
   const validateForm = () => {
     const errors: Record<string, string> = {}
 
@@ -259,6 +271,16 @@ export const EnhancementRuleModal: React.FC<EnhancementRuleModalProps> = ({
 
         await createRule(cleanedData)
       }
+
+      if (createEmptyCopy) {
+        const emptyCopyData: EnhancementRuleCreate = {
+          normalized_description_pattern: formData.normalized_description_pattern,
+          match_type: formData.match_type,
+          source: formData.source,
+        }
+        await createRule(emptyCopyData)
+      }
+
       onSuccess()
       handleClose()
     } catch (err) {
@@ -287,6 +309,9 @@ export const EnhancementRuleModal: React.FC<EnhancementRuleModalProps> = ({
     setMatchingCount(null)
     setFetchingCount(false)
     setPreviewError(null)
+
+    // Reset empty copy state
+    setCreateEmptyCopy(true)
 
     onClose()
   }
@@ -548,6 +573,30 @@ export const EnhancementRuleModal: React.FC<EnhancementRuleModalProps> = ({
                 label="Apply these changes to existing matching transactions"
               />
             </>
+          )}
+
+          {/* Empty Copy Section - show when constraints exist */}
+          {hasConstraints() && (
+            <Box sx={{ mt: 2 }}>
+              <Typography variant="h6" gutterBottom>
+                Create Additional Rule
+              </Typography>
+
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={createEmptyCopy}
+                    onChange={(e) => setCreateEmptyCopy(e.target.checked)}
+                    disabled={loading}
+                  />
+                }
+                label="Also create an unconstrained copy of this rule (same pattern, no amount/date filters)"
+              />
+              <FormHelperText sx={{ mt: -1, ml: 4 }}>
+                This creates a second rule that matches all transactions with this pattern, useful for catching edge
+                cases outside your specified constraints.
+              </FormHelperText>
+            </Box>
           )}
         </Stack>
       </DialogContent>
