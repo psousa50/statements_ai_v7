@@ -259,6 +259,104 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
 
         return totals
 
+    def get_category_time_series(
+        self,
+        category_id: Optional[UUID] = None,
+        period: str = "month",
+        category_ids: Optional[List[UUID]] = None,
+        status: Optional[CategorizationStatus] = None,
+        min_amount: Optional[Decimal] = None,
+        max_amount: Optional[Decimal] = None,
+        description_search: Optional[str] = None,
+        account_id: Optional[UUID] = None,
+        start_date: Optional[date] = None,
+        end_date: Optional[date] = None,
+        exclude_transfers: Optional[bool] = None,
+        exclude_uncategorized: Optional[bool] = None,
+        transaction_type: Optional[str] = None,
+    ) -> List[Dict]:
+        if period == "month":
+            period_expr = func.to_char(Transaction.date, "YYYY-MM")
+        else:
+            period_expr = func.to_char(Transaction.date, "IYYY-IW")
+
+        query = self.db_session.query(
+            period_expr.label("period"),
+            Transaction.category_id,
+            func.sum(func.abs(Transaction.amount)).label("total_amount"),
+            func.count(Transaction.id).label("transaction_count"),
+        )
+
+        filters = []
+
+        if category_id:
+            from app.adapters.repositories.category import SQLAlchemyCategoryRepository
+
+            category_repo = SQLAlchemyCategoryRepository(self.db_session)
+            category = category_repo.get_by_id(category_id)
+
+            if category and category.parent_id is None:
+                subcategories = category_repo.get_subcategories(category_id)
+                subcategory_ids = [sub.id for sub in subcategories]
+                category_filter_ids = [category_id] + subcategory_ids
+            else:
+                category_filter_ids = [category_id]
+
+            filters.append(Transaction.category_id.in_(category_filter_ids))
+        elif category_ids:
+            filters.append(Transaction.category_id.in_(category_ids))
+
+        if status is not None:
+            filters.append(Transaction.categorization_status == status)
+
+        if min_amount is not None:
+            filters.append(Transaction.amount >= min_amount)
+        if max_amount is not None:
+            filters.append(Transaction.amount <= max_amount)
+
+        if description_search:
+            search_term = f"%{description_search.lower()}%"
+            filters.append(
+                or_(
+                    func.lower(Transaction.description).like(search_term),
+                    func.lower(Transaction.normalized_description).like(search_term),
+                )
+            )
+
+        if account_id is not None:
+            filters.append(Transaction.account_id == account_id)
+
+        if start_date is not None:
+            filters.append(Transaction.date >= start_date)
+        if end_date is not None:
+            filters.append(Transaction.date <= end_date)
+
+        if exclude_transfers is not False:
+            filters.append(Transaction.counterparty_account_id.is_(None))
+
+        if exclude_uncategorized is True:
+            filters.append(Transaction.category_id.isnot(None))
+
+        if transaction_type == "debit":
+            filters.append(Transaction.amount < 0)
+        elif transaction_type == "credit":
+            filters.append(Transaction.amount > 0)
+
+        if filters:
+            query = query.filter(and_(*filters))
+
+        results = query.group_by(period_expr, Transaction.category_id).order_by(period_expr).all()
+
+        return [
+            {
+                "period": period_str,
+                "category_id": cat_id,
+                "total_amount": Decimal(str(total)) if total else Decimal("0"),
+                "transaction_count": count,
+            }
+            for period_str, cat_id, total, count in results
+        ]
+
     def update(self, transaction: Transaction) -> Transaction:
         self.db_session.commit()
         self.db_session.refresh(transaction)

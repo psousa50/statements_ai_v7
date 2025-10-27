@@ -1,10 +1,11 @@
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts'
-import { useCategoryTotals } from '../services/hooks/useTransactions'
+import { useCategoryTotals, useCategoryTimeSeries } from '../services/hooks/useTransactions'
 import { useCategories } from '../services/hooks/useCategories'
 import { useAccounts } from '../services/hooks/useAccounts'
 import { TransactionFilters } from '../components/TransactionFilters'
+import { CategoryTimeSeriesChart } from '../components/CategoryTimeSeriesChart'
 import { Category } from '../types/Transaction'
 import { TransactionFilters as FilterType } from '../api/TransactionClient'
 import './ChartsPage.css'
@@ -57,6 +58,8 @@ export const ChartsPage = () => {
   const [selectedRootCategory, setSelectedRootCategory] = useState<string | null>(null)
   const [transactionType, setTransactionType] = useState<'all' | 'debit' | 'credit'>('debit')
   const [excludeUncategorized, setExcludeUncategorized] = useState<boolean>(true)
+  const [viewMode, setViewMode] = useState<'pie' | 'timeseries'>('pie')
+  const [timeSeriesPeriod, setTimeSeriesPeriod] = useState<'month' | 'week'>('month')
 
   // Local state for debounced inputs
   const [localDescriptionSearch, setLocalDescriptionSearch] = useState<string>('')
@@ -74,11 +77,18 @@ export const ChartsPage = () => {
     fetchCategoryTotals,
   } = useCategoryTotals()
 
+  const {
+    timeSeriesData,
+    loading: timeSeriesLoading,
+    error: timeSeriesError,
+    fetchCategoryTimeSeries,
+  } = useCategoryTimeSeries()
+
   const { categories, loading: categoriesLoading, error: categoriesError } = useCategories()
   const { accounts, loading: accountsLoading, error: accountsError } = useAccounts()
 
-  const loading = categoryTotalsLoading || categoriesLoading || accountsLoading
-  const error = categoryTotalsError || categoriesError || accountsError
+  const loading = categoryTotalsLoading || categoriesLoading || accountsLoading || timeSeriesLoading
+  const error = categoryTotalsError || categoriesError || accountsError || timeSeriesError
 
   // Debounced filter update for search, amount, and date inputs
   useEffect(() => {
@@ -448,6 +458,42 @@ export const ChartsPage = () => {
   const totalAmount = chartData.reduce((sum, item) => sum + item.value, 0)
   const totalTransactions = chartData.reduce((sum, item) => sum + item.count, 0)
 
+  const handleViewModeChange = useCallback(
+    (mode: 'pie' | 'timeseries') => {
+      setViewMode(mode)
+      if (mode === 'timeseries') {
+        fetchCategoryTimeSeries(selectedRootCategory || undefined, timeSeriesPeriod, filters)
+      }
+    },
+    [selectedRootCategory, timeSeriesPeriod, filters, fetchCategoryTimeSeries]
+  )
+
+  const handleCategorySelectionForTimeSeries = useCallback(
+    (categoryId: string | null) => {
+      setSelectedRootCategory(categoryId)
+      if (viewMode === 'timeseries') {
+        fetchCategoryTimeSeries(categoryId || undefined, timeSeriesPeriod, filters)
+      }
+    },
+    [viewMode, timeSeriesPeriod, filters, fetchCategoryTimeSeries]
+  )
+
+  const handlePeriodChange = useCallback(
+    (period: 'month' | 'week') => {
+      setTimeSeriesPeriod(period)
+      if (viewMode === 'timeseries') {
+        fetchCategoryTimeSeries(selectedRootCategory || undefined, period, filters)
+      }
+    },
+    [viewMode, selectedRootCategory, filters, fetchCategoryTimeSeries]
+  )
+
+  useEffect(() => {
+    if (viewMode === 'timeseries') {
+      fetchCategoryTimeSeries(selectedRootCategory || undefined, timeSeriesPeriod, filters)
+    }
+  }, [viewMode, timeSeriesPeriod, filters, fetchCategoryTimeSeries])
+
   // Initial load
   useEffect(() => {
     fetchCategoryTotals({
@@ -521,7 +567,52 @@ export const ChartsPage = () => {
             </div>
 
             <div className="charts-controls">
-              {chartType === 'sub' && (
+              <div className="view-mode-toggle">
+                <button onClick={() => handleViewModeChange('pie')} className={viewMode === 'pie' ? 'active' : ''}>
+                  Pie Chart
+                </button>
+                <button
+                  onClick={() => handleViewModeChange('timeseries')}
+                  className={viewMode === 'timeseries' ? 'active' : ''}
+                >
+                  Time Series
+                </button>
+              </div>
+              {viewMode === 'timeseries' && (
+                <>
+                  <div className="category-selector">
+                    <select
+                      value={selectedRootCategory || ''}
+                      onChange={(e) => handleCategorySelectionForTimeSeries(e.target.value || null)}
+                      className="transaction-type-select"
+                    >
+                      <option value="">All Categories</option>
+                      {categories
+                        ?.filter((cat) => !cat.parent_id)
+                        .map((cat) => (
+                          <option key={cat.id} value={cat.id}>
+                            {cat.name}
+                          </option>
+                        ))}
+                    </select>
+                  </div>
+                  <div className="period-toggle">
+                    <button
+                      onClick={() => handlePeriodChange('month')}
+                      className={timeSeriesPeriod === 'month' ? 'active' : ''}
+                    >
+                      Monthly
+                    </button>
+                    <button
+                      onClick={() => handlePeriodChange('week')}
+                      className={timeSeriesPeriod === 'week' ? 'active' : ''}
+                    >
+                      Weekly
+                    </button>
+                  </div>
+                </>
+              )}
+              {chartType === 'sub' && viewMode === 'pie' && (
                 <button onClick={handleBackToRoot} className="back-button">
                   ← Back to All Categories
                 </button>
@@ -530,63 +621,80 @@ export const ChartsPage = () => {
           </div>
 
           <div className="chart-container">
-            {loading ? (
-              <div className="loading-indicator">Loading chart data...</div>
-            ) : chartData.length === 0 ? (
-              <div className="no-data-message">No transaction data available for the selected filters.</div>
+            {viewMode === 'pie' ? (
+              loading ? (
+                <div className="loading-indicator">Loading chart data...</div>
+              ) : chartData.length === 0 ? (
+                <div className="no-data-message">No transaction data available for the selected filters.</div>
+              ) : (
+                <ResponsiveContainer width="100%" height={500}>
+                  <PieChart>
+                    <Pie
+                      data={chartData}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={renderCustomizedLabel}
+                      outerRadius={180}
+                      fill="#8884d8"
+                      dataKey="value"
+                      onClick={handleChartClick}
+                      style={{ cursor: 'pointer' }}
+                      animationDuration={300}
+                    >
+                      {chartData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      formatter={(value: number, _name: string, props: unknown) => {
+                        const payload = (props as { payload: ChartData }).payload
+                        return [
+                          [`$${value.toFixed(2)}`, 'Amount'],
+                          [`${payload.count} transactions`, 'Count'],
+                        ]
+                      }}
+                      labelFormatter={(label: string) => `Category: ${label}`}
+                      contentStyle={{
+                        backgroundColor: 'var(--bg-primary)',
+                        border: '1px solid var(--border-primary)',
+                        borderRadius: '4px',
+                        color: 'var(--text-primary)',
+                        boxShadow: '0 4px 6px var(--shadow-light)',
+                      }}
+                      labelStyle={{
+                        color: 'var(--text-primary)',
+                      }}
+                      itemStyle={{
+                        color: 'var(--text-secondary)',
+                      }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              )
             ) : (
-              <ResponsiveContainer width="100%" height={500}>
-                <PieChart>
-                  <Pie
-                    data={chartData}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={renderCustomizedLabel}
-                    outerRadius={180}
-                    fill="#8884d8"
-                    dataKey="value"
-                    onClick={handleChartClick}
-                    style={{ cursor: 'pointer' }}
-                    animationDuration={300}
-                  >
-                    {chartData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip
-                    formatter={(value: number, _name: string, props: unknown) => {
-                      const payload = (props as { payload: ChartData }).payload
-                      return [
-                        [`$${value.toFixed(2)}`, 'Amount'],
-                        [`${payload.count} transactions`, 'Count'],
-                      ]
-                    }}
-                    labelFormatter={(label: string) => `Category: ${label}`}
-                    contentStyle={{
-                      backgroundColor: 'var(--bg-primary)',
-                      border: '1px solid var(--border-primary)',
-                      borderRadius: '4px',
-                      color: 'var(--text-primary)',
-                      boxShadow: '0 4px 6px var(--shadow-light)',
-                    }}
-                    labelStyle={{
-                      color: 'var(--text-primary)',
-                    }}
-                    itemStyle={{
-                      color: 'var(--text-secondary)',
-                    }}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
+              <CategoryTimeSeriesChart
+                dataPoints={timeSeriesData || []}
+                categories={categories || []}
+                loading={timeSeriesLoading}
+              />
             )}
           </div>
 
           <div className="chart-help">
-            {chartType === 'root' ? (
-              <p>💡 Click on any category slice to see its subcategories breakdown</p>
+            {viewMode === 'pie' ? (
+              chartType === 'root' ? (
+                <p>💡 Click on any category slice to see its subcategories breakdown</p>
+              ) : (
+                <p>💡 Click on any subcategory slice to view its transactions</p>
+              )
             ) : (
-              <p>💡 Click on any subcategory slice to view its transactions</p>
+              <p>
+                💡{' '}
+                {selectedRootCategory
+                  ? 'Showing time series for selected category and its subcategories. Use the dropdown above to change category.'
+                  : 'Showing time series for all categories. Use the dropdown above to filter by a specific category.'}
+              </p>
             )}
           </div>
         </div>

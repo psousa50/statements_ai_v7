@@ -35,6 +35,17 @@ export interface CategoryTotalsResponse {
   totals: CategoryTotal[]
 }
 
+export interface CategoryTimeSeriesDataPoint {
+  period: string
+  category_id?: string
+  total_amount: number
+  transaction_count: number
+}
+
+export interface CategoryTimeSeriesResponse {
+  data_points: CategoryTimeSeriesDataPoint[]
+}
+
 export interface BulkUpdateTransactionsRequest {
   normalized_description: string
   category_id?: string
@@ -63,6 +74,11 @@ export interface EnhancementPreviewResponse {
 export interface TransactionClient {
   getAll(filters?: TransactionFilters): Promise<TransactionListResponse>
   getCategoryTotals(filters?: Omit<TransactionFilters, 'page' | 'page_size'>): Promise<CategoryTotalsResponse>
+  getCategoryTimeSeries(
+    categoryId?: string,
+    period?: 'month' | 'week',
+    filters?: Omit<TransactionFilters, 'page' | 'page_size'>
+  ): Promise<CategoryTimeSeriesResponse>
   getById(id: string): Promise<Transaction>
   create(transaction: TransactionCreate): Promise<Transaction>
   update(id: string, transaction: TransactionCreate): Promise<Transaction>
@@ -183,6 +199,59 @@ export const transactionClient: TransactionClient = {
 
     const url = params.toString() ? `${API_URL}/category-totals?${params.toString()}` : `${API_URL}/category-totals`
     const response = await axios.get<CategoryTotalsResponse>(url)
+    return response.data
+  },
+
+  async getCategoryTimeSeries(
+    categoryId?: string,
+    period: 'month' | 'week' = 'month',
+    filters?: Omit<TransactionFilters, 'page' | 'page_size'>
+  ) {
+    const params = new URLSearchParams()
+
+    if (categoryId) {
+      params.append('category_id', categoryId)
+    }
+    params.append('period', period)
+
+    if (filters?.category_ids && filters.category_ids.length > 0) {
+      params.append('category_ids', filters.category_ids.join(','))
+    }
+    if (filters?.status) {
+      params.append('status', filters.status)
+    }
+    if (filters?.min_amount !== undefined) {
+      params.append('min_amount', filters.min_amount.toString())
+    }
+    if (filters?.max_amount !== undefined) {
+      params.append('max_amount', filters.max_amount.toString())
+    }
+    if (filters?.description_search) {
+      params.append('description_search', filters.description_search)
+    }
+    if (filters?.account_id) {
+      params.append('account_id', filters.account_id)
+    }
+    if (filters?.start_date) {
+      params.append('start_date', filters.start_date)
+    }
+    if (filters?.end_date) {
+      params.append('end_date', filters.end_date)
+    }
+    if (filters?.exclude_transfers !== undefined) {
+      params.append('exclude_transfers', filters.exclude_transfers.toString())
+    }
+    if (filters?.exclude_uncategorized !== undefined) {
+      params.append('exclude_uncategorized', filters.exclude_uncategorized.toString())
+    }
+    if (filters?.transaction_type) {
+      params.append('transaction_type', filters.transaction_type)
+    }
+
+    const url = params.toString()
+      ? `${API_URL}/category-time-series?${params.toString()}`
+      : `${API_URL}/category-time-series`
+    const response = await axios.get<CategoryTimeSeriesResponse>(url)
     return response.data
   },
 

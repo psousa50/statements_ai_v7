@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { CategorizationStatus, Transaction } from '../../types/Transaction'
 import { useApi } from '../../api/ApiContext'
-import { TransactionFilters, CategoryTotalsResponse } from '../../api/TransactionClient'
+import { TransactionFilters, CategoryTotalsResponse, CategoryTimeSeriesDataPoint } from '../../api/TransactionClient'
 import { EnhancementRule } from '../../types/EnhancementRule'
 
 interface TransactionPagination {
@@ -216,5 +216,42 @@ export const useCategoryTotals = () => {
     loading,
     error,
     fetchCategoryTotals,
+  }
+}
+
+export const useCategoryTimeSeries = () => {
+  const api = useApi()
+  const [timeSeriesData, setTimeSeriesData] = useState<CategoryTimeSeriesDataPoint[] | null>(null)
+  const [loading, setLoading] = useState<boolean>(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const fetchCategoryTimeSeries = useCallback(
+    async (
+      categoryId?: string,
+      period: 'month' | 'week' = 'month',
+      filters?: Omit<TransactionFilters, 'page' | 'page_size'>
+    ) => {
+      setLoading(true)
+      setError(null)
+      try {
+        const response = await api.transactions.getCategoryTimeSeries(categoryId, period, filters)
+        setTimeSeriesData(response.data_points)
+        return response.data_points
+      } catch (err) {
+        console.error('Error fetching category time series:', err)
+        setError('Failed to fetch time series data. Please try again later.')
+        return null
+      } finally {
+        setLoading(false)
+      }
+    },
+    [api.transactions]
+  )
+
+  return {
+    timeSeriesData,
+    loading,
+    error,
+    fetchCategoryTimeSeries,
   }
 }

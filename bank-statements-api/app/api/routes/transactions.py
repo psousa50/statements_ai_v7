@@ -8,6 +8,8 @@ from fastapi import APIRouter, Depends, FastAPI, HTTPException, Query, status
 from app.api.schemas import (
     BulkUpdateTransactionsRequest,
     BulkUpdateTransactionsResponse,
+    CategoryTimeSeriesDataPoint,
+    CategoryTimeSeriesResponse,
     CategoryTotalResponse,
     CategoryTotalsResponse,
     EnhancementPreviewRequest,
@@ -236,6 +238,92 @@ def register_transaction_routes(
         ]
 
         return CategoryTotalsResponse(totals=totals)
+
+    @router.get(
+        "/category-time-series",
+        response_model=CategoryTimeSeriesResponse,
+    )
+    def get_category_time_series(
+        category_id: Optional[UUID] = Query(
+            None,
+            description="Category ID to fetch time series for (includes subcategories if root category)",
+        ),
+        period: str = Query("month", description="Time period grouping: 'month' or 'week'"),
+        category_ids: Optional[str] = Query(
+            None,
+            description="Comma-separated list of category IDs",
+        ),
+        status: Optional[CategorizationStatus] = Query(
+            None,
+            description="Filter by categorization status",
+        ),
+        min_amount: Optional[Decimal] = Query(None, description="Minimum transaction amount"),
+        max_amount: Optional[Decimal] = Query(None, description="Maximum transaction amount"),
+        description_search: Optional[str] = Query(
+            None,
+            description="Search in transaction description",
+        ),
+        account_id: Optional[UUID] = Query(None, description="Filter by source ID"),
+        start_date: Optional[date] = Query(
+            None,
+            description="Filter transactions from this date",
+        ),
+        end_date: Optional[date] = Query(
+            None,
+            description="Filter transactions to this date",
+        ),
+        exclude_transfers: Optional[bool] = Query(
+            True,
+            description="Exclude transfers between accounts",
+        ),
+        exclude_uncategorized: Optional[bool] = Query(
+            False,
+            description="Exclude uncategorized transactions",
+        ),
+        transaction_type: Optional[str] = Query(
+            None,
+            description="Filter by transaction type: 'debit', 'credit', or 'all'",
+        ),
+        internal: InternalDependencies = Depends(provide_dependencies),
+    ):
+        """Get time-series data for categories/subcategories for area chart. Uses the same filtering options as get_transactions."""
+        parsed_category_ids = None
+        if category_ids:
+            try:
+                parsed_category_ids = [UUID(cid.strip()) for cid in category_ids.split(",") if cid.strip()]
+            except ValueError:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Invalid category IDs format",
+                )
+
+        data_points = internal.transaction_service.get_category_time_series(
+            category_id=category_id,
+            period=period,
+            category_ids=parsed_category_ids,
+            status=status,
+            min_amount=min_amount,
+            max_amount=max_amount,
+            description_search=description_search,
+            account_id=account_id,
+            start_date=start_date,
+            end_date=end_date,
+            exclude_transfers=exclude_transfers,
+            exclude_uncategorized=exclude_uncategorized,
+            transaction_type=transaction_type,
+        )
+
+        response_data_points = [
+            CategoryTimeSeriesDataPoint(
+                period=dp["period"],
+                category_id=dp["category_id"],
+                total_amount=dp["total_amount"],
+                transaction_count=dp["transaction_count"],
+            )
+            for dp in data_points
+        ]
+
+        return CategoryTimeSeriesResponse(data_points=response_data_points)
 
     @router.post(
         "/preview-enhancement",
