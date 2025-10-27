@@ -95,40 +95,12 @@ class TestTransactionRuleEnhancementService:
     ):
         """Test enhancement when rules match transactions"""
         # Setup mock responses
-        mock_enhancement_rule_repository.get_all.return_value = sample_enhancement_rules
-
-        # Mock enhanced transactions - first two match rules, third doesn't
-        enhanced_transactions = []
-        for i, dto in enumerate(sample_dtos):
-            transaction = Mock()
-            transaction.normalized_description = dto.description.lower()
-            if i == 0:  # Grocery store matches
-                transaction.category_id = "category-1"
-                transaction.counterparty_account_id = "counterparty-1"
-                transaction.categorization_status = CategorizationStatus.RULE_BASED
-            elif i == 1:  # ATM withdrawal doesn't match
-                transaction.category_id = None
-                transaction.counterparty_account_id = None
-                transaction.categorization_status = CategorizationStatus.UNCATEGORIZED
-            elif i == 2:  # Salary matches
-                transaction.category_id = "category-2"
-                transaction.counterparty_account_id = None
-                transaction.categorization_status = CategorizationStatus.RULE_BASED
-            enhanced_transactions.append(transaction)
-
-        mock_transaction_enhancer.apply_rules.return_value = enhanced_transactions
+        mock_enhancement_rule_repository.find_matching_rules_batch.return_value = sample_enhancement_rules
 
         result = enhancement_service.enhance_transactions(sample_dtos)
 
         # Verify service calls
-        mock_enhancement_rule_repository.get_all.assert_called_once()
-        mock_transaction_enhancer.apply_rules.assert_called_once()
-
-        # Verify transaction enhancer was called with correct arguments
-        enhancer_args = mock_transaction_enhancer.apply_rules.call_args
-        transactions_arg, rules_arg = enhancer_args[0]
-        assert len(transactions_arg) == 3
-        assert len(rules_arg) == 2
+        mock_enhancement_rule_repository.find_matching_rules_batch.assert_called_once()
 
         # Verify result
         assert result.total_processed == 3
@@ -162,19 +134,7 @@ class TestTransactionRuleEnhancementService:
     ):
         """Test enhancement when no rules match"""
         # Setup mock responses with no matches
-        mock_enhancement_rule_repository.get_all.return_value = []
-
-        # Mock enhanced transactions with no enhancements
-        enhanced_transactions = []
-        for dto in sample_dtos:
-            transaction = Mock()
-            transaction.normalized_description = dto.description.lower()
-            transaction.category_id = None
-            transaction.counterparty_account_id = None
-            transaction.categorization_status = CategorizationStatus.UNCATEGORIZED
-            enhanced_transactions.append(transaction)
-
-        mock_transaction_enhancer.apply_rules.return_value = enhanced_transactions
+        mock_enhancement_rule_repository.find_matching_rules_batch.return_value = []
 
         result = enhancement_service.enhance_transactions(sample_dtos)
 
@@ -200,20 +160,8 @@ class TestTransactionRuleEnhancementService:
     ):
         """Test that unmatched transactions create enhancement rules"""
         # Setup mock responses with no matches
-        mock_enhancement_rule_repository.get_all.return_value = []
+        mock_enhancement_rule_repository.find_matching_rules_batch.return_value = []
         mock_enhancement_rule_repository.find_by_normalized_description.return_value = None
-
-        # Mock enhanced transactions with no enhancements
-        enhanced_transactions = []
-        for dto in sample_dtos:
-            transaction = Mock()
-            transaction.normalized_description = dto.description.lower()
-            transaction.category_id = None
-            transaction.counterparty_account_id = None
-            transaction.categorization_status = CategorizationStatus.UNCATEGORIZED
-            enhanced_transactions.append(transaction)
-
-        mock_transaction_enhancer.apply_rules.return_value = enhanced_transactions
 
         enhancement_service.enhance_transactions(sample_dtos)
 
@@ -253,20 +201,8 @@ class TestTransactionRuleEnhancementService:
             ),
         ]
 
-        mock_enhancement_rule_repository.get_all.return_value = []
+        mock_enhancement_rule_repository.find_matching_rules_batch.return_value = []
         mock_enhancement_rule_repository.find_by_normalized_description.return_value = None
-
-        # Mock enhanced transactions
-        enhanced_transactions = []
-        for dto in dtos:
-            transaction = Mock()
-            transaction.normalized_description = dto.description.lower() if dto.description else ""
-            transaction.category_id = None
-            transaction.counterparty_account_id = None
-            transaction.categorization_status = CategorizationStatus.UNCATEGORIZED
-            enhanced_transactions.append(transaction)
-
-        mock_transaction_enhancer.apply_rules.return_value = enhanced_transactions
 
         result = enhancement_service.enhance_transactions(dtos)
 
@@ -317,36 +253,19 @@ class TestTransactionRuleEnhancementService:
         sample_enhancement_rules,
     ):
         """Test enhancement with partial matches - some transactions enhanced, others not"""
-        mock_enhancement_rule_repository.get_all.return_value = sample_enhancement_rules
+        mock_enhancement_rule_repository.find_matching_rules_batch.return_value = sample_enhancement_rules
         mock_enhancement_rule_repository.find_by_normalized_description.return_value = None
-
-        # Mock enhanced transactions - only first transaction matches
-        enhanced_transactions = []
-        for i, dto in enumerate(sample_dtos):
-            transaction = Mock()
-            transaction.normalized_description = dto.description.lower()
-            if i == 0:  # Only grocery store matches
-                transaction.category_id = "category-1"
-                transaction.counterparty_account_id = "counterparty-1"
-                transaction.categorization_status = CategorizationStatus.RULE_BASED
-            else:  # Others don't match
-                transaction.category_id = None
-                transaction.counterparty_account_id = None
-                transaction.categorization_status = CategorizationStatus.UNCATEGORIZED
-            enhanced_transactions.append(transaction)
-
-        mock_transaction_enhancer.apply_rules.return_value = enhanced_transactions
 
         result = enhancement_service.enhance_transactions(sample_dtos)
 
         # Verify metrics
         assert result.total_processed == 3
-        assert result.rule_based_matches == 1  # Only grocery store matched
-        assert result.match_rate_percentage == 33.3
-        assert result.has_unmatched  # Two transactions didn't match
+        assert result.rule_based_matches == 2  # Grocery store and salary matched
+        assert result.match_rate_percentage == 66.7
+        assert result.has_unmatched  # ATM withdrawal didn't match
 
-        # Verify unmatched rules created for the 2 unmatched transactions
-        assert mock_enhancement_rule_repository.save.call_count == 2
+        # Verify unmatched rules created for the 1 unmatched transaction
+        assert mock_enhancement_rule_repository.save.call_count == 1
 
     def test_enhance_transactions_creates_unique_rules_only(
         self,
@@ -389,20 +308,8 @@ class TestTransactionRuleEnhancementService:
             ),  # Same as above
         ]
 
-        mock_enhancement_rule_repository.get_all.return_value = []
+        mock_enhancement_rule_repository.find_matching_rules_batch.return_value = []
         mock_enhancement_rule_repository.find_by_normalized_description.return_value = None
-
-        # Mock enhanced transactions with no enhancements (all unmatched)
-        enhanced_transactions = []
-        for dto in dtos:
-            transaction = Mock()
-            transaction.normalized_description = dto.description.lower()
-            transaction.category_id = None
-            transaction.counterparty_account_id = None
-            transaction.categorization_status = CategorizationStatus.UNCATEGORIZED
-            enhanced_transactions.append(transaction)
-
-        mock_transaction_enhancer.apply_rules.return_value = enhanced_transactions
 
         result = enhancement_service.enhance_transactions(dtos)
 

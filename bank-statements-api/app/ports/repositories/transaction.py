@@ -141,6 +141,22 @@ class TransactionRepository(ABC):
 
         Returns:
             Tuple of (number of transactions saved, number of duplicates found)
+
+        Deprecated: Use create_many instead. This method will be removed in future versions.
+        """
+        pass
+
+    @abstractmethod
+    def create_many(self, transactions: List[Transaction]) -> List[Transaction]:
+        """
+        Create multiple transactions in a single batch operation.
+        This is a clean repository method that only handles persistence.
+
+        Args:
+            transactions: List of Transaction entities to persist
+
+        Returns:
+            List of persisted Transaction entities with IDs populated
         """
         pass
 

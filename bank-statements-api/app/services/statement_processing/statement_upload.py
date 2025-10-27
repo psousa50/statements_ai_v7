@@ -42,6 +42,7 @@ class StatementUploadService:
         uploaded_file_repo,
         file_analysis_metadata_repo,
         transaction_rule_enhancement_service: TransactionRuleEnhancementService,
+        transaction_service,
         statement_repo,
         transaction_repo,
         background_job_service,
@@ -52,6 +53,7 @@ class StatementUploadService:
         self.uploaded_file_repo = uploaded_file_repo
         self.file_analysis_metadata_repo = file_analysis_metadata_repo
         self.transaction_rule_enhancement_service = transaction_rule_enhancement_service
+        self.transaction_service = transaction_service
         self.statement_repo = statement_repo
         self.transaction_repo = transaction_repo
         self.background_job_service = background_job_service
@@ -236,11 +238,10 @@ class StatementUploadService:
                 # Set statement_id on all DTOs
                 dto.statement_id = str(statement.id)
 
-            # Save the batch of DTOs
-            (
-                transactions_saved,
-                duplicated_transactions,
-            ) = self.transaction_repo.save_batch(enhanced.enhanced_dtos)
+            # Save the batch of DTOs using the transaction service
+            persistence_result = self.transaction_service.save_transactions_from_dtos(enhanced.enhanced_dtos)
+            transactions_saved = persistence_result.transactions_saved
+            duplicated_transactions = persistence_result.duplicates_found
 
             # Update statement with transaction statistics
             self.statement_repo.update_transaction_statistics(statement.id)

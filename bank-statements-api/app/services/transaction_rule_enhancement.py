@@ -72,19 +72,27 @@ class TransactionRuleEnhancementService:
 
         # Step 1: Normalize descriptions and convert DTOs to Transaction entities
         transactions = []
+        normalized_descriptions_set = set()
+
         for dto in transaction_dtos:
             dto.normalized_description = normalize_description(dto.description)
+            normalized_descriptions_set.add(dto.normalized_description)
 
             # Convert DTO to Transaction entity for processing
             transaction = self._dto_to_transaction(dto)
             transactions.append(transaction)
 
-        # Step 2: Get all enhancement rules from repository
-        rules = self.enhancement_rule_repository.get_all()
-        logger.debug(f"Retrieved {len(rules)} enhancement rules")
+        # Step 2: Batch query for matching rules (efficient!)
+        matching_rules = self.enhancement_rule_repository.find_matching_rules_batch(list(normalized_descriptions_set))
+        logger.debug(
+            f"Retrieved {len(matching_rules)} matching rules for {len(normalized_descriptions_set)} unique descriptions"
+        )
 
-        # Step 3: Apply enhancement rules using TransactionEnhancer
-        enhanced_transactions = self.transaction_enhancer.apply_rules(transactions, rules)
+        # Step 3: Build lookup map: normalized_description -> best matching rule
+        rules_map = self._build_rules_map(transactions, matching_rules)
+
+        # Step 4: Apply rules efficiently using the map
+        enhanced_transactions = self._apply_rules_from_map(transactions, rules_map)
 
         # Step 4: Convert back to DTOs and calculate metrics
         matched_count = 0
@@ -182,3 +190,36 @@ class TransactionRuleEnhancementService:
         except Exception as e:
             # Don't fail the enhancement if rule creation fails
             logger.warning(f"Failed to create unmatched rule for {normalized_description}: {e}")
+
+    def _build_rules_map(self, transactions: List[Transaction], rules: List[EnhancementRule]) -> dict:
+        """
+        Build a lookup map from normalized_description to the best matching rule.
+        For each transaction, find the first matching rule (rules are already sorted by precedence).
+        """
+        rules_map = {}
+
+        for transaction in transactions:
+            if transaction.normalized_description in rules_map:
+                continue
+
+            for rule in rules:
+                if rule.matches_transaction(transaction):
+                    rules_map[transaction.normalized_description] = rule
+                    break
+
+        return rules_map
+
+    def _apply_rules_from_map(self, transactions: List[Transaction], rules_map: dict) -> List[Transaction]:
+        """Apply enhancement rules to transactions using the lookup map"""
+        for transaction in transactions:
+            rule = rules_map.get(transaction.normalized_description)
+            if rule:
+                if rule.category_id is not None:
+                    transaction.category_id = rule.category_id
+                    transaction.mark_rule_based_categorization()
+
+                if rule.counterparty_account_id is not None:
+                    transaction.counterparty_account_id = rule.counterparty_account_id
+                    transaction.mark_rule_based_counterparty()
+
+        return transactions

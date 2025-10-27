@@ -160,6 +160,7 @@ def build_internal_dependencies(
         uploaded_file_repo=uploaded_file_repo,
         file_analysis_metadata_repo=file_analysis_metadata_repo,
         transaction_rule_enhancement_service=transaction_rule_enhancement_service,
+        transaction_service=transaction_service,
         statement_repo=statement_repo,
         transaction_repo=transaction_repo,
         background_job_service=background_job_service,

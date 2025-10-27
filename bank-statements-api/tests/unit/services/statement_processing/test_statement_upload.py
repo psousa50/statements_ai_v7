@@ -32,6 +32,10 @@ class TestStatementUploadService:
         return Mock()
 
     @pytest.fixture
+    def mock_transaction_service(self):
+        return Mock()
+
+    @pytest.fixture
     def mock_statement_repo(self):
         return Mock()
 
@@ -51,6 +55,7 @@ class TestStatementUploadService:
         mock_uploaded_file_repo,
         mock_file_analysis_metadata_repo,
         mock_transaction_rule_enhancement_service,
+        mock_transaction_service,
         mock_statement_repo,
         mock_transaction_repo,
         mock_background_job_service,
@@ -61,6 +66,7 @@ class TestStatementUploadService:
             uploaded_file_repo=mock_uploaded_file_repo,
             file_analysis_metadata_repo=mock_file_analysis_metadata_repo,
             transaction_rule_enhancement_service=mock_transaction_rule_enhancement_service,
+            transaction_service=mock_transaction_service,
             statement_repo=mock_statement_repo,
             transaction_repo=mock_transaction_repo,
             background_job_service=mock_background_job_service,

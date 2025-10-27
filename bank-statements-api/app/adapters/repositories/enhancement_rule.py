@@ -258,3 +258,36 @@ class SQLAlchemyEnhancementRuleRepository(EnhancementRuleRepository):
             )
             .all()
         )
+
+    def find_matching_rules_batch(self, normalized_descriptions: List[str]) -> List[EnhancementRule]:
+        if not normalized_descriptions:
+            return []
+
+        conditions = []
+        for description in normalized_descriptions:
+            conditions.append(
+                or_(
+                    and_(
+                        EnhancementRule.match_type == MatchType.EXACT,
+                        func.lower(EnhancementRule.normalized_description_pattern) == func.lower(description),
+                    ),
+                    and_(
+                        EnhancementRule.match_type == MatchType.PREFIX,
+                        func.lower(description).like(func.lower(EnhancementRule.normalized_description_pattern) + "%"),
+                    ),
+                    and_(
+                        EnhancementRule.match_type == MatchType.INFIX,
+                        func.lower(description).like("%" + func.lower(EnhancementRule.normalized_description_pattern) + "%"),
+                    ),
+                )
+            )
+
+        return (
+            self.db.query(EnhancementRule)
+            .filter(or_(*conditions))
+            .order_by(
+                EnhancementRule.match_type.asc(),
+                EnhancementRule.created_at.asc(),
+            )
+            .all()
+        )

@@ -28,6 +28,14 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         self.db_session.refresh(transaction)
         return transaction
 
+    def create_many(self, transactions: List[Transaction]) -> List[Transaction]:
+        for transaction in transactions:
+            self.db_session.add(transaction)
+        self.db_session.commit()
+        for transaction in transactions:
+            self.db_session.refresh(transaction)
+        return transactions
+
     def get_by_id(self, transaction_id: UUID) -> Optional[Transaction]:
         return self.db_session.query(Transaction).filter(Transaction.id == transaction_id).first()
 
@@ -466,6 +474,11 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
                     sort_index=transaction_dto.sort_index or 0,
                     source_type=account_type_enum,
                     manual_position_after=transaction_dto.manual_position_after,
+                    category_id=UUID(transaction_dto.category_id) if transaction_dto.category_id else None,
+                    counterparty_account_id=(
+                        UUID(transaction_dto.counterparty_account_id) if transaction_dto.counterparty_account_id else None
+                    ),
+                    categorization_status=transaction_dto.categorization_status or CategorizationStatus.UNCATEGORIZED,
                 )
 
                 if account_uuid:
@@ -513,7 +526,7 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         # Update the category_id and categorization_status for all matching transactions
         update_values = {
             "category_id": category_id,
-            "categorization_status": (CategorizationStatus.CATEGORIZED if category_id else CategorizationStatus.UNCATEGORIZED),
+            "categorization_status": (CategorizationStatus.RULE_BASED if category_id else CategorizationStatus.UNCATEGORIZED),
         }
 
         # Execute bulk update

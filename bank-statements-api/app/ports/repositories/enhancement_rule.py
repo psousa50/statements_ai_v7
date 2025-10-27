@@ -32,3 +32,17 @@ class EnhancementRuleRepository(ABC):
     def delete(self, rule_id: UUID) -> bool:
         """Delete an enhancement rule by ID"""
         pass
+
+    @abstractmethod
+    def find_matching_rules_batch(self, normalized_descriptions: List[str]) -> List[EnhancementRule]:
+        """
+        Find all enhancement rules that match any of the given normalized descriptions.
+        Handles exact, prefix, and infix match types efficiently in a single query.
+
+        Args:
+            normalized_descriptions: List of normalized description strings to match
+
+        Returns:
+            List of matching enhancement rules, ordered by precedence (exact > prefix > infix)
+        """
+        pass

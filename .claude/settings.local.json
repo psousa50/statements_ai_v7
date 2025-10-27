@@ -32,7 +32,11 @@
       "mcp__chrome-devtools__navigate_page",
       "mcp__chrome-devtools__take_snapshot",
       "mcp__chrome-devtools__click",
-      "mcp__chrome-devtools__take_screenshot"
+      "mcp__chrome-devtools__take_screenshot",
+      "Bash(uv run pytest:*)",
+      "Bash(uv run isort:*)",
+      "Bash(uv run black:*)",
+      "Bash(uv run ruff:*)"
     ],
     "deny": []
   },

@@ -213,14 +213,7 @@ class TestTransactionService:
             source=EnhancementRuleSource.MANUAL,
         )
 
-        mock_enhancement_rule_repository.get_all.return_value = [rule]
-
-        def apply_rules_side_effect(transactions, _rules):
-            transactions[0].category_id = category_id
-            transactions[0].categorization_status = CategorizationStatus.RULE_BASED
-            return transactions
-
-        mock_transaction_enhancer.apply_rules.side_effect = apply_rules_side_effect
+        mock_enhancement_rule_repository.find_matching_rules_batch.return_value = [rule]
 
         created_transaction = Transaction(
             id=uuid4(),
@@ -245,8 +238,7 @@ class TestTransactionService:
 
         assert result.category_id == category_id
         assert result.categorization_status == CategorizationStatus.RULE_BASED
-        mock_enhancement_rule_repository.get_all.assert_called_once()
-        mock_transaction_enhancer.apply_rules.assert_called_once()
+        mock_enhancement_rule_repository.find_matching_rules_batch.assert_called_once()
 
     def test_create_transaction_with_prefix_rule_match(
         self,
@@ -266,14 +258,7 @@ class TestTransactionService:
             source=EnhancementRuleSource.MANUAL,
         )
 
-        mock_enhancement_rule_repository.get_all.return_value = [rule]
-
-        def apply_rules_side_effect(transactions, _rules):
-            transactions[0].category_id = category_id
-            transactions[0].categorization_status = CategorizationStatus.RULE_BASED
-            return transactions
-
-        mock_transaction_enhancer.apply_rules.side_effect = apply_rules_side_effect
+        mock_enhancement_rule_repository.find_matching_rules_batch.return_value = [rule]
 
         created_transaction = Transaction(
             id=uuid4(),
@@ -297,7 +282,7 @@ class TestTransactionService:
         result = service.create_transaction(transaction_data=transaction_data)
 
         assert result.category_id == category_id
-        mock_transaction_enhancer.apply_rules.assert_called_once()
+        mock_enhancement_rule_repository.find_matching_rules_batch.assert_called_once()
 
     def test_create_transaction_with_infix_rule_match(
         self,
@@ -317,14 +302,7 @@ class TestTransactionService:
             source=EnhancementRuleSource.MANUAL,
         )
 
-        mock_enhancement_rule_repository.get_all.return_value = [rule]
-
-        def apply_rules_side_effect(transactions, _rules):
-            transactions[0].category_id = category_id
-            transactions[0].categorization_status = CategorizationStatus.RULE_BASED
-            return transactions
-
-        mock_transaction_enhancer.apply_rules.side_effect = apply_rules_side_effect
+        mock_enhancement_rule_repository.find_matching_rules_batch.return_value = [rule]
 
         created_transaction = Transaction(
             id=uuid4(),
@@ -348,7 +326,7 @@ class TestTransactionService:
         result = service.create_transaction(transaction_data=transaction_data)
 
         assert result.category_id == category_id
-        mock_transaction_enhancer.apply_rules.assert_called_once()
+        mock_enhancement_rule_repository.find_matching_rules_batch.assert_called_once()
 
     def test_create_transaction_no_rule_match_creates_ai_rule(
         self,
@@ -359,13 +337,8 @@ class TestTransactionService:
     ):
         account_id = uuid4()
 
-        mock_enhancement_rule_repository.get_all.return_value = []
+        mock_enhancement_rule_repository.find_matching_rules_batch.return_value = []
         mock_enhancement_rule_repository.find_by_normalized_description.return_value = None
-
-        def apply_rules_side_effect(transactions, _rules):
-            return transactions
-
-        mock_transaction_enhancer.apply_rules.side_effect = apply_rules_side_effect
 
         created_transaction = Transaction(
             id=uuid4(),

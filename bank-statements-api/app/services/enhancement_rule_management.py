@@ -206,7 +206,7 @@ class EnhancementRuleManagementService:
     def cleanup_unused_rules(self) -> Dict[str, Any]:
         """Delete rules that haven't been used to categorize any transactions."""
 
-        all_rules = self.enhancement_rule_repository.get_all()
+        all_rules = self.enhancement_rule_repository.get_all(limit=10000)
         unused_rules = []
 
         for rule in all_rules:
@@ -227,7 +227,7 @@ class EnhancementRuleManagementService:
         """Get comprehensive statistics about enhancement rules."""
 
         # Get all rules
-        all_rules = self.enhancement_rule_repository.get_all()
+        all_rules = self.enhancement_rule_repository.get_all(limit=10000)
 
         # Basic counts
         total_rules = len(all_rules)

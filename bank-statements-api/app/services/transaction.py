@@ -5,12 +5,19 @@ from uuid import UUID, uuid4
 
 from app.api.schemas import TransactionCreateRequest, TransactionListResponse
 from app.common.text_normalization import normalize_description
+from app.domain.dto.statement_processing import TransactionDTO
 from app.domain.models.enhancement_rule import EnhancementRule, EnhancementRuleSource, MatchType
 from app.domain.models.transaction import CategorizationStatus, SourceType, Transaction
 from app.ports.repositories.enhancement_rule import EnhancementRuleRepository
 from app.ports.repositories.initial_balance import InitialBalanceRepository
 from app.ports.repositories.transaction import TransactionRepository
 from app.services.transaction_enhancement import TransactionEnhancer
+
+
+class TransactionPersistenceResult:
+    def __init__(self, transactions_saved: int, duplicates_found: int):
+        self.transactions_saved = transactions_saved
+        self.duplicates_found = duplicates_found
 
 
 class TransactionService:
@@ -51,33 +58,42 @@ class TransactionService:
         if transaction_data.category_id is None:
             normalized_description = normalize_description(transaction_data.description)
 
-            rules = self.enhancement_rule_repository.get_all()
+            # Use efficient batch query for single transaction
+            matching_rules = self.enhancement_rule_repository.find_matching_rules_batch([normalized_description])
 
-            temp_transaction = Transaction(
-                id=uuid4(),
-                date=transaction_data.date,
-                description=transaction_data.description,
-                normalized_description=normalized_description,
-                amount=transaction_data.amount,
-                account_id=transaction_data.account_id,
-                statement_id=None,
-                source_type=SourceType.MANUAL,
-                categorization_status=CategorizationStatus.UNCATEGORIZED,
-            )
-
-            enhanced_transactions = self.transaction_enhancer.apply_rules([temp_transaction], rules)
-            enhanced_transaction = enhanced_transactions[0]
-
-            if enhanced_transaction.category_id or enhanced_transaction.counterparty_account_id:
-                enhanced_data = TransactionCreateRequest(
+            if matching_rules:
+                # Get the first matching rule (rules are sorted by precedence)
+                temp_transaction = Transaction(
+                    id=uuid4(),
                     date=transaction_data.date,
                     description=transaction_data.description,
+                    normalized_description=normalized_description,
                     amount=transaction_data.amount,
                     account_id=transaction_data.account_id,
-                    category_id=enhanced_transaction.category_id,
-                    counterparty_account_id=enhanced_transaction.counterparty_account_id,
-                    after_transaction_id=transaction_data.after_transaction_id,
+                    statement_id=None,
+                    source_type=SourceType.MANUAL,
+                    categorization_status=CategorizationStatus.UNCATEGORIZED,
                 )
+
+                # Find first rule that matches the transaction
+                matching_rule = None
+                for rule in matching_rules:
+                    if rule.matches_transaction(temp_transaction):
+                        matching_rule = rule
+                        break
+
+                if matching_rule:
+                    enhanced_data = TransactionCreateRequest(
+                        date=transaction_data.date,
+                        description=transaction_data.description,
+                        amount=transaction_data.amount,
+                        account_id=transaction_data.account_id,
+                        category_id=matching_rule.category_id,
+                        counterparty_account_id=matching_rule.counterparty_account_id,
+                        after_transaction_id=transaction_data.after_transaction_id,
+                    )
+                else:
+                    self._create_unmatched_rule(normalized_description)
             else:
                 self._create_unmatched_rule(normalized_description)
 
@@ -402,3 +418,119 @@ class TransactionService:
     ) -> int:
         """Update the category for all transactions with the given normalized description"""
         return self.transaction_repository.bulk_update_category_by_normalized_description(normalized_description, category_id)
+
+    def save_transactions_from_dtos(
+        self,
+        transaction_dtos: List[TransactionDTO],
+    ) -> TransactionPersistenceResult:
+        """
+        Save multiple transactions from DTOs with duplicate detection.
+        Handles DTO→Entity conversion and duplicate detection logic.
+        """
+        transactions_to_save = []
+        duplicates_found = 0
+        processed_tx_ids = set()
+
+        for dto in transaction_dtos:
+            if self._is_duplicate_transaction(dto, processed_tx_ids):
+                duplicates_found += 1
+                continue
+
+            transaction_entity = self._convert_dto_to_entity(dto)
+            transactions_to_save.append(transaction_entity)
+
+        if transactions_to_save:
+            self.transaction_repository.create_many(transactions_to_save)
+
+        return TransactionPersistenceResult(
+            transactions_saved=len(transactions_to_save),
+            duplicates_found=duplicates_found,
+        )
+
+    def _is_duplicate_transaction(
+        self,
+        dto: TransactionDTO,
+        processed_tx_ids: set,
+    ) -> bool:
+        """Check if a transaction DTO is a duplicate"""
+        account_uuid = None
+        if dto.account_id:
+            if isinstance(dto.account_id, UUID):
+                account_uuid = dto.account_id
+            else:
+                account_uuid = UUID(dto.account_id)
+
+        date_str = dto.date if isinstance(dto.date, str) else dto.date.strftime("%Y-%m-%d")
+
+        matching_transactions = self.transaction_repository.find_matching_transactions(
+            date=date_str,
+            description=dto.description,
+            amount=float(dto.amount),
+            account_id=account_uuid,
+        )
+
+        for match in matching_transactions:
+            if match.id not in processed_tx_ids:
+                processed_tx_ids.add(match.id)
+                return True
+
+        return False
+
+    def _convert_dto_to_entity(self, dto: TransactionDTO) -> Transaction:
+        """Convert a TransactionDTO to a Transaction entity"""
+        date_val = dto.date
+        if isinstance(date_val, str):
+            date_val = datetime.strptime(date_val, "%Y-%m-%d").date()
+
+        source_type_enum = SourceType.UPLOAD
+        if dto.source_type == "manual":
+            source_type_enum = SourceType.MANUAL
+
+        account_uuid = None
+        if dto.account_id:
+            if isinstance(dto.account_id, UUID):
+                account_uuid = dto.account_id
+            else:
+                account_uuid = UUID(dto.account_id)
+
+        statement_uuid = None
+        if dto.statement_id:
+            if isinstance(dto.statement_id, UUID):
+                statement_uuid = dto.statement_id
+            else:
+                statement_uuid = UUID(dto.statement_id)
+
+        category_uuid = None
+        if dto.category_id:
+            if isinstance(dto.category_id, UUID):
+                category_uuid = dto.category_id
+            else:
+                category_uuid = UUID(dto.category_id)
+
+        counterparty_uuid = None
+        if dto.counterparty_account_id:
+            if isinstance(dto.counterparty_account_id, UUID):
+                counterparty_uuid = dto.counterparty_account_id
+            else:
+                counterparty_uuid = UUID(dto.counterparty_account_id)
+
+        categorization_status = dto.categorization_status or CategorizationStatus.UNCATEGORIZED
+
+        transaction = Transaction(
+            id=uuid4(),
+            date=date_val,
+            amount=Decimal(str(dto.amount)),
+            description=dto.description,
+            normalized_description=normalize_description(dto.description),
+            statement_id=statement_uuid,
+            row_index=dto.row_index,
+            sort_index=dto.sort_index or 0,
+            source_type=source_type_enum,
+            manual_position_after=dto.manual_position_after,
+            category_id=category_uuid,
+            counterparty_account_id=counterparty_uuid,
+            categorization_status=categorization_status,
+            account_id=account_uuid,
+        )
+
+        return transaction
