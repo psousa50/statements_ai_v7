@@ -11,6 +11,7 @@ import {
 import {
   TransactionClient,
   CategoryTotalsResponse,
+  CategoryTimeSeriesResponse,
   BulkUpdateTransactionsResponse,
   EnhancementPreviewResponse,
 } from '@/api/TransactionClient'
@@ -76,12 +77,16 @@ const defaultTransactionClient: TransactionClient = {
           transaction_count: 1,
         },
         {
-          category_id: undefined, // uncategorized
+          category_id: undefined,
           total_amount: 50,
           transaction_count: 2,
         },
       ],
     } as CategoryTotalsResponse),
+  getCategoryTimeSeries: () =>
+    Promise.resolve({
+      data_points: [],
+    } as CategoryTimeSeriesResponse),
   getById: () => Promise.resolve(defaultTransaction),
   create: () => Promise.resolve(defaultTransaction),
   update: () => Promise.resolve(defaultTransaction),
