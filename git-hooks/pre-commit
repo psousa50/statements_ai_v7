@@ -7,9 +7,6 @@ echo "🔍 Running pre-commit checks..."
 ROOT_DIR="$(git rev-parse --show-toplevel)"
 cd "$ROOT_DIR"
 
-BACKEND_DIR="$ROOT_DIR/bank-statements-api"
-FRONTEND_DIR="$ROOT_DIR/bank-statements-web"
-
 BACKEND_CHANGED=$(git diff --cached --name-only --diff-filter=ACM | grep "^bank-statements-api/" || true)
 FRONTEND_CHANGED=$(git diff --cached --name-only --diff-filter=ACM | grep "^bank-statements-web/" || true)
 
@@ -18,16 +15,7 @@ if [ -n "$BACKEND_CHANGED" ]; then
   echo "📦 Backend changes detected"
   echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
-  cd "$BACKEND_DIR"
-
-  echo "🔧 Running isort..."
-  uv run isort .
-
-  echo "🔧 Running black..."
-  uv run black .
-
-  echo "🔍 Running ruff..."
-  uv run ruff check .
+  pnpm run verify:api
 
   echo "✅ Backend checks passed"
 fi
@@ -37,13 +25,7 @@ if [ -n "$FRONTEND_CHANGED" ]; then
   echo "🌐 Frontend changes detected"
   echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
-  cd "$FRONTEND_DIR"
-
-  echo "🔧 Running prettier..."
-  pnpm run format
-
-  echo "🔍 Running eslint..."
-  pnpm run lint
+  pnpm run verify:web
 
   echo "✅ Frontend checks passed"
 fi
