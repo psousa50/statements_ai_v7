@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
 import { Category } from '../types/Transaction'
 import { CategoryTimeSeriesDataPoint } from '../api/TransactionClient'
 
@@ -82,7 +82,7 @@ export const CategoryTimeSeriesChart = ({ dataPoints, categories, loading }: Cat
   return (
     <div style={{ width: '100%', height: 400 }}>
       <ResponsiveContainer>
-        <AreaChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+        <BarChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="var(--border-secondary)" />
           <XAxis dataKey="period" stroke="var(--text-secondary)" style={{ fontSize: 12 }} />
           <YAxis stroke="var(--text-secondary)" style={{ fontSize: 12 }} />
@@ -105,18 +105,9 @@ export const CategoryTimeSeriesChart = ({ dataPoints, categories, loading }: Cat
             }}
           />
           {categoryNames.map((name, index) => (
-            <Area
-              key={name}
-              type="monotone"
-              dataKey={name}
-              stackId="1"
-              stroke={COLORS[index % COLORS.length]}
-              fill={COLORS[index % COLORS.length]}
-              fillOpacity={0.6}
-              animationDuration={300}
-            />
+            <Bar key={name} dataKey={name} stackId="1" fill={COLORS[index % COLORS.length]} animationDuration={300} />
           ))}
-        </AreaChart>
+        </BarChart>
       </ResponsiveContainer>
     </div>
   )
