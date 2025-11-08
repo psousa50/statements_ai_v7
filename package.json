@@ -8,7 +8,7 @@
     "dev": "pnpm run dev:api & pnpm run dev:web",
     "dev:api": "cd bank-statements-api && DATABASE_URL=postgresql+psycopg://postgres:postgres@localhost:54321/bank_statements uv run python run.py",
     "dev:web": "cd bank-statements-web && pnpm run dev",
-    "start": "pnpm run dev",
+    "start": "pnpm run db:start && pnpm run dev",
     "// Testing": "=== Testing Scripts ===",
     "test": "pnpm run test:unit && pnpm run test:integration && pnpm run test:web",
     "test:unit": "cd bank-statements-api && uv run pytest tests/unit tests/api tests/services -v",
