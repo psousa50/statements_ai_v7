@@ -451,7 +451,6 @@ select:disabled {
 
 .table-modern tbody tr:hover {
   background-color: var(--bg-hover);
-  transform: scale(1.001);
   box-shadow: var(--shadow-xs);
 }
 

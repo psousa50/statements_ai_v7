@@ -36,7 +36,8 @@
       "Bash(uv run pytest:*)",
       "Bash(uv run isort:*)",
       "Bash(uv run black:*)",
-      "Bash(uv run ruff:*)"
+      "Bash(uv run ruff:*)",
+      "mcp__chrome-devtools__fill"
     ],
     "deny": []
   },

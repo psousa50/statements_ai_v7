@@ -121,7 +121,7 @@ button:disabled {
   box-shadow: var(--shadow-md);
   padding: 0;
   border: 1px solid var(--border-primary);
-  overflow: hidden;
+  overflow: visible;
   transition: all var(--transition-base);
 }
 
@@ -169,7 +169,6 @@ tr {
 
 tr:hover {
   background-color: var(--bg-hover);
-  transform: scale(1.001);
 }
 
 th.text-right,
