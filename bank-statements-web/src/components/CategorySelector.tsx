@@ -15,6 +15,7 @@ interface CategorySelectorProps {
   autoFocus?: boolean
   allowCreate?: boolean
   onCategoryCreate?: (name: string, parentId?: string) => Promise<Category | null>
+  allowParentCategories?: boolean
 }
 
 export const CategorySelector = ({
@@ -30,6 +31,7 @@ export const CategorySelector = ({
   autoFocus = false,
   allowCreate = false,
   onCategoryCreate,
+  allowParentCategories = false,
 }: CategorySelectorProps) => {
   const [categoryInput, setCategoryInput] = useState('')
   const [showSuggestions, setShowSuggestions] = useState(false)
@@ -83,10 +85,10 @@ export const CategorySelector = ({
     let availableCategories = categories
 
     if (multiple) {
-      // For multiple selection, exclude already selected categories
       availableCategories = categories.filter((category) => !selectedCategoryIds.includes(category.id))
+    } else if (allowParentCategories) {
+      availableCategories = categories.filter((category) => !category.parent_id)
     } else {
-      // For single selection, only show leaf categories (no children)
       availableCategories = categories.filter((category) => {
         const hasChildren = categories.some((cat) => cat.parent_id === category.id)
         return !hasChildren
@@ -103,9 +105,8 @@ export const CategorySelector = ({
           return categoryNameMatch || parentNameMatch
         })
 
-    // Sort categories alphabetically
     return filtered.sort((a, b) => a.name.localeCompare(b.name))
-  }, [categories, categoryInput, multiple, selectedCategoryIds])
+  }, [categories, categoryInput, multiple, selectedCategoryIds, allowParentCategories])
 
   // Get category hierarchy display name
   const getCategoryHierarchy = (category: Category): string => {

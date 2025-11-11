@@ -56,22 +56,26 @@ export const CategoryModal = ({ isOpen, category, parentId, categories, onSave, 
     const trimmedName = name.trim()
     if (!trimmedName) return
 
-    // Check for duplicate names at the same level
+    if (selectedParentId) {
+      const selectedParent = categories.find((c) => c.id === selectedParentId)
+      if (selectedParent?.parent_id) {
+        alert('Cannot select a subcategory as parent. Only top-level categories can be parents.')
+        return
+      }
+    }
+
     const duplicateExists = categories.some(
       (c) =>
-        c.name.toLowerCase() === trimmedName.toLowerCase() && c.parent_id === selectedParentId && c.id !== category?.id // Exclude current category when editing
+        c.name.toLowerCase() === trimmedName.toLowerCase() && c.parent_id === selectedParentId && c.id !== category?.id
     )
 
     if (duplicateExists) {
-      // Could use a toast notification here instead of alert
-      // For now, we'll handle this through the parent component's error handling
       throw new Error('A category with this name already exists at this level. Please choose a different name.')
     }
 
     setSaving(true)
     try {
       await onSave(trimmedName, selectedParentId, category?.id)
-      // Don't close modal here - let parent component handle it after successful save
     } catch (error) {
       console.error('Failed to save category:', error)
     } finally {
@@ -121,6 +125,7 @@ export const CategoryModal = ({ isOpen, category, parentId, categories, onSave, 
               placeholder="Select a parent category (leave empty for root category)"
               allowClear={true}
               variant="form"
+              allowParentCategories={true}
             />
             {selectedParentId && (
               <div className="form-help-text">

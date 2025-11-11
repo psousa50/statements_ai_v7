@@ -18,9 +18,13 @@ class CategoryService:
 
     def create_category(self, name: str, parent_id: Optional[UUID] = None) -> Category:
         """Create a new category"""
-        # Validate parent exists if provided
-        if parent_id and not self.category_repository.get_by_id(parent_id):
-            raise ValueError(f"Parent category with ID {parent_id} not found")
+        if parent_id:
+            parent = self.category_repository.get_by_id(parent_id)
+            if not parent:
+                raise ValueError(f"Parent category with ID {parent_id} not found")
+
+            if parent.parent_id:
+                raise ValueError("Cannot create more than 2 levels of categories. Parent category already has a parent.")
 
         category = Category(name=name, parent_id=parent_id)
         return self.category_repository.create(category)
@@ -57,13 +61,16 @@ class CategoryService:
         if not category:
             return None
 
-        # Validate parent exists if provided
-        if parent_id and not self.category_repository.get_by_id(parent_id):
-            raise ValueError(f"Parent category with ID {parent_id} not found")
-
-        # Prevent circular references
         if parent_id == category_id:
             raise ValueError("A category cannot be its own parent")
+
+        if parent_id:
+            parent = self.category_repository.get_by_id(parent_id)
+            if not parent:
+                raise ValueError(f"Parent category with ID {parent_id} not found")
+
+            if parent.parent_id:
+                raise ValueError("Cannot create more than 2 levels of categories. Parent category already has a parent.")
 
         category.name = name
         category.parent_id = parent_id
@@ -81,16 +88,18 @@ class CategoryService:
 
     def upsert_category(self, name: str, parent_id: Optional[UUID] = None) -> Category:
         """Create or update a category (upsert operation)"""
-        # Validate parent exists if provided
-        if parent_id and not self.category_repository.get_by_id(parent_id):
-            raise ValueError(f"Parent category with ID {parent_id} not found")
+        if parent_id:
+            parent = self.category_repository.get_by_id(parent_id)
+            if not parent:
+                raise ValueError(f"Parent category with ID {parent_id} not found")
 
-        # Try to find existing category
+            if parent.parent_id:
+                raise ValueError("Cannot create more than 2 levels of categories. Parent category already has a parent.")
+
         existing_category = self.category_repository.get_by_name(name, parent_id)
         if existing_category:
             return existing_category
 
-        # Create new category if not found
         category = Category(name=name, parent_id=parent_id)
         return self.category_repository.create(category)
 
