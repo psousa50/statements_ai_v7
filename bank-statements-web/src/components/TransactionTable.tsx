@@ -258,7 +258,7 @@ export const TransactionTable = ({
             {showRunningBalance ? (
               <th className="text-right">Running Balance</th>
             ) : (
-              <th style={{ textAlign: 'left' }}>Source</th>
+              <th style={{ textAlign: 'left' }}>Account</th>
             )}
             {onEdit && <th style={{ textAlign: 'center' }}>Actions</th>}
           </tr>
