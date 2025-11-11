@@ -403,6 +403,20 @@ export const TransactionsPage = () => {
             </div>
           </div>
 
+          {!loading && pagination.total_count > 0 && (
+            <div className="transactions-pagination">
+              <Pagination
+                currentPage={pagination.current_page}
+                totalPages={pagination.total_pages}
+                totalItems={pagination.total_count}
+                pageSize={pagination.page_size}
+                onPageChange={handlePageChange}
+                onPageSizeChange={handlePageSizeChange}
+                itemName="transactions"
+              />
+            </div>
+          )}
+
           <div className="transactions-table-container">
             <TransactionTable
               transactions={transactions || []}
