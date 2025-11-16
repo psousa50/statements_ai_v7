@@ -4,6 +4,7 @@ import { StatementClient } from './StatementClient'
 import { TransactionClient } from './TransactionClient'
 import { TransactionCategorizationClient } from './TransactionCategorizationClient'
 import { EnhancementRuleClient } from './EnhancementRuleClient'
+import { DescriptionGroupClient } from './DescriptionGroupClient'
 
 export interface ApiClient {
   transactions: TransactionClient
@@ -12,4 +13,5 @@ export interface ApiClient {
   categories: CategoryClient
   statements: StatementClient
   accounts: AccountClient
+  descriptionGroups: DescriptionGroupClient
 }

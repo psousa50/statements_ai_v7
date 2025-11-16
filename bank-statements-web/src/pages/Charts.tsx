@@ -97,8 +97,7 @@ export const ChartsPage = () => {
 
   const loading =
     categoryTotalsLoading || categoriesLoading || accountsLoading || timeSeriesLoading || recurringPatternsLoading
-  const error =
-    categoryTotalsError || categoriesError || accountsError || timeSeriesError || recurringPatternsError
+  const error = categoryTotalsError || categoriesError || accountsError || timeSeriesError || recurringPatternsError
 
   // Debounced filter update for search, amount, and date inputs
   useEffect(() => {
@@ -696,20 +695,20 @@ export const ChartsPage = () => {
                 categories={categories || []}
                 loading={timeSeriesLoading}
               />
+            ) : loading ? (
+              <div className="loading-indicator">Loading recurring patterns...</div>
+            ) : recurringPatterns && recurringPatterns.patterns.length > 0 ? (
+              <RecurringPatternsTable
+                patterns={recurringPatterns.patterns}
+                categories={categories || []}
+                totalMonthlyRecurring={recurringPatterns.summary.total_monthly_recurring}
+                onRefresh={() => fetchRecurringPatterns(filters)}
+              />
             ) : (
-              loading ? (
-                <div className="loading-indicator">Loading recurring patterns...</div>
-              ) : recurringPatterns && recurringPatterns.patterns.length > 0 ? (
-                <RecurringPatternsTable
-                  patterns={recurringPatterns.patterns}
-                  categories={categories || []}
-                  totalMonthlyRecurring={recurringPatterns.summary.total_monthly_recurring}
-                />
-              ) : (
-                <div className="no-data-message">
-                  No recurring expense patterns found with the current filters. Try adjusting your date range or other filters.
-                </div>
-              )
+              <div className="no-data-message">
+                No recurring expense patterns found with the current filters. Try adjusting your date range or other
+                filters.
+              </div>
             )}
           </div>
 
@@ -729,8 +728,8 @@ export const ChartsPage = () => {
               </p>
             ) : (
               <p>
-                💡 Recurring expenses are detected by finding transactions with similar descriptions that occur at monthly
-                intervals (approximately 30 days apart) with consistent amounts.
+                💡 Recurring expenses are detected by finding transactions with similar descriptions that occur at
+                monthly intervals (approximately 30 days apart) with consistent amounts.
               </p>
             )}
           </div>

@@ -6,6 +6,7 @@ from typing import Dict, List, Optional
 from uuid import UUID
 
 from app.domain.models.transaction import Transaction
+from app.ports.repositories.description_group import DescriptionGroupRepository
 
 
 @dataclass
@@ -57,15 +58,23 @@ class RecurringAnalysisResult:
 
 
 class RecurringExpenseAnalyzer:
-    def __init__(self, min_occurrences: int = 3, amount_variance_threshold: float = 0.15):
+    def __init__(
+        self,
+        description_group_repository: Optional[DescriptionGroupRepository] = None,
+        min_occurrences: int = 3,
+        amount_variance_threshold: float = 0.15,
+    ):
+        self.description_group_repository = description_group_repository
         self.min_occurrences = min_occurrences
         self.amount_variance_threshold = amount_variance_threshold
 
     def analyze_patterns(self, transactions: List[Transaction]) -> RecurringAnalysisResult:
-        patterns = []
-
         monthly_patterns = self._find_monthly_patterns(transactions)
-        patterns.extend(monthly_patterns)
+
+        if self.description_group_repository:
+            patterns = self._merge_grouped_patterns(monthly_patterns)
+        else:
+            patterns = monthly_patterns
 
         total_monthly = sum(p.average_amount for p in patterns)
 
@@ -141,3 +150,60 @@ class RecurringExpenseAnalyzer:
 
     def _is_monthly_interval(self, avg_interval: float) -> bool:
         return 25 <= avg_interval <= 35
+
+    def _merge_grouped_patterns(self, patterns: List[RecurringPattern]) -> List[RecurringPattern]:
+        description_to_group = self.description_group_repository.get_description_to_group_map()
+
+        grouped_patterns = defaultdict(list)
+
+        for pattern in patterns:
+            group_id = description_to_group.get(pattern.normalized_description, pattern.normalized_description)
+            grouped_patterns[group_id].append(pattern)
+
+        merged_patterns = []
+
+        for group_id, pattern_list in grouped_patterns.items():
+            if len(pattern_list) == 1:
+                merged_patterns.append(pattern_list[0])
+            else:
+                merged_pattern = self._combine_patterns(pattern_list)
+                merged_patterns.append(merged_pattern)
+
+        return merged_patterns
+
+    def _combine_patterns(self, patterns: List[RecurringPattern]) -> RecurringPattern:
+        all_transactions = []
+        for pattern in patterns:
+            all_transactions.extend(pattern.transactions)
+
+        sorted_transactions = sorted(all_transactions, key=lambda t: t.date)
+
+        amounts = [abs(t.amount) for t in sorted_transactions]
+        avg_amount = sum(amounts) / len(amounts)
+
+        intervals = self._calculate_intervals(sorted_transactions)
+        avg_interval = sum(intervals) / len(intervals) if intervals else 30.0
+
+        variance = max(abs(a - avg_amount) / avg_amount for a in amounts) if avg_amount > 0 else 0
+
+        category_id = next((t.category_id for t in sorted_transactions if t.category_id), None)
+
+        description = sorted(patterns, key=lambda p: p.description)[0].description
+        normalized_description = sorted(patterns, key=lambda p: p.normalized_description)[0].normalized_description
+
+        annual_cost = avg_amount * Decimal("12")
+
+        return RecurringPattern(
+            description=description,
+            normalized_description=normalized_description,
+            frequency="monthly",
+            interval_days=avg_interval,
+            average_amount=avg_amount,
+            amount_variance=variance,
+            transaction_count=len(sorted_transactions),
+            transactions=sorted_transactions,
+            category_id=category_id,
+            first_transaction_date=sorted_transactions[0].date,
+            last_transaction_date=sorted_transactions[-1].date,
+            total_annual_cost=annual_cost,
+        )

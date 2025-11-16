@@ -4,6 +4,7 @@ from fastapi import FastAPI
 
 from app.api.routes.accounts import register_account_routes
 from app.api.routes.categories import register_category_routes
+from app.api.routes.description_groups import register_description_group_routes
 from app.api.routes.enhancement_rules import register_enhancement_rule_routes
 from app.api.routes.statements import register_statement_routes, register_transaction_job_routes
 from app.api.routes.transactions import register_transaction_routes
@@ -31,3 +32,4 @@ def register_app_routes(
     register_account_routes(app, provide_dependencies)
     register_statement_routes(app, provide_dependencies)
     register_transaction_job_routes(app, provide_dependencies)
+    register_description_group_routes(app, provide_dependencies)

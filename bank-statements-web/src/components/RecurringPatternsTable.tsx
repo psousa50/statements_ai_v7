@@ -2,9 +2,11 @@ import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { RecurringPattern } from '../api/TransactionClient'
 import { Category } from '../types/Transaction'
+import { useApi } from '../api/ApiContext'
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward'
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward'
 import UnfoldMoreIcon from '@mui/icons-material/UnfoldMore'
+import MergeIcon from '@mui/icons-material/MergeType'
 
 type SortField = 'description' | 'category' | 'average_amount' | 'total_annual_cost' | 'transaction_count'
 type SortDirection = 'asc' | 'desc'
@@ -13,16 +15,24 @@ interface RecurringPatternsTableProps {
   patterns: RecurringPattern[]
   categories: Category[]
   totalMonthlyRecurring: number
+  onRefresh?: () => void
 }
 
 export const RecurringPatternsTable = ({
   patterns,
   categories,
   totalMonthlyRecurring,
+  onRefresh,
 }: RecurringPatternsTableProps) => {
   const navigate = useNavigate()
+  const api = useApi()
   const [sortField, setSortField] = useState<SortField>('average_amount')
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc')
+  const [mergeModalOpen, setMergeModalOpen] = useState(false)
+  const [patternToMerge, setPatternToMerge] = useState<RecurringPattern | null>(null)
+  const [selectedTargetPattern, setSelectedTargetPattern] = useState<string>('')
+  const [merging, setMerging] = useState(false)
+  const [mergeError, setMergeError] = useState<string | null>(null)
 
   const getCategoryName = (categoryId?: string) => {
     if (!categoryId) return '-'
@@ -87,6 +97,47 @@ export const RecurringPatternsTable = ({
     const params = new URLSearchParams()
     params.set('description_search', pattern.normalized_description)
     navigate(`/transactions?${params.toString()}`)
+  }
+
+  const handleMergeClick = (pattern: RecurringPattern) => {
+    setPatternToMerge(pattern)
+    setSelectedTargetPattern('')
+    setMergeError(null)
+    setMergeModalOpen(true)
+  }
+
+  const handleMergeConfirm = async () => {
+    if (!patternToMerge || !selectedTargetPattern) return
+
+    setMerging(true)
+    setMergeError(null)
+
+    try {
+      await api.descriptionGroups.create({
+        name: `Merged: ${patternToMerge.description}`,
+        normalized_descriptions: [patternToMerge.normalized_description, selectedTargetPattern],
+      })
+
+      setMergeModalOpen(false)
+      setPatternToMerge(null)
+      setSelectedTargetPattern('')
+
+      if (onRefresh) {
+        onRefresh()
+      }
+    } catch (error) {
+      console.error('Error merging patterns:', error)
+      setMergeError('Failed to merge patterns. Please try again.')
+    } finally {
+      setMerging(false)
+    }
+  }
+
+  const handleMergeCancel = () => {
+    setMergeModalOpen(false)
+    setPatternToMerge(null)
+    setSelectedTargetPattern('')
+    setMergeError(null)
   }
 
   const formatCurrency = (amount: number) => {
@@ -191,9 +242,18 @@ export const RecurringPatternsTable = ({
                     </div>
                   </td>
                   <td>
-                    <button className="view-transactions-btn" onClick={() => handleViewTransactions(pattern)}>
-                      View Transactions
-                    </button>
+                    <div className="actions-cell">
+                      <button className="view-transactions-btn" onClick={() => handleViewTransactions(pattern)}>
+                        View Transactions
+                      </button>
+                      <button
+                        className="merge-btn"
+                        onClick={() => handleMergeClick(pattern)}
+                        title="Merge with another pattern"
+                      >
+                        <MergeIcon fontSize="small" />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))
@@ -201,6 +261,50 @@ export const RecurringPatternsTable = ({
           </tbody>
         </table>
       </div>
+
+      {mergeModalOpen && patternToMerge && (
+        <div className="merge-modal-overlay" onClick={handleMergeCancel}>
+          <div className="merge-modal" onClick={(e) => e.stopPropagation()}>
+            <h3>Merge Recurring Pattern</h3>
+            <p className="modal-description">
+              Merge "<strong>{patternToMerge.description}</strong>" with:
+            </p>
+
+            {mergeError && <div className="error-message">{mergeError}</div>}
+
+            <div className="pattern-selector">
+              {sortedPatterns
+                .filter((p) => p.normalized_description !== patternToMerge.normalized_description)
+                .map((pattern) => (
+                  <label key={pattern.normalized_description} className="pattern-option">
+                    <input
+                      type="radio"
+                      name="target-pattern"
+                      value={pattern.normalized_description}
+                      checked={selectedTargetPattern === pattern.normalized_description}
+                      onChange={(e) => setSelectedTargetPattern(e.target.value)}
+                    />
+                    <div className="pattern-option-content">
+                      <div className="pattern-option-description">{pattern.description}</div>
+                      <div className="pattern-option-details">
+                        {pattern.transaction_count} transactions • {formatCurrency(pattern.average_amount)}/month
+                      </div>
+                    </div>
+                  </label>
+                ))}
+            </div>
+
+            <div className="modal-actions">
+              <button className="cancel-btn" onClick={handleMergeCancel} disabled={merging}>
+                Cancel
+              </button>
+              <button className="confirm-btn" onClick={handleMergeConfirm} disabled={!selectedTargetPattern || merging}>
+                {merging ? 'Merging...' : 'Merge'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <style>{`
         .recurring-patterns-container {
@@ -365,6 +469,160 @@ export const RecurringPatternsTable = ({
           text-align: center;
           padding: 48px 16px;
           color: var(--text-secondary);
+        }
+
+        .actions-cell {
+          display: flex;
+          gap: 8px;
+          align-items: center;
+        }
+
+        .merge-btn {
+          background: var(--bg-tertiary);
+          color: var(--text-primary);
+          border: 1px solid var(--border-color);
+          padding: 6px 8px;
+          border-radius: 4px;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          transition: all 0.2s;
+        }
+
+        .merge-btn:hover {
+          background: var(--bg-hover);
+          border-color: var(--primary-color);
+          color: var(--primary-color);
+        }
+
+        .merge-modal-overlay {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: rgba(0, 0, 0, 0.5);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 1000;
+        }
+
+        .merge-modal {
+          background: var(--bg-primary);
+          border-radius: 8px;
+          padding: 24px;
+          max-width: 600px;
+          width: 90%;
+          max-height: 80vh;
+          overflow: auto;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .merge-modal h3 {
+          margin: 0 0 16px 0;
+          font-size: 20px;
+          font-weight: 600;
+        }
+
+        .modal-description {
+          margin: 0 0 20px 0;
+          color: var(--text-secondary);
+        }
+
+        .error-message {
+          background: var(--error-bg);
+          color: var(--error-text);
+          padding: 12px;
+          border-radius: 4px;
+          margin-bottom: 16px;
+        }
+
+        .pattern-selector {
+          max-height: 400px;
+          overflow-y: auto;
+          margin-bottom: 24px;
+          border: 1px solid var(--border-color);
+          border-radius: 4px;
+        }
+
+        .pattern-option {
+          display: flex;
+          align-items: flex-start;
+          padding: 12px;
+          border-bottom: 1px solid var(--border-color);
+          cursor: pointer;
+          transition: background 0.2s;
+        }
+
+        .pattern-option:last-child {
+          border-bottom: none;
+        }
+
+        .pattern-option:hover {
+          background: var(--bg-hover);
+        }
+
+        .pattern-option input[type="radio"] {
+          margin-right: 12px;
+          margin-top: 2px;
+          cursor: pointer;
+        }
+
+        .pattern-option-content {
+          flex: 1;
+        }
+
+        .pattern-option-description {
+          font-weight: 500;
+          margin-bottom: 4px;
+        }
+
+        .pattern-option-details {
+          font-size: 13px;
+          color: var(--text-secondary);
+        }
+
+        .modal-actions {
+          display: flex;
+          gap: 12px;
+          justify-content: flex-end;
+        }
+
+        .cancel-btn,
+        .confirm-btn {
+          padding: 8px 16px;
+          border-radius: 4px;
+          font-size: 14px;
+          font-weight: 500;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+
+        .cancel-btn {
+          background: var(--bg-secondary);
+          color: var(--text-primary);
+          border: 1px solid var(--border-color);
+        }
+
+        .cancel-btn:hover:not(:disabled) {
+          background: var(--bg-hover);
+        }
+
+        .confirm-btn {
+          background: var(--primary-color);
+          color: white;
+          border: none;
+        }
+
+        .confirm-btn:hover:not(:disabled) {
+          background: var(--primary-hover);
+        }
+
+        .confirm-btn:disabled,
+        .cancel-btn:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
         }
       `}</style>
     </div>

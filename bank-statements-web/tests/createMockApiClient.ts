@@ -1,6 +1,7 @@
 import { ApiClient } from '@/api/ApiClient'
 import { Account, AccountClient } from '@/api/AccountClient'
 import { CategoryClient, CategoryListResponse } from '@/api/CategoryClient'
+import { DescriptionGroupClient, DescriptionGroupListResponse } from '@/api/DescriptionGroupClient'
 import { EnhancementRuleClient } from '@/api/EnhancementRuleClient'
 import {
   StatementAnalysisResponse,
@@ -87,6 +88,14 @@ const defaultTransactionClient: TransactionClient = {
     Promise.resolve({
       data_points: [],
     } as CategoryTimeSeriesResponse),
+  getRecurringPatterns: () =>
+    Promise.resolve({
+      patterns: [],
+      summary: {
+        total_monthly_recurring: 0,
+        pattern_count: 0,
+      },
+    }),
   getById: () => Promise.resolve(defaultTransaction),
   create: () => Promise.resolve(defaultTransaction),
   update: () => Promise.resolve(defaultTransaction),
@@ -238,6 +247,14 @@ const defaultEnhancementRuleClient: EnhancementRuleClient = {
   cleanupUnused: () => Promise.resolve({ deleted_count: 0, message: 'No unused rules found' }),
 }
 
+const defaultDescriptionGroupClient: DescriptionGroupClient = {
+  getAll: () => Promise.resolve({ groups: [], total: 0 } as DescriptionGroupListResponse),
+  getById: () => Promise.reject(new Error('Not implemented')),
+  create: () => Promise.reject(new Error('Not implemented')),
+  update: () => Promise.reject(new Error('Not implemented')),
+  delete: () => Promise.resolve(),
+}
+
 type TransactionClientOverrides = Partial<{
   [K in keyof TransactionClient]: TransactionClient[K]
 }>
@@ -287,5 +304,6 @@ export const createMockApiClient = (overrides: ApiClientOverrides = {}): ApiClie
       ...overrides.statements,
     },
     enhancementRules: defaultEnhancementRuleClient,
+    descriptionGroups: defaultDescriptionGroupClient,
   }
 }

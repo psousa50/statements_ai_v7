@@ -531,3 +531,39 @@ class RecurringPatternResponse(BaseModel):
 class RecurringPatternsResponse(BaseModel):
     patterns: List[RecurringPatternResponse]
     summary: Dict[str, float]
+
+
+class DescriptionGroupMemberResponse(BaseModel):
+    id: UUID
+    normalized_description: str
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class DescriptionGroupBase(BaseModel):
+    name: str
+
+
+class DescriptionGroupCreate(DescriptionGroupBase):
+    normalized_descriptions: List[str]
+
+
+class DescriptionGroupUpdate(DescriptionGroupBase):
+    normalized_descriptions: List[str]
+
+
+class DescriptionGroupResponse(BaseModel):
+    id: UUID
+    name: str
+    members: List[DescriptionGroupMemberResponse]
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class DescriptionGroupListResponse(BaseModel):
+    groups: Sequence[DescriptionGroupResponse]
+    total: int
+
+    model_config = ConfigDict(from_attributes=True)

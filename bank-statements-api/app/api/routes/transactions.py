@@ -397,14 +397,11 @@ def register_transaction_routes(
 
         result = internal.recurring_expense_analyzer.analyze_patterns(transactions_response.transactions)
 
-        patterns_response = [
-            RecurringPatternResponse(**pattern.to_dict())
-            for pattern in result.patterns
-        ]
+        patterns_response = [RecurringPatternResponse(**pattern.to_dict()) for pattern in result.patterns]
 
         return RecurringPatternsResponse(
             patterns=patterns_response,
-            summary=result.to_dict()['summary'],
+            summary=result.to_dict()["summary"],
         )
 
     @router.post(

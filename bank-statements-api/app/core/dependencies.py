@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from app.adapters.repositories.account import SQLAlchemyAccountRepository
 from app.adapters.repositories.background_job import SQLAlchemyBackgroundJobRepository
 from app.adapters.repositories.category import SQLAlchemyCategoryRepository
+from app.adapters.repositories.description_group import SQLAlchemyDescriptionGroupRepository
 from app.adapters.repositories.enhancement_rule import SQLAlchemyEnhancementRuleRepository
 from app.adapters.repositories.initial_balance import SQLAlchemyInitialBalanceRepository
 from app.adapters.repositories.statement import SqlAlchemyStatementRepository
@@ -18,6 +19,7 @@ from app.core.database import SessionLocal
 from app.services.account import AccountService
 from app.services.background.background_job_service import BackgroundJobService
 from app.services.category import CategoryService
+from app.services.description_group import DescriptionGroupService
 from app.services.enhancement_rule_management import EnhancementRuleManagementService
 from app.services.initial_balance_service import InitialBalanceService
 from app.services.recurring_expense_analyzer import RecurringExpenseAnalyzer
@@ -74,6 +76,7 @@ class InternalDependencies:
         category_repository: SQLAlchemyCategoryRepository,
         account_repository: SQLAlchemyAccountRepository,
         recurring_expense_analyzer: RecurringExpenseAnalyzer,
+        description_group_service: DescriptionGroupService,
     ):
         self.transaction_service = transaction_service
         self.category_service = category_service
@@ -92,6 +95,7 @@ class InternalDependencies:
         self.category_repository = category_repository
         self.account_repository = account_repository
         self.recurring_expense_analyzer = recurring_expense_analyzer
+        self.description_group_service = description_group_service
 
 
 def build_external_dependencies() -> ExternalDependencies:
@@ -110,6 +114,7 @@ def build_internal_dependencies(
     statement_repo = SqlAlchemyStatementRepository(external.db)
     enhancement_rule_repo = SQLAlchemyEnhancementRuleRepository(external.db)
     background_job_repo = SQLAlchemyBackgroundJobRepository(external.db)
+    description_group_repo = SQLAlchemyDescriptionGroupRepository(external.db)
 
     file_type_detector = StatementFileTypeDetector()
     statement_parser = StatementParser()
@@ -170,7 +175,8 @@ def build_internal_dependencies(
         row_filter_service=row_filter_service,
     )
 
-    recurring_expense_analyzer = RecurringExpenseAnalyzer()
+    recurring_expense_analyzer = RecurringExpenseAnalyzer(description_group_repository=description_group_repo)
+    description_group_service = DescriptionGroupService(description_group_repo)
 
     return InternalDependencies(
         transaction_service=transaction_service,
@@ -190,6 +196,7 @@ def build_internal_dependencies(
         category_repository=category_repo,
         account_repository=account_repo,
         recurring_expense_analyzer=recurring_expense_analyzer,
+        description_group_service=description_group_service,
     )
 
 

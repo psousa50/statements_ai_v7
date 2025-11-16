@@ -15,8 +15,10 @@ from app.core.dependencies import InternalDependencies
 from app.services.account import AccountService
 from app.services.background.background_job_service import BackgroundJobService
 from app.services.category import CategoryService
+from app.services.description_group import DescriptionGroupService
 from app.services.enhancement_rule_management import EnhancementRuleManagementService
 from app.services.initial_balance_service import InitialBalanceService
+from app.services.recurring_expense_analyzer import RecurringExpenseAnalyzer
 from app.services.statement import StatementService
 from app.services.statement_processing.statement_analyzer import StatementAnalyzerService
 from app.services.statement_processing.statement_upload import StatementUploadService
@@ -41,6 +43,8 @@ def mocked_dependencies(
     transaction_enhancer: TransactionEnhancer = None,
     category_repository: SQLAlchemyCategoryRepository = None,
     account_repository: SQLAlchemyAccountRepository = None,
+    recurring_expense_analyzer: RecurringExpenseAnalyzer = None,
+    description_group_service: DescriptionGroupService = None,
 ) -> InternalDependencies:
     if transaction_service is None:
         transaction_service = MagicMock(spec=TransactionService)
@@ -66,6 +70,8 @@ def mocked_dependencies(
         transaction_enhancer=transaction_enhancer or MagicMock(spec=TransactionEnhancer),
         category_repository=category_repository or MagicMock(spec=SQLAlchemyCategoryRepository),
         account_repository=account_repository or MagicMock(spec=SQLAlchemyAccountRepository),
+        recurring_expense_analyzer=recurring_expense_analyzer or MagicMock(spec=RecurringExpenseAnalyzer),
+        description_group_service=description_group_service or MagicMock(spec=DescriptionGroupService),
     )
 
 
