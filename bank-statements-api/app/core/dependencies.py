@@ -20,6 +20,7 @@ from app.services.background.background_job_service import BackgroundJobService
 from app.services.category import CategoryService
 from app.services.enhancement_rule_management import EnhancementRuleManagementService
 from app.services.initial_balance_service import InitialBalanceService
+from app.services.recurring_expense_analyzer import RecurringExpenseAnalyzer
 from app.services.schema_detection.heuristic_schema_detector import HeuristicSchemaDetector
 from app.services.statement import StatementService
 from app.services.statement_processing.file_type_detector import StatementFileTypeDetector
@@ -72,6 +73,7 @@ class InternalDependencies:
         transaction_enhancer: TransactionEnhancer,
         category_repository: SQLAlchemyCategoryRepository,
         account_repository: SQLAlchemyAccountRepository,
+        recurring_expense_analyzer: RecurringExpenseAnalyzer,
     ):
         self.transaction_service = transaction_service
         self.category_service = category_service
@@ -89,6 +91,7 @@ class InternalDependencies:
         self.transaction_enhancer = transaction_enhancer
         self.category_repository = category_repository
         self.account_repository = account_repository
+        self.recurring_expense_analyzer = recurring_expense_analyzer
 
 
 def build_external_dependencies() -> ExternalDependencies:
@@ -167,6 +170,8 @@ def build_internal_dependencies(
         row_filter_service=row_filter_service,
     )
 
+    recurring_expense_analyzer = RecurringExpenseAnalyzer()
+
     return InternalDependencies(
         transaction_service=transaction_service,
         category_service=category_service,
@@ -184,6 +189,7 @@ def build_internal_dependencies(
         transaction_enhancer=transaction_enhancer,
         category_repository=category_repo,
         account_repository=account_repo,
+        recurring_expense_analyzer=recurring_expense_analyzer,
     )
 
 

@@ -71,6 +71,29 @@ export interface EnhancementPreviewResponse {
   counterparty_account_name?: string
 }
 
+export interface RecurringPattern {
+  description: string
+  normalized_description: string
+  frequency: string
+  interval_days: number
+  average_amount: number
+  amount_variance: number
+  transaction_count: number
+  transaction_ids: string[]
+  category_id?: string
+  first_transaction_date: string
+  last_transaction_date: string
+  total_annual_cost: number
+}
+
+export interface RecurringPatternsResponse {
+  patterns: RecurringPattern[]
+  summary: {
+    total_monthly_recurring: number
+    pattern_count: number
+  }
+}
+
 export interface TransactionClient {
   getAll(filters?: TransactionFilters): Promise<TransactionListResponse>
   getCategoryTotals(filters?: Omit<TransactionFilters, 'page' | 'page_size'>): Promise<CategoryTotalsResponse>
@@ -79,6 +102,7 @@ export interface TransactionClient {
     period?: 'month' | 'week',
     filters?: Omit<TransactionFilters, 'page' | 'page_size'>
   ): Promise<CategoryTimeSeriesResponse>
+  getRecurringPatterns(filters?: Omit<TransactionFilters, 'page' | 'page_size'>): Promise<RecurringPatternsResponse>
   getById(id: string): Promise<Transaction>
   create(transaction: TransactionCreate): Promise<Transaction>
   update(id: string, transaction: TransactionCreate): Promise<Transaction>
@@ -252,6 +276,50 @@ export const transactionClient: TransactionClient = {
       ? `${API_URL}/category-time-series?${params.toString()}`
       : `${API_URL}/category-time-series`
     const response = await axios.get<CategoryTimeSeriesResponse>(url)
+    return response.data
+  },
+
+  async getRecurringPatterns(filters?: Omit<TransactionFilters, 'page' | 'page_size'>) {
+    const params = new URLSearchParams()
+
+    if (filters?.category_ids && filters.category_ids.length > 0) {
+      params.append('category_ids', filters.category_ids.join(','))
+    }
+    if (filters?.status) {
+      params.append('status', filters.status)
+    }
+    if (filters?.min_amount !== undefined) {
+      params.append('min_amount', filters.min_amount.toString())
+    }
+    if (filters?.max_amount !== undefined) {
+      params.append('max_amount', filters.max_amount.toString())
+    }
+    if (filters?.description_search) {
+      params.append('description_search', filters.description_search)
+    }
+    if (filters?.account_id) {
+      params.append('account_id', filters.account_id)
+    }
+    if (filters?.start_date) {
+      params.append('start_date', filters.start_date)
+    }
+    if (filters?.end_date) {
+      params.append('end_date', filters.end_date)
+    }
+    if (filters?.exclude_transfers !== undefined) {
+      params.append('exclude_transfers', filters.exclude_transfers.toString())
+    }
+    if (filters?.exclude_uncategorized !== undefined) {
+      params.append('exclude_uncategorized', filters.exclude_uncategorized.toString())
+    }
+    if (filters?.transaction_type) {
+      params.append('transaction_type', filters.transaction_type)
+    }
+
+    const url = params.toString()
+      ? `${API_URL}/recurring-patterns?${params.toString()}`
+      : `${API_URL}/recurring-patterns`
+    const response = await axios.get<RecurringPatternsResponse>(url)
     return response.data
   },
 

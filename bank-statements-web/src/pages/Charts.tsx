@@ -1,11 +1,12 @@
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts'
-import { useCategoryTotals, useCategoryTimeSeries } from '../services/hooks/useTransactions'
+import { useCategoryTotals, useCategoryTimeSeries, useRecurringPatterns } from '../services/hooks/useTransactions'
 import { useCategories } from '../services/hooks/useCategories'
 import { useAccounts } from '../services/hooks/useAccounts'
 import { TransactionFilters } from '../components/TransactionFilters'
 import { CategoryTimeSeriesChart } from '../components/CategoryTimeSeriesChart'
+import { RecurringPatternsTable } from '../components/RecurringPatternsTable'
 import { Category } from '../types/Transaction'
 import { TransactionFilters as FilterType } from '../api/TransactionClient'
 import './ChartsPage.css'
@@ -58,7 +59,7 @@ export const ChartsPage = () => {
   const [selectedRootCategory, setSelectedRootCategory] = useState<string | null>(null)
   const [transactionType, setTransactionType] = useState<'all' | 'debit' | 'credit'>('debit')
   const [excludeUncategorized, setExcludeUncategorized] = useState<boolean>(true)
-  const [viewMode, setViewMode] = useState<'pie' | 'timeseries'>('pie')
+  const [viewMode, setViewMode] = useState<'pie' | 'timeseries' | 'recurring'>('pie')
   const [timeSeriesPeriod, setTimeSeriesPeriod] = useState<'month' | 'week'>('month')
 
   // Local state for debounced inputs
@@ -84,11 +85,20 @@ export const ChartsPage = () => {
     fetchCategoryTimeSeries,
   } = useCategoryTimeSeries()
 
+  const {
+    recurringPatterns,
+    loading: recurringPatternsLoading,
+    error: recurringPatternsError,
+    fetchRecurringPatterns,
+  } = useRecurringPatterns()
+
   const { categories, loading: categoriesLoading, error: categoriesError } = useCategories()
   const { accounts, loading: accountsLoading, error: accountsError } = useAccounts()
 
-  const loading = categoryTotalsLoading || categoriesLoading || accountsLoading || timeSeriesLoading
-  const error = categoryTotalsError || categoriesError || accountsError || timeSeriesError
+  const loading =
+    categoryTotalsLoading || categoriesLoading || accountsLoading || timeSeriesLoading || recurringPatternsLoading
+  const error =
+    categoryTotalsError || categoriesError || accountsError || timeSeriesError || recurringPatternsError
 
   // Debounced filter update for search, amount, and date inputs
   useEffect(() => {
@@ -459,13 +469,15 @@ export const ChartsPage = () => {
   const totalTransactions = chartData.reduce((sum, item) => sum + item.count, 0)
 
   const handleViewModeChange = useCallback(
-    (mode: 'pie' | 'timeseries') => {
+    (mode: 'pie' | 'timeseries' | 'recurring') => {
       setViewMode(mode)
       if (mode === 'timeseries') {
         fetchCategoryTimeSeries(selectedRootCategory || undefined, timeSeriesPeriod, filters)
+      } else if (mode === 'recurring') {
+        fetchRecurringPatterns(filters)
       }
     },
-    [selectedRootCategory, timeSeriesPeriod, filters, fetchCategoryTimeSeries]
+    [selectedRootCategory, timeSeriesPeriod, filters, fetchCategoryTimeSeries, fetchRecurringPatterns]
   )
 
   const handleCategorySelectionForTimeSeries = useCallback(
@@ -577,6 +589,12 @@ export const ChartsPage = () => {
                 >
                   Time Series
                 </button>
+                <button
+                  onClick={() => handleViewModeChange('recurring')}
+                  className={viewMode === 'recurring' ? 'active' : ''}
+                >
+                  Recurring
+                </button>
               </div>
               {viewMode === 'timeseries' && (
                 <>
@@ -672,12 +690,26 @@ export const ChartsPage = () => {
                   </PieChart>
                 </ResponsiveContainer>
               )
-            ) : (
+            ) : viewMode === 'timeseries' ? (
               <CategoryTimeSeriesChart
                 dataPoints={timeSeriesData || []}
                 categories={categories || []}
                 loading={timeSeriesLoading}
               />
+            ) : (
+              loading ? (
+                <div className="loading-indicator">Loading recurring patterns...</div>
+              ) : recurringPatterns && recurringPatterns.patterns.length > 0 ? (
+                <RecurringPatternsTable
+                  patterns={recurringPatterns.patterns}
+                  categories={categories || []}
+                  totalMonthlyRecurring={recurringPatterns.summary.total_monthly_recurring}
+                />
+              ) : (
+                <div className="no-data-message">
+                  No recurring expense patterns found with the current filters. Try adjusting your date range or other filters.
+                </div>
+              )
             )}
           </div>
 
@@ -688,12 +720,17 @@ export const ChartsPage = () => {
               ) : (
                 <p>💡 Click on any subcategory slice to view its transactions</p>
               )
-            ) : (
+            ) : viewMode === 'timeseries' ? (
               <p>
                 💡{' '}
                 {selectedRootCategory
                   ? 'Showing time series for selected category and its subcategories. Use the dropdown above to change category.'
                   : 'Showing time series for all categories. Use the dropdown above to filter by a specific category.'}
+              </p>
+            ) : (
+              <p>
+                💡 Recurring expenses are detected by finding transactions with similar descriptions that occur at monthly
+                intervals (approximately 30 days apart) with consistent amounts.
               </p>
             )}
           </div>

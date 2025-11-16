@@ -507,3 +507,27 @@ class StatementResponse(BaseModel):
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class RecurringPatternResponse(BaseModel):
+    description: str
+    normalized_description: str
+    frequency: str
+    interval_days: float
+    average_amount: Decimal
+    amount_variance: float
+    transaction_count: int
+    transaction_ids: List[str]
+    category_id: Optional[str] = None
+    first_transaction_date: date
+    last_transaction_date: date
+    total_annual_cost: Decimal
+
+    @field_serializer("average_amount", "total_annual_cost")
+    def serialize_decimal(self, value: Decimal) -> float:
+        return float(value)
+
+
+class RecurringPatternsResponse(BaseModel):
+    patterns: List[RecurringPatternResponse]
+    summary: Dict[str, float]

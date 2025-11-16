@@ -14,6 +14,8 @@ from app.api.schemas import (
     CategoryTotalsResponse,
     EnhancementPreviewRequest,
     EnhancementPreviewResponse,
+    RecurringPatternResponse,
+    RecurringPatternsResponse,
     TransactionCreateRequest,
     TransactionListResponse,
     TransactionResponse,
@@ -324,6 +326,86 @@ def register_transaction_routes(
         ]
 
         return CategoryTimeSeriesResponse(data_points=response_data_points)
+
+    @router.get(
+        "/recurring-patterns",
+        response_model=RecurringPatternsResponse,
+    )
+    def get_recurring_patterns(
+        category_ids: Optional[str] = Query(
+            None,
+            description="Comma-separated list of category IDs",
+        ),
+        status: Optional[CategorizationStatus] = Query(
+            None,
+            description="Filter by categorization status",
+        ),
+        min_amount: Optional[Decimal] = Query(None, description="Minimum transaction amount"),
+        max_amount: Optional[Decimal] = Query(None, description="Maximum transaction amount"),
+        description_search: Optional[str] = Query(
+            None,
+            description="Search in transaction description",
+        ),
+        account_id: Optional[UUID] = Query(None, description="Filter by account ID"),
+        start_date: Optional[date] = Query(
+            None,
+            description="Filter transactions from this date",
+        ),
+        end_date: Optional[date] = Query(
+            None,
+            description="Filter transactions to this date",
+        ),
+        exclude_transfers: Optional[bool] = Query(
+            True,
+            description="Exclude transfers between accounts",
+        ),
+        exclude_uncategorized: Optional[bool] = Query(
+            False,
+            description="Exclude uncategorized transactions",
+        ),
+        transaction_type: Optional[str] = Query(
+            None,
+            description="Filter by transaction type: 'debit', 'credit', or 'all'",
+        ),
+        internal: InternalDependencies = Depends(provide_dependencies),
+    ):
+        parsed_category_ids = None
+        if category_ids:
+            try:
+                parsed_category_ids = [UUID(cid.strip()) for cid in category_ids.split(",") if cid.strip()]
+            except ValueError:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Invalid category IDs format",
+                )
+
+        transactions_response = internal.transaction_service.get_transactions_paginated(
+            page=1,
+            page_size=10000,
+            category_ids=parsed_category_ids,
+            status=status,
+            min_amount=min_amount,
+            max_amount=max_amount,
+            description_search=description_search,
+            account_id=account_id,
+            start_date=start_date,
+            end_date=end_date,
+            exclude_transfers=exclude_transfers,
+            exclude_uncategorized=exclude_uncategorized,
+            transaction_type=transaction_type,
+        )
+
+        result = internal.recurring_expense_analyzer.analyze_patterns(transactions_response.transactions)
+
+        patterns_response = [
+            RecurringPatternResponse(**pattern.to_dict())
+            for pattern in result.patterns
+        ]
+
+        return RecurringPatternsResponse(
+            patterns=patterns_response,
+            summary=result.to_dict()['summary'],
+        )
 
     @router.post(
         "/preview-enhancement",

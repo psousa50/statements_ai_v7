@@ -1,7 +1,12 @@
 import { useState, useEffect, useCallback } from 'react'
 import { CategorizationStatus, Transaction } from '../../types/Transaction'
 import { useApi } from '../../api/ApiContext'
-import { TransactionFilters, CategoryTotalsResponse, CategoryTimeSeriesDataPoint } from '../../api/TransactionClient'
+import {
+  TransactionFilters,
+  CategoryTotalsResponse,
+  CategoryTimeSeriesDataPoint,
+  RecurringPatternsResponse,
+} from '../../api/TransactionClient'
 import { EnhancementRule } from '../../types/EnhancementRule'
 
 interface TransactionPagination {
@@ -253,5 +258,38 @@ export const useCategoryTimeSeries = () => {
     loading,
     error,
     fetchCategoryTimeSeries,
+  }
+}
+
+export const useRecurringPatterns = () => {
+  const api = useApi()
+  const [recurringPatterns, setRecurringPatterns] = useState<RecurringPatternsResponse | null>(null)
+  const [loading, setLoading] = useState<boolean>(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const fetchRecurringPatterns = useCallback(
+    async (filters?: Omit<TransactionFilters, 'page' | 'page_size'>) => {
+      setLoading(true)
+      setError(null)
+      try {
+        const response = await api.transactions.getRecurringPatterns(filters)
+        setRecurringPatterns(response)
+        return response
+      } catch (err) {
+        console.error('Error fetching recurring patterns:', err)
+        setError('Failed to fetch recurring patterns. Please try again later.')
+        return null
+      } finally {
+        setLoading(false)
+      }
+    },
+    [api.transactions]
+  )
+
+  return {
+    recurringPatterns,
+    loading,
+    error,
+    fetchRecurringPatterns,
   }
 }
