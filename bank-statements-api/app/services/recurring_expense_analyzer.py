@@ -1,12 +1,14 @@
 from collections import defaultdict
 from dataclasses import dataclass
-from datetime import date
+from datetime import date, timedelta
 from decimal import Decimal
 from typing import Dict, List, Optional
 from uuid import UUID
 
 from app.domain.models.transaction import Transaction
 from app.ports.repositories.description_group import DescriptionGroupRepository
+
+ACTIVE_PATTERNS_DAYS = 90
 
 
 @dataclass
@@ -62,19 +64,27 @@ class RecurringExpenseAnalyzer:
         self,
         description_group_repository: Optional[DescriptionGroupRepository] = None,
         min_occurrences: int = 3,
-        amount_variance_threshold: float = 0.15,
+        amount_variance_threshold: float = 0.99,
     ):
         self.description_group_repository = description_group_repository
         self.min_occurrences = min_occurrences
         self.amount_variance_threshold = amount_variance_threshold
 
-    def analyze_patterns(self, transactions: List[Transaction]) -> RecurringAnalysisResult:
+    def analyze_patterns(
+        self,
+        transactions: List[Transaction],
+        active_only: bool = False,
+    ) -> RecurringAnalysisResult:
         monthly_patterns = self._find_monthly_patterns(transactions)
 
         if self.description_group_repository:
             patterns = self._merge_grouped_patterns(monthly_patterns)
         else:
             patterns = monthly_patterns
+
+        if active_only:
+            cutoff_date = date.today() - timedelta(days=ACTIVE_PATTERNS_DAYS)
+            patterns = [p for p in patterns if p.last_transaction_date >= cutoff_date]
 
         total_monthly = sum(p.average_amount for p in patterns)
 
@@ -93,17 +103,23 @@ class RecurringExpenseAnalyzer:
                 continue
 
             sorted_transactions = sorted(group_transactions, key=lambda t: t.date)
+            deduplicated = self._deduplicate_by_date(sorted_transactions)
 
-            intervals = self._calculate_intervals(sorted_transactions)
+            if len(deduplicated) < self.min_occurrences:
+                continue
+
+            monthly_transactions = self._filter_to_monthly_sequence(deduplicated)
+
+            if len(monthly_transactions) < self.min_occurrences:
+                continue
+
+            intervals = self._calculate_intervals(monthly_transactions)
             if not intervals:
                 continue
 
             avg_interval = sum(intervals) / len(intervals)
 
-            if not self._is_monthly_interval(avg_interval):
-                continue
-
-            amounts = [abs(t.amount) for t in sorted_transactions]
+            amounts = [abs(t.amount) for t in monthly_transactions]
             avg_amount = sum(amounts) / len(amounts)
 
             if avg_amount == 0:
@@ -112,8 +128,8 @@ class RecurringExpenseAnalyzer:
             variance = max(abs(a - avg_amount) / avg_amount for a in amounts)
 
             if variance <= self.amount_variance_threshold:
-                category_id = next((t.category_id for t in sorted_transactions if t.category_id), None)
-                description = sorted_transactions[0].description
+                category_id = next((t.category_id for t in monthly_transactions if t.category_id), None)
+                description = monthly_transactions[0].description
 
                 annual_cost = avg_amount * Decimal("12")
 
@@ -124,11 +140,11 @@ class RecurringExpenseAnalyzer:
                     interval_days=avg_interval,
                     average_amount=avg_amount,
                     amount_variance=variance,
-                    transaction_count=len(sorted_transactions),
-                    transactions=sorted_transactions,
+                    transaction_count=len(monthly_transactions),
+                    transactions=monthly_transactions,
                     category_id=category_id,
-                    first_transaction_date=sorted_transactions[0].date,
-                    last_transaction_date=sorted_transactions[-1].date,
+                    first_transaction_date=monthly_transactions[0].date,
+                    last_transaction_date=monthly_transactions[-1].date,
                     total_annual_cost=annual_cost,
                 )
                 patterns.append(pattern)
@@ -136,10 +152,79 @@ class RecurringExpenseAnalyzer:
         return patterns
 
     def _group_by_normalized_description(self, transactions: List[Transaction]) -> Dict[str, List[Transaction]]:
-        groups = defaultdict(list)
+        description_groups = defaultdict(list)
         for transaction in transactions:
-            groups[transaction.normalized_description].append(transaction)
-        return groups
+            description_groups[transaction.normalized_description].append(transaction)
+
+        final_groups = {}
+        for desc, txns in description_groups.items():
+            amount_clusters = self._cluster_by_amount(txns)
+            valid_clusters = [c for c in amount_clusters if len(c) >= self.min_occurrences]
+
+            if len(valid_clusters) == 0:
+                continue
+            elif len(valid_clusters) == 1 and len(amount_clusters) == 1:
+                final_groups[desc] = txns
+            else:
+                for cluster in valid_clusters:
+                    avg = sum(abs(t.amount) for t in cluster) / len(cluster)
+                    cluster_key = f"{desc}|~{int(avg)}"
+                    final_groups[cluster_key] = cluster
+
+        return final_groups
+
+    def _cluster_by_amount(self, transactions: List[Transaction], tolerance: float = 0.15) -> List[List[Transaction]]:
+        if not transactions:
+            return []
+
+        sorted_txns = sorted(transactions, key=lambda t: abs(t.amount))
+        clusters: List[List[Transaction]] = []
+
+        for txn in sorted_txns:
+            amount = abs(txn.amount)
+            placed = False
+
+            for cluster in clusters:
+                cluster_avg = sum(abs(t.amount) for t in cluster) / len(cluster)
+                if cluster_avg == 0:
+                    continue
+                if abs(amount - cluster_avg) / cluster_avg <= tolerance:
+                    cluster.append(txn)
+                    placed = True
+                    break
+
+            if not placed:
+                clusters.append([txn])
+
+        return clusters
+
+    def _deduplicate_by_date(self, sorted_transactions: List[Transaction]) -> List[Transaction]:
+        seen_dates = set()
+        result = []
+        for txn in sorted_transactions:
+            if txn.date not in seen_dates:
+                seen_dates.add(txn.date)
+                result.append(txn)
+        return result
+
+    def _filter_to_monthly_sequence(self, sorted_transactions: List[Transaction]) -> List[Transaction]:
+        if len(sorted_transactions) < 2:
+            return sorted_transactions
+
+        best_sequence: List[Transaction] = []
+
+        for start_idx in range(len(sorted_transactions)):
+            sequence = [sorted_transactions[start_idx]]
+
+            for i in range(start_idx + 1, len(sorted_transactions)):
+                days = (sorted_transactions[i].date - sequence[-1].date).days
+                if 26 <= days <= 34:
+                    sequence.append(sorted_transactions[i])
+
+            if len(sequence) > len(best_sequence):
+                best_sequence = sequence
+
+        return best_sequence
 
     def _calculate_intervals(self, sorted_transactions: List[Transaction]) -> List[float]:
         intervals = []
@@ -148,8 +233,10 @@ class RecurringExpenseAnalyzer:
             intervals.append(float(days))
         return intervals
 
-    def _is_monthly_interval(self, avg_interval: float) -> bool:
-        return 25 <= avg_interval <= 35
+    def _is_monthly_interval(self, intervals: List[float]) -> bool:
+        if not intervals:
+            return False
+        return all(26 <= interval <= 34 for interval in intervals)
 
     def _merge_grouped_patterns(self, patterns: List[RecurringPattern]) -> List[RecurringPattern]:
         description_to_group = self.description_group_repository.get_description_to_group_map()

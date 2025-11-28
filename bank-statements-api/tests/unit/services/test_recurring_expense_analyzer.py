@@ -1,9 +1,9 @@
 import uuid
-from datetime import date
+from datetime import date, timedelta
 from decimal import Decimal
 
 from app.domain.models.transaction import CategorizationStatus, SourceType, Transaction
-from app.services.recurring_expense_analyzer import RecurringExpenseAnalyzer
+from app.services.recurring_expense_analyzer import ACTIVE_PATTERNS_DAYS, RecurringExpenseAnalyzer
 
 
 class TestRecurringExpenseAnalyzer:
@@ -315,3 +315,104 @@ class TestRecurringExpenseAnalyzer:
         result = self.analyzer.analyze_patterns(transactions)
 
         assert len(result.patterns) == 0
+
+    def test_active_only_filters_old_patterns(self):
+        today = date.today()
+        old_date = today - timedelta(days=ACTIVE_PATTERNS_DAYS + 30)
+
+        transactions = [
+            self.create_transaction(
+                normalized_description="cancelled subscription",
+                amount=Decimal("9.99"),
+                transaction_date=old_date - timedelta(days=60),
+            ),
+            self.create_transaction(
+                normalized_description="cancelled subscription",
+                amount=Decimal("9.99"),
+                transaction_date=old_date - timedelta(days=30),
+            ),
+            self.create_transaction(
+                normalized_description="cancelled subscription",
+                amount=Decimal("9.99"),
+                transaction_date=old_date,
+            ),
+        ]
+
+        result_all = self.analyzer.analyze_patterns(transactions, active_only=False)
+        result_active = self.analyzer.analyze_patterns(transactions, active_only=True)
+
+        assert len(result_all.patterns) == 1
+        assert len(result_active.patterns) == 0
+
+    def test_active_only_keeps_recent_patterns(self):
+        today = date.today()
+
+        transactions = [
+            self.create_transaction(
+                normalized_description="active subscription",
+                amount=Decimal("9.99"),
+                transaction_date=today - timedelta(days=90),
+            ),
+            self.create_transaction(
+                normalized_description="active subscription",
+                amount=Decimal("9.99"),
+                transaction_date=today - timedelta(days=60),
+            ),
+            self.create_transaction(
+                normalized_description="active subscription",
+                amount=Decimal("9.99"),
+                transaction_date=today - timedelta(days=30),
+            ),
+        ]
+
+        result = self.analyzer.analyze_patterns(transactions, active_only=True)
+
+        assert len(result.patterns) == 1
+        assert result.patterns[0].normalized_description == "active subscription"
+
+    def test_active_only_with_mixed_patterns(self):
+        today = date.today()
+        old_date = today - timedelta(days=ACTIVE_PATTERNS_DAYS + 30)
+
+        transactions = [
+            self.create_transaction(
+                normalized_description="cancelled subscription",
+                amount=Decimal("9.99"),
+                transaction_date=old_date - timedelta(days=60),
+            ),
+            self.create_transaction(
+                normalized_description="cancelled subscription",
+                amount=Decimal("9.99"),
+                transaction_date=old_date - timedelta(days=30),
+            ),
+            self.create_transaction(
+                normalized_description="cancelled subscription",
+                amount=Decimal("9.99"),
+                transaction_date=old_date,
+            ),
+            self.create_transaction(
+                normalized_description="active subscription",
+                amount=Decimal("15.99"),
+                transaction_date=today - timedelta(days=60),
+            ),
+            self.create_transaction(
+                normalized_description="active subscription",
+                amount=Decimal("15.99"),
+                transaction_date=today - timedelta(days=30),
+            ),
+            self.create_transaction(
+                normalized_description="active subscription",
+                amount=Decimal("15.99"),
+                transaction_date=today - timedelta(days=1),
+            ),
+        ]
+
+        result_all = self.analyzer.analyze_patterns(transactions, active_only=False)
+        result_active = self.analyzer.analyze_patterns(transactions, active_only=True)
+
+        assert len(result_all.patterns) == 2
+        assert result_all.total_monthly_recurring == Decimal("25.98")
+
+        assert len(result_active.patterns) == 1
+        assert result_active.patterns[0].normalized_description == "active subscription"
+        assert result_active.total_monthly_recurring == Decimal("15.99")

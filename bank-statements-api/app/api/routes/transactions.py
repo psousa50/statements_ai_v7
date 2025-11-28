@@ -367,6 +367,10 @@ def register_transaction_routes(
             None,
             description="Filter by transaction type: 'debit', 'credit', or 'all'",
         ),
+        active_only: bool = Query(
+            True,
+            description="Only show patterns with recent transactions (last 60 days)",
+        ),
         internal: InternalDependencies = Depends(provide_dependencies),
     ):
         parsed_category_ids = None
@@ -395,7 +399,10 @@ def register_transaction_routes(
             transaction_type=transaction_type,
         )
 
-        result = internal.recurring_expense_analyzer.analyze_patterns(transactions_response.transactions)
+        result = internal.recurring_expense_analyzer.analyze_patterns(
+            transactions_response.transactions,
+            active_only=active_only,
+        )
 
         patterns_response = [RecurringPatternResponse(**pattern.to_dict()) for pattern in result.patterns]
 

@@ -61,6 +61,7 @@ export const ChartsPage = () => {
   const [excludeUncategorized, setExcludeUncategorized] = useState<boolean>(true)
   const [viewMode, setViewMode] = useState<'pie' | 'timeseries' | 'recurring'>('pie')
   const [timeSeriesPeriod, setTimeSeriesPeriod] = useState<'month' | 'week'>('month')
+  const [activeRecurringOnly, setActiveRecurringOnly] = useState<boolean>(true)
 
   // Local state for debounced inputs
   const [localDescriptionSearch, setLocalDescriptionSearch] = useState<string>('')
@@ -473,10 +474,27 @@ export const ChartsPage = () => {
       if (mode === 'timeseries') {
         fetchCategoryTimeSeries(selectedRootCategory || undefined, timeSeriesPeriod, filters)
       } else if (mode === 'recurring') {
-        fetchRecurringPatterns(filters)
+        fetchRecurringPatterns({ ...filters, active_only: activeRecurringOnly })
       }
     },
-    [selectedRootCategory, timeSeriesPeriod, filters, fetchCategoryTimeSeries, fetchRecurringPatterns]
+    [
+      selectedRootCategory,
+      timeSeriesPeriod,
+      filters,
+      fetchCategoryTimeSeries,
+      fetchRecurringPatterns,
+      activeRecurringOnly,
+    ]
+  )
+
+  const handleActiveRecurringToggle = useCallback(
+    (active: boolean) => {
+      setActiveRecurringOnly(active)
+      if (viewMode === 'recurring') {
+        fetchRecurringPatterns({ ...filters, active_only: active })
+      }
+    },
+    [viewMode, filters, fetchRecurringPatterns]
   )
 
   const handleCategorySelectionForTimeSeries = useCallback(
@@ -504,6 +522,12 @@ export const ChartsPage = () => {
       fetchCategoryTimeSeries(selectedRootCategory || undefined, timeSeriesPeriod, filters)
     }
   }, [viewMode, timeSeriesPeriod, filters, fetchCategoryTimeSeries])
+
+  useEffect(() => {
+    if (viewMode === 'recurring') {
+      fetchRecurringPatterns({ ...filters, active_only: activeRecurringOnly })
+    }
+  }, [viewMode, filters, activeRecurringOnly, fetchRecurringPatterns])
 
   // Initial load
   useEffect(() => {
@@ -629,6 +653,18 @@ export const ChartsPage = () => {
                   </div>
                 </>
               )}
+              {viewMode === 'recurring' && (
+                <div className="active-toggle">
+                  <label className="toggle-label">
+                    <input
+                      type="checkbox"
+                      checked={activeRecurringOnly}
+                      onChange={(e) => handleActiveRecurringToggle(e.target.checked)}
+                    />
+                    <span>Active only</span>
+                  </label>
+                </div>
+              )}
               {chartType === 'sub' && viewMode === 'pie' && (
                 <button onClick={handleBackToRoot} className="back-button">
                   ← Back to All Categories
@@ -702,7 +738,7 @@ export const ChartsPage = () => {
                 patterns={recurringPatterns.patterns}
                 categories={categories || []}
                 totalMonthlyRecurring={recurringPatterns.summary.total_monthly_recurring}
-                onRefresh={() => fetchRecurringPatterns(filters)}
+                onRefresh={() => fetchRecurringPatterns({ ...filters, active_only: activeRecurringOnly })}
               />
             ) : (
               <div className="no-data-message">

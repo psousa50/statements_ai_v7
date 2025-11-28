@@ -23,6 +23,7 @@ export interface TransactionFilters {
   exclude_transfers?: boolean
   exclude_uncategorized?: boolean
   transaction_type?: 'all' | 'debit' | 'credit'
+  active_only?: boolean
 }
 
 export interface CategoryTotal {
@@ -314,6 +315,9 @@ export const transactionClient: TransactionClient = {
     }
     if (filters?.transaction_type) {
       params.append('transaction_type', filters.transaction_type)
+    }
+    if (filters?.active_only !== undefined) {
+      params.append('active_only', filters.active_only.toString())
     }
 
     const url = params.toString()
