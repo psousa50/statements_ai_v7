@@ -1,0 +1,127 @@
+.recurring-expenses-page {
+  padding: 1.5rem;
+  min-height: 100vh;
+  background-color: var(--bg-secondary);
+}
+
+.recurring-expenses-page .page-header {
+  margin-bottom: 2rem;
+}
+
+.recurring-expenses-page .header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.recurring-expenses-page .page-header h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, var(--text-primary) 0%, var(--accent-purple) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin: 0 0 0.5rem 0;
+  letter-spacing: -0.02em;
+}
+
+.recurring-expenses-page .page-description {
+  color: var(--text-muted);
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.recurring-expenses-page .header-controls {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.recurring-expenses-page .toggle-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: var(--bg-primary);
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  border: 1px solid var(--border-primary);
+}
+
+.recurring-expenses-page .toggle-label input[type='checkbox'] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: var(--button-primary);
+}
+
+.recurring-expenses-page .toggle-label:hover {
+  color: var(--text-primary);
+  border-color: var(--button-primary);
+}
+
+.recurring-expenses-page .page-content {
+  background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-elevated) 100%);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-md);
+  padding: 2rem;
+  border: 1px solid var(--border-primary);
+  position: relative;
+  overflow: hidden;
+}
+
+.recurring-expenses-page .page-content::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--accent-blue) 0%, var(--accent-purple) 50%, var(--accent-pink) 100%);
+}
+
+.recurring-expenses-page .loading-indicator {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 1rem;
+  padding: 3rem;
+  font-weight: 500;
+}
+
+.recurring-expenses-page .no-data-message {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 1rem;
+  padding: 3rem;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-lg);
+  border: 2px dashed var(--border-primary);
+}
+
+.recurring-expenses-page .error-message {
+  background: #fee2e2;
+  border: 1px solid #fca5a5;
+  color: #dc2626;
+  padding: 1rem;
+  border-radius: 4px;
+  margin-bottom: 1rem;
+}
+
+@media (max-width: 768px) {
+  .recurring-expenses-page {
+    padding: 1rem;
+  }
+
+  .recurring-expenses-page .header-content {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .recurring-expenses-page .header-controls {
+    width: 100%;
+  }
+}

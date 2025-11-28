@@ -332,71 +332,22 @@ def register_transaction_routes(
         response_model=RecurringPatternsResponse,
     )
     def get_recurring_patterns(
-        category_ids: Optional[str] = Query(
-            None,
-            description="Comma-separated list of category IDs",
-        ),
-        status: Optional[CategorizationStatus] = Query(
-            None,
-            description="Filter by categorization status",
-        ),
-        min_amount: Optional[Decimal] = Query(None, description="Minimum transaction amount"),
-        max_amount: Optional[Decimal] = Query(None, description="Maximum transaction amount"),
-        description_search: Optional[str] = Query(
-            None,
-            description="Search in transaction description",
-        ),
-        account_id: Optional[UUID] = Query(None, description="Filter by account ID"),
-        start_date: Optional[date] = Query(
-            None,
-            description="Filter transactions from this date",
-        ),
-        end_date: Optional[date] = Query(
-            None,
-            description="Filter transactions to this date",
-        ),
-        exclude_transfers: Optional[bool] = Query(
-            True,
-            description="Exclude transfers between accounts",
-        ),
-        exclude_uncategorized: Optional[bool] = Query(
-            False,
-            description="Exclude uncategorized transactions",
-        ),
-        transaction_type: Optional[str] = Query(
-            None,
-            description="Filter by transaction type: 'debit', 'credit', or 'all'",
-        ),
         active_only: bool = Query(
             True,
-            description="Only show patterns with recent transactions (last 60 days)",
+            description="Only show patterns with recent transactions (last 90 days)",
         ),
         internal: InternalDependencies = Depends(provide_dependencies),
     ):
-        parsed_category_ids = None
-        if category_ids:
-            try:
-                parsed_category_ids = [UUID(cid.strip()) for cid in category_ids.split(",") if cid.strip()]
-            except ValueError:
-                raise HTTPException(
-                    status_code=400,
-                    detail="Invalid category IDs format",
-                )
+        from dateutil.relativedelta import relativedelta
+
+        lookback_start = date.today() - relativedelta(months=12)
 
         transactions_response = internal.transaction_service.get_transactions_paginated(
             page=1,
             page_size=10000,
-            category_ids=parsed_category_ids,
-            status=status,
-            min_amount=min_amount,
-            max_amount=max_amount,
-            description_search=description_search,
-            account_id=account_id,
-            start_date=start_date,
-            end_date=end_date,
-            exclude_transfers=exclude_transfers,
-            exclude_uncategorized=exclude_uncategorized,
-            transaction_type=transaction_type,
+            start_date=lookback_start,
+            exclude_transfers=True,
+            transaction_type="debit",
         )
 
         result = internal.recurring_expense_analyzer.analyze_patterns(

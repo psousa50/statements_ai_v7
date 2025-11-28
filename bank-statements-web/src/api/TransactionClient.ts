@@ -103,7 +103,7 @@ export interface TransactionClient {
     period?: 'month' | 'week',
     filters?: Omit<TransactionFilters, 'page' | 'page_size'>
   ): Promise<CategoryTimeSeriesResponse>
-  getRecurringPatterns(filters?: Omit<TransactionFilters, 'page' | 'page_size'>): Promise<RecurringPatternsResponse>
+  getRecurringPatterns(activeOnly?: boolean): Promise<RecurringPatternsResponse>
   getById(id: string): Promise<Transaction>
   create(transaction: TransactionCreate): Promise<Transaction>
   update(id: string, transaction: TransactionCreate): Promise<Transaction>
@@ -280,50 +280,11 @@ export const transactionClient: TransactionClient = {
     return response.data
   },
 
-  async getRecurringPatterns(filters?: Omit<TransactionFilters, 'page' | 'page_size'>) {
+  async getRecurringPatterns(activeOnly: boolean = true) {
     const params = new URLSearchParams()
+    params.append('active_only', activeOnly.toString())
 
-    if (filters?.category_ids && filters.category_ids.length > 0) {
-      params.append('category_ids', filters.category_ids.join(','))
-    }
-    if (filters?.status) {
-      params.append('status', filters.status)
-    }
-    if (filters?.min_amount !== undefined) {
-      params.append('min_amount', filters.min_amount.toString())
-    }
-    if (filters?.max_amount !== undefined) {
-      params.append('max_amount', filters.max_amount.toString())
-    }
-    if (filters?.description_search) {
-      params.append('description_search', filters.description_search)
-    }
-    if (filters?.account_id) {
-      params.append('account_id', filters.account_id)
-    }
-    if (filters?.start_date) {
-      params.append('start_date', filters.start_date)
-    }
-    if (filters?.end_date) {
-      params.append('end_date', filters.end_date)
-    }
-    if (filters?.exclude_transfers !== undefined) {
-      params.append('exclude_transfers', filters.exclude_transfers.toString())
-    }
-    if (filters?.exclude_uncategorized !== undefined) {
-      params.append('exclude_uncategorized', filters.exclude_uncategorized.toString())
-    }
-    if (filters?.transaction_type) {
-      params.append('transaction_type', filters.transaction_type)
-    }
-    if (filters?.active_only !== undefined) {
-      params.append('active_only', filters.active_only.toString())
-    }
-
-    const url = params.toString()
-      ? `${API_URL}/recurring-patterns?${params.toString()}`
-      : `${API_URL}/recurring-patterns`
-    const response = await axios.get<RecurringPatternsResponse>(url)
+    const response = await axios.get<RecurringPatternsResponse>(`${API_URL}/recurring-patterns?${params.toString()}`)
     return response.data
   },
 

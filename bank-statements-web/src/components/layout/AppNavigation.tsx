@@ -8,6 +8,7 @@ import CategoryIcon from '@mui/icons-material/Category'
 import AccountTreeIcon from '@mui/icons-material/AccountTree'
 import AccountBalanceIcon from '@mui/icons-material/AccountBalance'
 import DescriptionIcon from '@mui/icons-material/Description'
+import RepeatIcon from '@mui/icons-material/Repeat'
 
 export const AppNavigation: React.FC = () => {
   const location = useLocation()
@@ -64,6 +65,15 @@ export const AppNavigation: React.FC = () => {
             <BarChartIcon />
           </ListItemIcon>
           <ListItemText primary="Charts" />
+        </ListItemButton>
+      </ListItem>
+
+      <ListItem disablePadding>
+        <ListItemButton component={RouterLink} to="/recurring" selected={location.pathname === '/recurring'}>
+          <ListItemIcon>
+            <RepeatIcon />
+          </ListItemIcon>
+          <ListItemText primary="Recurring" />
         </ListItemButton>
       </ListItem>
 

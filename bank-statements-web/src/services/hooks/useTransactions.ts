@@ -268,11 +268,11 @@ export const useRecurringPatterns = () => {
   const [error, setError] = useState<string | null>(null)
 
   const fetchRecurringPatterns = useCallback(
-    async (filters?: Omit<TransactionFilters, 'page' | 'page_size'>) => {
+    async (activeOnly: boolean = true) => {
       setLoading(true)
       setError(null)
       try {
-        const response = await api.transactions.getRecurringPatterns(filters)
+        const response = await api.transactions.getRecurringPatterns(activeOnly)
         setRecurringPatterns(response)
         return response
       } catch (err) {
