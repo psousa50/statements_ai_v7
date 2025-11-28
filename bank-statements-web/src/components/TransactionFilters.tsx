@@ -4,6 +4,8 @@ import { Category, Account } from '../types/Transaction'
 import { CategorySelector } from './CategorySelector'
 import 'rsuite/dist/rsuite.min.css'
 
+export type CategorizationFilter = 'all' | 'categorized' | 'uncategorized'
+
 interface TransactionFiltersProps {
   categories: Category[]
   accounts: Account[]
@@ -15,7 +17,8 @@ interface TransactionFiltersProps {
   startDate?: string
   endDate?: string
   excludeTransfers?: boolean
-  excludeUncategorized?: boolean
+  categorizationFilter?: CategorizationFilter
+  hideUncategorizedOnlyOption?: boolean
   transactionType?: 'all' | 'debit' | 'credit'
   onCategoryChange: (categoryIds: string[]) => void
   onAccountChange: (accountId?: string) => void
@@ -23,7 +26,7 @@ interface TransactionFiltersProps {
   onDescriptionSearchChange: (search?: string) => void
   onDateRangeChange?: (startDate?: string, endDate?: string) => void
   onExcludeTransfersChange: (excludeTransfers: boolean) => void
-  onExcludeUncategorizedChange: (excludeUncategorized: boolean) => void
+  onCategorizationFilterChange: (filter: CategorizationFilter) => void
   onTransactionTypeChange: (type: 'all' | 'debit' | 'credit') => void
   onClearFilters: () => void
 }
@@ -53,7 +56,8 @@ export const TransactionFilters = ({
   startDate,
   endDate,
   excludeTransfers,
-  excludeUncategorized,
+  categorizationFilter = 'all',
+  hideUncategorizedOnlyOption = false,
   transactionType = 'all',
   onCategoryChange,
   onAccountChange,
@@ -61,7 +65,7 @@ export const TransactionFilters = ({
   onDescriptionSearchChange,
   onDateRangeChange,
   onExcludeTransfersChange,
-  onExcludeUncategorizedChange,
+  onCategorizationFilterChange,
   onTransactionTypeChange,
   onClearFilters,
 }: TransactionFiltersProps) => {
@@ -93,8 +97,8 @@ export const TransactionFilters = ({
     selectedAccountId ||
     startDate ||
     endDate ||
-    excludeTransfers === false || // Only consider it active if explicitly set to false
-    excludeUncategorized === true || // Only consider it active if explicitly set to true
+    excludeTransfers === false ||
+    categorizationFilter !== 'all' ||
     transactionType !== 'all'
 
   const handleDateRangeChange = useCallback(
@@ -321,6 +325,23 @@ export const TransactionFilters = ({
               </div>
             </div>
 
+            {/* Categorization Filter */}
+            <div className="filter-group">
+              <label htmlFor="categorization-filter" className="filter-label">
+                Categorization
+              </label>
+              <select
+                id="categorization-filter"
+                value={categorizationFilter}
+                onChange={(e) => onCategorizationFilterChange(e.target.value as CategorizationFilter)}
+                className="filter-input filter-select"
+              >
+                <option value="all">All</option>
+                <option value="categorized">Categorized only</option>
+                {!hideUncategorizedOnlyOption && <option value="uncategorized">Uncategorized only</option>}
+              </select>
+            </div>
+
             {/* Options */}
             <div className="filter-group options-group">
               <label className="filter-label">Options</label>
@@ -334,16 +355,6 @@ export const TransactionFilters = ({
                     className="checkbox-input"
                   />
                   <span className="checkbox-text">Exclude Transfers</span>
-                </label>
-                <label htmlFor="exclude-uncategorized" className="checkbox-label">
-                  <input
-                    id="exclude-uncategorized"
-                    type="checkbox"
-                    checked={excludeUncategorized === true}
-                    onChange={(e) => onExcludeUncategorizedChange(e.target.checked)}
-                    className="checkbox-input"
-                  />
-                  <span className="checkbox-text">Exclude Uncategorized</span>
                 </label>
               </div>
             </div>

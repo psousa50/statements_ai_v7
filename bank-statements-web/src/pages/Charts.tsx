@@ -4,7 +4,7 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts'
 import { useCategoryTotals, useCategoryTimeSeries } from '../services/hooks/useTransactions'
 import { useCategories } from '../services/hooks/useCategories'
 import { useAccounts } from '../services/hooks/useAccounts'
-import { TransactionFilters } from '../components/TransactionFilters'
+import { TransactionFilters, CategorizationFilter } from '../components/TransactionFilters'
 import { CategoryTimeSeriesChart } from '../components/CategoryTimeSeriesChart'
 import { Category } from '../types/Transaction'
 import { TransactionFilters as FilterType } from '../api/TransactionClient'
@@ -57,7 +57,7 @@ export const ChartsPage = () => {
   const [chartType, setChartType] = useState<'root' | 'sub'>('root')
   const [selectedRootCategory, setSelectedRootCategory] = useState<string | null>(null)
   const [transactionType, setTransactionType] = useState<'all' | 'debit' | 'credit'>('debit')
-  const [excludeUncategorized, setExcludeUncategorized] = useState<boolean>(true)
+  const [categorizationFilter, setCategorizationFilter] = useState<CategorizationFilter>('categorized')
   const [viewMode, setViewMode] = useState<'pie' | 'timeseries'>('pie')
   const [timeSeriesPeriod, setTimeSeriesPeriod] = useState<'month' | 'week'>('month')
 
@@ -167,9 +167,8 @@ export const ChartsPage = () => {
     [handleFilterChange]
   )
 
-  const handleExcludeUncategorizedFilter = useCallback((excludeUncategorized: boolean) => {
-    setExcludeUncategorized(excludeUncategorized)
-    // We handle this in the chart data processing, not as a backend filter
+  const handleCategorizationFilterChange = useCallback((filter: CategorizationFilter) => {
+    setCategorizationFilter(filter)
   }, [])
 
   // Debounced updates
@@ -207,7 +206,7 @@ export const ChartsPage = () => {
     setLocalStartDate('')
     setLocalEndDate('')
     setTransactionType('debit')
-    setExcludeUncategorized(true)
+    setCategorizationFilter('categorized')
     fetchCategoryTotals(defaultFilters)
   }, [fetchCategoryTotals])
 
@@ -262,7 +261,7 @@ export const ChartsPage = () => {
 
       return Array.from(rootCategoryData.entries())
         .filter(([_, data]) => data.value > 0)
-        .filter(([id, _]) => !(excludeUncategorized && id === 'uncategorized'))
+        .filter(([id, _]) => !(categorizationFilter === 'categorized' && id === 'uncategorized'))
         .map(([id, data], index) => ({
           id,
           name: id === 'uncategorized' ? 'Uncategorized' : categoryMap.get(id)?.name || 'Unknown',
@@ -343,7 +342,7 @@ export const ChartsPage = () => {
 
       return Array.from(subcategoryData.entries())
         .filter(([_, data]) => data.value > 0)
-        .filter(([id, _]) => !(excludeUncategorized && id === 'uncategorized'))
+        .filter(([id, _]) => !(categorizationFilter === 'categorized' && id === 'uncategorized'))
         .map(([id, data], index) => ({
           id,
           name:
@@ -357,7 +356,7 @@ export const ChartsPage = () => {
           color: COLORS[index % COLORS.length],
         }))
     }
-  }, [categoryTotals, categories, chartType, selectedRootCategory, excludeUncategorized])
+  }, [categoryTotals, categories, chartType, selectedRootCategory, categorizationFilter])
 
   const handleChartClick = useCallback(
     (data: ChartData) => {
@@ -530,7 +529,8 @@ export const ChartsPage = () => {
             startDate={localStartDate}
             endDate={localEndDate}
             excludeTransfers={filters.exclude_transfers}
-            excludeUncategorized={excludeUncategorized}
+            categorizationFilter={categorizationFilter}
+            hideUncategorizedOnlyOption={true}
             transactionType={transactionType}
             onCategoryChange={handleCategoryFilter}
             onAccountChange={handleAccountFilter}
@@ -538,7 +538,7 @@ export const ChartsPage = () => {
             onDescriptionSearchChange={handleDescriptionSearchFilter}
             onDateRangeChange={handleDateRangeFilter}
             onExcludeTransfersChange={handleExcludeTransfersFilter}
-            onExcludeUncategorizedChange={handleExcludeUncategorizedFilter}
+            onCategorizationFilterChange={handleCategorizationFilterChange}
             onTransactionTypeChange={handleTransactionTypeFilter}
             onClearFilters={handleClearFilters}
           />

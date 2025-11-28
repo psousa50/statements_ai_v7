@@ -4,7 +4,7 @@ import { useTransactions } from '../services/hooks/useTransactions'
 import { useCategories } from '../services/hooks/useCategories'
 import { useAccounts } from '../services/hooks/useAccounts'
 import { TransactionTable, TransactionSortField, TransactionSortDirection } from '../components/TransactionTable'
-import { TransactionFilters } from '../components/TransactionFilters'
+import { TransactionFilters, CategorizationFilter } from '../components/TransactionFilters'
 import { TransactionModal } from '../components/TransactionModal'
 import { Pagination } from '../components/Pagination'
 import { CategorizationStatus, TransactionCreate, Transaction } from '../types/Transaction'
@@ -66,6 +66,7 @@ export const TransactionsPage = () => {
   )
   const [localStartDate, setLocalStartDate] = useState<string>(searchParams.get('start_date') || '')
   const [localEndDate, setLocalEndDate] = useState<string>(searchParams.get('end_date') || '')
+  const [categorizationFilter, setCategorizationFilter] = useState<CategorizationFilter>('all')
 
   const debounceTimeoutRef = useRef<NodeJS.Timeout>()
 
@@ -213,9 +214,16 @@ export const TransactionsPage = () => {
     [handleFilterChange]
   )
 
-  const handleExcludeUncategorizedFilter = useCallback(
-    (excludeUncategorized: boolean) => {
-      handleFilterChange({ exclude_uncategorized: excludeUncategorized })
+  const handleCategorizationFilterChange = useCallback(
+    (filter: CategorizationFilter) => {
+      setCategorizationFilter(filter)
+      if (filter === 'uncategorized') {
+        handleFilterChange({ status: 'UNCATEGORIZED', exclude_uncategorized: undefined })
+      } else if (filter === 'categorized') {
+        handleFilterChange({ exclude_uncategorized: true, status: undefined })
+      } else {
+        handleFilterChange({ exclude_uncategorized: undefined, status: undefined })
+      }
     },
     [handleFilterChange]
   )
@@ -278,6 +286,7 @@ export const TransactionsPage = () => {
     setLocalMaxAmount(undefined)
     setLocalStartDate('')
     setLocalEndDate('')
+    setCategorizationFilter('all')
     fetchTransactions(clearedFilters)
   }, [filters.page_size, fetchTransactions])
 
@@ -380,7 +389,7 @@ export const TransactionsPage = () => {
               startDate={localStartDate}
               endDate={localEndDate}
               excludeTransfers={filters.exclude_transfers}
-              excludeUncategorized={filters.exclude_uncategorized}
+              categorizationFilter={categorizationFilter}
               transactionType={filters.transaction_type || 'all'}
               onCategoryChange={handleCategoryFilter}
               onAccountChange={handleAccountFilter}
@@ -388,7 +397,7 @@ export const TransactionsPage = () => {
               onDescriptionSearchChange={handleDescriptionSearchFilter}
               onDateRangeChange={handleDateRangeFilter}
               onExcludeTransfersChange={handleExcludeTransfersFilter}
-              onExcludeUncategorizedChange={handleExcludeUncategorizedFilter}
+              onCategorizationFilterChange={handleCategorizationFilterChange}
               onTransactionTypeChange={handleTransactionTypeFilter}
               onClearFilters={handleClearFilters}
             />
