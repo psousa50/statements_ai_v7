@@ -97,6 +97,7 @@ export const CategoryTimeSeriesChart = ({ dataPoints, categories, loading }: Cat
             labelStyle={{ color: 'var(--text-primary)' }}
             itemStyle={{ color: 'var(--text-secondary)' }}
             formatter={(value: number) => `$${value.toFixed(2)}`}
+            itemSorter={(item) => -(item.value as number)}
           />
           <Legend
             wrapperStyle={{
