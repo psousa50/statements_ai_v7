@@ -7,6 +7,7 @@ import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward'
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward'
 import UnfoldMoreIcon from '@mui/icons-material/UnfoldMore'
 import MergeIcon from '@mui/icons-material/MergeType'
+import VisibilityIcon from '@mui/icons-material/Visibility'
 
 type SortField = 'description' | 'category' | 'average_amount' | 'total_annual_cost' | 'transaction_count'
 type SortDirection = 'asc' | 'desc'
@@ -243,8 +244,12 @@ export const RecurringPatternsTable = ({
                   </td>
                   <td>
                     <div className="actions-cell">
-                      <button className="view-transactions-btn" onClick={() => handleViewTransactions(pattern)}>
-                        View Transactions
+                      <button
+                        className="view-btn"
+                        onClick={() => handleViewTransactions(pattern)}
+                        title="View transactions"
+                      >
+                        <VisibilityIcon fontSize="small" />
                       </button>
                       <button
                         className="merge-btn"
@@ -449,20 +454,22 @@ export const RecurringPatternsTable = ({
           color: var(--text-secondary);
         }
 
-        .view-transactions-btn {
-          background: var(--primary-color);
-          color: white;
-          border: none;
-          padding: 6px 12px;
+        .view-btn {
+          background: var(--bg-tertiary);
+          color: var(--text-primary);
+          border: 1px solid var(--border-color);
+          padding: 6px 8px;
           border-radius: 4px;
           cursor: pointer;
-          font-size: 13px;
-          font-weight: 500;
-          transition: background 0.2s;
+          display: flex;
+          align-items: center;
+          transition: all 0.2s;
         }
 
-        .view-transactions-btn:hover {
-          background: var(--primary-hover);
+        .view-btn:hover {
+          background: var(--bg-hover);
+          border-color: var(--primary-color);
+          color: var(--primary-color);
         }
 
         .empty-state {

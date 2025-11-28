@@ -130,12 +130,13 @@ class RecurringExpenseAnalyzer:
             if variance <= self.amount_variance_threshold:
                 category_id = next((t.category_id for t in monthly_transactions if t.category_id), None)
                 description = monthly_transactions[0].description
+                actual_normalized_description = monthly_transactions[0].normalized_description
 
                 annual_cost = avg_amount * Decimal("12")
 
                 pattern = RecurringPattern(
                     description=description,
-                    normalized_description=normalized_description,
+                    normalized_description=actual_normalized_description,
                     frequency="monthly",
                     interval_days=avg_interval,
                     average_amount=avg_amount,
