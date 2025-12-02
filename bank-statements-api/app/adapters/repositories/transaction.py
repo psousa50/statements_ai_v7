@@ -191,7 +191,7 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         # Build the base query with aggregation
         query = self.db_session.query(
             Transaction.category_id,
-            func.sum(func.abs(Transaction.amount)).label("total_amount"),
+            func.sum(-Transaction.amount).label("total_amount"),
             func.count(Transaction.id).label("transaction_count"),
         )
 
@@ -291,7 +291,7 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         query = self.db_session.query(
             period_expr.label("period"),
             Transaction.category_id,
-            func.sum(func.abs(Transaction.amount)).label("total_amount"),
+            func.sum(-Transaction.amount).label("total_amount"),
             func.count(Transaction.id).label("transaction_count"),
         )
 
