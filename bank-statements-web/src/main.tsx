@@ -39,6 +39,10 @@ const ThemedApp = () => {
       root.style.setProperty('--button-secondary', '#4a5568')
       root.style.setProperty('--positive-amount', '#5aff83')
       root.style.setProperty('--negative-amount', '#ff8080')
+      root.style.setProperty('--bg-hover', '#374151')
+      root.style.setProperty('--bg-elevated', '#333333')
+      root.style.setProperty('--positive-amount-bg', '#064e3b')
+      root.style.setProperty('--negative-amount-bg', '#7f1d1d')
     } else {
       // Add RSuite light theme class
       body.classList.add('rs-theme-light')
@@ -61,6 +65,10 @@ const ThemedApp = () => {
       root.style.setProperty('--button-secondary', '#6c757d')
       root.style.setProperty('--positive-amount', '#059669')
       root.style.setProperty('--negative-amount', '#dc2626')
+      root.style.setProperty('--bg-hover', '#f3f4f6')
+      root.style.setProperty('--bg-elevated', '#ffffff')
+      root.style.setProperty('--positive-amount-bg', '#d1fae5')
+      root.style.setProperty('--negative-amount-bg', '#fee2e2')
     }
   }, [prefersDarkMode])
 

@@ -384,7 +384,7 @@ export const RecurringPatternsTable = ({
           font-weight: 600;
           text-align: left;
           padding: 12px 16px;
-          border-bottom: 2px solid var(--border-color);
+          border-bottom: 2px solid var(--border-primary);
         }
 
         .sortable-header {
@@ -413,12 +413,16 @@ export const RecurringPatternsTable = ({
 
         .sortable-header.active .sort-indicator {
           opacity: 1;
-          color: var(--primary-color);
+          color: var(--button-primary);
         }
 
         .recurring-patterns-table td {
           padding: 12px 16px;
-          border-bottom: 1px solid var(--border-color);
+          border-bottom: 1px solid var(--border-primary);
+        }
+
+        .recurring-patterns-table tbody tr {
+          background: var(--bg-primary);
         }
 
         .recurring-patterns-table tbody tr:hover {
@@ -432,8 +436,8 @@ export const RecurringPatternsTable = ({
         }
 
         .variance-badge {
-          background: var(--warning-bg);
-          color: var(--warning-text);
+          background: #fef3c7;
+          color: #92400e;
           padding: 2px 6px;
           border-radius: 4px;
           font-size: 11px;
@@ -441,8 +445,8 @@ export const RecurringPatternsTable = ({
         }
 
         .frequency-badge {
-          background: var(--primary-bg);
-          color: var(--primary-text);
+          background: var(--bg-accent);
+          color: var(--button-primary);
           padding: 4px 8px;
           border-radius: 4px;
           font-size: 12px;
@@ -467,7 +471,7 @@ export const RecurringPatternsTable = ({
         .view-btn {
           background: var(--bg-tertiary);
           color: var(--text-primary);
-          border: 1px solid var(--border-color);
+          border: 1px solid var(--border-primary);
           padding: 6px 8px;
           border-radius: 4px;
           cursor: pointer;
@@ -478,8 +482,8 @@ export const RecurringPatternsTable = ({
 
         .view-btn:hover {
           background: var(--bg-hover);
-          border-color: var(--primary-color);
-          color: var(--primary-color);
+          border-color: var(--button-primary);
+          color: var(--button-primary);
         }
 
         .empty-state {
@@ -497,7 +501,7 @@ export const RecurringPatternsTable = ({
         .merge-btn {
           background: var(--bg-tertiary);
           color: var(--text-primary);
-          border: 1px solid var(--border-color);
+          border: 1px solid var(--border-primary);
           padding: 6px 8px;
           border-radius: 4px;
           cursor: pointer;
@@ -508,8 +512,8 @@ export const RecurringPatternsTable = ({
 
         .merge-btn:hover {
           background: var(--bg-hover);
-          border-color: var(--primary-color);
-          color: var(--primary-color);
+          border-color: var(--button-primary);
+          color: var(--button-primary);
         }
 
         .merge-modal-overlay {
@@ -548,8 +552,8 @@ export const RecurringPatternsTable = ({
         }
 
         .error-message {
-          background: var(--error-bg);
-          color: var(--error-text);
+          background: var(--negative-amount-bg);
+          color: var(--negative-amount);
           padding: 12px;
           border-radius: 4px;
           margin-bottom: 16px;
@@ -559,7 +563,7 @@ export const RecurringPatternsTable = ({
           max-height: 400px;
           overflow-y: auto;
           margin-bottom: 24px;
-          border: 1px solid var(--border-color);
+          border: 1px solid var(--border-primary);
           border-radius: 4px;
         }
 
@@ -567,7 +571,7 @@ export const RecurringPatternsTable = ({
           display: flex;
           align-items: flex-start;
           padding: 12px;
-          border-bottom: 1px solid var(--border-color);
+          border-bottom: 1px solid var(--border-primary);
           cursor: pointer;
           transition: background 0.2s;
         }
@@ -619,7 +623,7 @@ export const RecurringPatternsTable = ({
         .cancel-btn {
           background: var(--bg-secondary);
           color: var(--text-primary);
-          border: 1px solid var(--border-color);
+          border: 1px solid var(--border-primary);
         }
 
         .cancel-btn:hover:not(:disabled) {
@@ -627,13 +631,13 @@ export const RecurringPatternsTable = ({
         }
 
         .confirm-btn {
-          background: var(--primary-color);
+          background: var(--button-primary);
           color: white;
           border: none;
         }
 
         .confirm-btn:hover:not(:disabled) {
-          background: var(--primary-hover);
+          background: var(--button-primary-hover);
         }
 
         .confirm-btn:disabled,
