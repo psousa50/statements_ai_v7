@@ -5,6 +5,7 @@ with real component interactions. Only external dependencies like LLM are mocked
 
 import os
 from unittest.mock import MagicMock
+from uuid import uuid4
 
 import pytest
 from sqlalchemy import create_engine, event
@@ -18,6 +19,7 @@ from app.domain.models.enhancement_rule import EnhancementRule, EnhancementRuleS
 from app.domain.models.statement import Statement
 from app.domain.models.transaction import Transaction
 from app.domain.models.uploaded_file import UploadedFile
+from app.domain.models.user import User
 
 
 @pytest.fixture
@@ -59,6 +61,21 @@ def db_session(db_engine):
 
 
 @pytest.fixture
+def test_user(db_session):
+    """Create a test user for integration tests."""
+    user = User(
+        id=uuid4(),
+        email="test@example.com",
+        name="Test User",
+        oauth_provider="google",
+        oauth_id="google-test-user",
+    )
+    db_session.add(user)
+    db_session.flush()
+    return user
+
+
+@pytest.fixture
 def llm_client():
     """Mock LLM client for integration tests."""
     llm_client = MagicMock()
@@ -67,7 +84,7 @@ def llm_client():
     {
         "column_mapping": {
             "date": "Date",
-            "amount": "Amount", 
+            "amount": "Amount",
             "description": "Description"
         },
         "header_row_index": 0,
@@ -88,14 +105,14 @@ def llm_client():
 class TestStatementUploadIntegration:
     """Integration tests using real service implementations with actual database."""
 
-    def test_complete_statement_upload_flow_with_real_services(self, db_session, llm_client):
+    def test_complete_statement_upload_flow_with_real_services(self, db_session, llm_client, test_user):
         """Test complete upload flow: analyze → upload → process → persist."""
 
         # Real CSV content
         filename = "bank_statement.csv"
         csv_content = b"""Date,Amount,Description,Balance
 2023-01-01,100.50,Coffee Shop Purchase,1500.50
-2023-01-02,-50.00,ATM Withdrawal,1450.50  
+2023-01-02,-50.00,ATM Withdrawal,1450.50
 2023-01-03,2500.00,Salary Deposit,3950.50
 2023-01-04,-25.99,Online Shopping,3924.51"""
 
@@ -104,6 +121,7 @@ class TestStatementUploadIntegration:
 
         # Step 1: Real file analysis
         analysis_result = dependencies.statement_analyzer_service.analyze(
+            user_id=test_user.id,
             filename=filename,
             file_content=csv_content,
         )
@@ -117,7 +135,7 @@ class TestStatementUploadIntegration:
         assert len(analysis_result.sample_data) > 0
 
         # Create a real source
-        source = Account(name="Test Bank")
+        source = Account(name="Test Bank", user_id=test_user.id)
         db_session.add(source)
         db_session.flush()
 
@@ -132,8 +150,9 @@ class TestStatementUploadIntegration:
 
         # Use real upload service
         upload_result = dependencies.statement_upload_service.upload_statement(
-            upload_request,
-            background_tasks=MagicMock(),  # Mock FastAPI background tasks
+            user_id=test_user.id,
+            upload_data=upload_request,
+            background_tasks=MagicMock(),
             internal_deps=dependencies,
         )
 
@@ -186,7 +205,7 @@ class TestStatementUploadIntegration:
             assert len(rule.normalized_description_pattern) > 0
             assert rule.created_at is not None
 
-    def test_upload_with_real_categorization_processing(self, db_session, llm_client):
+    def test_upload_with_real_categorization_processing(self, db_session, llm_client, test_user):
         """Test upload with real transaction categorization flow."""
 
         # CSV with categorizable transactions
@@ -200,12 +219,13 @@ class TestStatementUploadIntegration:
 
         # Analyze file
         analysis_result = dependencies.statement_analyzer_service.analyze(
+            user_id=test_user.id,
             filename=filename,
             file_content=csv_content,
         )
 
         # Create source
-        source = Account(name="Credit Card")
+        source = Account(name="Credit Card", user_id=test_user.id)
         db_session.add(source)
         db_session.flush()
 
@@ -219,7 +239,8 @@ class TestStatementUploadIntegration:
         )
 
         upload_result = dependencies.statement_upload_service.upload_statement(
-            upload_request,
+            user_id=test_user.id,
+            upload_data=upload_request,
             background_tasks=MagicMock(),
             internal_deps=dependencies,
         )
@@ -264,7 +285,7 @@ class TestStatementUploadIntegration:
                 "FAILURE",
             ]
 
-    def test_categorization_source_tracking(self, db_session, llm_client):
+    def test_categorization_source_tracking(self, db_session, llm_client, test_user):
         """Test that categorization sources are properly tracked in the database."""
 
         filename = "source_test.csv"
@@ -275,11 +296,12 @@ class TestStatementUploadIntegration:
         dependencies = build_internal_dependencies(ExternalDependencies(db=db_session, llm_client=llm_client))
 
         analysis_result = dependencies.statement_analyzer_service.analyze(
+            user_id=test_user.id,
             filename=filename,
             file_content=csv_content,
         )
 
-        source = Account(name="Test Card")
+        source = Account(name="Test Card", user_id=test_user.id)
         db_session.add(source)
         db_session.flush()
 
@@ -292,7 +314,8 @@ class TestStatementUploadIntegration:
         )
 
         dependencies.statement_upload_service.upload_statement(
-            upload_request,
+            user_id=test_user.id,
+            upload_data=upload_request,
             background_tasks=MagicMock(),
             internal_deps=dependencies,
         )
@@ -317,7 +340,7 @@ class TestStatementUploadIntegration:
                 assert rule.created_at is not None
                 # Note: category_id and counterparty_account_id can be None for unmatched rules
 
-    def test_upload_with_row_filters_integration(self, db_session, llm_client):
+    def test_upload_with_row_filters_integration(self, db_session, llm_client, test_user):
         """Test complete upload flow with row filters persisted to file analysis metadata."""
 
         # CSV content with various amounts to test filtering
@@ -332,12 +355,13 @@ class TestStatementUploadIntegration:
 
         # Analyze file first
         analysis_result = dependencies.statement_analyzer_service.analyze(
+            user_id=test_user.id,
             filename=filename,
             file_content=csv_content,
         )
 
         # Create account
-        account = Account(name="Test Account")
+        account = Account(name="Test Account", user_id=test_user.id)
         db_session.add(account)
         db_session.flush()
 
@@ -348,7 +372,7 @@ class TestStatementUploadIntegration:
         row_filters = RowFilterRequest(
             conditions=[
                 FilterConditionRequest(
-                    column_name="Amount",  # Use the actual CSV column name
+                    column_name="Amount",
                     operator=FilterOperator.GREATER_THAN,
                     value="100",
                     case_sensitive=False,
@@ -368,7 +392,8 @@ class TestStatementUploadIntegration:
 
         # Execute upload
         upload_result = dependencies.statement_upload_service.upload_statement(
-            upload_request,
+            user_id=test_user.id,
+            upload_data=upload_request,
             background_tasks=MagicMock(),
             internal_deps=dependencies,
         )
@@ -406,7 +431,7 @@ class TestStatementUploadIntegration:
         assert 50.00 not in amounts  # Filtered out
         assert 25.00 not in amounts  # Filtered out
 
-    def test_upload_without_row_filters_persists_null(self, db_session, llm_client):
+    def test_upload_without_row_filters_persists_null(self, db_session, llm_client, test_user):
         """Test that uploads without row filters persist NULL in the database."""
 
         filename = "no_filters.csv"
@@ -416,11 +441,12 @@ class TestStatementUploadIntegration:
         dependencies = build_internal_dependencies(ExternalDependencies(db=db_session, llm_client=llm_client))
 
         analysis_result = dependencies.statement_analyzer_service.analyze(
+            user_id=test_user.id,
             filename=filename,
             file_content=csv_content,
         )
 
-        account = Account(name="No Filter Account")
+        account = Account(name="No Filter Account", user_id=test_user.id)
         db_session.add(account)
         db_session.flush()
 
@@ -431,11 +457,11 @@ class TestStatementUploadIntegration:
             column_mapping=analysis_result.column_mapping,
             header_row_index=analysis_result.header_row_index,
             data_start_row_index=analysis_result.data_start_row_index,
-            # row_filters not provided
         )
 
         dependencies.statement_upload_service.upload_statement(
-            upload_request,
+            user_id=test_user.id,
+            upload_data=upload_request,
             background_tasks=MagicMock(),
             internal_deps=dependencies,
         )
@@ -447,7 +473,7 @@ class TestStatementUploadIntegration:
         assert metadata is not None
         assert metadata.row_filters is None
 
-    def test_duplicate_file_upload_reuses_saved_row_filters(self, db_session, llm_client):
+    def test_duplicate_file_upload_reuses_saved_row_filters(self, db_session, llm_client, test_user):
         """Test that uploading the same file again automatically applies saved row filters."""
 
         # Step 1: Upload file WITH row filters first time
@@ -462,11 +488,12 @@ class TestStatementUploadIntegration:
 
         # First analysis
         analysis_result = dependencies.statement_analyzer_service.analyze(
+            user_id=test_user.id,
             filename=filename,
             file_content=csv_content,
         )
 
-        account = Account(name="Reuse Test Account")
+        account = Account(name="Reuse Test Account", user_id=test_user.id)
         db_session.add(account)
         db_session.flush()
 
@@ -493,7 +520,8 @@ class TestStatementUploadIntegration:
         )
 
         first_result = dependencies.statement_upload_service.upload_statement(
-            first_upload_request,
+            user_id=test_user.id,
+            upload_data=first_upload_request,
             background_tasks=MagicMock(),
             internal_deps=dependencies,
         )
@@ -505,6 +533,7 @@ class TestStatementUploadIntegration:
         # Step 2: Upload the SAME file again WITHOUT specifying row filters
         # Analyze the same file again (new upload)
         second_analysis_result = dependencies.statement_analyzer_service.analyze(
+            user_id=test_user.id,
             filename=filename,
             file_content=csv_content,
         )
@@ -516,11 +545,11 @@ class TestStatementUploadIntegration:
             column_mapping=second_analysis_result.column_mapping,
             header_row_index=second_analysis_result.header_row_index,
             data_start_row_index=second_analysis_result.data_start_row_index,
-            # NO row_filters specified - should reuse saved ones
         )
 
         second_result = dependencies.statement_upload_service.upload_statement(
-            second_upload_request,
+            user_id=test_user.id,
+            upload_data=second_upload_request,
             background_tasks=MagicMock(),
             internal_deps=dependencies,
         )

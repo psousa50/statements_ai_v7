@@ -49,7 +49,7 @@
     "db:restore": "test -n \"$FILE\" || (echo 'Usage: FILE=backups/your_backup.dump pnpm db:restore' && exit 1) && docker exec -i bank-statements-db pg_restore -U postgres -d bank_statements -c < \"$FILE\"",
     "test:db:up": "docker-compose --profile test up test-db -d",
     "test:db:down": "docker-compose --profile test down",
-    "test:db:migrate": "cd bank-statements-api && DATABASE_URL=postgresql+psycopg://postgres:postgres@localhost:15432/bank_statements_test uv run alembic upgrade dc07aa0a9f15",
+    "test:db:migrate": "cd bank-statements-api && DATABASE_URL=postgresql+psycopg://postgres:postgres@localhost:15432/bank_statements_test uv run alembic upgrade head",
     "// Docker": "=== Docker Scripts ===",
     "docker:up": "docker-compose up",
     "docker:down": "docker-compose down",

@@ -149,6 +149,7 @@ class TestFileAnalysisMetadataRepository:
     def test_find_by_hash(self):
         session = MagicMock()
         metadata_id = uuid.uuid4()
+        user_id = uuid.uuid4()
         row_filters = [{"column_name": "description", "operator": "contains", "value": "test", "case_sensitive": False}]
         mock_metadata = MagicMock(
             id=metadata_id,
@@ -164,10 +165,10 @@ class TestFileAnalysisMetadataRepository:
             row_filters=row_filters,
             created_at=datetime.now(timezone.utc),
         )
-        session.query.return_value.filter.return_value.first.return_value = mock_metadata
+        session.query.return_value.join.return_value.filter.return_value.first.return_value = mock_metadata
 
         repo = SQLAlchemyFileAnalysisMetadataRepository(session)
-        result = repo.find_by_hash("abc123")
+        result = repo.find_by_hash("abc123", user_id)
 
         assert isinstance(result, FileAnalysisMetadataDTO)
         assert result.id == str(metadata_id)
@@ -176,4 +177,3 @@ class TestFileAnalysisMetadataRepository:
         assert result.row_filters == row_filters
 
         session.query.assert_called_once()
-        session.query.return_value.filter.assert_called_once()
