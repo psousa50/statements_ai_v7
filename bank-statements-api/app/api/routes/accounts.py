@@ -3,9 +3,11 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, FastAPI, File, HTTPException, UploadFile, status
 
+from app.api.routes.auth import require_current_user
 from app.api.schemas import AccountCreate, AccountListResponse, AccountResponse, AccountUpdate, AccountUploadResponse
 from app.core.config import settings
 from app.core.dependencies import InternalDependencies
+from app.domain.models.user import User
 from app.logging.utils import log_exception
 
 
@@ -13,7 +15,6 @@ def register_account_routes(
     app: FastAPI,
     provide_dependencies: Callable[[], Iterator[InternalDependencies]],
 ):
-    """Register account routes with the FastAPI app."""
     router = APIRouter(prefix="/accounts", tags=["accounts"])
 
     @router.post(
@@ -24,18 +25,17 @@ def register_account_routes(
     async def create_account(
         account_data: AccountCreate,
         internal: InternalDependencies = Depends(provide_dependencies),
+        current_user: User = Depends(require_current_user),
     ):
-        """Create a new account"""
         try:
-            # Check if account with the same name already exists
-            existing_account = internal.account_service.get_account_by_name(account_data.name)
+            existing_account = internal.account_service.get_account_by_name(account_data.name, current_user.id)
             if existing_account:
                 raise HTTPException(
                     status_code=status.HTTP_409_CONFLICT,
                     detail=f"Account with name '{account_data.name}' already exists",
                 )
 
-            account = internal.account_service.create_account(account_data.name)
+            account = internal.account_service.create_account(account_data.name, current_user.id)
             return account
         except HTTPException:
             raise
@@ -49,10 +49,10 @@ def register_account_routes(
     @router.get("", response_model=AccountListResponse)
     async def get_all_accounts(
         internal: InternalDependencies = Depends(provide_dependencies),
+        current_user: User = Depends(require_current_user),
     ):
-        """Get all accounts"""
         try:
-            accounts = internal.account_service.get_all_accounts()
+            accounts = internal.account_service.get_all_accounts(current_user.id)
             return AccountListResponse(accounts=accounts, total=len(accounts))
         except Exception as e:
             log_exception("Error retrieving accounts: %s", str(e))
@@ -65,10 +65,10 @@ def register_account_routes(
     async def get_account(
         account_id: UUID,
         internal: InternalDependencies = Depends(provide_dependencies),
+        current_user: User = Depends(require_current_user),
     ):
-        """Get an account by ID"""
         try:
-            account = internal.account_service.get_account_by_id(account_id)
+            account = internal.account_service.get_account(account_id, current_user.id)
             if not account:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
@@ -89,26 +89,24 @@ def register_account_routes(
         account_id: UUID,
         account_data: AccountUpdate,
         internal: InternalDependencies = Depends(provide_dependencies),
+        current_user: User = Depends(require_current_user),
     ):
-        """Update an account"""
         try:
-            # Check if account exists
-            existing_account = internal.account_service.get_account_by_id(account_id)
+            existing_account = internal.account_service.get_account(account_id, current_user.id)
             if not existing_account:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail=f"Account with ID {account_id} not found",
                 )
 
-            # Check if name is already taken by another account
-            name_exists = internal.account_service.get_account_by_name(account_data.name)
+            name_exists = internal.account_service.get_account_by_name(account_data.name, current_user.id)
             if name_exists and name_exists.id != account_id:
                 raise HTTPException(
                     status_code=status.HTTP_409_CONFLICT,
                     detail=f"Account with name '{account_data.name}' already exists",
                 )
 
-            updated_account = internal.account_service.update_account(account_id, account_data.name)
+            updated_account = internal.account_service.update_account(account_id, account_data.name, current_user.id)
             return updated_account
         except HTTPException:
             raise
@@ -126,18 +124,17 @@ def register_account_routes(
     async def delete_account(
         account_id: UUID,
         internal: InternalDependencies = Depends(provide_dependencies),
+        current_user: User = Depends(require_current_user),
     ):
-        """Delete an account"""
         try:
-            # Check if account exists
-            existing_account = internal.account_service.get_account_by_id(account_id)
+            existing_account = internal.account_service.get_account(account_id, current_user.id)
             if not existing_account:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail=f"Account with ID {account_id} not found",
                 )
 
-            internal.account_service.delete_account(account_id)
+            internal.account_service.delete_account(account_id, current_user.id)
             return None
         except HTTPException:
             raise
@@ -156,10 +153,9 @@ def register_account_routes(
     async def upload_accounts_csv(
         file: UploadFile = File(...),
         internal: InternalDependencies = Depends(provide_dependencies),
+        current_user: User = Depends(require_current_user),
     ):
-        """Upload accounts from CSV file"""
         try:
-            # Validate file type
             if not file.content_type or not file.content_type.startswith(("text/csv", "application/csv")):
                 if not file.filename or not file.filename.lower().endswith(".csv"):
                     raise HTTPException(
@@ -167,17 +163,12 @@ def register_account_routes(
                         detail="File must be a CSV file",
                     )
 
-            # Read file content
             content = await file.read()
             csv_content = content.decode("utf-8")
 
-            # Get existing accounts for comparison
-            existing_accounts = {acc.name: acc for acc in internal.account_service.get_all_accounts()}
+            existing_accounts = {acc.name: acc for acc in internal.account_service.get_all_accounts(current_user.id)}
+            accounts = internal.account_service.upsert_accounts_from_csv(csv_content, current_user.id)
 
-            # Process CSV and upsert accounts
-            accounts = internal.account_service.upsert_accounts_from_csv(csv_content)
-
-            # Count created vs updated
             created_count = 0
             updated_count = 0
 

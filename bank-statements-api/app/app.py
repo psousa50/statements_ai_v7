@@ -3,6 +3,7 @@ from typing import Callable, Iterator
 from fastapi import FastAPI
 
 from app.api.routes.accounts import register_account_routes
+from app.api.routes.auth import register_auth_routes
 from app.api.routes.categories import register_category_routes
 from app.api.routes.description_groups import register_description_group_routes
 from app.api.routes.enhancement_rules import register_enhancement_rule_routes
@@ -26,6 +27,7 @@ def register_app_routes(
     provide_dependencies: Callable[[], Iterator[InternalDependencies]],
 ):
     register_root_routes(app)
+    register_auth_routes(app)
     register_transaction_routes(app, provide_dependencies)
     register_enhancement_rule_routes(app, provide_dependencies)
     register_category_routes(app, provide_dependencies)

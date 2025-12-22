@@ -17,6 +17,10 @@ from app.services.transaction_enhancement import TransactionEnhancer
 
 class TestTransactionService:
     @pytest.fixture
+    def user_id(self):
+        return uuid4()
+
+    @pytest.fixture
     def mock_repository(self):
         repository = MagicMock(spec=TransactionRepository)
         return repository
@@ -68,6 +72,7 @@ class TestTransactionService:
         sample_transaction,
         mock_enhancement_rule_repository,
         mock_transaction_enhancer,
+        user_id,
     ):
         mock_repository.create_transaction.return_value = sample_transaction
         transaction_date = date(2023, 4, 15)
@@ -91,30 +96,31 @@ class TestTransactionService:
         )
 
         result = service.create_transaction(
+            user_id=user_id,
             transaction_data=transaction_data,
         )
 
         assert result == sample_transaction
         mock_repository.create_transaction.assert_called_once()
 
-    def test_get_transaction(self, service, mock_repository, sample_transaction):
+    def test_get_transaction(self, service, mock_repository, sample_transaction, user_id):
         transaction_id = sample_transaction.id
         mock_repository.get_by_id.return_value = sample_transaction
 
-        result = service.get_transaction(transaction_id)
+        result = service.get_transaction(transaction_id, user_id)
         assert result == sample_transaction
-        mock_repository.get_by_id.assert_called_once_with(transaction_id)
+        mock_repository.get_by_id.assert_called_once_with(transaction_id, user_id)
 
-    def test_get_transaction_not_found(self, service, mock_repository):
+    def test_get_transaction_not_found(self, service, mock_repository, user_id):
         transaction_id = uuid4()
         mock_repository.get_by_id.return_value = None
 
-        result = service.get_transaction(transaction_id)
+        result = service.get_transaction(transaction_id, user_id)
 
         assert result is None
-        mock_repository.get_by_id.assert_called_once_with(transaction_id)
+        mock_repository.get_by_id.assert_called_once_with(transaction_id, user_id)
 
-    def test_get_all_transactions(self, service, mock_repository):
+    def test_get_all_transactions(self, service, mock_repository, user_id):
         transactions = [
             Transaction(
                 id=uuid4(),
@@ -133,12 +139,12 @@ class TestTransactionService:
         ]
         mock_repository.get_all.return_value = transactions
 
-        result = service.get_all_transactions()
+        result = service.get_all_transactions(user_id)
 
         assert result == transactions
-        mock_repository.get_all.assert_called_once()
+        mock_repository.get_all.assert_called_once_with(user_id)
 
-    def test_update_transaction(self, service, mock_repository, sample_transaction):
+    def test_update_transaction(self, service, mock_repository, sample_transaction, user_id):
         transaction_id = sample_transaction.id
         mock_repository.get_by_id.return_value = sample_transaction
         mock_repository.update.return_value = sample_transaction
@@ -149,6 +155,7 @@ class TestTransactionService:
         new_account_id = uuid4()
 
         result = service.update_transaction(
+            user_id=user_id,
             transaction_id=transaction_id,
             transaction_date=new_date,
             description=new_description,
@@ -157,17 +164,18 @@ class TestTransactionService:
         )
 
         assert result == sample_transaction
-        mock_repository.get_by_id.assert_called_once_with(transaction_id)
+        mock_repository.get_by_id.assert_called_once_with(transaction_id, user_id)
         mock_repository.update.assert_called_once_with(sample_transaction)
         assert sample_transaction.date == new_date
         assert sample_transaction.description == new_description
         assert sample_transaction.amount == new_amount
         assert sample_transaction.account_id == new_account_id
 
-    def test_update_transaction_not_found(self, service, mock_repository):
+    def test_update_transaction_not_found(self, service, mock_repository, user_id):
         transaction_id = uuid4()
         mock_repository.get_by_id.return_value = None
         result = service.update_transaction(
+            user_id=user_id,
             transaction_id=transaction_id,
             transaction_date=date(2023, 4, 20),
             description="Updated Transaction",
@@ -176,24 +184,24 @@ class TestTransactionService:
         )
 
         assert result is None
-        mock_repository.get_by_id.assert_called_once_with(transaction_id)
+        mock_repository.get_by_id.assert_called_once_with(transaction_id, user_id)
         mock_repository.update.assert_not_called()
 
-    def test_delete_transaction(self, service, mock_repository):
+    def test_delete_transaction(self, service, mock_repository, user_id):
         transaction_id = uuid4()
         mock_repository.delete.return_value = True
-        result = service.delete_transaction(transaction_id)
+        result = service.delete_transaction(transaction_id, user_id)
 
         assert result is True
-        mock_repository.delete.assert_called_once_with(transaction_id)
+        mock_repository.delete.assert_called_once_with(transaction_id, user_id)
 
-    def test_delete_transaction_not_found(self, service, mock_repository):
+    def test_delete_transaction_not_found(self, service, mock_repository, user_id):
         transaction_id = uuid4()
         mock_repository.delete.return_value = False
-        result = service.delete_transaction(transaction_id)
+        result = service.delete_transaction(transaction_id, user_id)
 
         assert result is False
-        mock_repository.delete.assert_called_once_with(transaction_id)
+        mock_repository.delete.assert_called_once_with(transaction_id, user_id)
 
     def test_create_transaction_with_exact_rule_match(
         self,
@@ -201,6 +209,7 @@ class TestTransactionService:
         mock_repository,
         mock_enhancement_rule_repository,
         mock_transaction_enhancer,
+        user_id,
     ):
         category_id = uuid4()
         account_id = uuid4()
@@ -234,7 +243,7 @@ class TestTransactionService:
             account_id=account_id,
         )
 
-        result = service.create_transaction(transaction_data=transaction_data)
+        result = service.create_transaction(user_id=user_id, transaction_data=transaction_data)
 
         assert result.category_id == category_id
         assert result.categorization_status == CategorizationStatus.RULE_BASED
@@ -246,6 +255,7 @@ class TestTransactionService:
         mock_repository,
         mock_enhancement_rule_repository,
         mock_transaction_enhancer,
+        user_id,
     ):
         category_id = uuid4()
         account_id = uuid4()
@@ -279,7 +289,7 @@ class TestTransactionService:
             account_id=account_id,
         )
 
-        result = service.create_transaction(transaction_data=transaction_data)
+        result = service.create_transaction(user_id=user_id, transaction_data=transaction_data)
 
         assert result.category_id == category_id
         mock_enhancement_rule_repository.find_matching_rules_batch.assert_called_once()
@@ -290,6 +300,7 @@ class TestTransactionService:
         mock_repository,
         mock_enhancement_rule_repository,
         mock_transaction_enhancer,
+        user_id,
     ):
         category_id = uuid4()
         account_id = uuid4()
@@ -323,7 +334,7 @@ class TestTransactionService:
             account_id=account_id,
         )
 
-        result = service.create_transaction(transaction_data=transaction_data)
+        result = service.create_transaction(user_id=user_id, transaction_data=transaction_data)
 
         assert result.category_id == category_id
         mock_enhancement_rule_repository.find_matching_rules_batch.assert_called_once()
@@ -334,6 +345,7 @@ class TestTransactionService:
         mock_repository,
         mock_enhancement_rule_repository,
         mock_transaction_enhancer,
+        user_id,
     ):
         account_id = uuid4()
 
@@ -358,9 +370,9 @@ class TestTransactionService:
             account_id=account_id,
         )
 
-        service.create_transaction(transaction_data=transaction_data)
+        service.create_transaction(user_id=user_id, transaction_data=transaction_data)
 
-        mock_enhancement_rule_repository.find_by_normalized_description.assert_called_once_with("new merchant")
+        mock_enhancement_rule_repository.find_by_normalized_description.assert_called_once_with("new merchant", user_id)
         mock_enhancement_rule_repository.save.assert_called_once()
 
         saved_rule = mock_enhancement_rule_repository.save.call_args[0][0]
@@ -375,6 +387,7 @@ class TestTransactionService:
         mock_repository,
         mock_enhancement_rule_repository,
         mock_transaction_enhancer,
+        user_id,
     ):
         account_id = uuid4()
         existing_rule = EnhancementRule(
@@ -412,7 +425,7 @@ class TestTransactionService:
             account_id=account_id,
         )
 
-        service.create_transaction(transaction_data=transaction_data)
+        service.create_transaction(user_id=user_id, transaction_data=transaction_data)
 
         mock_enhancement_rule_repository.save.assert_not_called()
 
@@ -422,6 +435,7 @@ class TestTransactionService:
         mock_repository,
         mock_enhancement_rule_repository,
         mock_transaction_enhancer,
+        user_id,
     ):
         user_category_id = uuid4()
         account_id = uuid4()
@@ -446,7 +460,7 @@ class TestTransactionService:
             category_id=user_category_id,
         )
 
-        result = service.create_transaction(transaction_data=transaction_data)
+        result = service.create_transaction(user_id=user_id, transaction_data=transaction_data)
 
         assert result.category_id == user_category_id
         mock_enhancement_rule_repository.get_all.assert_not_called()

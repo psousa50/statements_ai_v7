@@ -1,10 +1,9 @@
-"""Enhancement Rules API routes."""
-
 from typing import Callable, Iterator, List, Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, Query, status
 
+from app.api.routes.auth import require_current_user
 from app.api.schemas import (
     CleanupUnusedRulesResponse,
     EnhancementRuleCreate,
@@ -15,8 +14,10 @@ from app.api.schemas import (
     EnhancementRuleUpdate,
     MatchingTransactionsCountResponse,
 )
+from app.core.config import settings
 from app.core.dependencies import InternalDependencies
 from app.domain.models.enhancement_rule import EnhancementRuleSource, MatchType
+from app.domain.models.user import User
 from app.services.enhancement_rule_management import EnhancementRuleManagementService
 
 
@@ -24,7 +25,6 @@ def register_enhancement_rule_routes(
     app: FastAPI,
     provide_dependencies: Callable[[], Iterator[InternalDependencies]],
 ):
-    """Register enhancement rule routes with the FastAPI app."""
     router = APIRouter(
         prefix="/enhancement-rules",
         tags=["enhancement-rules"],
@@ -53,14 +53,14 @@ def register_enhancement_rule_routes(
         sort_field: str = Query("created_at", description="Field to sort by"),
         sort_direction: str = Query("desc", description="Sort direction (asc/desc)"),
         internal: InternalDependencies = Depends(provide_dependencies),
+        current_user: User = Depends(require_current_user),
     ) -> EnhancementRuleListResponse:
-        """List enhancement rules with filtering and pagination."""
-
         service: EnhancementRuleManagementService = internal.enhancement_rule_management_service
 
         try:
             offset = (page - 1) * page_size
             result = service.list_rules(
+                user_id=current_user.id,
                 limit=page_size,
                 offset=offset,
                 description_search=description_search,
@@ -90,13 +90,12 @@ def register_enhancement_rule_routes(
     )
     def get_enhancement_rule_stats(
         internal: InternalDependencies = Depends(provide_dependencies),
+        current_user: User = Depends(require_current_user),
     ) -> EnhancementRuleStatsResponse:
-        """Get comprehensive statistics about enhancement rules."""
-
         service: EnhancementRuleManagementService = internal.enhancement_rule_management_service
 
         try:
-            stats = service.get_stats()
+            stats = service.get_stats(current_user.id)
             return EnhancementRuleStatsResponse(**stats)
 
         except Exception as e:
@@ -111,13 +110,12 @@ def register_enhancement_rule_routes(
     )
     def cleanup_unused_rules(
         internal: InternalDependencies = Depends(provide_dependencies),
+        current_user: User = Depends(require_current_user),
     ) -> CleanupUnusedRulesResponse:
-        """Delete enhancement rules that haven't been used to enhance any transactions."""
-
         service: EnhancementRuleManagementService = internal.enhancement_rule_management_service
 
         try:
-            result = service.cleanup_unused_rules()
+            result = service.cleanup_unused_rules(current_user.id)
             return CleanupUnusedRulesResponse(**result)
 
         except Exception as e:
@@ -133,13 +131,12 @@ def register_enhancement_rule_routes(
     def get_matching_transactions_count(
         rule_id: UUID,
         internal: InternalDependencies = Depends(provide_dependencies),
+        current_user: User = Depends(require_current_user),
     ) -> MatchingTransactionsCountResponse:
-        """Get count of transactions that would match this enhancement rule."""
-
         service: EnhancementRuleManagementService = internal.enhancement_rule_management_service
 
         try:
-            result = service.get_matching_transactions_count(rule_id)
+            result = service.get_matching_transactions_count(rule_id, current_user.id)
             return MatchingTransactionsCountResponse(**result)
 
         except ValueError as e:
@@ -160,13 +157,12 @@ def register_enhancement_rule_routes(
     def preview_matching_transactions_count(
         rule_preview: EnhancementRulePreview,
         internal: InternalDependencies = Depends(provide_dependencies),
+        current_user: User = Depends(require_current_user),
     ) -> MatchingTransactionsCountResponse:
-        """Preview count of transactions that would match the given enhancement rule criteria."""
-
         service: EnhancementRuleManagementService = internal.enhancement_rule_management_service
 
         try:
-            result = service.preview_matching_transactions_count(rule_preview)
+            result = service.preview_matching_transactions_count(rule_preview, current_user.id)
             return MatchingTransactionsCountResponse(**result)
 
         except ValueError as e:
@@ -184,13 +180,12 @@ def register_enhancement_rule_routes(
     def get_enhancement_rule(
         rule_id: UUID,
         internal: InternalDependencies = Depends(provide_dependencies),
+        current_user: User = Depends(require_current_user),
     ) -> EnhancementRuleResponse:
-        """Get a specific enhancement rule by ID."""
-
         service: EnhancementRuleManagementService = internal.enhancement_rule_management_service
 
         try:
-            rule = service.get_rule(rule_id)
+            rule = service.get_rule(rule_id, current_user.id)
             if not rule:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
@@ -215,13 +210,13 @@ def register_enhancement_rule_routes(
     def create_enhancement_rule(
         rule_data: EnhancementRuleCreate,
         internal: InternalDependencies = Depends(provide_dependencies),
+        current_user: User = Depends(require_current_user),
     ) -> EnhancementRuleResponse:
-        """Create a new enhancement rule."""
-
         service: EnhancementRuleManagementService = internal.enhancement_rule_management_service
 
         try:
             rule = service.create_rule(
+                user_id=current_user.id,
                 normalized_description_pattern=rule_data.normalized_description_pattern,
                 match_type=rule_data.match_type,
                 category_id=rule_data.category_id,
@@ -251,14 +246,14 @@ def register_enhancement_rule_routes(
         rule_id: UUID,
         rule_data: EnhancementRuleUpdate,
         internal: InternalDependencies = Depends(provide_dependencies),
+        current_user: User = Depends(require_current_user),
     ) -> EnhancementRuleResponse:
-        """Update an existing enhancement rule."""
-
         service: EnhancementRuleManagementService = internal.enhancement_rule_management_service
 
         try:
             rule = service.update_rule(
                 rule_id=rule_id,
+                user_id=current_user.id,
                 normalized_description_pattern=rule_data.normalized_description_pattern,
                 match_type=rule_data.match_type,
                 category_id=rule_data.category_id,
@@ -296,13 +291,12 @@ def register_enhancement_rule_routes(
     def delete_enhancement_rule(
         rule_id: UUID,
         internal: InternalDependencies = Depends(provide_dependencies),
+        current_user: User = Depends(require_current_user),
     ):
-        """Delete an enhancement rule."""
-
         service: EnhancementRuleManagementService = internal.enhancement_rule_management_service
 
         try:
-            success = service.delete_rule(rule_id)
+            success = service.delete_rule(rule_id, current_user.id)
             if not success:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
@@ -317,4 +311,4 @@ def register_enhancement_rule_routes(
                 detail=f"Failed to delete enhancement rule: {str(e)}",
             )
 
-    app.include_router(router, prefix="/api/v1")
+    app.include_router(router, prefix=settings.API_V1_STR)

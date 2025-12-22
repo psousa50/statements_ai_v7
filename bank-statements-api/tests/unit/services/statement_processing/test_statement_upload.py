@@ -12,6 +12,10 @@ from app.services.transaction_rule_enhancement import EnhancementResult
 
 class TestStatementUploadService:
     @pytest.fixture
+    def user_id(self):
+        return uuid4()
+
+    @pytest.fixture
     def mock_statement_parser(self):
         return Mock()
 
@@ -105,9 +109,8 @@ class TestStatementUploadService:
         self,
         statement_upload_service,
         mock_transaction_rule_enhancement_service,
+        user_id,
     ):
-        """Test successful transaction enhancement"""
-        # Setup test data
         parsed = ParsedStatement(
             uploaded_file_id=uuid4(),
             transaction_dtos=[
@@ -138,11 +141,9 @@ class TestStatementUploadService:
 
         mock_transaction_rule_enhancement_service.enhance_transactions.return_value = enhancement_result
 
-        # Execute
-        result = statement_upload_service.enhance_transactions(parsed)
+        result = statement_upload_service.enhance_transactions(user_id, parsed)
 
-        # Verify
-        mock_transaction_rule_enhancement_service.enhance_transactions.assert_called_once_with(parsed.transaction_dtos)
+        mock_transaction_rule_enhancement_service.enhance_transactions.assert_called_once_with(user_id, parsed.transaction_dtos)
 
         assert isinstance(result, EnhancedTransactions)
         assert result.enhanced_dtos == parsed.transaction_dtos

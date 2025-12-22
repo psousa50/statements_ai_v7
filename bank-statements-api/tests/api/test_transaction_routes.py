@@ -9,7 +9,7 @@ from app.domain.models.account import Account
 from app.domain.models.category import Category
 from app.domain.models.enhancement_rule import EnhancementRule, EnhancementRuleSource, MatchType
 from app.domain.models.transaction import CategorizationStatus, SourceType, Transaction
-from tests.api.helpers import build_client, mocked_dependencies
+from tests.api.helpers import TEST_USER_ID, build_client, mocked_dependencies
 
 
 def test_create_transaction():
@@ -32,7 +32,8 @@ def test_create_transaction():
         manual_position_after=None,
     )
 
-    # Patch the correct method for manual transaction creation
+    mock_account = Account(id=account_id, name="Test Account", user_id=TEST_USER_ID)
+    internal_dependencies.account_service.get_account.return_value = mock_account
     internal_dependencies.transaction_service.create_transaction.return_value = mock_transaction
     client = build_client(internal_dependencies)
 
@@ -62,6 +63,7 @@ def test_create_transaction():
     assert transaction_response.source_type == SourceType.MANUAL.value
     assert transaction_response.manual_position_after is None
 
+    internal_dependencies.account_service.get_account.assert_called_once_with(account_id, TEST_USER_ID)
     internal_dependencies.transaction_service.create_transaction.assert_called_once()
 
 
@@ -92,7 +94,7 @@ def test_get_transaction():
     assert transaction_response.source_type == SourceType.MANUAL.value
     assert transaction_response.manual_position_after is None
 
-    internal_dependencies.transaction_service.get_transaction.assert_called_once_with(transaction_id)
+    internal_dependencies.transaction_service.get_transaction.assert_called_once_with(transaction_id, TEST_USER_ID)
 
 
 def test_get_transaction_not_found():
@@ -107,7 +109,7 @@ def test_get_transaction_not_found():
     assert response.status_code == 404
     assert response.json()["detail"] == f"Transaction with ID {transaction_id} not found"
 
-    internal_dependencies.transaction_service.get_transaction.assert_called_once_with(transaction_id)
+    internal_dependencies.transaction_service.get_transaction.assert_called_once_with(transaction_id, TEST_USER_ID)
 
 
 def test_get_category_totals():

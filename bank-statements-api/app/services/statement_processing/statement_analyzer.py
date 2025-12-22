@@ -34,12 +34,12 @@ class StatementAnalyzerService:
         self.transaction_repo = transaction_repo
         self.row_filter_service = row_filter_service or RowFilterService()
 
-    def analyze(self, filename: str, file_content: bytes) -> AnalysisResultDTO:
+    def analyze(self, user_id: UUID, filename: str, file_content: bytes) -> AnalysisResultDTO:
         file_type = self.file_type_detector.detect(file_content)
         raw_df = self.statement_parser.parse(file_content, file_type)
 
         file_hash = compute_hash(file_type, raw_df)
-        existing_metadata = self.file_analysis_metadata_repo.find_by_hash(file_hash)
+        existing_metadata = self.file_analysis_metadata_repo.find_by_hash(file_hash, user_id)
 
         if existing_metadata:
             conversion_model = ConversionModel(

@@ -8,7 +8,7 @@ from app.api.schemas import JobStatusResponse, StatementAnalysisResponse, Statem
 from app.domain.dto.statement_processing import AnalysisResultDTO
 from app.domain.models.background_job import JobStatus
 from app.domain.models.processing import BackgroundJobInfo
-from tests.api.helpers import build_client, mocked_dependencies
+from tests.api.helpers import TEST_USER_ID, build_client, mocked_dependencies
 
 
 class TestStatementRoutes:
@@ -128,11 +128,11 @@ class TestStatementRoutes:
         assert persistence_result.processing_time_ms == 150
         assert persistence_result.background_job is None
 
-        # Verify the service was called with the correct request
         call_args = internal_dependencies.statement_upload_service.upload_statement.call_args
-        assert call_args[0][0] == request_data  # First positional arg should be request_data
-        assert "background_tasks" in call_args[1]  # Should have background_tasks kwarg
-        assert "internal_deps" in call_args[1]  # Should have internal_deps kwarg
+        assert call_args.kwargs["user_id"] == TEST_USER_ID
+        assert call_args.kwargs["upload_data"] == request_data
+        assert "background_tasks" in call_args.kwargs
+        assert "internal_deps" in call_args.kwargs
 
     def test_upload_statement_error(self):
         internal_dependencies = mocked_dependencies()

@@ -12,6 +12,7 @@ class DescriptionGroup(Base):
     __tablename__ = "description_groups"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     name = Column(String, nullable=False)
     created_at = Column(
         DateTime,

@@ -6,47 +6,34 @@ from app.domain.models.category import Category
 
 
 class CategoryRepository(ABC):
-    """
-    Port (interface) for category repository operations.
-    Following Hexagonal Architecture pattern.
-    """
-
     @abstractmethod
     def create(self, category: Category) -> Category:
-        """Create a new category"""
         pass
 
     @abstractmethod
-    def get_by_id(self, category_id: UUID) -> Optional[Category]:
-        """Get a category by ID"""
+    def get_by_id(self, category_id: UUID, user_id: UUID) -> Optional[Category]:
         pass
 
     @abstractmethod
-    def get_all(self) -> List[Category]:
-        """Get all categories"""
+    def get_all(self, user_id: UUID) -> List[Category]:
         pass
 
     @abstractmethod
-    def get_root_categories(self) -> List[Category]:
-        """Get all root categories (categories without a parent)"""
+    def get_root_categories(self, user_id: UUID) -> List[Category]:
         pass
 
     @abstractmethod
-    def get_subcategories(self, parent_id: UUID) -> List[Category]:
-        """Get all subcategories for a given parent category"""
+    def get_subcategories(self, parent_id: UUID, user_id: UUID) -> List[Category]:
         pass
 
     @abstractmethod
     def update(self, category: Category) -> Category:
-        """Update a category"""
         pass
 
     @abstractmethod
-    def delete(self, category_id: UUID) -> bool:
-        """Delete a category"""
+    def delete(self, category_id: UUID, user_id: UUID) -> bool:
         pass
 
     @abstractmethod
-    def get_by_name(self, name: str, parent_id: Optional[UUID] = None) -> Optional[Category]:
-        """Get a category by name and optional parent_id"""
+    def get_by_name(self, name: str, user_id: UUID, parent_id: Optional[UUID] = None) -> Optional[Category]:
         pass

@@ -2,7 +2,7 @@ from uuid import uuid4
 
 from app.api.schemas import CategoryListResponse, CategoryResponse
 from app.domain.models.category import Category
-from tests.api.helpers import build_client, mocked_dependencies
+from tests.api.helpers import TEST_USER_ID, build_client, mocked_dependencies
 
 
 def test_create_category():
@@ -29,6 +29,7 @@ def test_create_category():
     assert category_response.name == "Test Category"
     internal_dependencies.category_service.create_category.assert_called_once_with(
         name="Test Category",
+        user_id=TEST_USER_ID,
         parent_id=None,
     )
 
@@ -51,7 +52,7 @@ def test_get_categories():
     assert response.json()["categories"][0]["id"] == str(category_id1)
     assert response.json()["categories"][1]["id"] == str(category_id2)
 
-    internal_dependencies.category_service.get_all_categories.assert_called_once()
+    internal_dependencies.category_service.get_all_categories.assert_called_once_with(TEST_USER_ID)
 
 
 def test_get_root_categories():
@@ -75,7 +76,7 @@ def test_get_root_categories():
     assert root_categories_response.categories[0].id == category_id1
     assert root_categories_response.categories[1].id == category_id2
 
-    internal_dependencies.category_service.get_root_categories.assert_called_once()
+    internal_dependencies.category_service.get_root_categories.assert_called_once_with(TEST_USER_ID)
 
 
 def test_update_category():
@@ -104,6 +105,7 @@ def test_update_category():
     internal_dependencies.category_service.update_category.assert_called_once_with(
         category_id=category_id,
         name="Updated Category",
+        user_id=TEST_USER_ID,
         parent_id=None,
     )
 
@@ -118,7 +120,7 @@ def test_delete_category():
 
     assert response.status_code == 204
 
-    internal_dependencies.category_service.delete_category.assert_called_once_with(category_id)
+    internal_dependencies.category_service.delete_category.assert_called_once_with(category_id, TEST_USER_ID)
 
 
 def test_delete_category_not_found():
@@ -132,7 +134,7 @@ def test_delete_category_not_found():
     assert response.status_code == 404
     assert "not found" in response.json()["detail"]
 
-    internal_dependencies.category_service.delete_category.assert_called_once_with(category_id)
+    internal_dependencies.category_service.delete_category.assert_called_once_with(category_id, TEST_USER_ID)
 
 
 def test_get_subcategories():
@@ -165,4 +167,4 @@ def test_get_subcategories():
     assert subcategories_response.categories[0].id == subcategory_id1
     assert subcategories_response.categories[1].id == subcategory_id2
 
-    internal_dependencies.category_service.get_subcategories.assert_called_once_with(parent_id)
+    internal_dependencies.category_service.get_subcategories.assert_called_once_with(parent_id, TEST_USER_ID)

@@ -1,5 +1,6 @@
 from typing import Callable, Iterator
 from unittest.mock import MagicMock
+from uuid import uuid4
 
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
@@ -10,8 +11,10 @@ from app.adapters.repositories.category import SQLAlchemyCategoryRepository
 from app.adapters.repositories.enhancement_rule import SQLAlchemyEnhancementRuleRepository
 from app.adapters.repositories.statement import SqlAlchemyStatementRepository
 from app.adapters.repositories.transaction import SQLAlchemyTransactionRepository
+from app.api.routes.auth import require_current_user
 from app.app import register_app_routes
 from app.core.dependencies import InternalDependencies
+from app.domain.models.user import User
 from app.services.account import AccountService
 from app.services.background.background_job_service import BackgroundJobService
 from app.services.category import CategoryService
@@ -24,6 +27,19 @@ from app.services.statement_processing.statement_analyzer import StatementAnalyz
 from app.services.statement_processing.statement_upload import StatementUploadService
 from app.services.transaction import TransactionService
 from app.services.transaction_enhancement import TransactionEnhancer
+
+
+TEST_USER_ID = uuid4()
+
+
+def get_test_user() -> User:
+    return User(
+        id=TEST_USER_ID,
+        email="test@example.com",
+        name="Test User",
+        oauth_provider="google",
+        oauth_id="test-oauth-id",
+    )
 
 
 def mocked_dependencies(
@@ -85,12 +101,19 @@ def provide_mocked_dependencies(
 
 
 def build_client(
-    internal_dependencies: InternalDependencies = mocked_dependencies(),
+    internal_dependencies: InternalDependencies = None,
+    test_user: User = None,
 ) -> TestClient:
+    if internal_dependencies is None:
+        internal_dependencies = mocked_dependencies()
+    if test_user is None:
+        test_user = get_test_user()
+
     app = FastAPI()
     register_app_routes(
         app,
         provide_mocked_dependencies(internal_dependencies),
     )
+    app.dependency_overrides[require_current_user] = lambda: test_user
     client = TestClient(app)
     return client

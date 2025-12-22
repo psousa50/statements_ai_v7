@@ -61,30 +61,16 @@ class StatementUploadService:
 
     def upload_statement(
         self,
-        upload_request: StatementUploadRequest,
+        user_id: UUID,
+        upload_data: StatementUploadRequest,
         background_tasks=None,
         internal_deps=None,
     ) -> StatementUploadResult:
-        """
-        Simplified statement upload process with 4 clear steps:
-        1. Parse statement file
-        2. Enhance transactions with rule-based processing
-        3. Save statement and transactions to database
-        4. Schedule background jobs for AI processing
-        """
-        # Step 1: Parse Statement
-        parsed = self.parse_statement(upload_request)
-
-        # Step 2: Enhance Transactions
-        enhanced = self.enhance_transactions(parsed)
-
-        # Step 3: Save Statement
-        saved = self.save_statement(enhanced, upload_request)
-
-        # Step 4: Schedule Background Jobs
+        parsed = self.parse_statement(upload_data)
+        enhanced = self.enhance_transactions(user_id, parsed)
+        saved = self.save_statement(enhanced, upload_data)
         jobs = self.schedule_jobs(saved, enhanced)
 
-        # Optional: Trigger immediate processing if requested
         if background_tasks and internal_deps:
             self._trigger_immediate_processing(background_tasks, internal_deps)
 
@@ -187,11 +173,10 @@ class StatementUploadService:
             account_id=UUID(upload_request.account_id),
         )
 
-    def enhance_transactions(self, parsed: ParsedStatement) -> EnhancedTransactions:
-        """Step 2: Enhance transactions with rule-based processing"""
+    def enhance_transactions(self, user_id: UUID, parsed: ParsedStatement) -> EnhancedTransactions:
         logger.info(f"Enhancing {len(parsed.transaction_dtos)} transactions")
 
-        enhancement_result = self.transaction_rule_enhancement_service.enhance_transactions(parsed.transaction_dtos)
+        enhancement_result = self.transaction_rule_enhancement_service.enhance_transactions(user_id, parsed.transaction_dtos)
 
         return EnhancedTransactions(
             enhanced_dtos=enhancement_result.enhanced_dtos,

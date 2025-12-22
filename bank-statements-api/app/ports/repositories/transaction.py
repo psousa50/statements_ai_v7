@@ -30,13 +30,11 @@ class TransactionRepository(ABC):
         pass
 
     @abstractmethod
-    def get_by_id(self, transaction_id: UUID) -> Optional[Transaction]:
-        """Get a transaction by ID"""
+    def get_by_id(self, transaction_id: UUID, user_id: UUID) -> Optional[Transaction]:
         pass
 
     @abstractmethod
-    def get_all(self) -> List[Transaction]:
-        """Get all transactions"""
+    def get_all(self, user_id: UUID) -> List[Transaction]:
         pass
 
     @abstractmethod
@@ -52,6 +50,7 @@ class TransactionRepository(ABC):
     @abstractmethod
     def get_paginated(
         self,
+        user_id: UUID,
         page: int = 1,
         page_size: int = 20,
         category_ids: Optional[List[UUID]] = None,
@@ -66,32 +65,14 @@ class TransactionRepository(ABC):
         sort_direction: Optional[str] = None,
         exclude_transfers: Optional[bool] = None,
         transaction_type: Optional[str] = None,
+        exclude_uncategorized: Optional[bool] = None,
     ) -> Tuple[List[Transaction], int]:
-        """
-        Get transactions with pagination and advanced filtering
-
-        Args:
-            page: Page number (1-based)
-            page_size: Number of transactions per page
-            category_ids: Optional list of category IDs to filter by
-            status: Optional status filter
-            min_amount: Optional minimum amount filter
-            max_amount: Optional maximum amount filter
-            description_search: Optional description search filter
-            account_id: Optional account ID to filter by
-            start_date: Optional start date filter (inclusive)
-            end_date: Optional end date filter (inclusive)
-            sort_field: Optional field to sort by (date, amount, description, created_at)
-            sort_direction: Optional sort direction (asc, desc)
-
-        Returns:
-            Tuple of (transactions list, total count)
-        """
         pass
 
     @abstractmethod
     def get_category_totals(
         self,
+        user_id: UUID,
         category_ids: Optional[List[UUID]] = None,
         status: Optional[CategorizationStatus] = None,
         min_amount: Optional[Decimal] = None,
@@ -101,24 +82,9 @@ class TransactionRepository(ABC):
         start_date: Optional[date] = None,
         end_date: Optional[date] = None,
         exclude_transfers: Optional[bool] = None,
+        exclude_uncategorized: Optional[bool] = None,
         transaction_type: Optional[str] = None,
     ) -> Dict[Optional[UUID], Dict[str, Decimal]]:
-        """
-        Get category totals for chart data with the same filtering options as get_paginated.
-
-        Args:
-            category_ids: Optional list of category IDs to filter by
-            status: Optional status filter
-            min_amount: Optional minimum amount filter
-            max_amount: Optional maximum amount filter
-            description_search: Optional description search filter
-            account_id: Optional account ID to filter by
-            start_date: Optional start date filter (inclusive)
-            end_date: Optional end date filter (inclusive)
-
-        Returns:
-            Dict mapping category_id (or None for uncategorized) to dict with 'total_amount' and 'transaction_count'
-        """
         pass
 
     @abstractmethod
@@ -127,8 +93,7 @@ class TransactionRepository(ABC):
         pass
 
     @abstractmethod
-    def delete(self, transaction_id: UUID) -> bool:
-        """Delete a transaction"""
+    def delete(self, transaction_id: UUID, user_id: UUID) -> bool:
         pass
 
     @abstractmethod
@@ -211,19 +176,10 @@ class TransactionRepository(ABC):
     @abstractmethod
     def bulk_update_category_by_normalized_description(
         self,
+        user_id: UUID,
         normalized_description: str,
         category_id: Optional[UUID],
     ) -> int:
-        """
-        Update the category for all transactions with the given normalized description.
-
-        Args:
-            normalized_description: The normalized description to match
-            category_id: The new category ID to assign (or None to uncategorize)
-
-        Returns:
-            Number of transactions updated
-        """
         pass
 
     @abstractmethod
@@ -263,6 +219,7 @@ class TransactionRepository(ABC):
     @abstractmethod
     def get_transactions_matching_rule_paginated(
         self,
+        user_id: UUID,
         rule,
         page: int = 1,
         page_size: int = 20,
@@ -270,20 +227,6 @@ class TransactionRepository(ABC):
         sort_direction: Optional[str] = None,
         uncategorized_only: bool = False,
     ) -> Tuple[List[Transaction], int]:
-        """
-        Get transactions that match the given enhancement rule with pagination and sorting
-
-        Args:
-            rule: EnhancementRule to match against
-            page: Page number (1-based)
-            page_size: Number of transactions per page
-            sort_field: Optional field to sort by (date, amount, description, created_at)
-            sort_direction: Optional sort direction (asc, desc)
-            uncategorized_only: If True, only return transactions without a category
-
-        Returns:
-            Tuple of (transactions list, total count)
-        """
         pass
 
     @abstractmethod

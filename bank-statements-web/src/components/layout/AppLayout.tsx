@@ -1,6 +1,7 @@
 import { Outlet } from 'react-router-dom'
 import { Box, CssBaseline, Drawer, AppBar, Toolbar, Typography, Divider } from '@mui/material'
 import { AppNavigation } from './AppNavigation'
+import { UserMenu } from './UserMenu'
 
 const drawerWidth = 240
 
@@ -10,9 +11,10 @@ export const AppLayout = () => {
       <CssBaseline />
       <AppBar position="fixed" sx={{ width: `calc(100% - ${drawerWidth}px)`, ml: `${drawerWidth}px` }}>
         <Toolbar>
-          <Typography variant="h6" noWrap component="div">
+          <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
             Bank Statements App
           </Typography>
+          <UserMenu />
         </Toolbar>
       </AppBar>
       <Drawer

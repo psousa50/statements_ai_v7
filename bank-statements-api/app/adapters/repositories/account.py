@@ -17,22 +17,26 @@ class SQLAlchemyAccountRepository(AccountRepository):
         self.db_session.refresh(account)
         return account
 
-    def get_by_id(self, account_id: UUID) -> Optional[Account]:
-        return self.db_session.query(Account).filter(Account.id == account_id).first()
+    def get_by_id(self, account_id: UUID, user_id: UUID) -> Optional[Account]:
+        return (
+            self.db_session.query(Account)
+            .filter(Account.id == account_id, Account.user_id == user_id)
+            .first()
+        )
 
-    def get_by_name(self, name: str) -> Optional[Account]:
-        return self.db_session.query(Account).filter(Account.name == name).first()
+    def get_by_name(self, name: str, user_id: UUID) -> Optional[Account]:
+        return self.db_session.query(Account).filter(Account.name == name, Account.user_id == user_id).first()
 
-    def get_all(self) -> List[Account]:
-        return self.db_session.query(Account).all()
+    def get_all(self, user_id: UUID) -> List[Account]:
+        return self.db_session.query(Account).filter(Account.user_id == user_id).all()
 
     def update(self, account: Account) -> Account:
         self.db_session.commit()
         self.db_session.refresh(account)
         return account
 
-    def delete(self, account_id: UUID) -> None:
-        account = self.get_by_id(account_id)
+    def delete(self, account_id: UUID, user_id: UUID) -> None:
+        account = self.get_by_id(account_id, user_id)
         if account:
             self.db_session.delete(account)
             self.db_session.commit()

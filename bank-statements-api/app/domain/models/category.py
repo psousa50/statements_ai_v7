@@ -11,6 +11,7 @@ class Category(Base):
     __tablename__ = "categories"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     name = Column(String, nullable=False)
     parent_id = Column(
         UUID(as_uuid=True),
@@ -18,6 +19,7 @@ class Category(Base):
         nullable=True,
     )
 
+    user = relationship("User", back_populates="categories")
     parent = relationship(
         "Category",
         remote_side=[id],

@@ -73,12 +73,13 @@ class RecurringExpenseAnalyzer:
     def analyze_patterns(
         self,
         transactions: List[Transaction],
+        user_id: UUID,
         active_only: bool = False,
     ) -> RecurringAnalysisResult:
         monthly_patterns = self._find_monthly_patterns(transactions)
 
         if self.description_group_repository:
-            patterns = self._merge_grouped_patterns(monthly_patterns)
+            patterns = self._merge_grouped_patterns(monthly_patterns, user_id)
         else:
             patterns = monthly_patterns
 
@@ -190,8 +191,8 @@ class RecurringExpenseAnalyzer:
             return False
         return all(26 <= interval <= 34 for interval in intervals)
 
-    def _merge_grouped_patterns(self, patterns: List[RecurringPattern]) -> List[RecurringPattern]:
-        description_to_group = self.description_group_repository.get_description_to_group_map()
+    def _merge_grouped_patterns(self, patterns: List[RecurringPattern], user_id: UUID) -> List[RecurringPattern]:
+        description_to_group = self.description_group_repository.get_description_to_group_map(user_id)
 
         grouped_patterns = defaultdict(list)
 

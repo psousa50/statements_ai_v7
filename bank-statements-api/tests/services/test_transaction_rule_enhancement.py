@@ -11,6 +11,10 @@ from app.services.transaction_rule_enhancement import EnhancementResult, Transac
 
 class TestTransactionRuleEnhancementService:
     @pytest.fixture
+    def user_id(self):
+        return uuid4()
+
+    @pytest.fixture
     def mock_transaction_enhancer(self):
         return Mock()
 
@@ -73,9 +77,8 @@ class TestTransactionRuleEnhancementService:
             ),
         ]
 
-    def test_enhance_transactions_empty_list(self, enhancement_service):
-        """Test enhancement with empty transaction list"""
-        result = enhancement_service.enhance_transactions([])
+    def test_enhance_transactions_empty_list(self, enhancement_service, user_id):
+        result = enhancement_service.enhance_transactions(user_id, [])
 
         assert isinstance(result, EnhancementResult)
         assert result.enhanced_dtos == []
@@ -92,23 +95,19 @@ class TestTransactionRuleEnhancementService:
         mock_enhancement_rule_repository,
         sample_dtos,
         sample_enhancement_rules,
+        user_id,
     ):
-        """Test enhancement when rules match transactions"""
-        # Setup mock responses
         mock_enhancement_rule_repository.find_matching_rules_batch.return_value = sample_enhancement_rules
 
-        result = enhancement_service.enhance_transactions(sample_dtos)
+        result = enhancement_service.enhance_transactions(user_id, sample_dtos)
 
-        # Verify service calls
         mock_enhancement_rule_repository.find_matching_rules_batch.assert_called_once()
 
-        # Verify result
         assert result.total_processed == 3
-        assert result.rule_based_matches == 2  # grocery store and salary matched
+        assert result.rule_based_matches == 2
         assert result.match_rate_percentage == 66.7
-        assert result.has_unmatched  # ATM withdrawal didn't match
+        assert result.has_unmatched
 
-        # Verify DTOs were enhanced
         grocery_dto = next(dto for dto in result.enhanced_dtos if "grocery" in dto.description.lower())
         assert grocery_dto.category_id == "category-1"
         assert grocery_dto.categorization_status == CategorizationStatus.RULE_BASED
@@ -131,20 +130,17 @@ class TestTransactionRuleEnhancementService:
         mock_transaction_enhancer,
         mock_enhancement_rule_repository,
         sample_dtos,
+        user_id,
     ):
-        """Test enhancement when no rules match"""
-        # Setup mock responses with no matches
         mock_enhancement_rule_repository.find_matching_rules_batch.return_value = []
 
-        result = enhancement_service.enhance_transactions(sample_dtos)
+        result = enhancement_service.enhance_transactions(user_id, sample_dtos)
 
-        # Verify result
         assert result.total_processed == 3
         assert result.rule_based_matches == 0
         assert result.match_rate_percentage == 0.0
         assert result.has_unmatched
 
-        # Verify all DTOs are uncategorized
         for dto in result.enhanced_dtos:
             assert dto.category_id is None
             assert dto.categorization_status == CategorizationStatus.UNCATEGORIZED
@@ -157,18 +153,15 @@ class TestTransactionRuleEnhancementService:
         mock_transaction_enhancer,
         mock_enhancement_rule_repository,
         sample_dtos,
+        user_id,
     ):
-        """Test that unmatched transactions create enhancement rules"""
-        # Setup mock responses with no matches
         mock_enhancement_rule_repository.find_matching_rules_batch.return_value = []
         mock_enhancement_rule_repository.find_by_normalized_description.return_value = None
 
-        enhancement_service.enhance_transactions(sample_dtos)
+        enhancement_service.enhance_transactions(user_id, sample_dtos)
 
-        # Verify unmatched rules were created
-        assert mock_enhancement_rule_repository.save.call_count == 3  # One for each unmatched transaction
+        assert mock_enhancement_rule_repository.save.call_count == 3
 
-        # Verify rule creation calls
         save_calls = mock_enhancement_rule_repository.save.call_args_list
         for call in save_calls:
             rule = call[0][0]
@@ -183,16 +176,15 @@ class TestTransactionRuleEnhancementService:
         enhancement_service,
         mock_transaction_enhancer,
         mock_enhancement_rule_repository,
+        user_id,
     ):
-        """Test enhancement handles DTOs with empty descriptions gracefully"""
-        # Create DTOs with empty and valid descriptions
         dtos = [
             TransactionDTO(
                 date="2024-01-01",
                 amount=100.0,
                 description="",
                 account_id="acc1",
-            ),  # Empty description
+            ),
             TransactionDTO(
                 date="2024-01-02",
                 amount=50.0,
@@ -204,21 +196,17 @@ class TestTransactionRuleEnhancementService:
         mock_enhancement_rule_repository.find_matching_rules_batch.return_value = []
         mock_enhancement_rule_repository.find_by_normalized_description.return_value = None
 
-        result = enhancement_service.enhance_transactions(dtos)
+        result = enhancement_service.enhance_transactions(user_id, dtos)
 
-        # Verify empty description DTO is handled correctly
         empty_dto = next(dto for dto in result.enhanced_dtos if not dto.description)
         assert empty_dto.categorization_status == CategorizationStatus.UNCATEGORIZED
 
-        # Verify valid description DTO was processed
         valid_dto = next(dto for dto in result.enhanced_dtos if dto.description == "Valid Description")
         assert valid_dto.normalized_description == "valid description"
 
-        # Only one unmatched rule should be created (for the valid description)
         assert mock_enhancement_rule_repository.save.call_count == 1
 
     def test_enhancement_result_properties(self):
-        """Test EnhancementResult data class properties"""
         dtos = [
             TransactionDTO(
                 date="2024-01-01",
@@ -251,20 +239,18 @@ class TestTransactionRuleEnhancementService:
         mock_enhancement_rule_repository,
         sample_dtos,
         sample_enhancement_rules,
+        user_id,
     ):
-        """Test enhancement with partial matches - some transactions enhanced, others not"""
         mock_enhancement_rule_repository.find_matching_rules_batch.return_value = sample_enhancement_rules
         mock_enhancement_rule_repository.find_by_normalized_description.return_value = None
 
-        result = enhancement_service.enhance_transactions(sample_dtos)
+        result = enhancement_service.enhance_transactions(user_id, sample_dtos)
 
-        # Verify metrics
         assert result.total_processed == 3
-        assert result.rule_based_matches == 2  # Grocery store and salary matched
+        assert result.rule_based_matches == 2
         assert result.match_rate_percentage == 66.7
-        assert result.has_unmatched  # ATM withdrawal didn't match
+        assert result.has_unmatched
 
-        # Verify unmatched rules created for the 1 unmatched transaction
         assert mock_enhancement_rule_repository.save.call_count == 1
 
     def test_enhance_transactions_creates_unique_rules_only(
@@ -272,9 +258,8 @@ class TestTransactionRuleEnhancementService:
         enhancement_service,
         mock_transaction_enhancer,
         mock_enhancement_rule_repository,
+        user_id,
     ):
-        """Test that only one rule is created per unique normalized description, even with duplicate transactions"""
-        # Create multiple DTOs with duplicate normalized descriptions
         dtos = [
             TransactionDTO(
                 date="2024-01-01",
@@ -287,37 +272,34 @@ class TestTransactionRuleEnhancementService:
                 amount=150.0,
                 description="GROCERY STORE PURCHASE",
                 account_id="acc1",
-            ),  # Same normalized
+            ),
             TransactionDTO(
                 date="2024-01-03",
                 amount=75.0,
                 description="grocery store purchase",
                 account_id="acc1",
-            ),  # Same normalized
+            ),
             TransactionDTO(
                 date="2024-01-04",
                 amount=50.0,
                 description="ATM Withdrawal",
                 account_id="acc1",
-            ),  # Different normalized
+            ),
             TransactionDTO(
                 date="2024-01-05",
                 amount=25.0,
                 description="atm withdrawal",
                 account_id="acc1",
-            ),  # Same as above
+            ),
         ]
 
         mock_enhancement_rule_repository.find_matching_rules_batch.return_value = []
         mock_enhancement_rule_repository.find_by_normalized_description.return_value = None
 
-        result = enhancement_service.enhance_transactions(dtos)
+        result = enhancement_service.enhance_transactions(user_id, dtos)
 
-        # Verify only 2 unique rules were created (not 5)
-        # "grocery store purchase" and "atm withdrawal"
         assert mock_enhancement_rule_repository.save.call_count == 2
 
-        # Verify the unique normalized descriptions in the created rules
         save_calls = mock_enhancement_rule_repository.save.call_args_list
         created_patterns = {call[0][0].normalized_description_pattern for call in save_calls}
         expected_patterns = {
@@ -326,7 +308,6 @@ class TestTransactionRuleEnhancementService:
         }
         assert created_patterns == expected_patterns
 
-        # Verify result metrics
         assert result.total_processed == 5
-        assert result.rule_based_matches == 0  # No matches
+        assert result.rule_based_matches == 0
         assert result.has_unmatched

@@ -9,6 +9,7 @@ from app.services.recurring_expense_analyzer import ACTIVE_PATTERNS_DAYS, Recurr
 class TestRecurringExpenseAnalyzer:
     def setup_method(self) -> None:
         self.analyzer = RecurringExpenseAnalyzer(min_occurrences=3, amount_variance_threshold=0.15)
+        self.user_id = uuid.uuid4()
 
     def create_transaction(
         self,
@@ -31,7 +32,7 @@ class TestRecurringExpenseAnalyzer:
         return transaction
 
     def test_analyze_patterns_empty_transactions(self):
-        result = self.analyzer.analyze_patterns([])
+        result = self.analyzer.analyze_patterns([], self.user_id)
         assert len(result.patterns) == 0
         assert result.total_monthly_recurring == Decimal("0")
         assert result.pattern_count == 0
@@ -42,7 +43,7 @@ class TestRecurringExpenseAnalyzer:
             self.create_transaction(normalized_description="spotify", transaction_date=date(2024, 2, 1)),
         ]
 
-        result = self.analyzer.analyze_patterns(transactions)
+        result = self.analyzer.analyze_patterns(transactions, self.user_id)
         assert len(result.patterns) == 0
 
     def test_analyze_patterns_monthly_recurring_detected(self):
@@ -64,7 +65,7 @@ class TestRecurringExpenseAnalyzer:
             ),
         ]
 
-        result = self.analyzer.analyze_patterns(transactions)
+        result = self.analyzer.analyze_patterns(transactions, self.user_id)
 
         assert len(result.patterns) == 1
         pattern = result.patterns[0]
@@ -109,7 +110,7 @@ class TestRecurringExpenseAnalyzer:
             ),
         ]
 
-        result = self.analyzer.analyze_patterns(transactions)
+        result = self.analyzer.analyze_patterns(transactions, self.user_id)
 
         assert len(result.patterns) == 2
         assert result.pattern_count == 2
@@ -134,7 +135,7 @@ class TestRecurringExpenseAnalyzer:
             ),
         ]
 
-        result = self.analyzer.analyze_patterns(transactions)
+        result = self.analyzer.analyze_patterns(transactions, self.user_id)
 
         assert len(result.patterns) == 1
         pattern = result.patterns[0]
@@ -160,7 +161,7 @@ class TestRecurringExpenseAnalyzer:
             ),
         ]
 
-        result = self.analyzer.analyze_patterns(transactions)
+        result = self.analyzer.analyze_patterns(transactions, self.user_id)
 
         assert len(result.patterns) == 0
 
@@ -183,7 +184,7 @@ class TestRecurringExpenseAnalyzer:
             ),
         ]
 
-        result = self.analyzer.analyze_patterns(transactions)
+        result = self.analyzer.analyze_patterns(transactions, self.user_id)
 
         assert len(result.patterns) == 0
 
@@ -210,7 +211,7 @@ class TestRecurringExpenseAnalyzer:
             ),
         ]
 
-        result = self.analyzer.analyze_patterns(transactions)
+        result = self.analyzer.analyze_patterns(transactions, self.user_id)
 
         assert len(result.patterns) == 1
         pattern = result.patterns[0]
@@ -235,7 +236,7 @@ class TestRecurringExpenseAnalyzer:
             ),
         ]
 
-        result = self.analyzer.analyze_patterns(transactions)
+        result = self.analyzer.analyze_patterns(transactions, self.user_id)
 
         assert len(result.patterns) == 1
         pattern = result.patterns[0]
@@ -263,7 +264,7 @@ class TestRecurringExpenseAnalyzer:
             ),
         ]
 
-        result = self.analyzer.analyze_patterns(transactions)
+        result = self.analyzer.analyze_patterns(transactions, self.user_id)
 
         assert len(result.patterns) == 1
         pattern = result.patterns[0]
@@ -289,7 +290,7 @@ class TestRecurringExpenseAnalyzer:
             ),
         ]
 
-        result = self.analyzer.analyze_patterns(transactions)
+        result = self.analyzer.analyze_patterns(transactions, self.user_id)
 
         assert len(result.patterns) == 1
 
@@ -312,7 +313,7 @@ class TestRecurringExpenseAnalyzer:
             ),
         ]
 
-        result = self.analyzer.analyze_patterns(transactions)
+        result = self.analyzer.analyze_patterns(transactions, self.user_id)
 
         assert len(result.patterns) == 0
 
@@ -338,8 +339,8 @@ class TestRecurringExpenseAnalyzer:
             ),
         ]
 
-        result_all = self.analyzer.analyze_patterns(transactions, active_only=False)
-        result_active = self.analyzer.analyze_patterns(transactions, active_only=True)
+        result_all = self.analyzer.analyze_patterns(transactions, self.user_id, active_only=False)
+        result_active = self.analyzer.analyze_patterns(transactions, self.user_id, active_only=True)
 
         assert len(result_all.patterns) == 1
         assert len(result_active.patterns) == 0
@@ -365,7 +366,7 @@ class TestRecurringExpenseAnalyzer:
             ),
         ]
 
-        result = self.analyzer.analyze_patterns(transactions, active_only=True)
+        result = self.analyzer.analyze_patterns(transactions, self.user_id, active_only=True)
 
         assert len(result.patterns) == 1
         assert result.patterns[0].normalized_description == "active subscription"
@@ -407,8 +408,8 @@ class TestRecurringExpenseAnalyzer:
             ),
         ]
 
-        result_all = self.analyzer.analyze_patterns(transactions, active_only=False)
-        result_active = self.analyzer.analyze_patterns(transactions, active_only=True)
+        result_all = self.analyzer.analyze_patterns(transactions, self.user_id, active_only=False)
+        result_active = self.analyzer.analyze_patterns(transactions, self.user_id, active_only=True)
 
         assert len(result_all.patterns) == 2
         assert result_all.total_monthly_recurring == Decimal("25.98")

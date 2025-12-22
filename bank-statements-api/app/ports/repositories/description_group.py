@@ -11,11 +11,11 @@ class DescriptionGroupRepository(ABC):
         pass
 
     @abstractmethod
-    def get_by_id(self, group_id: UUID) -> Optional[DescriptionGroup]:
+    def get_by_id(self, group_id: UUID, user_id: UUID) -> Optional[DescriptionGroup]:
         pass
 
     @abstractmethod
-    def get_all(self) -> List[DescriptionGroup]:
+    def get_all(self, user_id: UUID) -> List[DescriptionGroup]:
         pass
 
     @abstractmethod
@@ -23,13 +23,13 @@ class DescriptionGroupRepository(ABC):
         pass
 
     @abstractmethod
-    def delete(self, group_id: UUID) -> None:
+    def delete(self, group_id: UUID, user_id: UUID) -> None:
         pass
 
     @abstractmethod
-    def get_by_normalized_description(self, normalized_description: str) -> Optional[DescriptionGroup]:
+    def get_by_normalized_description(self, normalized_description: str, user_id: UUID) -> Optional[DescriptionGroup]:
         pass
 
     @abstractmethod
-    def get_description_to_group_map(self) -> Dict[str, UUID]:
+    def get_description_to_group_map(self, user_id: UUID) -> Dict[str, UUID]:
         pass

@@ -3,16 +3,17 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, FastAPI, File, HTTPException, UploadFile, status
 
+from app.api.routes.auth import require_current_user
 from app.api.schemas import CategoryCreate, CategoryListResponse, CategoryResponse, CategoryUpdate, CategoryUploadResponse
 from app.core.config import settings
 from app.core.dependencies import InternalDependencies
+from app.domain.models.user import User
 
 
 def register_category_routes(
     app: FastAPI,
     provide_dependencies: Callable[[], Iterator[InternalDependencies]],
 ):
-    """Register category routes with the FastAPI app."""
     router = APIRouter(prefix="/categories", tags=["categories"])
 
     @router.post(
@@ -23,11 +24,12 @@ def register_category_routes(
     def create_category(
         category_data: CategoryCreate,
         internal: InternalDependencies = Depends(provide_dependencies),
+        current_user: User = Depends(require_current_user),
     ):
-        """Create a new category"""
         try:
             category = internal.category_service.create_category(
                 name=category_data.name,
+                user_id=current_user.id,
                 parent_id=category_data.parent_id,
             )
             return category
@@ -40,9 +42,9 @@ def register_category_routes(
     @router.get("", response_model=CategoryListResponse)
     def get_categories(
         internal: InternalDependencies = Depends(provide_dependencies),
+        current_user: User = Depends(require_current_user),
     ):
-        """Get all categories"""
-        categories = internal.category_service.get_all_categories()
+        categories = internal.category_service.get_all_categories(current_user.id)
         return CategoryListResponse(
             categories=categories,
             total=len(categories),
@@ -51,9 +53,9 @@ def register_category_routes(
     @router.get("/root", response_model=CategoryListResponse)
     def get_root_categories(
         internal: InternalDependencies = Depends(provide_dependencies),
+        current_user: User = Depends(require_current_user),
     ):
-        """Get all root categories (categories without a parent)"""
-        categories = internal.category_service.get_root_categories()
+        categories = internal.category_service.get_root_categories(current_user.id)
         return CategoryListResponse(
             categories=categories,
             total=len(categories),
@@ -63,9 +65,9 @@ def register_category_routes(
     def get_category(
         category_id: UUID,
         internal: InternalDependencies = Depends(provide_dependencies),
+        current_user: User = Depends(require_current_user),
     ):
-        """Get a category by ID"""
-        category = internal.category_service.get_category(category_id)
+        category = internal.category_service.get_category(category_id, current_user.id)
         if not category:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -80,10 +82,10 @@ def register_category_routes(
     def get_subcategories(
         category_id: UUID,
         internal: InternalDependencies = Depends(provide_dependencies),
+        current_user: User = Depends(require_current_user),
     ):
-        """Get all subcategories for a given parent category"""
         try:
-            subcategories = internal.category_service.get_subcategories(category_id)
+            subcategories = internal.category_service.get_subcategories(category_id, current_user.id)
             return CategoryListResponse(
                 categories=subcategories,
                 total=len(subcategories),
@@ -99,12 +101,13 @@ def register_category_routes(
         category_id: UUID,
         category_data: CategoryUpdate,
         internal: InternalDependencies = Depends(provide_dependencies),
+        current_user: User = Depends(require_current_user),
     ):
-        """Update a category"""
         try:
             updated_category = internal.category_service.update_category(
                 category_id=category_id,
                 name=category_data.name,
+                user_id=current_user.id,
                 parent_id=category_data.parent_id,
             )
             if not updated_category:
@@ -126,10 +129,10 @@ def register_category_routes(
     def delete_category(
         category_id: UUID,
         internal: InternalDependencies = Depends(provide_dependencies),
+        current_user: User = Depends(require_current_user),
     ):
-        """Delete a category"""
         try:
-            deleted = internal.category_service.delete_category(category_id)
+            deleted = internal.category_service.delete_category(category_id, current_user.id)
             if not deleted:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
@@ -149,10 +152,9 @@ def register_category_routes(
     async def upload_categories_csv(
         file: UploadFile = File(...),
         internal: InternalDependencies = Depends(provide_dependencies),
+        current_user: User = Depends(require_current_user),
     ):
-        """Upload categories from CSV file with parent_name and name columns"""
         try:
-            # Validate file type
             if not file.content_type or not file.content_type.startswith(("text/csv", "application/csv")):
                 if not file.filename or not file.filename.lower().endswith(".csv"):
                     raise HTTPException(
@@ -160,17 +162,15 @@ def register_category_routes(
                         detail="File must be a CSV file",
                     )
 
-            # Read file content
             content = await file.read()
             csv_content = content.decode("utf-8")
 
-            # Get existing categories for comparison
-            existing_categories = {(cat.name, cat.parent_id): cat for cat in internal.category_service.get_all_categories()}
+            existing_categories = {
+                (cat.name, cat.parent_id): cat for cat in internal.category_service.get_all_categories(current_user.id)
+            }
 
-            # Process CSV and upsert categories
-            categories = internal.category_service.upsert_categories_from_csv(csv_content)
+            categories = internal.category_service.upsert_categories_from_csv(csv_content, current_user.id)
 
-            # Calculate statistics
             categories_created = 0
             categories_found = 0
             for category in categories:

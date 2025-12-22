@@ -5,6 +5,7 @@ from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, Query, status
 
+from app.api.routes.auth import require_current_user
 from app.api.schemas import (
     BulkUpdateTransactionsRequest,
     BulkUpdateTransactionsResponse,
@@ -25,6 +26,7 @@ from app.common.text_normalization import normalize_description
 from app.core.config import settings
 from app.core.dependencies import InternalDependencies
 from app.domain.models.transaction import CategorizationStatus, SourceType, Transaction
+from app.domain.models.user import User
 
 
 def register_transaction_routes(
@@ -45,13 +47,17 @@ def register_transaction_routes(
             description="Insert after this transaction ID for ordering",
         ),
         internal: InternalDependencies = Depends(provide_dependencies),
+        current_user: User = Depends(require_current_user),
     ):
-        """
-        Create a manual transaction with proper ordering.
-        If after_transaction_id is provided, the new transaction will be inserted after that transaction.
-        Otherwise, it will be added at the end of the day's transactions.
-        """
+        account = internal.account_service.get_account(transaction_data.account_id, current_user.id)
+        if not account:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Account with ID {transaction_data.account_id} not found",
+            )
+
         transaction = internal.transaction_service.create_transaction(
+            user_id=current_user.id,
             transaction_data=transaction_data,
             after_transaction_id=after_transaction_id,
         )
@@ -115,11 +121,20 @@ def register_transaction_routes(
             description="Filter by transaction type: 'debit', 'credit', or 'all'",
         ),
         internal: InternalDependencies = Depends(provide_dependencies),
+        current_user: User = Depends(require_current_user),
     ):
-        # If enhancement_rule_id is provided, use rule-based filtering
+        if account_id:
+            account = internal.account_service.get_account(account_id, current_user.id)
+            if not account:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"Account with ID {account_id} not found",
+                )
+
         if enhancement_rule_id:
             uncategorized_only = status == CategorizationStatus.UNCATEGORIZED
             transactions = internal.transaction_service.get_transactions_matching_rule_paginated(
+                user_id=current_user.id,
                 enhancement_rule_id=enhancement_rule_id,
                 page=page,
                 page_size=page_size,
@@ -130,7 +145,6 @@ def register_transaction_routes(
             )
             return transactions
 
-        # Parse category_ids if provided
         parsed_category_ids = None
         if category_ids:
             try:
@@ -142,6 +156,7 @@ def register_transaction_routes(
                 )
 
         transactions = internal.transaction_service.get_transactions_paginated(
+            user_id=current_user.id,
             page=page,
             page_size=page_size,
             category_ids=parsed_category_ids,
@@ -202,9 +217,8 @@ def register_transaction_routes(
             description="Filter by transaction type: 'debit', 'credit', or 'all'",
         ),
         internal: InternalDependencies = Depends(provide_dependencies),
+        current_user: User = Depends(require_current_user),
     ):
-        """Get aggregated totals per category for chart data. Uses the same filtering options as get_transactions."""
-        # Parse category_ids if provided
         parsed_category_ids = None
         if category_ids:
             try:
@@ -216,6 +230,7 @@ def register_transaction_routes(
                 )
 
         totals_dict = internal.transaction_service.get_category_totals(
+            user_id=current_user.id,
             category_ids=parsed_category_ids,
             status=status,
             min_amount=min_amount,
@@ -229,7 +244,6 @@ def register_transaction_routes(
             transaction_type=transaction_type,
         )
 
-        # Convert to response format
         totals = [
             CategoryTotalResponse(
                 category_id=category_id,
@@ -287,8 +301,8 @@ def register_transaction_routes(
             description="Filter by transaction type: 'debit', 'credit', or 'all'",
         ),
         internal: InternalDependencies = Depends(provide_dependencies),
+        current_user: User = Depends(require_current_user),
     ):
-        """Get time-series data for categories/subcategories for area chart. Uses the same filtering options as get_transactions."""
         parsed_category_ids = None
         if category_ids:
             try:
@@ -300,6 +314,7 @@ def register_transaction_routes(
                 )
 
         data_points = internal.transaction_service.get_category_time_series(
+            user_id=current_user.id,
             category_id=category_id,
             period=period,
             category_ids=parsed_category_ids,
@@ -337,12 +352,14 @@ def register_transaction_routes(
             description="Only show patterns with recent transactions (last 90 days)",
         ),
         internal: InternalDependencies = Depends(provide_dependencies),
+        current_user: User = Depends(require_current_user),
     ):
         from dateutil.relativedelta import relativedelta
 
         lookback_start = date.today() - relativedelta(months=12)
 
         transactions_response = internal.transaction_service.get_transactions_paginated(
+            user_id=current_user.id,
             page=1,
             page_size=10000,
             start_date=lookback_start,
@@ -352,6 +369,7 @@ def register_transaction_routes(
 
         result = internal.recurring_expense_analyzer.analyze_patterns(
             transactions_response.transactions,
+            user_id=current_user.id,
             active_only=active_only,
         )
 
@@ -369,9 +387,10 @@ def register_transaction_routes(
     def preview_enhancement(
         request: EnhancementPreviewRequest,
         internal: InternalDependencies = Depends(provide_dependencies),
+        current_user: User = Depends(require_current_user),
     ):
         normalized_desc = normalize_description(request.description)
-        rules = internal.enhancement_rule_repository.find_matching_rules(normalized_desc)
+        rules = internal.enhancement_rule_repository.find_matching_rules(normalized_desc, current_user.id)
 
         temp_transaction = Transaction(
             id=uuid4(),
@@ -393,12 +412,12 @@ def register_transaction_routes(
 
         category_name = None
         if enhanced_transaction.category_id:
-            category = internal.category_repository.get_by_id(enhanced_transaction.category_id)
+            category = internal.category_repository.get_by_id(enhanced_transaction.category_id, current_user.id)
             category_name = category.name if category else None
 
         counterparty_name = None
         if enhanced_transaction.counterparty_account_id:
-            counterparty = internal.account_repository.get_by_id(enhanced_transaction.counterparty_account_id)
+            counterparty = internal.account_repository.get_by_id(enhanced_transaction.counterparty_account_id, current_user.id)
             counterparty_name = counterparty.name if counterparty else None
 
         matched_rule = None
@@ -416,7 +435,6 @@ def register_transaction_routes(
             counterparty_account_name=counterparty_name,
         )
 
-    # Bulk update route - MUST be defined before /{transaction_id} routes to avoid path conflicts
     @router.put(
         "/bulk-update-category",
         response_model=BulkUpdateTransactionsResponse,
@@ -424,12 +442,9 @@ def register_transaction_routes(
     def bulk_update_transaction_category(
         request: BulkUpdateTransactionsRequest,
         internal: InternalDependencies = Depends(provide_dependencies),
+        current_user: User = Depends(require_current_user),
     ):
-        """
-        Update the category for all transactions with the given normalized description
-        """
         try:
-            # Convert category_id string to UUID if provided
             category_uuid = None
             if request.category_id:
                 try:
@@ -441,6 +456,7 @@ def register_transaction_routes(
                     )
 
             updated_count = internal.transaction_service.bulk_update_category_by_normalized_description(
+                user_id=current_user.id,
                 normalized_description=request.normalized_description,
                 category_id=category_uuid,
             )
@@ -462,8 +478,9 @@ def register_transaction_routes(
     def get_transaction(
         transaction_id: UUID,
         internal: InternalDependencies = Depends(provide_dependencies),
+        current_user: User = Depends(require_current_user),
     ):
-        transaction = internal.transaction_service.get_transaction(transaction_id)
+        transaction = internal.transaction_service.get_transaction(transaction_id, current_user.id)
         if not transaction:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -479,8 +496,10 @@ def register_transaction_routes(
         transaction_id: UUID,
         transaction_data: TransactionUpdateRequest,
         internal: InternalDependencies = Depends(provide_dependencies),
+        current_user: User = Depends(require_current_user),
     ):
         updated_transaction = internal.transaction_service.update_transaction(
+            user_id=current_user.id,
             transaction_id=transaction_id,
             transaction_date=transaction_data.date,
             description=transaction_data.description,
@@ -503,8 +522,9 @@ def register_transaction_routes(
     def delete_transaction(
         transaction_id: UUID,
         internal: InternalDependencies = Depends(provide_dependencies),
+        current_user: User = Depends(require_current_user),
     ):
-        deleted = internal.transaction_service.delete_transaction(transaction_id)
+        deleted = internal.transaction_service.delete_transaction(transaction_id, current_user.id)
         if not deleted:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -520,8 +540,10 @@ def register_transaction_routes(
         transaction_id: UUID,
         category_id: Optional[UUID] = None,
         internal: InternalDependencies = Depends(provide_dependencies),
+        current_user: User = Depends(require_current_user),
     ):
         updated_transaction = internal.transaction_service.categorize_transaction(
+            user_id=current_user.id,
             transaction_id=transaction_id,
             category_id=category_id,
         )
@@ -539,8 +561,12 @@ def register_transaction_routes(
     def mark_categorization_failure(
         transaction_id: UUID,
         internal: InternalDependencies = Depends(provide_dependencies),
+        current_user: User = Depends(require_current_user),
     ):
-        updated_transaction = internal.transaction_service.mark_categorization_failure(transaction_id=transaction_id)
+        updated_transaction = internal.transaction_service.mark_categorization_failure(
+            transaction_id=transaction_id,
+            user_id=current_user.id,
+        )
         if not updated_transaction:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,

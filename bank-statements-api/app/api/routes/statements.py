@@ -4,6 +4,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, BackgroundTasks, Depends, FastAPI, File, HTTPException, UploadFile, status
 
+from app.api.routes.auth import require_current_user
 from app.api.schemas import (
     BackgroundJobInfoResponse,
     FilterConditionRequest,
@@ -16,6 +17,7 @@ from app.api.schemas import (
 from app.core.config import settings
 from app.core.dependencies import InternalDependencies
 from app.domain.dto.statement_processing import FilterOperator
+from app.domain.models.user import User
 from app.logging.utils import log_exception
 
 logger = logging.getLogger("app")
@@ -31,15 +33,16 @@ def register_statement_routes(
     async def analyze_statement(
         file: UploadFile = File(...),
         internal: InternalDependencies = Depends(provide_dependencies),
+        current_user: User = Depends(require_current_user),
     ):
         try:
             file_content = await file.read()
             result = internal.statement_analyzer_service.analyze(
+                user_id=current_user.id,
                 filename=file.filename,
                 file_content=file_content,
             )
 
-            # Convert FilterCondition objects to FilterConditionRequest for API response
             suggested_filters = []
             if result.suggested_filters:
                 for filter_condition in result.suggested_filters:
@@ -52,7 +55,6 @@ def register_statement_routes(
                         )
                     )
 
-            # Convert saved row filters to FilterConditionRequest objects for API response
             saved_row_filters = None
             if result.saved_row_filters:
                 saved_row_filters = []
@@ -66,7 +68,6 @@ def register_statement_routes(
                         )
                     )
 
-            # Create response with converted filters
             response_data = {
                 "uploaded_file_id": result.uploaded_file_id,
                 "file_type": result.file_type,
@@ -98,20 +99,23 @@ def register_statement_routes(
         upload_data: StatementUploadRequest,
         background_tasks: BackgroundTasks,
         internal: InternalDependencies = Depends(provide_dependencies),
+        current_user: User = Depends(require_current_user),
     ):
-        """
-        Statement upload endpoint with immediate rule-based categorization
-        and immediate background AI processing for unmatched transactions.
-        """
         try:
-            # Delegate to service with immediate background processing capability
+            account = internal.account_service.get_account(upload_data.account_id, current_user.id)
+            if not account:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"Account with ID {upload_data.account_id} not found",
+                )
+
             result = internal.statement_upload_service.upload_statement(
-                upload_data,
+                user_id=current_user.id,
+                upload_data=upload_data,
                 background_tasks=background_tasks,
                 internal_deps=internal,
             )
 
-            # Build HTTP response
             response = StatementUploadResponse(
                 uploaded_file_id=result.uploaded_file_id,
                 transactions_saved=result.transactions_saved,
@@ -127,7 +131,6 @@ def register_statement_routes(
                 background_job=None,
             )
 
-            # Add background job info if available
             if result.background_job_info:
                 response.background_job = BackgroundJobInfoResponse(
                     job_id=str(result.background_job_info.job_id),
@@ -139,6 +142,8 @@ def register_statement_routes(
 
             return response
 
+        except HTTPException:
+            raise
         except Exception as e:
             log_exception("Error processing statement: %s", str(e))
             raise HTTPException(
@@ -149,10 +154,10 @@ def register_statement_routes(
     @router.get("", response_model=List[StatementResponse])
     async def list_statements(
         internal: InternalDependencies = Depends(provide_dependencies),
+        current_user: User = Depends(require_current_user),
     ):
-        """Get all statements"""
         try:
-            statements = internal.statement_service.get_all_statements()
+            statements = internal.statement_service.get_all_statements(current_user.id)
             return [
                 StatementResponse(
                     id=stmt.id,
@@ -178,13 +183,12 @@ def register_statement_routes(
     async def delete_statement(
         statement_id: UUID,
         internal: InternalDependencies = Depends(provide_dependencies),
+        current_user: User = Depends(require_current_user),
     ):
-        """Delete a statement and all its transactions"""
         try:
-            result = internal.statement_service.delete_statement_with_transactions(statement_id)
+            result = internal.statement_service.delete_statement_with_transactions(statement_id, current_user.id)
             return result
         except ValueError as e:
-            # Statement not found
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=str(e),
@@ -203,7 +207,6 @@ def register_transaction_job_routes(
     app: FastAPI,
     provide_dependencies: Callable[[], Iterator[InternalDependencies]],
 ):
-    """Register transaction job status routes for US-21"""
     router = APIRouter(prefix="/transactions", tags=["transactions"])
 
     @router.get(
@@ -213,13 +216,8 @@ def register_transaction_job_routes(
     async def get_job_status(
         job_id: UUID,
         internal: InternalDependencies = Depends(provide_dependencies),
+        current_user: User = Depends(require_current_user),
     ):
-        """
-        Get status of a background categorization job.
-
-        Returns detailed progress information, estimated completion time,
-        and results when the job is complete.
-        """
         try:
             job_status = internal.background_job_service.get_job_status_for_api(job_id)
 

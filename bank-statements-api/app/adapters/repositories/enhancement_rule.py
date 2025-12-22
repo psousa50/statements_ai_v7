@@ -9,13 +9,12 @@ from app.ports.repositories.enhancement_rule import EnhancementRuleRepository
 
 
 class SQLAlchemyEnhancementRuleRepository(EnhancementRuleRepository):
-    """SQLAlchemy implementation of EnhancementRuleRepository"""
-
     def __init__(self, db: Session):
         self.db = db
 
     def get_all(
         self,
+        user_id: UUID,
         limit: int = 50,
         offset: int = 0,
         description_search: Optional[str] = None,
@@ -27,11 +26,9 @@ class SQLAlchemyEnhancementRuleRepository(EnhancementRuleRepository):
         sort_field: str = "created_at",
         sort_direction: str = "desc",
     ) -> List[EnhancementRule]:
-        """Get enhancement rules with filtering and pagination"""
-
-        # If sorting by usage, we need a more complex query with subquery for transaction counts
         if sort_field == "usage":
             return self._get_all_with_usage_sorting(
+                user_id,
                 limit,
                 offset,
                 description_search,
@@ -43,10 +40,8 @@ class SQLAlchemyEnhancementRuleRepository(EnhancementRuleRepository):
                 sort_direction,
             )
 
-        # Standard query for other sorting fields
-        query = self.db.query(EnhancementRule)
+        query = self.db.query(EnhancementRule).filter(EnhancementRule.user_id == user_id)
 
-        # Apply filters
         if description_search:
             query = query.filter(EnhancementRule.normalized_description_pattern.ilike(f"%{description_search}%"))
 
@@ -65,11 +60,7 @@ class SQLAlchemyEnhancementRuleRepository(EnhancementRuleRepository):
         if show_invalid_only:
             query = query.filter(and_(EnhancementRule.category_id.is_(None), EnhancementRule.counterparty_account_id.is_(None)))
 
-        # Apply sorting
-        if sort_field in [
-            "normalized_description_pattern",
-            "normalized_description",
-        ]:
+        if sort_field in ["normalized_description_pattern", "normalized_description"]:
             sort_column = EnhancementRule.normalized_description_pattern
         elif sort_field == "category":
             sort_column = EnhancementRule.category_id
@@ -77,7 +68,7 @@ class SQLAlchemyEnhancementRuleRepository(EnhancementRuleRepository):
             sort_column = EnhancementRule.counterparty_account_id
         elif sort_field == "source":
             sort_column = EnhancementRule.source
-        else:  # default to created_at
+        else:
             sort_column = EnhancementRule.created_at
 
         if sort_direction == "asc":
@@ -85,11 +76,11 @@ class SQLAlchemyEnhancementRuleRepository(EnhancementRuleRepository):
         else:
             query = query.order_by(sort_column.desc())
 
-        # Apply pagination
         return query.offset(offset).limit(limit).all()
 
     def _get_all_with_usage_sorting(
         self,
+        user_id: UUID,
         limit: int,
         offset: int,
         description_search: Optional[str] = None,
@@ -100,16 +91,8 @@ class SQLAlchemyEnhancementRuleRepository(EnhancementRuleRepository):
         show_invalid_only: Optional[bool] = None,
         sort_direction: str = "desc",
     ) -> List[EnhancementRule]:
-        """Get enhancement rules sorted by usage count"""
+        query = self.db.query(EnhancementRule).filter(EnhancementRule.user_id == user_id)
 
-        # Since sorting by usage requires counting transactions for each rule,
-        # we need to get all rules first, calculate their usage counts, sort them,
-        # and then apply pagination. This is less efficient but necessary for proper sorting.
-
-        # First, get all rules with filters applied (but without pagination)
-        query = self.db.query(EnhancementRule)
-
-        # Apply filters (same as regular query)
         if description_search:
             query = query.filter(EnhancementRule.normalized_description_pattern.ilike(f"%{description_search}%"))
 
@@ -128,41 +111,34 @@ class SQLAlchemyEnhancementRuleRepository(EnhancementRuleRepository):
         if show_invalid_only:
             query = query.filter(and_(EnhancementRule.category_id.is_(None), EnhancementRule.counterparty_account_id.is_(None)))
 
-        # Get all rules matching the filters
         all_rules = query.all()
 
-        # Calculate usage count for each rule and create tuples for sorting
         rules_with_counts = []
         for rule in all_rules:
             try:
-                # Use the existing count_matching_rule method from transaction repository
-                # We need to import and get the transaction repository here
                 from app.adapters.repositories.transaction import SQLAlchemyTransactionRepository
 
                 transaction_repo = SQLAlchemyTransactionRepository(self.db)
                 count = transaction_repo.count_matching_rule(rule)
             except Exception:
-                # Fallback to 0 if counting fails
                 count = 0
 
             rules_with_counts.append((rule, count))
 
-        # Sort by usage count
         if sort_direction == "asc":
-            rules_with_counts.sort(key=lambda x: x[1])  # Sort by count ascending
+            rules_with_counts.sort(key=lambda x: x[1])
         else:
-            rules_with_counts.sort(key=lambda x: x[1], reverse=True)  # Sort by count descending
+            rules_with_counts.sort(key=lambda x: x[1], reverse=True)
 
-        # Apply pagination
         start_idx = offset
         end_idx = offset + limit
         paginated_rules = rules_with_counts[start_idx:end_idx]
 
-        # Return just the rules (without counts)
         return [rule for rule, count in paginated_rules]
 
     def count(
         self,
+        user_id: UUID,
         description_search: Optional[str] = None,
         category_ids: Optional[List[UUID]] = None,
         counterparty_account_ids: Optional[List[UUID]] = None,
@@ -170,10 +146,8 @@ class SQLAlchemyEnhancementRuleRepository(EnhancementRuleRepository):
         source: Optional[EnhancementRuleSource] = None,
         show_invalid_only: Optional[bool] = None,
     ) -> int:
-        """Count enhancement rules with filters"""
-        query = self.db.query(func.count(EnhancementRule.id))
+        query = self.db.query(func.count(EnhancementRule.id)).filter(EnhancementRule.user_id == user_id)
 
-        # Apply same filters as get_all
         if description_search:
             query = query.filter(EnhancementRule.normalized_description_pattern.ilike(f"%{description_search}%"))
 
@@ -195,71 +169,65 @@ class SQLAlchemyEnhancementRuleRepository(EnhancementRuleRepository):
         return query.scalar()
 
     def save(self, rule: EnhancementRule) -> EnhancementRule:
-        """Save an enhancement rule"""
         self.db.add(rule)
         self.db.commit()
         self.db.refresh(rule)
         return rule
 
-    def find_by_id(self, rule_id: UUID) -> Optional[EnhancementRule]:
-        """Find enhancement rule by ID"""
+    def find_by_id(self, rule_id: UUID, user_id: UUID) -> Optional[EnhancementRule]:
         return (
             self.db.query(EnhancementRule)
             .options(joinedload(EnhancementRule.category), joinedload(EnhancementRule.counterparty_account))
-            .filter(EnhancementRule.id == rule_id)
+            .filter(EnhancementRule.id == rule_id, EnhancementRule.user_id == user_id)
             .first()
         )
 
-    def find_by_normalized_description(self, normalized_description: str) -> Optional[EnhancementRule]:
-        """Find enhancement rule by exact normalized description pattern"""
+    def find_by_normalized_description(self, normalized_description: str, user_id: UUID) -> Optional[EnhancementRule]:
         return (
             self.db.query(EnhancementRule)
-            .filter(EnhancementRule.normalized_description_pattern == normalized_description)
+            .filter(
+                EnhancementRule.normalized_description_pattern == normalized_description,
+                EnhancementRule.user_id == user_id,
+            )
             .first()
         )
 
     def delete(self, rule: EnhancementRule) -> None:
-        """Delete an enhancement rule"""
         self.db.delete(rule)
         self.db.commit()
 
-    def find_matching_rules(self, normalized_description: str) -> List[EnhancementRule]:
-        """Find enhancement rules that could match a normalized description"""
-        # This returns potential matches - actual matching logic is in the EnhancementRule.matches_transaction method
+    def find_matching_rules(self, normalized_description: str, user_id: UUID) -> List[EnhancementRule]:
         return (
             self.db.query(EnhancementRule)
             .filter(
+                EnhancementRule.user_id == user_id,
                 or_(
-                    # For exact matches, the pattern must match exactly
                     and_(
                         EnhancementRule.match_type == MatchType.EXACT,
                         EnhancementRule.normalized_description_pattern == normalized_description,
                     ),
-                    # For prefix matches, the description must start with the pattern
                     and_(
                         EnhancementRule.match_type == MatchType.PREFIX,
                         func.lower(normalized_description).like(
                             func.lower(EnhancementRule.normalized_description_pattern) + "%"
                         ),
                     ),
-                    # For infix matches, the description must contain the pattern
                     and_(
                         EnhancementRule.match_type == MatchType.INFIX,
                         func.lower(normalized_description).like(
                             "%" + func.lower(EnhancementRule.normalized_description_pattern) + "%"
                         ),
                     ),
-                )
+                ),
             )
             .order_by(
-                # Order by match type precedence: exact, prefix, infix
                 EnhancementRule.match_type.asc(),
                 EnhancementRule.created_at.asc(),
             )
             .all()
         )
 
-    def find_matching_rules_batch(self, normalized_descriptions: List[str]) -> List[EnhancementRule]:
+    def find_matching_rules_batch(self, normalized_descriptions: List[str], user_id: UUID) -> List[EnhancementRule]:
         if not normalized_descriptions:
             return []
 
@@ -284,7 +252,7 @@ class SQLAlchemyEnhancementRuleRepository(EnhancementRuleRepository):
 
         return (
             self.db.query(EnhancementRule)
-            .filter(or_(*conditions))
+            .filter(EnhancementRule.user_id == user_id, or_(*conditions))
             .order_by(
                 EnhancementRule.match_type.asc(),
                 EnhancementRule.created_at.asc(),

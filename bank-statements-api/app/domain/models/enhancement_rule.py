@@ -29,6 +29,7 @@ class EnhancementRule(Base):
     __tablename__ = "enhancement_rules"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     normalized_description_pattern = Column(String, nullable=False, index=True)
     match_type = Column(
         SQLAlchemyEnum(MatchType, name="matchtype", values_callable=lambda x: [e.value for e in x]), nullable=False

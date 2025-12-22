@@ -17,19 +17,19 @@ class StatementRepository(ABC):
         pass
 
     @abstractmethod
-    def find_by_id(self, statement_id: UUID) -> Optional[Statement]:
+    def find_by_id(self, statement_id: UUID, user_id: UUID) -> Optional[Statement]:
         pass
 
     @abstractmethod
-    def find_by_account_id(self, account_id: UUID) -> list[Statement]:
+    def find_by_account_id(self, account_id: UUID, user_id: UUID) -> list[Statement]:
         pass
 
     @abstractmethod
-    def find_all(self) -> list[Statement]:
+    def find_all(self, user_id: UUID) -> list[Statement]:
         pass
 
     @abstractmethod
-    def delete(self, statement_id: UUID) -> None:
+    def delete(self, statement_id: UUID, user_id: UUID) -> None:
         pass
 
     @abstractmethod

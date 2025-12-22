@@ -3,7 +3,7 @@ import time
 from datetime import datetime, timezone
 from decimal import Decimal
 from typing import List
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 from app.common.text_normalization import normalize_description
 from app.domain.dto.statement_processing import TransactionDTO
@@ -51,13 +51,9 @@ class TransactionRuleEnhancementService:
         self.transaction_enhancer = transaction_enhancer
         self.enhancement_rule_repository = enhancement_rule_repository
 
-    def enhance_transactions(self, transaction_dtos: List[TransactionDTO]) -> EnhancementResult:
-        """
-        Enhance transaction DTOs using enhancement rules and create new rules for unmatched transactions.
-        """
+    def enhance_transactions(self, user_id: UUID, transaction_dtos: List[TransactionDTO]) -> EnhancementResult:
         start_time_ms = int(time.time() * 1000)
 
-        # Handle empty transaction list
         if not transaction_dtos:
             return EnhancementResult(
                 enhanced_dtos=[],
@@ -70,55 +66,41 @@ class TransactionRuleEnhancementService:
 
         logger.info(f"Enhancing {len(transaction_dtos)} transaction DTOs")
 
-        # Step 1: Normalize descriptions and convert DTOs to Transaction entities
         transactions = []
         normalized_descriptions_set = set()
 
         for dto in transaction_dtos:
             dto.normalized_description = normalize_description(dto.description)
             normalized_descriptions_set.add(dto.normalized_description)
-
-            # Convert DTO to Transaction entity for processing
             transaction = self._dto_to_transaction(dto)
             transactions.append(transaction)
 
-        # Step 2: Batch query for matching rules (efficient!)
-        matching_rules = self.enhancement_rule_repository.find_matching_rules_batch(list(normalized_descriptions_set))
+        matching_rules = self.enhancement_rule_repository.find_matching_rules_batch(list(normalized_descriptions_set), user_id)
         logger.debug(
             f"Retrieved {len(matching_rules)} matching rules for {len(normalized_descriptions_set)} unique descriptions"
         )
 
-        # Step 3: Build lookup map: normalized_description -> best matching rule
         rules_map = self._build_rules_map(transactions, matching_rules)
-
-        # Step 4: Apply rules efficiently using the map
         enhanced_transactions = self._apply_rules_from_map(transactions, rules_map)
 
-        # Step 4: Convert back to DTOs and calculate metrics
         matched_count = 0
         unmatched_transactions = []
 
         for i, transaction in enumerate(enhanced_transactions):
             dto = transaction_dtos[i]
-
-            # Copy enhancements back to DTO
             dto.category_id = transaction.category_id
             dto.categorization_status = transaction.categorization_status
             dto.counterparty_account_id = transaction.counterparty_account_id
 
-            # Count matches (any enhancement applied)
             if transaction.category_id or transaction.counterparty_account_id:
                 matched_count += 1
             else:
-                # Track unmatched transactions for rule creation
                 unmatched_transactions.append(transaction)
 
-        # Step 5: Create enhancement rules for unique unmatched normalized descriptions
         unique_normalized_descriptions = {t.normalized_description for t in unmatched_transactions if t.normalized_description}
         for normalized_description in unique_normalized_descriptions:
-            self._create_unmatched_rule(normalized_description)
+            self._create_unmatched_rule(user_id, normalized_description)
 
-        # Step 6: Calculate metrics
         total_processed = len(transaction_dtos)
         match_rate_percentage = round((matched_count / total_processed) * 100, 1) if total_processed > 0 else 0.0
         processing_time_ms = int(time.time() * 1000) - start_time_ms
@@ -163,11 +145,9 @@ class TransactionRuleEnhancementService:
         )
         return transaction
 
-    def _create_unmatched_rule(self, normalized_description: str) -> None:
-        """Create an enhancement rule for an unmatched normalized description with no category/counterparty"""
+    def _create_unmatched_rule(self, user_id: UUID, normalized_description: str) -> None:
         try:
-            # Check if a rule with this normalized description already exists
-            existing_rule = self.enhancement_rule_repository.find_by_normalized_description(normalized_description)
+            existing_rule = self.enhancement_rule_repository.find_by_normalized_description(normalized_description, user_id)
 
             if existing_rule:
                 logger.debug(f"Rule already exists for normalized description: {normalized_description}")
@@ -175,10 +155,11 @@ class TransactionRuleEnhancementService:
 
             rule = EnhancementRule(
                 id=uuid4(),
+                user_id=user_id,
                 normalized_description_pattern=normalized_description,
                 match_type=MatchType.EXACT,
-                category_id=None,  # No category enhancement
-                counterparty_account_id=None,  # No counterparty enhancement
+                category_id=None,
+                counterparty_account_id=None,
                 source=EnhancementRuleSource.AI,
                 created_at=datetime.now(timezone.utc),
                 updated_at=datetime.now(timezone.utc),
@@ -188,7 +169,6 @@ class TransactionRuleEnhancementService:
             logger.debug(f"Created unmatched rule for: {normalized_description}")
 
         except Exception as e:
-            # Don't fail the enhancement if rule creation fails
             logger.warning(f"Failed to create unmatched rule for {normalized_description}: {e}")
 
     def _build_rules_map(self, transactions: List[Transaction], rules: List[EnhancementRule]) -> dict:

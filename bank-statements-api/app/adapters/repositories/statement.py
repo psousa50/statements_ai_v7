@@ -4,6 +4,7 @@ from uuid import UUID
 from sqlalchemy import func
 from sqlalchemy.orm import Session, joinedload
 
+from app.domain.models.account import Account
 from app.domain.models.statement import Statement
 from app.domain.models.transaction import Transaction
 from app.ports.repositories.statement import StatementRepository
@@ -27,20 +28,42 @@ class SqlAlchemyStatementRepository(StatementRepository):
             content=content,
         )
         self.session.add(statement)
-        self.session.flush()  # Flush to get the ID without committing
+        self.session.flush()
         return statement
 
-    def find_by_id(self, statement_id: UUID) -> Optional[Statement]:
-        return self.session.query(Statement).filter(Statement.id == statement_id).first()
+    def find_by_id(self, statement_id: UUID, user_id: UUID) -> Optional[Statement]:
+        return (
+            self.session.query(Statement)
+            .join(Account, Statement.account_id == Account.id)
+            .filter(Statement.id == statement_id, Account.user_id == user_id)
+            .first()
+        )
 
-    def find_by_account_id(self, account_id: UUID) -> list[Statement]:
-        return self.session.query(Statement).filter(Statement.account_id == account_id).all()
+    def find_by_account_id(self, account_id: UUID, user_id: UUID) -> list[Statement]:
+        return (
+            self.session.query(Statement)
+            .join(Account, Statement.account_id == Account.id)
+            .filter(Statement.account_id == account_id, Account.user_id == user_id)
+            .all()
+        )
 
-    def find_all(self) -> list[Statement]:
-        return self.session.query(Statement).options(joinedload(Statement.account)).order_by(Statement.created_at.desc()).all()
+    def find_all(self, user_id: UUID) -> list[Statement]:
+        return (
+            self.session.query(Statement)
+            .join(Account, Statement.account_id == Account.id)
+            .options(joinedload(Statement.account))
+            .filter(Account.user_id == user_id)
+            .order_by(Statement.created_at.desc())
+            .all()
+        )
 
-    def delete(self, statement_id: UUID) -> None:
-        statement = self.session.query(Statement).filter(Statement.id == statement_id).first()
+    def delete(self, statement_id: UUID, user_id: UUID) -> None:
+        statement = (
+            self.session.query(Statement)
+            .join(Account, Statement.account_id == Account.id)
+            .filter(Statement.id == statement_id, Account.user_id == user_id)
+            .first()
+        )
         if statement:
             self.session.delete(statement)
             self.session.flush()

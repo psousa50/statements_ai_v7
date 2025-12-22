@@ -40,29 +40,18 @@ class TransactionService:
 
     def create_transaction(
         self,
+        user_id: UUID,
         transaction_data: TransactionCreateRequest,
         after_transaction_id: Optional[UUID] = None,
     ) -> Transaction:
-        """
-        Create a transaction with proper ordering and automatic rule enhancement.
-
-        Args:
-            transaction_data: The transaction data to create
-            after_transaction_id: Optional transaction ID to insert after for ordering
-
-        Returns:
-            The created transaction with proper sort_index and applied enhancement rules
-        """
         enhanced_data = transaction_data
 
         if transaction_data.category_id is None:
             normalized_description = normalize_description(transaction_data.description)
 
-            # Use efficient batch query for single transaction
-            matching_rules = self.enhancement_rule_repository.find_matching_rules_batch([normalized_description])
+            matching_rules = self.enhancement_rule_repository.find_matching_rules_batch([normalized_description], user_id)
 
             if matching_rules:
-                # Get the first matching rule (rules are sorted by precedence)
                 temp_transaction = Transaction(
                     id=uuid4(),
                     date=transaction_data.date,
@@ -75,7 +64,6 @@ class TransactionService:
                     categorization_status=CategorizationStatus.UNCATEGORIZED,
                 )
 
-                # Find first rule that matches the transaction
                 matching_rule = None
                 for rule in matching_rules:
                     if rule.matches_transaction(temp_transaction):
@@ -93,23 +81,24 @@ class TransactionService:
                         after_transaction_id=transaction_data.after_transaction_id,
                     )
                 else:
-                    self._create_unmatched_rule(normalized_description)
+                    self._create_unmatched_rule(user_id, normalized_description)
             else:
-                self._create_unmatched_rule(normalized_description)
+                self._create_unmatched_rule(user_id, normalized_description)
 
         return self.transaction_repository.create_transaction(
             transaction_data=enhanced_data,
             after_transaction_id=after_transaction_id,
         )
 
-    def _create_unmatched_rule(self, normalized_description: str) -> None:
-        existing_rule = self.enhancement_rule_repository.find_by_normalized_description(normalized_description)
+    def _create_unmatched_rule(self, user_id: UUID, normalized_description: str) -> None:
+        existing_rule = self.enhancement_rule_repository.find_by_normalized_description(normalized_description, user_id)
 
         if existing_rule:
             return
 
         rule = EnhancementRule(
             id=uuid4(),
+            user_id=user_id,
             normalized_description_pattern=normalized_description,
             match_type=MatchType.EXACT,
             category_id=None,
@@ -121,16 +110,15 @@ class TransactionService:
 
         self.enhancement_rule_repository.save(rule)
 
-    def get_transaction(self, transaction_id: UUID) -> Optional[Transaction]:
-        """Get a transaction by ID"""
-        return self.transaction_repository.get_by_id(transaction_id)
+    def get_transaction(self, transaction_id: UUID, user_id: UUID) -> Optional[Transaction]:
+        return self.transaction_repository.get_by_id(transaction_id, user_id)
 
-    def get_all_transactions(self) -> List[Transaction]:
-        """Get all transactions"""
-        return self.transaction_repository.get_all()
+    def get_all_transactions(self, user_id: UUID) -> List[Transaction]:
+        return self.transaction_repository.get_all(user_id)
 
     def get_transactions_paginated(
         self,
+        user_id: UUID,
         page: int = 1,
         page_size: int = 20,
         category_ids: Optional[List[UUID]] = None,
@@ -148,11 +136,11 @@ class TransactionService:
         exclude_uncategorized: Optional[bool] = None,
         transaction_type: Optional[str] = None,
     ) -> TransactionListResponse:
-        """Get transactions with pagination and advanced filtering"""
         (
             transactions,
             total,
         ) = self.transaction_repository.get_paginated(
+            user_id=user_id,
             page=page,
             page_size=page_size,
             category_ids=category_ids,
@@ -170,11 +158,9 @@ class TransactionService:
             transaction_type=transaction_type,
         )
 
-        # Calculate running balance if requested and account is specified
         if include_running_balance and account_id is not None:
             self._add_running_balance_to_transactions(transactions, account_id)
 
-        # Calculate total pages
         total_pages = (total + page_size - 1) // page_size if total > 0 else 1
 
         return TransactionListResponse(
@@ -187,6 +173,7 @@ class TransactionService:
 
     def get_transactions_matching_rule_paginated(
         self,
+        user_id: UUID,
         enhancement_rule_id: UUID,
         page: int = 1,
         page_size: int = 20,
@@ -195,18 +182,15 @@ class TransactionService:
         include_running_balance: bool = False,
         uncategorized_only: bool = False,
     ) -> TransactionListResponse:
-        """Get transactions that match the given enhancement rule with pagination"""
-
-        # Get the enhancement rule
-        rule = self.enhancement_rule_repository.find_by_id(enhancement_rule_id)
+        rule = self.enhancement_rule_repository.find_by_id(enhancement_rule_id, user_id)
         if not rule:
             raise ValueError(f"Enhancement rule with ID {enhancement_rule_id} not found")
 
-        # Get transactions matching the rule with pagination
         (
             transactions,
             total,
         ) = self.transaction_repository.get_transactions_matching_rule_paginated(
+            user_id=user_id,
             rule=rule,
             page=page,
             page_size=page_size,
@@ -215,16 +199,11 @@ class TransactionService:
             uncategorized_only=uncategorized_only,
         )
 
-        # Calculate running balance if requested (not supported for rule filtering since account may vary)
-        # Note: Running balance calculation is complex for rule-based filtering since rules can span multiple accounts
         if include_running_balance:
-            # We could implement this if needed, but it's complex when transactions span multiple accounts
             pass
 
-        # Calculate total pages
         total_pages = (total + page_size - 1) // page_size if total > 0 else 1
 
-        # Add rule information to the response (we'll need to update the schema for this)
         response = TransactionListResponse(
             transactions=transactions,
             total=total,
@@ -233,7 +212,6 @@ class TransactionService:
             total_pages=total_pages,
         )
 
-        # Store rule information for the frontend to display
         response.enhancement_rule = rule
 
         return response
@@ -290,6 +268,7 @@ class TransactionService:
 
     def get_category_totals(
         self,
+        user_id: UUID,
         category_ids: Optional[List[UUID]] = None,
         status: Optional[CategorizationStatus] = None,
         min_amount: Optional[Decimal] = None,
@@ -302,8 +281,8 @@ class TransactionService:
         exclude_uncategorized: Optional[bool] = None,
         transaction_type: Optional[str] = None,
     ) -> Dict[Optional[UUID], Dict[str, Decimal]]:
-        """Get category totals for chart data with the same filtering options as get_transactions_paginated"""
         return self.transaction_repository.get_category_totals(
+            user_id=user_id,
             category_ids=category_ids,
             status=status,
             min_amount=min_amount,
@@ -319,6 +298,7 @@ class TransactionService:
 
     def get_category_time_series(
         self,
+        user_id: UUID,
         category_id: Optional[UUID] = None,
         period: str = "month",
         category_ids: Optional[List[UUID]] = None,
@@ -334,6 +314,7 @@ class TransactionService:
         transaction_type: Optional[str] = None,
     ) -> List[Dict]:
         return self.transaction_repository.get_category_time_series(
+            user_id=user_id,
             category_id=category_id,
             period=period,
             category_ids=category_ids,
@@ -351,6 +332,7 @@ class TransactionService:
 
     def update_transaction(
         self,
+        user_id: UUID,
         transaction_id: UUID,
         transaction_date: date,
         description: str,
@@ -359,40 +341,31 @@ class TransactionService:
         category_id: Optional[UUID] = None,
         counterparty_account_id: Optional[UUID] = None,
     ) -> Optional[Transaction]:
-        """Update a transaction"""
-        transaction = self.transaction_repository.get_by_id(transaction_id)
+        transaction = self.transaction_repository.get_by_id(transaction_id, user_id)
         if transaction:
             transaction.date = transaction_date
             transaction.description = description
             transaction.normalized_description = normalize_description(description)
             transaction.amount = amount
-
-            # Update category and categorization status
             transaction.category_id = category_id
             transaction.categorization_status = (
                 CategorizationStatus.MANUAL if category_id else CategorizationStatus.UNCATEGORIZED
             )
-
-            # Update account
             transaction.account_id = account_id  # type: ignore
-
-            # Update counterparty account
             transaction.counterparty_account_id = counterparty_account_id  # type: ignore
-
             return self.transaction_repository.update(transaction)
         return None
 
-    def delete_transaction(self, transaction_id: UUID) -> bool:
-        """Delete a transaction"""
-        return self.transaction_repository.delete(transaction_id)
+    def delete_transaction(self, transaction_id: UUID, user_id: UUID) -> bool:
+        return self.transaction_repository.delete(transaction_id, user_id)
 
     def categorize_transaction(
         self,
+        user_id: UUID,
         transaction_id: UUID,
         category_id: Optional[UUID],
     ) -> Optional[Transaction]:
-        """Categorize a transaction"""
-        transaction = self.transaction_repository.get_by_id(transaction_id)
+        transaction = self.transaction_repository.get_by_id(transaction_id, user_id)
         if not transaction:
             return None
 
@@ -401,9 +374,8 @@ class TransactionService:
 
         return self.transaction_repository.update(transaction)
 
-    def mark_categorization_failure(self, transaction_id: UUID) -> Optional[Transaction]:
-        """Mark a transaction as having failed categorization"""
-        transaction = self.transaction_repository.get_by_id(transaction_id)
+    def mark_categorization_failure(self, transaction_id: UUID, user_id: UUID) -> Optional[Transaction]:
+        transaction = self.transaction_repository.get_by_id(transaction_id, user_id)
         if not transaction:
             return None
 
@@ -413,11 +385,13 @@ class TransactionService:
 
     def bulk_update_category_by_normalized_description(
         self,
+        user_id: UUID,
         normalized_description: str,
         category_id: Optional[UUID],
     ) -> int:
-        """Update the category for all transactions with the given normalized description"""
-        return self.transaction_repository.bulk_update_category_by_normalized_description(normalized_description, category_id)
+        return self.transaction_repository.bulk_update_category_by_normalized_description(
+            user_id, normalized_description, category_id
+        )
 
     def save_transactions_from_dtos(
         self,

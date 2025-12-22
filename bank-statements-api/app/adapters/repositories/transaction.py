@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 
 from app.common.text_normalization import normalize_description
 from app.domain.dto.statement_processing import TransactionDTO
+from app.domain.models.account import Account
 from app.domain.models.transaction import CategorizationStatus, SourceType, Transaction
 from app.ports.repositories.transaction import TransactionRepository
 
@@ -36,12 +37,19 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
             self.db_session.refresh(transaction)
         return transactions
 
-    def get_by_id(self, transaction_id: UUID) -> Optional[Transaction]:
-        return self.db_session.query(Transaction).filter(Transaction.id == transaction_id).first()
-
-    def get_all(self) -> List[Transaction]:
+    def get_by_id(self, transaction_id: UUID, user_id: UUID) -> Optional[Transaction]:
         return (
             self.db_session.query(Transaction)
+            .join(Account, Transaction.account_id == Account.id)
+            .filter(Transaction.id == transaction_id, Account.user_id == user_id)
+            .first()
+        )
+
+    def get_all(self, user_id: UUID) -> List[Transaction]:
+        return (
+            self.db_session.query(Transaction)
+            .join(Account, Transaction.account_id == Account.id)
+            .filter(Account.user_id == user_id)
             .order_by(
                 Transaction.date.desc(),
                 Transaction.sort_index.asc(),
@@ -72,6 +80,7 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
 
     def get_paginated(
         self,
+        user_id: UUID,
         page: int = 1,
         page_size: int = 20,
         category_ids: Optional[List[UUID]] = None,
@@ -88,10 +97,11 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         exclude_uncategorized: Optional[bool] = None,
         transaction_type: Optional[str] = None,
     ) -> Tuple[List[Transaction], int]:
-        """Get transactions with pagination and advanced filtering"""
-
-        # Build the base query
-        query = self.db_session.query(Transaction)
+        query = (
+            self.db_session.query(Transaction)
+            .join(Account, Transaction.account_id == Account.id)
+            .filter(Account.user_id == user_id)
+        )
 
         # Apply filters
         filters = []
@@ -174,6 +184,7 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
 
     def get_category_totals(
         self,
+        user_id: UUID,
         category_ids: Optional[List[UUID]] = None,
         status: Optional[CategorizationStatus] = None,
         min_amount: Optional[Decimal] = None,
@@ -186,13 +197,14 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         exclude_uncategorized: Optional[bool] = None,
         transaction_type: Optional[str] = None,
     ) -> Dict[Optional[UUID], Dict[str, Decimal]]:
-        """Get category totals for chart data with the same filtering options as get_paginated"""
-
-        # Build the base query with aggregation
-        query = self.db_session.query(
-            Transaction.category_id,
-            func.sum(-Transaction.amount).label("total_amount"),
-            func.count(Transaction.id).label("transaction_count"),
+        query = (
+            self.db_session.query(
+                Transaction.category_id,
+                func.sum(-Transaction.amount).label("total_amount"),
+                func.count(Transaction.id).label("transaction_count"),
+            )
+            .join(Account, Transaction.account_id == Account.id)
+            .filter(Account.user_id == user_id)
         )
 
         # Apply the same filters as get_paginated
@@ -269,6 +281,7 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
 
     def get_category_time_series(
         self,
+        user_id: UUID,
         category_id: Optional[UUID] = None,
         period: str = "month",
         category_ids: Optional[List[UUID]] = None,
@@ -288,11 +301,15 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         else:
             period_expr = func.to_char(Transaction.date, "IYYY-IW")
 
-        query = self.db_session.query(
-            period_expr.label("period"),
-            Transaction.category_id,
-            func.sum(-Transaction.amount).label("total_amount"),
-            func.count(Transaction.id).label("transaction_count"),
+        query = (
+            self.db_session.query(
+                period_expr.label("period"),
+                Transaction.category_id,
+                func.sum(-Transaction.amount).label("total_amount"),
+                func.count(Transaction.id).label("transaction_count"),
+            )
+            .join(Account, Transaction.account_id == Account.id)
+            .filter(Account.user_id == user_id)
         )
 
         filters = []
@@ -370,8 +387,8 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         self.db_session.refresh(transaction)
         return transaction
 
-    def delete(self, transaction_id: UUID) -> bool:
-        transaction = self.get_by_id(transaction_id)
+    def delete(self, transaction_id: UUID, user_id: UUID) -> bool:
+        transaction = self.get_by_id(transaction_id, user_id)
         if transaction:
             self.db_session.delete(transaction)
             self.db_session.commit()
@@ -515,22 +532,28 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
 
     def bulk_update_category_by_normalized_description(
         self,
+        user_id: UUID,
         normalized_description: str,
         category_id: Optional[UUID],
     ) -> int:
-        """
-        Update the category for all transactions with the given normalized description.
-        """
-        query = self.db_session.query(Transaction).filter(Transaction.normalized_description == normalized_description)
+        subquery = (
+            self.db_session.query(Transaction.id)
+            .join(Account, Transaction.account_id == Account.id)
+            .filter(Account.user_id == user_id)
+            .filter(Transaction.normalized_description == normalized_description)
+            .subquery()
+        )
 
-        # Update the category_id and categorization_status for all matching transactions
         update_values = {
             "category_id": category_id,
             "categorization_status": (CategorizationStatus.RULE_BASED if category_id else CategorizationStatus.UNCATEGORIZED),
         }
 
-        # Execute bulk update
-        updated_count = query.update(update_values)
+        updated_count = (
+            self.db_session.query(Transaction)
+            .filter(Transaction.id.in_(subquery))
+            .update(update_values, synchronize_session="fetch")
+        )
         self.db_session.commit()
 
         return updated_count
@@ -705,6 +728,7 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
 
     def get_transactions_matching_rule_paginated(
         self,
+        user_id: UUID,
         rule,
         page: int = 1,
         page_size: int = 20,
@@ -712,10 +736,13 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         sort_direction: Optional[str] = None,
         uncategorized_only: bool = False,
     ) -> Tuple[List[Transaction], int]:
-        """Get transactions that match the given enhancement rule with pagination and sorting"""
         from app.domain.models.enhancement_rule import MatchType
 
-        query = self.db_session.query(Transaction)
+        query = (
+            self.db_session.query(Transaction)
+            .join(Account, Transaction.account_id == Account.id)
+            .filter(Account.user_id == user_id)
+        )
 
         # Match description pattern based on rule type (same logic as count_matching_rule)
         if rule.match_type == MatchType.EXACT:

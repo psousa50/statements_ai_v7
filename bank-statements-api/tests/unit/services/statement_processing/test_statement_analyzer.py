@@ -2,6 +2,7 @@ import uuid
 from unittest.mock import MagicMock
 
 import pandas as pd
+import pytest
 
 from app.domain.dto.statement_processing import AnalysisResultDTO
 from app.domain.dto.uploaded_file import UploadedFileDTO
@@ -10,7 +11,11 @@ from app.services.statement_processing.statement_analyzer import StatementAnalyz
 
 
 class TestStatementAnalyzerService:
-    def test_analyze_new_file(self):
+    @pytest.fixture
+    def user_id(self):
+        return uuid.uuid4()
+
+    def test_analyze_new_file(self, user_id):
         file_type_detector = MagicMock()
         file_type_detector.detect.return_value = "CSV"
 
@@ -74,7 +79,7 @@ class TestStatementAnalyzerService:
         filename = "test.csv"
         file_content = b"Date,Amount,Description\n2023-01-01,100.00,Deposit\n2023-01-02,-200.00,Withdrawal"
 
-        result = analyzer.analyze(filename, file_content)
+        result = analyzer.analyze(user_id, filename, file_content)
 
         assert isinstance(result, AnalysisResultDTO)
         assert result.uploaded_file_id == uploaded_file_id
@@ -106,7 +111,7 @@ class TestStatementAnalyzerService:
         file_analysis_metadata_repo.find_by_hash.assert_called_once()
         uploaded_file_repo.save.assert_called_once_with(filename, file_content, "CSV")
 
-    def test_duplicate_counting_logic(self):
+    def test_duplicate_counting_logic(self, user_id):
         """Test that duplicate counting works correctly when multiple identical transactions exist in file"""
         file_type_detector = MagicMock()
         file_type_detector.detect.return_value = "CSV"
@@ -191,7 +196,7 @@ class TestStatementAnalyzerService:
             b"Date,Amount,Description\n2023-01-01,100.00,Deposit\n2023-01-01,100.00,Deposit\n2023-01-02,-200.00,Withdrawal"
         )
 
-        result = analyzer.analyze(filename, file_content)
+        result = analyzer.analyze(user_id, filename, file_content)
 
         # Test that duplicate counting is correct:
         # Total: 3 transactions
@@ -201,7 +206,7 @@ class TestStatementAnalyzerService:
         assert result.duplicate_transactions == 1
         assert result.unique_transactions == 2
 
-    def test_complex_duplicate_scenario(self):
+    def test_complex_duplicate_scenario(self, user_id):
         """Test duplicate counting with a complex scenario: multiple different transactions, some duplicated"""
         file_type_detector = MagicMock()
         file_type_detector.detect.return_value = "CSV"
@@ -317,7 +322,7 @@ class TestStatementAnalyzerService:
         filename = "test.csv"
         file_content = b"Date,Amount,Description\n2023-01-01,100.00,DepositA\n2023-01-01,100.00,DepositA\n2023-01-02,50.00,DepositB\n2023-01-02,50.00,DepositB\n2023-01-02,50.00,DepositB\n2023-01-03,-200.00,Withdrawal"
 
-        result = analyzer.analyze(filename, file_content)
+        result = analyzer.analyze(user_id, filename, file_content)
 
         # Test that duplicate counting is correct:
         # Total: 6 transactions
@@ -327,7 +332,7 @@ class TestStatementAnalyzerService:
         assert result.duplicate_transactions == 1
         assert result.unique_transactions == 5
 
-    def test_real_world_duplicate_scenario(self):
+    def test_real_world_duplicate_scenario(self, user_id):
         """Test the exact scenario user is experiencing: 1 transaction in DB, file with 2 identical transactions"""
         file_type_detector = MagicMock()
         file_type_detector.detect.return_value = "CSV"
@@ -406,7 +411,7 @@ class TestStatementAnalyzerService:
         filename = "test.csv"
         file_content = b"Date,Amount,Description\n2023-01-01,100.50,Coffee Shop\n2023-01-01,100.50,Coffee Shop"
 
-        result = analyzer.analyze(filename, file_content)
+        result = analyzer.analyze(user_id, filename, file_content)
 
         # Verify that the transaction repository method was called correctly
         transaction_repo.find_matching_transactions.assert_called()
@@ -422,7 +427,7 @@ class TestStatementAnalyzerService:
         assert result.duplicate_transactions == 1
         assert result.unique_transactions == 1
 
-    def test_user_reported_issue_scenario(self):
+    def test_user_reported_issue_scenario(self, user_id):
         """Test the exact user scenario: 1 tx in DB, file with 2 identical txs should detect 1 duplicate"""
         file_type_detector = MagicMock()
         file_type_detector.detect.return_value = "CSV"
@@ -494,7 +499,7 @@ class TestStatementAnalyzerService:
         filename = "test.csv"
         file_content = b"Date,Amount,Description\n2023-01-01,50.00,Transaction X\n2023-01-01,50.00,Transaction X"
 
-        result = analyzer.analyze(filename, file_content)
+        result = analyzer.analyze(user_id, filename, file_content)
 
         # Scenario: 1 tx X in DB, file with 2 identical txs X
         # Expected: 1 duplicate (since DB has 1 and min(2 file count, 1 db count) = 1)
@@ -502,7 +507,7 @@ class TestStatementAnalyzerService:
         assert result.duplicate_transactions == 1  # This should detect 1 duplicate
         assert result.unique_transactions == 1
 
-    def test_exact_user_scenario_step_by_step(self):
+    def test_exact_user_scenario_step_by_step(self, user_id):
         """Test the exact user scenario step by step: empty DB -> upload 1 tx -> upload same file -> upload file with 2 identical txs"""
         file_type_detector = MagicMock()
         file_type_detector.detect.return_value = "CSV"
@@ -559,6 +564,7 @@ class TestStatementAnalyzerService:
         transaction_repo.find_matching_transactions.return_value = []  # Empty DB
 
         result1 = analyzer.analyze(
+            user_id,
             "test1.csv",
             b"Date,Amount,Description\n2023-01-01,50.00,Coffee Shop",
         )
@@ -574,6 +580,7 @@ class TestStatementAnalyzerService:
         transaction_repo.find_matching_transactions.return_value = [mock_tx]
 
         result2 = analyzer.analyze(
+            user_id,
             "test1.csv",
             b"Date,Amount,Description\n2023-01-01,50.00,Coffee Shop",
         )
@@ -607,6 +614,7 @@ class TestStatementAnalyzerService:
         transaction_repo.find_matching_transactions.return_value = [mock_tx]
 
         result3 = analyzer.analyze(
+            user_id,
             "test2.csv",
             b"Date,Amount,Description\n2023-01-01,50.00,Coffee Shop\n2023-01-01,50.00,Coffee Shop",
         )

@@ -3,6 +3,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, status
 
+from app.api.routes.auth import require_current_user
 from app.api.schemas import (
     DescriptionGroupCreate,
     DescriptionGroupListResponse,
@@ -11,6 +12,7 @@ from app.api.schemas import (
 )
 from app.core.config import settings
 from app.core.dependencies import InternalDependencies
+from app.domain.models.user import User
 
 
 def register_description_group_routes(
@@ -27,9 +29,11 @@ def register_description_group_routes(
     def create_group(
         group_data: DescriptionGroupCreate,
         internal: InternalDependencies = Depends(provide_dependencies),
+        current_user: User = Depends(require_current_user),
     ):
         try:
             group = internal.description_group_service.create_group(
+                user_id=current_user.id,
                 name=group_data.name,
                 normalized_descriptions=group_data.normalized_descriptions,
             )
@@ -43,9 +47,10 @@ def register_description_group_routes(
     @router.get("", response_model=DescriptionGroupListResponse)
     def get_all_groups(
         internal: InternalDependencies = Depends(provide_dependencies),
+        current_user: User = Depends(require_current_user),
     ):
         try:
-            groups = internal.description_group_service.get_all_groups()
+            groups = internal.description_group_service.get_all_groups(current_user.id)
             return DescriptionGroupListResponse(groups=groups, total=len(groups))
         except Exception as e:
             raise HTTPException(
@@ -57,9 +62,10 @@ def register_description_group_routes(
     def get_group(
         group_id: UUID,
         internal: InternalDependencies = Depends(provide_dependencies),
+        current_user: User = Depends(require_current_user),
     ):
         try:
-            group = internal.description_group_service.get_group_by_id(group_id)
+            group = internal.description_group_service.get_group_by_id(group_id, current_user.id)
             if not group:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
@@ -79,10 +85,12 @@ def register_description_group_routes(
         group_id: UUID,
         group_data: DescriptionGroupUpdate,
         internal: InternalDependencies = Depends(provide_dependencies),
+        current_user: User = Depends(require_current_user),
     ):
         try:
             updated_group = internal.description_group_service.update_group(
                 group_id=group_id,
+                user_id=current_user.id,
                 name=group_data.name,
                 normalized_descriptions=group_data.normalized_descriptions,
             )
@@ -104,9 +112,10 @@ def register_description_group_routes(
     def delete_group(
         group_id: UUID,
         internal: InternalDependencies = Depends(provide_dependencies),
+        current_user: User = Depends(require_current_user),
     ):
         try:
-            deleted = internal.description_group_service.delete_group(group_id)
+            deleted = internal.description_group_service.delete_group(group_id, current_user.id)
             if not deleted:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,

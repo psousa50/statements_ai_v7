@@ -11,15 +11,15 @@ class AccountRepository(ABC):
         pass
 
     @abstractmethod
-    def get_by_id(self, account_id: UUID) -> Optional[Account]:
+    def get_by_id(self, account_id: UUID, user_id: UUID) -> Optional[Account]:
         pass
 
     @abstractmethod
-    def get_by_name(self, name: str) -> Optional[Account]:
+    def get_by_name(self, name: str, user_id: UUID) -> Optional[Account]:
         pass
 
     @abstractmethod
-    def get_all(self) -> List[Account]:
+    def get_all(self, user_id: UUID) -> List[Account]:
         pass
 
     @abstractmethod
@@ -27,5 +27,5 @@ class AccountRepository(ABC):
         pass
 
     @abstractmethod
-    def delete(self, account_id: UUID) -> None:
+    def delete(self, account_id: UUID, user_id: UUID) -> None:
         pass

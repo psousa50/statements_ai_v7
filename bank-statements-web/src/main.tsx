@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client'
 import { ThemeProvider, createTheme } from '@mui/material/styles'
 import { useMediaQuery } from '@mui/material'
 import CssBaseline from '@mui/material/CssBaseline'
+import { AuthProvider } from './auth/AuthContext'
 import App from './App'
 import './index.css'
 
@@ -134,7 +135,9 @@ const ThemedApp = () => {
           System
         </button>
       </div>
-      <App />
+      <AuthProvider>
+        <App />
+      </AuthProvider>
     </ThemeProvider>
   )
 }

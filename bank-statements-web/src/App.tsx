@@ -8,16 +8,30 @@ import { ChartsPage } from './pages/Charts'
 import { RecurringExpensesPage } from './pages/RecurringExpensesPage'
 import { Statements } from './pages/Statements'
 import { Upload } from './pages/Upload'
+import { Login } from './pages/Login'
+import { AuthCallback } from './pages/AuthCallback'
 import { AppLayout } from './components/layout/AppLayout'
+import { ProtectedRoute } from './auth/ProtectedRoute'
 import { RouterSafeApiProvider } from './api/RouterSafeApiProvider'
 import './App.css'
 
-// Create a simple router configuration
 const router = createBrowserRouter(
   [
     {
+      path: '/login',
+      element: <Login />,
+    },
+    {
+      path: '/auth/callback',
+      element: <AuthCallback />,
+    },
+    {
       path: '/',
-      element: <AppLayout />,
+      element: (
+        <ProtectedRoute>
+          <AppLayout />
+        </ProtectedRoute>
+      ),
       children: [
         { index: true, element: <TransactionsPage /> },
         { path: 'transactions', element: <TransactionsPage /> },

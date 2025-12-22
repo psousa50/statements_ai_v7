@@ -1,5 +1,3 @@
-"""Enhancement Rule Management Service."""
-
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
@@ -11,8 +9,6 @@ from app.ports.repositories.transaction import TransactionRepository
 
 
 class EnhancementRuleManagementService:
-    """Service for managing enhancement rules with business logic."""
-
     def __init__(
         self,
         enhancement_rule_repository: EnhancementRuleRepository,
@@ -27,6 +23,7 @@ class EnhancementRuleManagementService:
 
     def list_rules(
         self,
+        user_id: UUID,
         limit: int = 50,
         offset: int = 0,
         description_search: Optional[str] = None,
@@ -38,10 +35,8 @@ class EnhancementRuleManagementService:
         sort_field: str = "created_at",
         sort_direction: str = "desc",
     ) -> Dict[str, Any]:
-        """List enhancement rules with filtering and pagination."""
-
-        # Get rules with filters
         rules = self.enhancement_rule_repository.get_all(
+            user_id=user_id,
             limit=limit,
             offset=offset,
             description_search=description_search,
@@ -54,8 +49,8 @@ class EnhancementRuleManagementService:
             sort_direction=sort_direction,
         )
 
-        # Get total count for pagination
         total = self.enhancement_rule_repository.count(
+            user_id=user_id,
             description_search=description_search,
             category_ids=category_ids,
             counterparty_account_ids=counterparty_account_ids,
@@ -64,7 +59,6 @@ class EnhancementRuleManagementService:
             show_invalid_only=show_invalid_only,
         )
 
-        # Populate transaction counts for each rule
         for rule in rules:
             rule.transaction_count = self._get_rule_transaction_count(rule)
 
@@ -73,9 +67,8 @@ class EnhancementRuleManagementService:
             "total": total,
         }
 
-    def get_rule(self, rule_id: UUID) -> Optional[EnhancementRule]:
-        """Get a specific enhancement rule by ID."""
-        rule = self.enhancement_rule_repository.find_by_id(rule_id)
+    def get_rule(self, rule_id: UUID, user_id: UUID) -> Optional[EnhancementRule]:
+        rule = self.enhancement_rule_repository.find_by_id(rule_id, user_id)
 
         if rule:
             rule.transaction_count = self._get_rule_transaction_count(rule)
@@ -84,6 +77,7 @@ class EnhancementRuleManagementService:
 
     def create_rule(
         self,
+        user_id: UUID,
         normalized_description_pattern: str,
         match_type: MatchType,
         category_id: Optional[UUID] = None,
@@ -94,31 +88,21 @@ class EnhancementRuleManagementService:
         end_date: Optional[str] = None,
         source: EnhancementRuleSource = EnhancementRuleSource.MANUAL,
     ) -> EnhancementRule:
-        """Create a new enhancement rule with validation."""
-
-        # Allow creating rules without enhancements (can be added later)
-
-        # Validate category exists if specified
         if category_id:
-            category = self.category_repository.get_by_id(category_id)
+            category = self.category_repository.get_by_id(category_id, user_id)
             if not category:
                 raise ValueError(f"Category with ID {category_id} not found")
 
-        # Validate counterparty account exists if specified
         if counterparty_account_id:
-            account = self.account_repository.get_by_id(counterparty_account_id)
+            account = self.account_repository.get_by_id(counterparty_account_id, user_id)
             if not account:
                 raise ValueError(f"Account with ID {counterparty_account_id} not found")
 
-        # Validate amount constraints
         if min_amount is not None and max_amount is not None and min_amount > max_amount:
             raise ValueError("min_amount cannot be greater than max_amount")
 
-        # Note: Multiple rules with the same pattern are allowed
-        # Rules are differentiated by their category, counterparty, and constraints
-
-        # Create the rule
         rule = EnhancementRule(
+            user_id=user_id,
             normalized_description_pattern=normalized_description_pattern,
             match_type=match_type,
             category_id=category_id,
@@ -135,6 +119,7 @@ class EnhancementRuleManagementService:
     def update_rule(
         self,
         rule_id: UUID,
+        user_id: UUID,
         normalized_description_pattern: str,
         match_type: MatchType,
         category_id: Optional[UUID] = None,
@@ -146,35 +131,23 @@ class EnhancementRuleManagementService:
         source: EnhancementRuleSource = EnhancementRuleSource.MANUAL,
         apply_to_existing: bool = False,
     ) -> Optional[EnhancementRule]:
-        """Update an existing enhancement rule with validation."""
-
-        # Get existing rule
-        rule = self.enhancement_rule_repository.find_by_id(rule_id)
+        rule = self.enhancement_rule_repository.find_by_id(rule_id, user_id)
         if not rule:
             return None
 
-        # Allow updating rules without enhancements (can be added later)
-
-        # Validate category exists if specified
         if category_id:
-            category = self.category_repository.get_by_id(category_id)
+            category = self.category_repository.get_by_id(category_id, user_id)
             if not category:
                 raise ValueError(f"Category with ID {category_id} not found")
 
-        # Validate counterparty account exists if specified
         if counterparty_account_id:
-            account = self.account_repository.get_by_id(counterparty_account_id)
+            account = self.account_repository.get_by_id(counterparty_account_id, user_id)
             if not account:
                 raise ValueError(f"Account with ID {counterparty_account_id} not found")
 
-        # Validate amount constraints
         if min_amount is not None and max_amount is not None and min_amount > max_amount:
             raise ValueError("min_amount cannot be greater than max_amount")
 
-        # Note: Multiple rules with the same pattern are allowed
-        # Rules are differentiated by their category, counterparty, and constraints
-
-        # Update the rule
         rule.normalized_description_pattern = normalized_description_pattern
         rule.match_type = match_type
         rule.category_id = category_id
@@ -185,28 +158,23 @@ class EnhancementRuleManagementService:
         rule.end_date = end_date
         rule.source = source
 
-        # Save the updated rule
         updated_rule = self.enhancement_rule_repository.save(rule)
 
-        # Apply to existing transactions if requested
         if apply_to_existing:
-            self.apply_rule_to_existing_transactions(rule_id)
+            self.apply_rule_to_existing_transactions(rule_id, user_id)
 
         return updated_rule
 
-    def delete_rule(self, rule_id: UUID) -> bool:
-        """Delete an enhancement rule."""
-        rule = self.enhancement_rule_repository.find_by_id(rule_id)
+    def delete_rule(self, rule_id: UUID, user_id: UUID) -> bool:
+        rule = self.enhancement_rule_repository.find_by_id(rule_id, user_id)
         if not rule:
             return False
 
         self.enhancement_rule_repository.delete(rule)
         return True
 
-    def cleanup_unused_rules(self) -> Dict[str, Any]:
-        """Delete rules that haven't been used to categorize any transactions."""
-
-        all_rules = self.enhancement_rule_repository.get_all(limit=10000)
+    def cleanup_unused_rules(self, user_id: UUID) -> Dict[str, Any]:
+        all_rules = self.enhancement_rule_repository.get_all(user_id=user_id, limit=10000)
         unused_rules = []
 
         for rule in all_rules:
@@ -214,7 +182,6 @@ class EnhancementRuleManagementService:
             if transaction_count == 0:
                 unused_rules.append(rule)
 
-        # Delete unused rules
         for rule in unused_rules:
             self.enhancement_rule_repository.delete(rule)
 
@@ -223,23 +190,17 @@ class EnhancementRuleManagementService:
             "message": f"Deleted {len(unused_rules)} unused enhancement rules",
         }
 
-    def get_stats(self) -> Dict[str, Any]:
-        """Get comprehensive statistics about enhancement rules."""
+    def get_stats(self, user_id: UUID) -> Dict[str, Any]:
+        all_rules = self.enhancement_rule_repository.get_all(user_id=user_id, limit=10000)
 
-        # Get all rules
-        all_rules = self.enhancement_rule_repository.get_all(limit=10000)
-
-        # Basic counts
         total_rules = len(all_rules)
         manual_rules = len([r for r in all_rules if r.source == EnhancementRuleSource.MANUAL])
         ai_rules = len([r for r in all_rules if r.source == EnhancementRuleSource.AI])
 
-        # Rule type counts
         category_only_rules = len([r for r in all_rules if r.category_id and not r.counterparty_account_id])
         counterparty_only_rules = len([r for r in all_rules if r.counterparty_account_id and not r.category_id])
         combined_rules = len([r for r in all_rules if r.category_id and r.counterparty_account_id])
 
-        # Get transaction counts
         total_transactions_enhanced = 0
         transactions_with_manual_rules = 0
         transactions_with_ai_rules = 0
@@ -253,17 +214,12 @@ class EnhancementRuleManagementService:
             else:
                 transactions_with_ai_rules += count
 
-        # Top rules by usage
         rules_with_counts = []
         for rule in all_rules:
             count = self._get_rule_transaction_count(rule)
             rules_with_counts.append((rule, count))
 
-        top_rules = sorted(
-            rules_with_counts,
-            key=lambda x: x[1],
-            reverse=True,
-        )[:10]
+        top_rules = sorted(rules_with_counts, key=lambda x: x[1], reverse=True)[:10]
         unused_rules = [r for r, count in rules_with_counts if count == 0]
 
         return {
@@ -305,49 +261,38 @@ class EnhancementRuleManagementService:
         }
 
     def _get_rule_transaction_count(self, rule: EnhancementRule) -> int:
-        """Get the number of transactions that would match this rule."""
         try:
             is_unconfigured = not rule.category_id and not rule.counterparty_account_id
             return self.transaction_repository.count_matching_rule(rule, uncategorized_only=is_unconfigured)
         except Exception:
             return 0
 
-    def get_matching_transactions_count(self, rule_id: UUID) -> Dict[str, Any]:
-        """Get count of transactions that would match this enhancement rule."""
-        # Get the rule
-        rule = self.enhancement_rule_repository.find_by_id(rule_id)
+    def get_matching_transactions_count(self, rule_id: UUID, user_id: UUID) -> Dict[str, Any]:
+        rule = self.enhancement_rule_repository.find_by_id(rule_id, user_id)
         if not rule:
             raise ValueError(f"Enhancement rule with ID {rule_id} not found")
 
-        # Get the count
         count = self.transaction_repository.count_matching_rule(rule)
 
-        # TODO: Add date_range and amount_range calculation if needed
         return {
             "count": count,
             "date_range": None,
             "amount_range": None,
         }
 
-    def preview_matching_transactions_count(self, rule_preview: Any) -> Dict[str, Any]:
-        """Preview count of transactions that would match the given enhancement rule criteria."""
-        # Note: We allow preview without enhancements to show matching transaction counts
-        # The actual rule creation will still require at least one enhancement
-
-        # Validate category exists if provided
+    def preview_matching_transactions_count(self, rule_preview: Any, user_id: UUID) -> Dict[str, Any]:
         if rule_preview.category_id:
-            category = self.category_repository.get_by_id(rule_preview.category_id)
+            category = self.category_repository.get_by_id(rule_preview.category_id, user_id)
             if not category:
                 raise ValueError(f"Category with ID {rule_preview.category_id} not found")
 
-        # Validate counterparty account exists if provided
         if rule_preview.counterparty_account_id:
-            account = self.account_repository.get_by_id(rule_preview.counterparty_account_id)
+            account = self.account_repository.get_by_id(rule_preview.counterparty_account_id, user_id)
             if not account:
                 raise ValueError(f"Account with ID {rule_preview.counterparty_account_id} not found")
 
-        # Create a temporary rule object for counting (not persisted)
         temp_rule = EnhancementRule(
+            user_id=user_id,
             normalized_description_pattern=rule_preview.normalized_description_pattern,
             match_type=rule_preview.match_type,
             category_id=rule_preview.category_id,
@@ -359,22 +304,18 @@ class EnhancementRuleManagementService:
             source=rule_preview.source,
         )
 
-        # Get the count using the temporary rule
         count = self.transaction_repository.count_matching_rule(temp_rule)
 
-        # TODO: Add date_range and amount_range calculation if needed
         return {
             "count": count,
             "date_range": None,
             "amount_range": None,
         }
 
-    def apply_rule_to_existing_transactions(self, rule_id: UUID) -> int:
-        """Apply an enhancement rule to all existing matching transactions with batch processing."""
+    def apply_rule_to_existing_transactions(self, rule_id: UUID, user_id: UUID) -> int:
         from app.domain.models.transaction import CategorizationStatus, CounterpartyStatus
 
-        # Get the rule
-        rule = self.enhancement_rule_repository.find_by_id(rule_id)
+        rule = self.enhancement_rule_repository.find_by_id(rule_id, user_id)
         if not rule:
             raise ValueError(f"Enhancement rule with ID {rule_id} not found")
 
@@ -383,20 +324,16 @@ class EnhancementRuleManagementService:
         batch_size = 1000
 
         while True:
-            # Get transactions matching the rule using pagination
             matching_transactions = self.transaction_repository.find_transactions_matching_rule(
                 rule=rule, page=page, page_size=batch_size
             )
 
             if not matching_transactions:
-                break  # No more transactions to process
+                break
 
-            # Apply selective updates based on current status
             for transaction in matching_transactions:
                 updated = False
 
-                # Only update category if transaction is UNCATEGORIZED, RULE_BASED, or FAILURE
-                # Never overwrite MANUAL categorizations
                 if rule.category_id and transaction.categorization_status in [
                     CategorizationStatus.UNCATEGORIZED,
                     CategorizationStatus.RULE_BASED,
@@ -406,8 +343,6 @@ class EnhancementRuleManagementService:
                     transaction.categorization_status = CategorizationStatus.RULE_BASED
                     updated = True
 
-                # Only update counterparty if it's currently unprocessed or was rule-based
-                # Never overwrite MANUAL assignments
                 if rule.counterparty_account_id and transaction.counterparty_status in [
                     CounterpartyStatus.UNPROCESSED,
                     CounterpartyStatus.RULE_BASED,
@@ -423,9 +358,7 @@ class EnhancementRuleManagementService:
 
             page += 1
 
-            # Optional: For very large updates, this could break and continue as background job
-            # For now, let's process everything synchronously
-            if total_updated > 10000:  # Safety limit
+            if total_updated > 10000:
                 break
 
         return total_updated

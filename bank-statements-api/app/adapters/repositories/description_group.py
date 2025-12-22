@@ -17,38 +17,51 @@ class SQLAlchemyDescriptionGroupRepository(DescriptionGroupRepository):
         self.db_session.refresh(group)
         return group
 
-    def get_by_id(self, group_id: UUID) -> Optional[DescriptionGroup]:
+    def get_by_id(self, group_id: UUID, user_id: UUID) -> Optional[DescriptionGroup]:
         return (
             self.db_session.query(DescriptionGroup)
             .options(joinedload(DescriptionGroup.members))
-            .filter(DescriptionGroup.id == group_id)
+            .filter(DescriptionGroup.id == group_id, DescriptionGroup.user_id == user_id)
             .first()
         )
 
-    def get_all(self) -> List[DescriptionGroup]:
-        return self.db_session.query(DescriptionGroup).options(joinedload(DescriptionGroup.members)).all()
+    def get_all(self, user_id: UUID) -> List[DescriptionGroup]:
+        return (
+            self.db_session.query(DescriptionGroup)
+            .options(joinedload(DescriptionGroup.members))
+            .filter(DescriptionGroup.user_id == user_id)
+            .all()
+        )
 
     def update(self, group: DescriptionGroup) -> DescriptionGroup:
         self.db_session.commit()
         self.db_session.refresh(group)
         return group
 
-    def delete(self, group_id: UUID) -> None:
-        group = self.get_by_id(group_id)
+    def delete(self, group_id: UUID, user_id: UUID) -> None:
+        group = self.get_by_id(group_id, user_id)
         if group:
             self.db_session.delete(group)
             self.db_session.commit()
 
-    def get_by_normalized_description(self, normalized_description: str) -> Optional[DescriptionGroup]:
+    def get_by_normalized_description(self, normalized_description: str, user_id: UUID) -> Optional[DescriptionGroup]:
         return (
             self.db_session.query(DescriptionGroup)
             .join(DescriptionGroupMember)
-            .filter(DescriptionGroupMember.normalized_description == normalized_description)
+            .filter(
+                DescriptionGroupMember.normalized_description == normalized_description,
+                DescriptionGroup.user_id == user_id,
+            )
             .first()
         )
 
-    def get_description_to_group_map(self) -> Dict[str, UUID]:
-        members = self.db_session.query(DescriptionGroupMember).all()
+    def get_description_to_group_map(self, user_id: UUID) -> Dict[str, UUID]:
+        members = (
+            self.db_session.query(DescriptionGroupMember)
+            .join(DescriptionGroup)
+            .filter(DescriptionGroup.user_id == user_id)
+            .all()
+        )
 
         description_to_group = {}
         for member in members:
