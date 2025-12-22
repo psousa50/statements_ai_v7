@@ -103,12 +103,7 @@ class RecurringExpenseAnalyzer:
                 continue
 
             sorted_transactions = sorted(group_transactions, key=lambda t: t.date)
-            deduplicated = self._deduplicate_by_date(sorted_transactions)
-
-            if len(deduplicated) < self.min_occurrences:
-                continue
-
-            monthly_transactions = self._filter_to_monthly_sequence(deduplicated)
+            monthly_transactions = self._filter_to_monthly_sequence(sorted_transactions)
 
             if len(monthly_transactions) < self.min_occurrences:
                 continue
@@ -119,13 +114,19 @@ class RecurringExpenseAnalyzer:
 
             avg_interval = sum(intervals) / len(intervals)
 
-            amounts = [abs(t.amount) for t in monthly_transactions]
-            avg_amount = sum(amounts) / len(amounts)
+            first_date = sorted_transactions[0].date
+            last_date = sorted_transactions[-1].date
+            months_covered = (last_date.year - first_date.year) * 12 + (last_date.month - first_date.month) + 1
+
+            total_amount = sum(abs(t.amount) for t in group_transactions)
+            avg_amount = Decimal(total_amount) / Decimal(months_covered)
 
             if avg_amount == 0:
                 continue
 
-            variance = max(abs(a - avg_amount) / avg_amount for a in amounts)
+            amounts = [abs(t.amount) for t in group_transactions]
+            avg_per_txn = total_amount / len(amounts)
+            variance = max(abs(a - avg_per_txn) / avg_per_txn for a in amounts) if avg_per_txn > 0 else 0
 
             if variance <= self.amount_variance_threshold:
                 category_id = next((t.category_id for t in monthly_transactions if t.category_id), None)
@@ -141,11 +142,11 @@ class RecurringExpenseAnalyzer:
                     interval_days=avg_interval,
                     average_amount=avg_amount,
                     amount_variance=variance,
-                    transaction_count=len(monthly_transactions),
-                    transactions=monthly_transactions,
+                    transaction_count=len(group_transactions),
+                    transactions=group_transactions,
                     category_id=category_id,
-                    first_transaction_date=monthly_transactions[0].date,
-                    last_transaction_date=monthly_transactions[-1].date,
+                    first_transaction_date=sorted_transactions[0].date,
+                    last_transaction_date=sorted_transactions[-1].date,
                     total_annual_cost=annual_cost,
                 )
                 patterns.append(pattern)
@@ -157,15 +158,6 @@ class RecurringExpenseAnalyzer:
         for transaction in transactions:
             groups[transaction.normalized_description].append(transaction)
         return {k: v for k, v in groups.items() if len(v) >= self.min_occurrences}
-
-    def _deduplicate_by_date(self, sorted_transactions: List[Transaction]) -> List[Transaction]:
-        seen_dates = set()
-        result = []
-        for txn in sorted_transactions:
-            if txn.date not in seen_dates:
-                seen_dates.add(txn.date)
-                result.append(txn)
-        return result
 
     def _filter_to_monthly_sequence(self, sorted_transactions: List[Transaction]) -> List[Transaction]:
         if len(sorted_transactions) < 2:
