@@ -157,7 +157,7 @@ export const EnhancementRuleTable: React.FC<EnhancementRuleTableProps> = ({
             </TableCell>
             <TableCell>Counterparty</TableCell>
             <TableCell>Constraints</TableCell>
-            <TableCell>
+            <TableCell align="right">
               <TableSortLabel
                 active={filters.sort_field === 'usage'}
                 direction={filters.sort_field === 'usage' ? filters.sort_direction : 'asc'}
@@ -238,20 +238,8 @@ export const EnhancementRuleTable: React.FC<EnhancementRuleTableProps> = ({
                   </Typography>
                 )}
               </TableCell>
-              <TableCell>
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}>
-                  <Typography variant="body2">{rule.transaction_count ?? 0}</Typography>
-                  {(rule.transaction_count ?? 0) > 0 && (
-                    <IconButton
-                      size="small"
-                      onClick={() => handleViewTransactions(rule)}
-                      title="View transactions"
-                      sx={{ ml: -2.5 }}
-                    >
-                      <VisibilityIcon fontSize="small" />
-                    </IconButton>
-                  )}
-                </Box>
+              <TableCell align="right">
+                <Typography variant="body2">{rule.transaction_count ?? 0}</Typography>
               </TableCell>
               <TableCell>
                 <Chip
@@ -262,6 +250,22 @@ export const EnhancementRuleTable: React.FC<EnhancementRuleTableProps> = ({
               </TableCell>
               <TableCell>
                 <Box sx={{ display: 'flex !important', gap: '0 !important', width: 'fit-content' }}>
+                  {(rule.transaction_count ?? 0) > 0 && (
+                    <IconButton
+                      size="small"
+                      onClick={() => handleViewTransactions(rule)}
+                      title="View transactions"
+                      sx={{
+                        minWidth: '0 !important',
+                        padding: '4px !important',
+                        margin: '0 !important',
+                        width: '24px !important',
+                        height: '24px !important',
+                      }}
+                    >
+                      <VisibilityIcon fontSize="small" />
+                    </IconButton>
+                  )}
                   <IconButton
                     size="small"
                     onClick={() => onEdit(rule)}

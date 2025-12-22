@@ -154,13 +154,25 @@ export const RecurringPatternsTable = ({
     })
   }
 
-  const SortableHeader = ({ field, children }: { field: SortField; children: React.ReactNode }) => {
+  const SortableHeader = ({
+    field,
+    children,
+    align,
+  }: {
+    field: SortField
+    children: React.ReactNode
+    align?: 'left' | 'right'
+  }) => {
     const isActive = sortField === field
     const direction = isActive ? sortDirection : undefined
 
     return (
-      <th className={`sortable-header ${isActive ? 'active' : ''}`} onClick={() => handleSort(field)}>
-        <div className="header-content">
+      <th
+        className={`sortable-header ${isActive ? 'active' : ''}`}
+        onClick={() => handleSort(field)}
+        style={align ? { textAlign: align } : undefined}
+      >
+        <div className="header-content" style={align === 'right' ? { justifyContent: 'flex-end' } : undefined}>
           <span>{children}</span>
           <span className="sort-indicator">
             {!isActive && <UnfoldMoreIcon fontSize="small" />}
@@ -199,9 +211,9 @@ export const RecurringPatternsTable = ({
               <SortableHeader field="description">Description</SortableHeader>
               <SortableHeader field="category">Category</SortableHeader>
               <th>Frequency</th>
-              <SortableHeader field="average_amount">Monthly Amount</SortableHeader>
-              <SortableHeader field="total_annual_cost">Annual Cost</SortableHeader>
-              <SortableHeader field="transaction_count">Occurrences</SortableHeader>
+              <SortableHeader field="average_amount" align="right">Monthly Amount</SortableHeader>
+              <SortableHeader field="total_annual_cost" align="right">Annual Cost</SortableHeader>
+              <SortableHeader field="transaction_count" align="right">Occurrences</SortableHeader>
               <th>First/Last Date</th>
               <th>Actions</th>
             </tr>
@@ -444,7 +456,7 @@ export const RecurringPatternsTable = ({
         }
 
         .count-cell {
-          text-align: center;
+          text-align: right;
         }
 
         .date-cell {
