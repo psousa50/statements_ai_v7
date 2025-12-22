@@ -17,7 +17,6 @@ import EditIcon from '@mui/icons-material/Edit'
 import DeleteIcon from '@mui/icons-material/Delete'
 import VisibilityIcon from '@mui/icons-material/Visibility'
 import ContentCopyIcon from '@mui/icons-material/ContentCopy'
-import { useNavigate } from 'react-router-dom'
 import { EnhancementRule, EnhancementRuleFilters, EnhancementRuleSource, MatchType } from '../types/EnhancementRule'
 
 interface EnhancementRuleTableProps {
@@ -39,7 +38,6 @@ export const EnhancementRuleTable: React.FC<EnhancementRuleTableProps> = ({
   onDuplicate,
   onDelete,
 }) => {
-  const navigate = useNavigate()
   const handleSort = (field: string) => {
     const isAsc = filters.sort_field === field && filters.sort_direction === 'asc'
     onSort(field, isAsc ? 'desc' : 'asc')
@@ -53,7 +51,7 @@ export const EnhancementRuleTable: React.FC<EnhancementRuleTableProps> = ({
     if (isUnconfigured) {
       params.set('status', 'UNCATEGORIZED')
     }
-    navigate(`/transactions?${params.toString()}`)
+    window.open(`/transactions?${params.toString()}`, '_blank')
   }
 
   const getMatchTypeLabel = (matchType: MatchType) => {

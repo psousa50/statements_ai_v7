@@ -1,5 +1,4 @@
 import { useState, useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { RecurringPattern } from '../api/TransactionClient'
 import { Category } from '../types/Transaction'
 import { useApi } from '../api/ApiContext'
@@ -25,7 +24,6 @@ export const RecurringPatternsTable = ({
   totalMonthlyRecurring,
   onRefresh,
 }: RecurringPatternsTableProps) => {
-  const navigate = useNavigate()
   const api = useApi()
   const [sortField, setSortField] = useState<SortField>('average_amount')
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc')
@@ -97,7 +95,7 @@ export const RecurringPatternsTable = ({
   const handleViewTransactions = (pattern: RecurringPattern) => {
     const params = new URLSearchParams()
     params.set('description_search', pattern.normalized_description)
-    navigate(`/transactions?${params.toString()}`)
+    window.open(`/transactions?${params.toString()}`, '_blank')
   }
 
   const handleMergeClick = (pattern: RecurringPattern) => {
