@@ -153,51 +153,10 @@ class RecurringExpenseAnalyzer:
         return patterns
 
     def _group_by_normalized_description(self, transactions: List[Transaction]) -> Dict[str, List[Transaction]]:
-        description_groups = defaultdict(list)
+        groups = defaultdict(list)
         for transaction in transactions:
-            description_groups[transaction.normalized_description].append(transaction)
-
-        final_groups = {}
-        for desc, txns in description_groups.items():
-            amount_clusters = self._cluster_by_amount(txns)
-            valid_clusters = [c for c in amount_clusters if len(c) >= self.min_occurrences]
-
-            if len(valid_clusters) == 0:
-                continue
-            elif len(valid_clusters) == 1 and len(amount_clusters) == 1:
-                final_groups[desc] = txns
-            else:
-                for cluster in valid_clusters:
-                    avg = sum(abs(t.amount) for t in cluster) / len(cluster)
-                    cluster_key = f"{desc}|~{int(avg)}"
-                    final_groups[cluster_key] = cluster
-
-        return final_groups
-
-    def _cluster_by_amount(self, transactions: List[Transaction], tolerance: float = 0.15) -> List[List[Transaction]]:
-        if not transactions:
-            return []
-
-        sorted_txns = sorted(transactions, key=lambda t: abs(t.amount))
-        clusters: List[List[Transaction]] = []
-
-        for txn in sorted_txns:
-            amount = abs(txn.amount)
-            placed = False
-
-            for cluster in clusters:
-                cluster_avg = sum(abs(t.amount) for t in cluster) / len(cluster)
-                if cluster_avg == 0:
-                    continue
-                if abs(amount - cluster_avg) / cluster_avg <= tolerance:
-                    cluster.append(txn)
-                    placed = True
-                    break
-
-            if not placed:
-                clusters.append([txn])
-
-        return clusters
+            groups[transaction.normalized_description].append(transaction)
+        return {k: v for k, v in groups.items() if len(v) >= self.min_occurrences}
 
     def _deduplicate_by_date(self, sorted_transactions: List[Transaction]) -> List[Transaction]:
         seen_dates = set()
