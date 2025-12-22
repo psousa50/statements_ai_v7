@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from uuid import uuid4
 
-from sqlalchemy import Column, DateTime, ForeignKey, Integer, LargeBinary, String, Text
+from sqlalchemy import Column, DateTime, ForeignKey, Integer, LargeBinary, String, Text, UniqueConstraint
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import relationship
 
@@ -24,9 +24,10 @@ class UploadedFile(Base):
 
 class FileAnalysisMetadata(Base):
     __tablename__ = "file_analysis_metadata"
+    __table_args__ = (UniqueConstraint("file_hash", "account_id", name="file_analysis_metadata_file_hash_account_id_key"),)
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    file_hash = Column(Text, unique=True, nullable=False, index=True)
+    file_hash = Column(Text, nullable=False, index=True)
     account_id = Column(
         UUID(as_uuid=True),
         ForeignKey("accounts.id"),

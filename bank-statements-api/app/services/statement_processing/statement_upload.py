@@ -66,9 +66,9 @@ class StatementUploadService:
         background_tasks=None,
         internal_deps=None,
     ) -> StatementUploadResult:
-        parsed = self.parse_statement(upload_data)
+        parsed = self.parse_statement(user_id, upload_data)
         enhanced = self.enhance_transactions(user_id, parsed)
-        saved = self.save_statement(enhanced, upload_data)
+        saved = self.save_statement(user_id, enhanced, upload_data)
         jobs = self.schedule_jobs(saved, enhanced)
 
         if background_tasks and internal_deps:
@@ -76,7 +76,7 @@ class StatementUploadService:
 
         return self._build_result(enhanced, saved, jobs)
 
-    def parse_statement(self, upload_request: StatementUploadRequest) -> ParsedStatement:
+    def parse_statement(self, user_id: UUID, upload_request: StatementUploadRequest) -> ParsedStatement:
         """Step 1: Parse uploaded file to transaction DTOs"""
         logger.info(f"Parsing statement file {upload_request.uploaded_file_id}")
 
@@ -104,7 +104,7 @@ class StatementUploadService:
             from app.services.common import compute_hash
 
             file_hash = compute_hash(file_type, raw_df)
-            existing_metadata = self.file_analysis_metadata_repo.find_by_hash(file_hash)
+            existing_metadata = self.file_analysis_metadata_repo.find_by_hash(file_hash, user_id)
             if existing_metadata and existing_metadata.row_filters:
                 logger.info(f"Using saved row filters for file hash {file_hash}")
                 # Convert saved filters back to API format
@@ -189,6 +189,7 @@ class StatementUploadService:
 
     def save_statement(
         self,
+        user_id: UUID,
         enhanced: EnhancedTransactions,
         upload_request: StatementUploadRequest,
     ) -> SavedStatement:
@@ -251,6 +252,7 @@ class StatementUploadService:
             header_row_index=upload_request.header_row_index,
             data_start_row_index=upload_request.data_start_row_index,
             account_id=UUID(upload_request.account_id),
+            user_id=user_id,
             row_filters=row_filters_dict,
         )
 
@@ -318,6 +320,7 @@ class StatementUploadService:
         header_row_index: int,
         data_start_row_index: int,
         account_id: UUID,
+        user_id: UUID,
         row_filters: Optional[List[dict]] = None,
     ):
         uploaded_file = self.uploaded_file_repo.find_by_id(uploaded_file_id)
@@ -327,7 +330,7 @@ class StatementUploadService:
         raw_df = self.statement_parser.parse(uploaded_file.content, uploaded_file.file_type)
         file_hash = compute_hash(uploaded_file.file_type, raw_df)
 
-        existing_metadata = self.file_analysis_metadata_repo.find_by_hash(file_hash)
+        existing_metadata = self.file_analysis_metadata_repo.find_by_hash(file_hash, user_id)
         if existing_metadata:
             filters_to_save = row_filters if row_filters is not None else existing_metadata.row_filters
             self.file_analysis_metadata_repo.update(

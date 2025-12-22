@@ -2,6 +2,7 @@ from typing import Optional
 from uuid import UUID
 
 from app.domain.dto.uploaded_file import FileAnalysisMetadataDTO, UploadedFileDTO
+from app.domain.models.account import Account
 from app.domain.models.uploaded_file import FileAnalysisMetadata, UploadedFile
 from app.ports.repositories.uploaded_file import FileAnalysisMetadataRepository, UploadedFileRepository
 
@@ -115,8 +116,13 @@ class SQLAlchemyFileAnalysisMetadataRepository(FileAnalysisMetadataRepository):
             row_filters=metadata.row_filters,
         )
 
-    def find_by_hash(self, file_hash: str) -> Optional[FileAnalysisMetadataDTO]:
-        metadata = self.session.query(FileAnalysisMetadata).filter(FileAnalysisMetadata.file_hash == file_hash).first()
+    def find_by_hash(self, file_hash: str, user_id: UUID) -> Optional[FileAnalysisMetadataDTO]:
+        metadata = (
+            self.session.query(FileAnalysisMetadata)
+            .join(Account, FileAnalysisMetadata.account_id == Account.id)
+            .filter(FileAnalysisMetadata.file_hash == file_hash, Account.user_id == user_id)
+            .first()
+        )
 
         if not metadata:
             return None

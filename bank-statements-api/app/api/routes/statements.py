@@ -102,7 +102,7 @@ def register_statement_routes(
         current_user: User = Depends(require_current_user),
     ):
         try:
-            account = internal.account_service.get_account(upload_data.account_id, current_user.id)
+            account = internal.account_service.get_account(UUID(upload_data.account_id), current_user.id)
             if not account:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,

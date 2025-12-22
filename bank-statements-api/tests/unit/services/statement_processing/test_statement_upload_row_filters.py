@@ -9,6 +9,10 @@ from app.services.statement_processing.statement_upload import StatementUploadSe
 
 class TestStatementUploadServiceRowFilters:
     @pytest.fixture
+    def user_id(self):
+        return uuid4()
+
+    @pytest.fixture
     def mock_statement_parser(self):
         return Mock()
 
@@ -114,6 +118,7 @@ class TestStatementUploadServiceRowFilters:
         mock_uploaded_file_repo,
         mock_file_analysis_metadata_repo,
         sample_upload_request_with_filters,
+        user_id,
     ):
         """Test that row filters are saved in file analysis metadata"""
         from datetime import datetime, timezone
@@ -141,10 +146,11 @@ class TestStatementUploadServiceRowFilters:
                     header_row_index=sample_upload_request_with_filters.header_row_index,
                     data_start_row_index=sample_upload_request_with_filters.data_start_row_index,
                     account_id=UUID(sample_upload_request_with_filters.account_id),
+                    user_id=user_id,
                     row_filters=sample_upload_request_with_filters.row_filters,
                 )
 
-                # Verify row filters were passed to repository save
+                mock_file_analysis_metadata_repo.find_by_hash.assert_called_once_with("test_hash", user_id)
                 mock_file_analysis_metadata_repo.save.assert_called_once_with(
                     file_hash="test_hash",
                     column_mapping=sample_upload_request_with_filters.column_mapping,
@@ -160,6 +166,7 @@ class TestStatementUploadServiceRowFilters:
         mock_uploaded_file_repo,
         mock_file_analysis_metadata_repo,
         sample_upload_request_without_filters,
+        user_id,
     ):
         """Test that None row filters are handled correctly"""
         from datetime import datetime, timezone
@@ -187,10 +194,11 @@ class TestStatementUploadServiceRowFilters:
                     header_row_index=sample_upload_request_without_filters.header_row_index,
                     data_start_row_index=sample_upload_request_without_filters.data_start_row_index,
                     account_id=UUID(sample_upload_request_without_filters.account_id),
+                    user_id=user_id,
                     row_filters=None,
                 )
 
-                # Verify None row filters were passed to repository save
+                mock_file_analysis_metadata_repo.find_by_hash.assert_called_once_with("test_hash", user_id)
                 mock_file_analysis_metadata_repo.save.assert_called_once_with(
                     file_hash="test_hash",
                     column_mapping=sample_upload_request_without_filters.column_mapping,
@@ -206,6 +214,7 @@ class TestStatementUploadServiceRowFilters:
         mock_uploaded_file_repo,
         mock_file_analysis_metadata_repo,
         sample_upload_request_without_filters,
+        user_id,
     ):
         """Test that saved row filters are automatically applied when uploading the same file"""
         from datetime import datetime, timezone
@@ -260,7 +269,7 @@ class TestStatementUploadServiceRowFilters:
                             statement_upload_service.transaction_normalizer, "normalize", return_value=normalized_df
                         ):
                             # Execute
-                            statement_upload_service.parse_statement(upload_request)
+                            statement_upload_service.parse_statement(user_id, upload_request)
 
                             # Verify that row filters were applied even though none were provided in the request
                             mock_apply_filters.assert_called_once()

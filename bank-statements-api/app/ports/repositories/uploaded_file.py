@@ -41,5 +41,5 @@ class FileAnalysisMetadataRepository(ABC):
         pass
 
     @abstractmethod
-    def find_by_hash(self, file_hash: str) -> Optional[FileAnalysisMetadataDTO]:
+    def find_by_hash(self, file_hash: str, user_id: UUID) -> Optional[FileAnalysisMetadataDTO]:
         pass
