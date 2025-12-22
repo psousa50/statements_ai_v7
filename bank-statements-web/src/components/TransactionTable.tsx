@@ -195,7 +195,7 @@ export const TransactionTable = ({
 
   const formatDate = (dateString: string) => {
     try {
-      return format(new Date(dateString), 'MMM dd, yyyy')
+      return format(new Date(dateString), 'yyyy-MM-dd')
     } catch (_error) {
       return dateString
     }
