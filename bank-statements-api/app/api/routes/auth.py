@@ -2,7 +2,7 @@ from typing import Optional
 
 from authlib.integrations.starlette_client import OAuth, OAuthError
 from fastapi import APIRouter, Cookie, Depends, FastAPI, HTTPException, Request, Response, status
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 from app.adapters.repositories.refresh_token import SQLAlchemyRefreshTokenRepository
 from app.adapters.repositories.user import SQLAlchemyUserRepository
@@ -14,13 +14,12 @@ from app.services.auth import AuthService
 
 
 class UserResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: str
     email: str
     name: Optional[str]
     avatar_url: Optional[str]
-
-    class Config:
-        from_attributes = True
 
 
 oauth = OAuth()
