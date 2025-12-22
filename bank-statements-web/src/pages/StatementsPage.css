@@ -82,6 +82,34 @@
   letter-spacing: 0.5px;
 }
 
+.statements-table th.sortable-header {
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.2s;
+}
+
+.statements-table th.sortable-header:hover {
+  background-color: var(--bg-tertiary);
+}
+
+.statements-table th.sortable-header .header-content {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.statements-table th.sortable-header .sort-indicator {
+  display: flex;
+  align-items: center;
+  color: var(--text-muted);
+  opacity: 0.5;
+}
+
+.statements-table th.sortable-header.active .sort-indicator {
+  opacity: 1;
+  color: var(--button-primary);
+}
+
 .statements-table tbody tr:hover {
   background-color: var(--bg-secondary);
 }

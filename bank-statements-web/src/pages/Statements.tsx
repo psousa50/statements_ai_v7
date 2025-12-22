@@ -1,15 +1,25 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { statementClient, StatementResponse } from '../api/StatementClient'
 import { ConfirmationModal } from '../components/ConfirmationModal'
 import { Toast } from '../components/Toast'
 import { ActionIconButton } from '../components/ActionIconButton'
 import DeleteIcon from '@mui/icons-material/Delete'
+import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward'
+import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward'
+import UnfoldMoreIcon from '@mui/icons-material/UnfoldMore'
 import './StatementsPage.css'
+
+type SortField = 'filename' | 'account' | 'date_range'
+type SortDirection = 'asc' | 'desc'
 
 export const Statements: React.FC = () => {
   const [statements, setStatements] = useState<StatementResponse[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [sortField, setSortField] = useState<SortField>('date_range')
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc')
+  const [secondarySortField, setSecondarySortField] = useState<SortField | null>(null)
+  const [secondarySortDirection, setSecondarySortDirection] = useState<SortDirection>('desc')
   const [deleteModal, setDeleteModal] = useState<{
     isOpen: boolean
     statement: StatementResponse | null
@@ -66,9 +76,72 @@ export const Statements: React.FC = () => {
   }
 
   const formatFileSize = (filename: string) => {
-    // Extract file extension for display
     const ext = filename.split('.').pop()?.toLowerCase()
     return ext ? ext.toUpperCase() : 'FILE'
+  }
+
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')
+    } else {
+      setSecondarySortField(sortField)
+      setSecondarySortDirection(sortDirection)
+      setSortField(field)
+      setSortDirection(field === 'filename' || field === 'account' ? 'asc' : 'desc')
+    }
+  }
+
+  const sortedStatements = useMemo(() => {
+    const getValue = (statement: StatementResponse, field: SortField): string => {
+      switch (field) {
+        case 'filename':
+          return statement.filename.toLowerCase()
+        case 'account':
+          return statement.account_name.toLowerCase()
+        case 'date_range':
+          return statement.date_from || ''
+      }
+    }
+
+    const compare = (aVal: string, bVal: string, direction: SortDirection): number => {
+      if (aVal < bVal) return direction === 'asc' ? -1 : 1
+      if (aVal > bVal) return direction === 'asc' ? 1 : -1
+      return 0
+    }
+
+    return [...statements].sort((a, b) => {
+      const primaryResult = compare(getValue(a, sortField), getValue(b, sortField), sortDirection)
+
+      if (primaryResult !== 0 || !secondarySortField) {
+        return primaryResult
+      }
+
+      return compare(getValue(a, secondarySortField), getValue(b, secondarySortField), secondarySortDirection)
+    })
+  }, [statements, sortField, sortDirection, secondarySortField, secondarySortDirection])
+
+  const SortableHeader = ({
+    field,
+    children,
+  }: {
+    field: SortField
+    children: React.ReactNode
+  }) => {
+    const isActive = sortField === field
+    const direction = isActive ? sortDirection : undefined
+
+    return (
+      <th className={`sortable-header ${isActive ? 'active' : ''}`} onClick={() => handleSort(field)}>
+        <div className="header-content">
+          <span>{children}</span>
+          <span className="sort-indicator">
+            {!isActive && <UnfoldMoreIcon fontSize="small" />}
+            {isActive && direction === 'asc' && <ArrowUpwardIcon fontSize="small" />}
+            {isActive && direction === 'desc' && <ArrowDownwardIcon fontSize="small" />}
+          </span>
+        </div>
+      </th>
+    )
   }
 
   if (loading) {
@@ -111,17 +184,17 @@ export const Statements: React.FC = () => {
           <table className="statements-table">
             <thead>
               <tr>
-                <th>Filename</th>
-                <th>Account</th>
+                <SortableHeader field="filename">Filename</SortableHeader>
+                <SortableHeader field="account">Account</SortableHeader>
                 <th>Type</th>
                 <th>Transactions</th>
-                <th>Date Range</th>
+                <SortableHeader field="date_range">Date Range</SortableHeader>
                 <th>Uploaded</th>
                 <th style={{ textAlign: 'center', width: '80px' }}>Actions</th>
               </tr>
             </thead>
             <tbody>
-              {statements.map((statement) => (
+              {sortedStatements.map((statement) => (
                 <tr key={statement.id}>
                   <td>
                     <div className="filename-cell">
