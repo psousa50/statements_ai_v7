@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: statements-api
+    name: bank-statements-api
     runtime: python
     plan: free
     region: frankfurt
