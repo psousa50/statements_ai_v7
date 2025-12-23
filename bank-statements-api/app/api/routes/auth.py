@@ -1,7 +1,17 @@
 from typing import Optional
 
 from authlib.integrations.starlette_client import OAuth, OAuthError
-from fastapi import APIRouter, Cookie, Depends, FastAPI, HTTPException, Request, Response, status
+from fastapi import (
+    APIRouter,
+    Cookie,
+    Depends,
+    FastAPI,
+    HTTPException,
+    Request,
+    Response,
+    status,
+)
+from fastapi.responses import HTMLResponse
 from pydantic import BaseModel, ConfigDict
 
 from app.adapters.repositories.refresh_token import SQLAlchemyRefreshTokenRepository
@@ -73,6 +83,36 @@ def _clear_auth_cookies(response: Response):
     response.delete_cookie("refresh_token")
 
 
+def _create_redirect_html(redirect_url: str) -> str:
+    """Create an HTML page that redirects client-side.
+
+    This is used instead of a 302 redirect to ensure cookies are properly
+    stored by browsers with strict third-party cookie policies (e.g., Safari ITP).
+    The HTML page is served from the API domain, making it first-party context
+    for cookie storage, then JavaScript redirects to the frontend.
+    """
+    return f"""<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Redirecting...</title>
+    <script>
+        // Small delay to ensure cookies are stored before redirect
+        setTimeout(function() {{
+            window.location.replace("{redirect_url}");
+        }}, 100);
+    </script>
+</head>
+<body>
+    <p>Redirecting...</p>
+    <noscript>
+        <meta http-equiv="refresh" content="0;url={redirect_url}">
+        <a href="{redirect_url}">Click here to continue</a>
+    </noscript>
+</body>
+</html>"""
+
+
 def get_current_user_from_cookie(
     access_token: Optional[str] = Cookie(None),
 ) -> Optional[User]:
@@ -96,7 +136,9 @@ def require_current_user(
 ) -> User:
     user = get_current_user_from_cookie(access_token)
     if not user:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated"
+        )
     return user
 
 
@@ -106,12 +148,17 @@ def register_auth_routes(app: FastAPI):
     @router.get("/google")
     async def google_login(request: Request):
         if not settings.GOOGLE_OAUTH_CLIENT_ID:
-            raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED, detail="Google OAuth not configured")
-        redirect_uri = f"{settings.API_BASE_URL}{settings.API_V1_STR}/auth/google/callback"
+            raise HTTPException(
+                status_code=status.HTTP_501_NOT_IMPLEMENTED,
+                detail="Google OAuth not configured",
+            )
+        redirect_uri = (
+            f"{settings.API_BASE_URL}{settings.API_V1_STR}/auth/google/callback"
+        )
         return await oauth.google.authorize_redirect(request, redirect_uri)
 
-    @router.get("/google/callback")
-    async def google_callback(request: Request, response: Response):
+    @router.get("/google/callback", response_class=HTMLResponse)
+    async def google_callback(request: Request):
         try:
             token = await oauth.google.authorize_access_token(request)
         except OAuthError as e:
@@ -119,7 +166,10 @@ def register_auth_routes(app: FastAPI):
 
         user_info = token.get("userinfo")
         if not user_info:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Failed to get user info")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Failed to get user info",
+            )
 
         db = SessionLocal()
         try:
@@ -136,17 +186,24 @@ def register_auth_routes(app: FastAPI):
             )
 
             tokens = auth_service.create_tokens_for_user(user)
+
+            # Use HTML redirect instead of 302 to ensure cookies are stored
+            # This addresses Safari ITP and other strict third-party cookie policies
+            html_content = _create_redirect_html(settings.WEB_BASE_URL)
+            response = HTMLResponse(content=html_content, status_code=200)
             _set_auth_cookies(response, tokens.access_token, tokens.refresh_token)
-            response.status_code = status.HTTP_302_FOUND
-            response.headers["Location"] = settings.WEB_BASE_URL
             return response
         finally:
             db.close()
 
     @router.post("/refresh")
-    async def refresh_token(response: Response, refresh_token: Optional[str] = Cookie(None)):
+    async def refresh_token(
+        response: Response, refresh_token: Optional[str] = Cookie(None)
+    ):
         if not refresh_token:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="No refresh token")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED, detail="No refresh token"
+            )
 
         db = SessionLocal()
         try:
@@ -157,7 +214,10 @@ def register_auth_routes(app: FastAPI):
             tokens = auth_service.refresh_access_token(refresh_token)
             if not tokens:
                 _clear_auth_cookies(response)
-                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token")
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Invalid refresh token",
+                )
 
             _set_auth_cookies(response, tokens.access_token, tokens.refresh_token)
             return {"message": "Token refreshed"}
