@@ -89,6 +89,8 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Start services with docker-compose
+        env:
+          E2E_TEST_MODE: "true"
         run: |
           docker compose up -d db api
           docker compose up -d web

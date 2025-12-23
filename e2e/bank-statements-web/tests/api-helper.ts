@@ -1,6 +1,5 @@
 import { APIRequestContext, request } from "@playwright/test";
 
-// Define the Transaction interface based on the project's type definition
 interface Transaction {
   id: string;
   description: string;
@@ -12,12 +11,76 @@ interface Transaction {
   updated_at: string;
 }
 
-// Get API URL from environment or use default
 const API_BASE_URL =
   process.env.VITE_API_URL ||
   process.env.API_BASE_URL ||
-  "http://localhost:8000";
+  "http://localhost:8010";
 const API_V1_BASE_URL = `${API_BASE_URL}/api/v1`;
+
+interface CookieData {
+  name: string;
+  value: string;
+  domain: string;
+  path: string;
+}
+
+let authCookies: string = "";
+let parsedCookies: CookieData[] = [];
+let testAccountId: string = "";
+
+export async function testLogin(): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/api/v1/auth/test-login`, {
+    method: "POST",
+    credentials: "include",
+  });
+
+  if (!response.ok) {
+    throw new Error(`Test login failed: ${response.status}`);
+  }
+
+  const data = await response.json();
+  testAccountId = data.account_id;
+
+  const setCookieHeader = response.headers.get("set-cookie");
+  if (setCookieHeader) {
+    const cookieParts = setCookieHeader.split(",").map((c) => c.trim());
+    const cookies: CookieData[] = [];
+
+    for (const part of cookieParts) {
+      const [nameValue] = part.split(";");
+      const [name, value] = nameValue.split("=");
+      if (name && value) {
+        cookies.push({
+          name: name.trim(),
+          value: value.trim(),
+          domain: "localhost",
+          path: "/",
+        });
+      }
+    }
+
+    parsedCookies = cookies;
+    authCookies = cookies.map((c) => `${c.name}=${c.value}`).join("; ");
+  }
+}
+
+export function getAuthCookies(): CookieData[] {
+  return parsedCookies;
+}
+
+export function getTestAccountId(): string {
+  return testAccountId;
+}
+
+function getAuthHeaders(): HeadersInit {
+  const headers: HeadersInit = {
+    "Content-Type": "application/json",
+  };
+  if (authCookies) {
+    headers["Cookie"] = authCookies;
+  }
+  return headers;
+}
 
 export async function createApiContext(): Promise<APIRequestContext> {
   return await request.newContext({
@@ -30,16 +93,18 @@ export async function createApiContext(): Promise<APIRequestContext> {
  * @param transaction The transaction data (without id and created_at)
  * @returns The created transaction
  */
-export async function createTransactionLegacy(
-  transaction: Omit<Transaction, "id" | "created_at">
+export async function createTransaction(
+  transaction: Omit<Transaction, "id" | "created_at" | "source_id" | "updated_at">
 ): Promise<Transaction> {
   try {
+    const payload = {
+      ...transaction,
+      account_id: testAccountId,
+    };
     const response = await fetch(`${API_BASE_URL}/api/v1/transactions`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(transaction),
+      headers: getAuthHeaders(),
+      body: JSON.stringify(payload),
     });
 
     if (!response.ok) {
@@ -66,7 +131,7 @@ export async function createTransactions(
 
     for (const transaction of transactions) {
       try {
-        const createdTransaction = await createTransactionLegacy(transaction);
+        const createdTransaction = await createTransaction(transaction);
         createdTransactions.push(createdTransaction);
       } catch (error) {
         console.error(
@@ -89,7 +154,9 @@ export async function createTransactions(
  */
 export async function deleteAllTransactions(): Promise<void> {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/v1/transactions`);
+    const response = await fetch(`${API_BASE_URL}/api/v1/transactions`, {
+      headers: getAuthHeaders(),
+    });
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
@@ -102,6 +169,7 @@ export async function deleteAllTransactions(): Promise<void> {
       async (transaction) =>
         await fetch(`${API_BASE_URL}/api/v1/transactions/${transaction.id}`, {
           method: "DELETE",
+          headers: getAuthHeaders(),
         })
     );
 

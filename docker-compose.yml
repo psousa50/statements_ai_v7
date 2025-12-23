@@ -46,6 +46,7 @@ services:
       - API_PORT=${API_PORT:-8000}
       - WEB_PORT=${WEB_PORT:-5173}
       - DB_PORT=${DB_PORT:-54321}
+      - E2E_TEST_MODE=${E2E_TEST_MODE:-false}
     ports:
       - '${API_PORT:-8000}:8000'
     depends_on:

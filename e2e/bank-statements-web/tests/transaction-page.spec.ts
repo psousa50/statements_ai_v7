@@ -1,11 +1,9 @@
 import { test, expect } from '@playwright/test';
-import { createTransactions, deleteAllTransactions } from './api-helper';
+import { createTransactions, deleteAllTransactions, getAuthCookies, testLogin } from './api-helper';
 
 test.describe('Transaction Page', () => {
-  // Generate a unique test ID to avoid conflicts with existing data
   const testId = `test-${Date.now()}`;
 
-  // Sample transactions to create via API with unique identifiers
   const testTransactions = [
     {
       date: '2025-01-01',
@@ -24,7 +22,10 @@ test.describe('Transaction Page', () => {
     },
   ];
 
-  // Clean up before each test
+  test.beforeAll(async () => {
+    await testLogin();
+  });
+
   test.beforeEach(async () => {
     await deleteAllTransactions();
   });
@@ -32,6 +33,7 @@ test.describe('Transaction Page', () => {
   test('should display transactions', async ({ page }) => {
     const createdTransactions = await createTransactions(testTransactions);
 
+    await page.context().addCookies(getAuthCookies());
     await page.goto('/');
 
     await page.waitForSelector('table');

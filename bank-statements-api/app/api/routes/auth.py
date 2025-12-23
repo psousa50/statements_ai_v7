@@ -188,4 +188,52 @@ def register_auth_routes(app: FastAPI):
             avatar_url=user.avatar_url,
         )
 
+    @router.post("/test-login")
+    async def test_login(response: Response):
+        if not settings.E2E_TEST_MODE:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Test login is only available in E2E test mode",
+            )
+
+        from app.adapters.repositories.account import SQLAlchemyAccountRepository
+        from app.domain.models.account import Account
+
+        db = SessionLocal()
+        try:
+            user_repo = SQLAlchemyUserRepository(db)
+            refresh_token_repo = SQLAlchemyRefreshTokenRepository(db)
+            auth_service = AuthService(user_repo, refresh_token_repo)
+
+            user = auth_service.get_or_create_user_from_oauth(
+                oauth_provider="test",
+                oauth_id="e2e-test-user",
+                email="e2e-test@example.com",
+                name="E2E Test User",
+                avatar_url=None,
+            )
+
+            account_repo = SQLAlchemyAccountRepository(db)
+            accounts = account_repo.get_all(user.id)
+            if not accounts:
+                test_account = Account(
+                    name="E2E Test Account",
+                    user_id=user.id,
+                )
+                account_repo.create(test_account)
+                db.commit()
+                account_id = str(test_account.id)
+            else:
+                account_id = str(accounts[0].id)
+
+            tokens = auth_service.create_tokens_for_user(user)
+            _set_auth_cookies(response, tokens.access_token, tokens.refresh_token)
+            return {
+                "message": "Test login successful",
+                "user_id": str(user.id),
+                "account_id": account_id,
+            }
+        finally:
+            db.close()
+
     app.include_router(router, prefix=settings.API_V1_STR)

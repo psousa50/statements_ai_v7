@@ -45,6 +45,9 @@ class Settings(BaseSettings):
     GOOGLE_OAUTH_CLIENT_ID: str = os.getenv("GOOGLE_OAUTH_CLIENT_ID", "")
     GOOGLE_OAUTH_CLIENT_SECRET: str = os.getenv("GOOGLE_OAUTH_CLIENT_SECRET", "")
 
+    # E2E Testing
+    E2E_TEST_MODE: bool = os.getenv("E2E_TEST_MODE", "").lower() == "true"
+
     model_config = {
         "env_file": ".env",
         "env_file_encoding": "utf-8",
