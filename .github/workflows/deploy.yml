@@ -175,10 +175,13 @@ jobs:
         working-directory: bank-statements-web
         run: pnpm install --frozen-lockfile
 
+      - name: Generate Cloudflare proxy config
+        run: uvx --from pyyaml python scripts/generate-cloudflare-proxy.py
+
       - name: Build frontend
         working-directory: bank-statements-web
         env:
-          VITE_API_URL: ${{ secrets.VITE_API_URL }}
+          VITE_API_URL: ""
         run: pnpm run build
 
       - name: Deploy to Cloudflare Pages
@@ -186,4 +189,5 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy bank-statements-web/dist --project-name=bank-statements-web
+          workingDirectory: bank-statements-web
+          command: pages deploy dist --project-name=bank-statements-web
