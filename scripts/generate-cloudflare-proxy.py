@@ -1,11 +1,9 @@
 #!/usr/bin/env python3
+import os
 import sys
 from pathlib import Path
 
-import yaml
-
 PROJECT_ROOT = Path(__file__).parent.parent
-CONFIG_FILE = PROJECT_ROOT / "config" / "settings.prod.yaml"
 OUTPUT_FILE = PROJECT_ROOT / "bank-statements-web" / "functions" / "api" / "[[path]].ts"
 
 TEMPLATE = '''interface Env {
@@ -50,16 +48,9 @@ export const onRequest: PagesFunction<Env> = async (context) => {
 
 
 def main():
-    if not CONFIG_FILE.exists():
-        print(f"Error: {CONFIG_FILE} not found")
-        sys.exit(1)
-
-    with open(CONFIG_FILE) as f:
-        config = yaml.safe_load(f)
-
-    api_host = config.get("urls", {}).get("api", "")
+    api_host = os.environ.get("API_HOST")
     if not api_host:
-        print("Error: urls.api not set in settings.prod.yaml")
+        print("Error: API_HOST env var not set")
         sys.exit(1)
 
     content = TEMPLATE.replace("%API_HOST%", api_host)
