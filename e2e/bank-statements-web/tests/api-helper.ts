@@ -15,7 +15,6 @@ const API_BASE_URL =
   process.env.VITE_API_URL ||
   process.env.API_BASE_URL ||
   "http://localhost:8010";
-const API_V1_BASE_URL = `${API_BASE_URL}/api/v1`;
 
 interface CookieData {
   name: string;
@@ -124,7 +123,7 @@ export async function createTransaction(
  * @returns Array of created transactions
  */
 export async function createTransactions(
-  transactions: Omit<Transaction, "id" | "created_at">[]
+  transactions: Omit<Transaction, "id" | "created_at" | "source_id" | "updated_at">[]
 ): Promise<Transaction[]> {
   try {
     const createdTransactions: Transaction[] = [];

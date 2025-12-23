@@ -48,12 +48,6 @@ test.describe('Transaction Page', () => {
         currency: 'USD',
       }).format(transaction.amount);
 
-      const date = new Date(transaction.date);
-      const month = date.toLocaleString('en-US', { month: 'short' });
-      const day = date.getDate().toString().padStart(2, '0');
-      const year = date.getFullYear();
-      const formattedDate = `${month} ${day}, ${year}`;
-
       const matchingRow = rows.filter({
         has: page.locator('td', { hasText: transaction.description }),
         hasText: formattedAmount,
