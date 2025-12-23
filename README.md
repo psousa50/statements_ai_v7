@@ -89,32 +89,19 @@ The frontend follows a modular architecture:
 
 ### Configuration
 
-The project uses a centralized configuration system. All ports, URLs, and settings are managed from a single YAML file.
-
 1. Copy the example configuration:
-
 ```bash
-   cp config/settings.yaml.example config/settings.yaml
+cp config/settings.local.yaml.example config/settings.local.yaml
 ```
 
-2. Edit `config/settings.yaml` to customise your configuration:
+2. Edit `config/settings.local.yaml` to add your credentials (OAuth, API keys, etc.)
 
-```yaml
-   ports:
-     api: 8010    # Backend API port
-     web: 5173    # Frontend dev server port
-     database: 54321  # PostgreSQL port
-```
-
-3. Generate environment files:
-
+3. Generate the `.env` files:
 ```bash
-   python scripts/generate_env_files.py
+pnpm config:generate
 ```
 
-   This creates `.env` files for the root, backend, and frontend with the correct settings.
-
-4. Restart your services to apply the changes.
+This creates `.env` files for root, backend, and frontend from the single YAML config.
 
 ### Running the Application
 

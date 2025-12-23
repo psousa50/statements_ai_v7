@@ -1,23 +1,21 @@
-# Production configuration - DO NOT COMMIT
-# Copy to settings.prod.yaml and fill in your values
+urls:
+  api: "https://your-api.onrender.com"
+  web: "https://your-web.pages.dev"
 
-# Render service
-render:
-  api_key: ""
-  service_id: ""
+database:
+  url: "postgresql+psycopg://user:password@host/database"
 
-# GitHub Actions secrets
-github:
-  cloudflare_account_id: ""
-  cloudflare_api_token: ""
-  render_deploy_hook_url: ""
-  vite_api_url: ""
-
-# Render environment variables
-render_env:
-  database_url: ""
+secrets:
   gemini_api_key: ""
   jwt_secret_key: ""
   google_oauth_client_id: ""
   google_oauth_client_secret: ""
-  web_base_url: ""
+
+deployment:
+  render:
+    api_key: ""
+    service_id: ""
+  github:
+    cloudflare_account_id: ""
+    cloudflare_api_token: ""
+    render_deploy_hook_url: ""

@@ -9,10 +9,10 @@ PROJECT_ROOT = Path(__file__).parent.parent
 CONFIG_FILE = PROJECT_ROOT / "config" / "settings.prod.yaml"
 
 GITHUB_SECRETS = [
-    ("CLOUDFLARE_ACCOUNT_ID", ["github", "cloudflare_account_id"]),
-    ("CLOUDFLARE_API_TOKEN", ["github", "cloudflare_api_token"]),
-    ("RENDER_DEPLOY_HOOK_URL", ["github", "render_deploy_hook_url"]),
-    ("VITE_API_URL", ["github", "vite_api_url"]),
+    ("CLOUDFLARE_ACCOUNT_ID", ["deployment", "github", "cloudflare_account_id"]),
+    ("CLOUDFLARE_API_TOKEN", ["deployment", "github", "cloudflare_api_token"]),
+    ("RENDER_DEPLOY_HOOK_URL", ["deployment", "github", "render_deploy_hook_url"]),
+    ("VITE_API_URL", ["urls", "api"]),
 ]
 
 
@@ -58,10 +58,10 @@ def set_secret(name, value):
     )
 
     if result.returncode == 0:
-        print(f"  ✓ {name}")
+        print(f"  {name}")
         return True
     else:
-        print(f"  ✗ {name}: {result.stderr.decode()}")
+        print(f"  {name}: {result.stderr.decode()}")
         return False
 
 
@@ -73,15 +73,15 @@ def set_variable(name, value):
     )
 
     if result.returncode == 0:
-        print(f"  ✓ {name}")
+        print(f"  {name}")
         return True
     else:
-        print(f"  ✗ {name}: {result.stderr.decode()}")
+        print(f"  {name}: {result.stderr.decode()}")
         return False
 
 
 def main():
-    print("=== GitHub Secrets Setup ===\n")
+    print("GitHub Secrets Setup\n")
 
     check_gh_cli()
     config = load_config()

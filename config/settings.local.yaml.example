@@ -1,0 +1,18 @@
+urls:
+  api: "http://localhost:8000"
+  web: "http://localhost:5173"
+
+database:
+  url: "postgresql+psycopg://postgres:postgres@localhost:54321/bank_statements"
+
+secrets:
+  gemini_api_key: ""
+  jwt_secret_key: "local-dev-secret"
+  google_oauth_client_id: ""
+  google_oauth_client_secret: ""
+
+local:
+  ports:
+    api: 8000
+    web: 5173
+    database: 54321
