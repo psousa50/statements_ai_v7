@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: statements-api
+    runtime: python
+    plan: free
+    region: frankfurt
+    buildCommand: pnpm deploy:api:build
+    startCommand: pnpm deploy:api:start
+    autoDeploy: false
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: JWT_SECRET_KEY
+        sync: false
+      - key: GOOGLE_OAUTH_CLIENT_ID
+        sync: false
+      - key: GOOGLE_OAUTH_CLIENT_SECRET
+        sync: false
+      - key: WEB_BASE_URL
+        sync: false
