@@ -13,6 +13,7 @@ import { AuthCallback } from './pages/AuthCallback'
 import { AppLayout } from './components/layout/AppLayout'
 import { ProtectedRoute } from './auth/ProtectedRoute'
 import { RouterSafeApiProvider } from './api/RouterSafeApiProvider'
+import { StorageAccessGate } from './components/StorageAccessGate'
 import './App.css'
 
 const router = createBrowserRouter(
@@ -54,12 +55,13 @@ const router = createBrowserRouter(
   }
 )
 
-// Wrap the entire app with RouterSafeApiProvider
 function App() {
   return (
-    <RouterSafeApiProvider>
-      <RouterProvider router={router} />
-    </RouterSafeApiProvider>
+    <StorageAccessGate>
+      <RouterSafeApiProvider>
+        <RouterProvider router={router} />
+      </RouterSafeApiProvider>
+    </StorageAccessGate>
   )
 }
 
