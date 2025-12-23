@@ -18,7 +18,6 @@ class Settings(BaseSettings):
 
     # CORS settings
     BACKEND_CORS_ORIGINS: list = [
-        "*",
         os.getenv("WEB_BASE_URL", "http://localhost:5173"),
     ]
 
