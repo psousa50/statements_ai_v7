@@ -5,4 +5,4 @@ node_modules
 *.log
 .DS_Store
 config/settings.yaml
-.env
+config/settings.prod.yaml

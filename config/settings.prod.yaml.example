@@ -1,0 +1,23 @@
+# Production configuration - DO NOT COMMIT
+# Copy to settings.prod.yaml and fill in your values
+
+# Render service
+render:
+  api_key: ""
+  service_id: ""
+
+# GitHub Actions secrets
+github:
+  cloudflare_account_id: ""
+  cloudflare_api_token: ""
+  render_deploy_hook_url: ""
+  vite_api_url: ""
+
+# Render environment variables
+render_env:
+  database_url: ""
+  gemini_api_key: ""
+  jwt_secret_key: ""
+  google_oauth_client_id: ""
+  google_oauth_client_secret: ""
+  web_base_url: ""

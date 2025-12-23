@@ -20,7 +20,6 @@ class Settings(BaseSettings):
     BACKEND_CORS_ORIGINS: list = [
         "*",
         os.getenv("WEB_BASE_URL", "http://localhost:5173"),
-        "https://bank-statements-web-test.fly.dev",
     ]
 
     # Port configurations
