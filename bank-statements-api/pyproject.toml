@@ -51,8 +51,8 @@ target-version = ["py38"]
 profile = "black"
 line_length = 128
 
-[tool.uv]
-dev-dependencies = [
+[dependency-groups]
+dev = [
     "pytest>=7.3.1",
     "black>=23.3.0",
     "isort>=5.12.0",

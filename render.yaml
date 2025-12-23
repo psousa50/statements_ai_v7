@@ -9,6 +9,8 @@ services:
     startCommand: uv run alembic upgrade head && uv run uvicorn app.main:app --host 0.0.0.0 --port $PORT
     autoDeploy: false
     envVars:
+      - key: UV_PROJECT_ENVIRONMENT
+        value: /opt/render/project/src/.venv
       - key: DATABASE_URL
         sync: false
       - key: GEMINI_API_KEY
