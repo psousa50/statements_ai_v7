@@ -107,7 +107,7 @@ def register_auth_routes(app: FastAPI):
     async def google_login(request: Request):
         if not settings.GOOGLE_OAUTH_CLIENT_ID:
             raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED, detail="Google OAuth not configured")
-        redirect_uri = f"{settings.WEB_BASE_URL}{settings.API_V1_STR}/auth/google/callback"
+        redirect_uri = f"{settings.API_BASE_URL}{settings.API_V1_STR}/auth/google/callback"
         return await oauth.google.authorize_redirect(request, redirect_uri)
 
     @router.get("/google/callback")

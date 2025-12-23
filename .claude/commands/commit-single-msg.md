@@ -1,1 +1,1 @@
-Based on this chat and the git diffs, generate a single line commit message.
+generate a single line commit message
