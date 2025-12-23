@@ -2,17 +2,13 @@ import os
 from uuid import uuid4
 
 import pytest
-from sqlalchemy import create_engine, text
+from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from app.core.database import Base
 from app.domain.models.account import Account
 from app.domain.models.category import Category
-from app.domain.models.description_group import DescriptionGroup
-from app.domain.models.enhancement_rule import EnhancementRule
 from app.domain.models.refresh_token import RefreshToken  # noqa: F401
-from app.domain.models.statement import Statement
-from app.domain.models.transaction import Transaction
 from app.domain.models.uploaded_file import FileAnalysisMetadata, UploadedFile  # noqa: F401
 from app.domain.models.user import User
 

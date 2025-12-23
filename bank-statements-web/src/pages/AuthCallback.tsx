@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Box, CircularProgress, Typography, Alert } from '@mui/material'
 import { useAuth } from '../auth/AuthContext'
+import { authClient } from '../api/AuthClient'
 
 export const AuthCallback: React.FC = () => {
   const navigate = useNavigate()
@@ -15,6 +16,17 @@ export const AuthCallback: React.FC = () => {
       if (errorParam) {
         setError(errorParam)
         return
+      }
+
+      const code = searchParams.get('code')
+      if (code) {
+        try {
+          // Exchange the auth code for session cookies
+          await authClient.exchangeAuthCode(code)
+        } catch (err) {
+          setError('Failed to complete authentication. Please try again.')
+          return
+        }
       }
 
       try {

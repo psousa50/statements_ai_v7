@@ -1,3 +1,5 @@
+import secrets
+import time
 from typing import Optional
 
 from authlib.integrations.starlette_client import OAuth, OAuthError
@@ -11,7 +13,7 @@ from fastapi import (
     Response,
     status,
 )
-from fastapi.responses import HTMLResponse
+from fastapi.responses import RedirectResponse
 from pydantic import BaseModel, ConfigDict
 
 from app.adapters.repositories.refresh_token import SQLAlchemyRefreshTokenRepository
@@ -21,6 +23,14 @@ from app.core.config import settings
 from app.core.database import SessionLocal
 from app.domain.models.user import User
 from app.services.auth import AuthService
+
+
+# In-memory store for auth codes (short-lived, one-time use)
+# In production, use Redis or similar for multi-instance deployments
+_auth_codes: dict[
+    str, tuple[str, str, float]
+] = {}  # code -> (access_token, refresh_token, expires_at)
+AUTH_CODE_EXPIRY_SECONDS = 60  # 1 minute
 
 
 class UserResponse(BaseModel):
@@ -83,34 +93,41 @@ def _clear_auth_cookies(response: Response):
     response.delete_cookie("refresh_token")
 
 
-def _create_redirect_html(redirect_url: str) -> str:
-    """Create an HTML page that redirects client-side.
+def _create_auth_code(access_token: str, refresh_token: str) -> str:
+    """Create a short-lived, one-time auth code for token exchange.
 
-    This is used instead of a 302 redirect to ensure cookies are properly
-    stored by browsers with strict third-party cookie policies (e.g., Safari ITP).
-    The HTML page is served from the API domain, making it first-party context
-    for cookie storage, then JavaScript redirects to the frontend.
+    This is used to work around Safari ITP and other strict third-party cookie
+    policies. Instead of setting cookies directly in the OAuth callback (which
+    may be blocked), we redirect to the frontend with a code that can be
+    exchanged for cookies via a same-origin request.
     """
-    return f"""<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8">
-    <title>Redirecting...</title>
-    <script>
-        // Small delay to ensure cookies are stored before redirect
-        setTimeout(function() {{
-            window.location.replace("{redirect_url}");
-        }}, 100);
-    </script>
-</head>
-<body>
-    <p>Redirecting...</p>
-    <noscript>
-        <meta http-equiv="refresh" content="0;url={redirect_url}">
-        <a href="{redirect_url}">Click here to continue</a>
-    </noscript>
-</body>
-</html>"""
+    # Clean up expired codes
+    current_time = time.time()
+    expired_codes = [
+        code
+        for code, (_, _, expires_at) in _auth_codes.items()
+        if expires_at < current_time
+    ]
+    for code in expired_codes:
+        del _auth_codes[code]
+
+    # Generate new code
+    code = secrets.token_urlsafe(32)
+    expires_at = current_time + AUTH_CODE_EXPIRY_SECONDS
+    _auth_codes[code] = (access_token, refresh_token, expires_at)
+    return code
+
+
+def _exchange_auth_code(code: str) -> tuple[str, str] | None:
+    """Exchange an auth code for tokens. Code is single-use."""
+    if code not in _auth_codes:
+        return None
+
+    access_token, refresh_token, expires_at = _auth_codes.pop(code)
+    if time.time() > expires_at:
+        return None
+
+    return access_token, refresh_token
 
 
 def get_current_user_from_cookie(
@@ -157,19 +174,20 @@ def register_auth_routes(app: FastAPI):
         )
         return await oauth.google.authorize_redirect(request, redirect_uri)
 
-    @router.get("/google/callback", response_class=HTMLResponse)
+    @router.get("/google/callback")
     async def google_callback(request: Request):
         try:
             token = await oauth.google.authorize_access_token(request)
         except OAuthError as e:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+            redirect_url = f"{settings.WEB_BASE_URL}/auth/callback?error={str(e)}"
+            return RedirectResponse(url=redirect_url, status_code=302)
 
         user_info = token.get("userinfo")
         if not user_info:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Failed to get user info",
+            redirect_url = (
+                f"{settings.WEB_BASE_URL}/auth/callback?error=Failed to get user info"
             )
+            return RedirectResponse(url=redirect_url, status_code=302)
 
         db = SessionLocal()
         try:
@@ -187,12 +205,11 @@ def register_auth_routes(app: FastAPI):
 
             tokens = auth_service.create_tokens_for_user(user)
 
-            # Use HTML redirect instead of 302 to ensure cookies are stored
-            # This addresses Safari ITP and other strict third-party cookie policies
-            html_content = _create_redirect_html(settings.WEB_BASE_URL)
-            response = HTMLResponse(content=html_content, status_code=200)
-            _set_auth_cookies(response, tokens.access_token, tokens.refresh_token)
-            return response
+            # Create a short-lived auth code instead of setting cookies directly
+            # This works around Safari ITP which blocks cross-origin cookies
+            auth_code = _create_auth_code(tokens.access_token, tokens.refresh_token)
+            redirect_url = f"{settings.WEB_BASE_URL}/auth/callback?code={auth_code}"
+            return RedirectResponse(url=redirect_url, status_code=302)
         finally:
             db.close()
 
@@ -247,6 +264,24 @@ def register_auth_routes(app: FastAPI):
             name=user.name,
             avatar_url=user.avatar_url,
         )
+
+    @router.post("/exchange")
+    async def exchange_auth_code(response: Response, code: str):
+        """Exchange a one-time auth code for session cookies.
+
+        This endpoint is called by the frontend after OAuth callback to set
+        cookies in a same-origin context, working around Safari ITP restrictions.
+        """
+        tokens = _exchange_auth_code(code)
+        if not tokens:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid or expired auth code",
+            )
+
+        access_token, refresh_token = tokens
+        _set_auth_cookies(response, access_token, refresh_token)
+        return {"message": "Authentication successful"}
 
     @router.post("/test-login")
     async def test_login(response: Response):

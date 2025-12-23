@@ -10,6 +10,7 @@ export interface AuthClient {
   getCurrentUser(): Promise<User>
   refreshToken(): Promise<void>
   logout(): Promise<void>
+  exchangeAuthCode(code: string): Promise<void>
   getGoogleAuthUrl(): string
   getGithubAuthUrl(): string
 }
@@ -26,6 +27,10 @@ export const authClient: AuthClient = {
 
   async logout() {
     await axios.post(`${AUTH_URL}/logout`)
+  },
+
+  async exchangeAuthCode(code: string) {
+    await axios.post(`${AUTH_URL}/exchange`, null, { params: { code } })
   },
 
   getGoogleAuthUrl() {

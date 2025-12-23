@@ -2,7 +2,6 @@ from datetime import date
 from decimal import Decimal
 from uuid import uuid4
 
-import pytest
 
 from app.adapters.repositories.account import SQLAlchemyAccountRepository
 from app.adapters.repositories.category import SQLAlchemyCategoryRepository
@@ -10,8 +9,6 @@ from app.adapters.repositories.description_group import SQLAlchemyDescriptionGro
 from app.adapters.repositories.enhancement_rule import SQLAlchemyEnhancementRuleRepository
 from app.adapters.repositories.statement import SqlAlchemyStatementRepository
 from app.adapters.repositories.transaction import SQLAlchemyTransactionRepository
-from app.domain.models.account import Account
-from app.domain.models.category import Category
 from app.domain.models.description_group import DescriptionGroup
 from app.domain.models.enhancement_rule import EnhancementRule
 from app.domain.models.statement import Statement
