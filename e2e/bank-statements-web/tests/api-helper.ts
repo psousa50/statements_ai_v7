@@ -28,19 +28,26 @@ let parsedCookies: CookieData[] = [];
 let testAccountId: string = "";
 
 export async function testLogin(): Promise<void> {
-  const response = await fetch(`${API_BASE_URL}/api/v1/auth/test-login`, {
+  const url = `${API_BASE_URL}/api/v1/auth/test-login`;
+  console.log(`Test login URL: ${url}`);
+
+  const response = await fetch(url, {
     method: "POST",
     credentials: "include",
   });
 
   if (!response.ok) {
-    throw new Error(`Test login failed: ${response.status}`);
+    const body = await response.text();
+    throw new Error(`Test login failed: ${response.status}, body: ${body}`);
   }
 
   const data = await response.json();
   testAccountId = data.account_id;
+  console.log(`Test login successful, account_id: ${testAccountId}`);
 
   const setCookieHeader = response.headers.get("set-cookie");
+  console.log(`Set-Cookie header: ${setCookieHeader}`);
+
   if (setCookieHeader) {
     const cookieParts = setCookieHeader.split(",").map((c) => c.trim());
     const cookies: CookieData[] = [];
@@ -60,6 +67,9 @@ export async function testLogin(): Promise<void> {
 
     parsedCookies = cookies;
     authCookies = cookies.map((c) => `${c.name}=${c.value}`).join("; ");
+    console.log(`Parsed ${cookies.length} cookies: ${cookies.map(c => c.name).join(", ")}`);
+  } else {
+    console.log("No Set-Cookie header received!");
   }
 }
 
@@ -153,12 +163,16 @@ export async function createTransactions(
  */
 export async function deleteAllTransactions(): Promise<void> {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/v1/transactions`, {
-      headers: getAuthHeaders(),
-    });
+    const url = `${API_BASE_URL}/api/v1/transactions`;
+    const headers = getAuthHeaders();
+    console.log(`Fetching transactions from: ${url}`);
+    console.log(`Auth headers: ${JSON.stringify(headers)}`);
+
+    const response = await fetch(url, { headers });
 
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      const body = await response.text();
+      throw new Error(`HTTP error! status: ${response.status}, body: ${body}`);
     }
 
     const data = await response.json();
