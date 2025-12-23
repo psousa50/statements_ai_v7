@@ -13,8 +13,9 @@ from app.adapters.repositories.initial_balance import SQLAlchemyInitialBalanceRe
 from app.adapters.repositories.statement import SqlAlchemyStatementRepository
 from app.adapters.repositories.transaction import SQLAlchemyTransactionRepository
 from app.adapters.repositories.uploaded_file import SQLAlchemyFileAnalysisMetadataRepository, SQLAlchemyUploadedFileRepository
-from app.ai.gemini_ai import GeminiAI
 from app.ai.llm_client import LLMClient
+from app.ai.noop_llm import NoopLLMClient
+from app.core.config import settings
 from app.core.database import SessionLocal
 from app.services.account import AccountService
 from app.services.background.background_job_service import BackgroundJobService
@@ -38,6 +39,14 @@ from app.services.transaction_rule_enhancement import TransactionRuleEnhancement
 logger = logging.getLogger(__name__)
 
 
+def _create_llm_client() -> LLMClient:
+    if settings.E2E_TEST_MODE or not settings.GEMINI_API_KEY:
+        return NoopLLMClient()
+    from app.ai.gemini_ai import GeminiAI
+
+    return GeminiAI()
+
+
 class ExternalDependencies:
     def __init__(
         self,
@@ -45,7 +54,7 @@ class ExternalDependencies:
         llm_client: Optional[LLMClient] = None,
     ):
         self.db: Session = db if db is not None else SessionLocal()
-        self.llm_client: LLMClient = llm_client if llm_client is not None else GeminiAI()
+        self.llm_client: LLMClient = llm_client if llm_client is not None else _create_llm_client()
 
     def cleanup(self):
         try:
