@@ -1,26 +1,36 @@
 # Development Commands
 
-API: port ${API_PORT:-8010} | UI: port 5173
+Run all commands from the root directory using pnpm.
 
-## Backend (bank-statements-api/)
+## Quick Start
 ```bash
-uv run python run.py          # Dev server
-uv run pytest                 # Tests
-uv run alembic upgrade head   # Migrations
-uv run isort . && uv run black . && uv run ruff check .  # Lint/format
+pnpm start              # Start db + dev servers (API :8000, Web :5173)
+pnpm dev                # Dev servers only (assumes db running)
 ```
 
-## Frontend (bank-statements-web/)
+## Testing
 ```bash
-pnpm run dev                 # Dev server
-pnpm run build               # Build
-pnpm run test                # Tests
-pnpm run lint                # Lint
+pnpm test               # Run all tests (unit + integration + web)
+pnpm test:api           # Backend tests only
+pnpm test:web           # Frontend tests only
+pnpm test:e2e           # E2E tests (Playwright)
 ```
 
-## Test Database
+## Database
 ```bash
-DATABASE_URL=postgresql+psycopg://postgres:postgres@localhost:15432/bank_statements_test uv run alembic upgrade head
+pnpm db:start           # Start db container + run migrations
+pnpm db:migrate         # Run migrations only
+pnpm test:db:up         # Start test db (port 15432)
+pnpm test:db:migrate    # Migrate test db
+```
+
+## Linting & Formatting
+```bash
+pnpm format             # Format all code
+pnpm lint               # Lint all code
+pnpm lint:fix           # Lint and fix
+pnpm check              # Type check (web) + lint (api)
+pnpm verify             # Format + lint + test (both)
 ```
 
 ## Notes
