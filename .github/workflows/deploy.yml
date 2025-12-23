@@ -112,6 +112,15 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: "pnpm"
+          cache-dependency-path: e2e/bank-statements-web/pnpm-lock.yaml
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        id: playwright-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('e2e/bank-statements-web/pnpm-lock.yaml') }}
 
       - name: Install Playwright
         working-directory: e2e/bank-statements-web
