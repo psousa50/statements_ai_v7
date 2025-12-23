@@ -1,0 +1,1 @@
+generate a single line commit message
