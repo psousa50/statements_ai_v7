@@ -1,6 +1,6 @@
 # Development Commands
 
-API: port 8010 | UI: port 5173
+API: port ${API_PORT:-8010} | UI: port 5173
 
 ## Backend (bank-statements-api/)
 ```bash
@@ -12,7 +12,7 @@ uv run isort . && uv run black . && uv run ruff check .  # Lint/format
 
 ## Frontend (bank-statements-web/)
 ```bash
-pnpm run dev                  # Dev server
+pnpm run dev                 # Dev server
 pnpm run build               # Build
 pnpm run test                # Tests
 pnpm run lint                # Lint

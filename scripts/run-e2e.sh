@@ -3,6 +3,7 @@ set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(dirname "$SCRIPT_DIR")"
+API_PORT=${API_PORT:-8010}
 
 cleanup() {
     echo "Cleaning up..."
@@ -21,12 +22,12 @@ sleep 2
 pnpm run test:db:migrate
 
 cd "$ROOT_DIR/bank-statements-api"
-E2E_TEST_MODE=true DATABASE_URL=postgresql+psycopg://postgres:postgres@localhost:15432/bank_statements_test uv run python run.py &
+E2E_TEST_MODE=true API_PORT=$API_PORT DATABASE_URL=postgresql+psycopg://postgres:postgres@localhost:15432/bank_statements_test uv run python run.py &
 sleep 3
 
 cd "$ROOT_DIR/e2e/bank-statements-web"
 if [[ "$1" == "--ui" ]]; then
-    API_BASE_URL=http://localhost:8010 VITE_API_URL=http://localhost:8010 pnpm run test:ui --project=chromium
+    API_BASE_URL=http://localhost:$API_PORT VITE_API_URL=http://localhost:$API_PORT pnpm run test:ui --project=chromium
 else
-    API_BASE_URL=http://localhost:8010 VITE_API_URL=http://localhost:8010 pnpm run test --project=chromium "$@"
+    API_BASE_URL=http://localhost:$API_PORT VITE_API_URL=http://localhost:$API_PORT pnpm run test --project=chromium "$@"
 fi

@@ -1,18 +1,19 @@
 #!/bin/bash
 
-# Function to cleanup background processes on exit
+API_PORT=${API_PORT:-8010}
+WEB_PORT=${WEB_PORT:-5173}
+
 cleanup() {
     echo "Stopping services..."
     kill $backend_pid $frontend_pid 2>/dev/null
     exit 0
 }
 
-# Set up trap to catch Ctrl+C
 trap cleanup SIGINT
 
 echo "Starting backend server..."
 cd bank-statements-api
-poetry run python run.py &
+uv run python run.py &
 backend_pid=$!
 
 echo "Starting frontend server..."
@@ -21,8 +22,7 @@ pnpm run dev &
 frontend_pid=$!
 
 echo "Both services started. Press Ctrl+C to stop."
-echo "Backend running on port 8010"
-echo "Frontend running on port 6173"
+echo "Backend running on port $API_PORT"
+echo "Frontend running on port $WEB_PORT"
 
-# Wait for both processes
 wait $backend_pid $frontend_pid
