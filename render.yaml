@@ -23,3 +23,5 @@ services:
         sync: false
       - key: WEB_BASE_URL
         sync: false
+      - key: API_BASE_URL
+        sync: false

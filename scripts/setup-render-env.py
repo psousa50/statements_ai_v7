@@ -16,6 +16,7 @@ RENDER_ENV_VARS = [
     ("GOOGLE_OAUTH_CLIENT_ID", ["render_env", "google_oauth_client_id"]),
     ("GOOGLE_OAUTH_CLIENT_SECRET", ["render_env", "google_oauth_client_secret"]),
     ("WEB_BASE_URL", ["render_env", "web_base_url"]),
+    ("API_BASE_URL", ["render_env", "api_base_url"]),
 ]
 
 
