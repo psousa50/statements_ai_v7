@@ -39,7 +39,7 @@ def construct_urls_and_db(config):
     web_base_url = f"http://{hosts['web']}:{ports['web']}"
 
     # Construct database URL
-    database_url = f"postgresql://{db_config['user']}:{db_config['password']}@{hosts['database']}:{ports['database']}/{db_config['name']}"
+    database_url = f"postgresql+psycopg://{db_config['user']}:{db_config['password']}@{hosts['database']}:{ports['database']}/{db_config['name']}"
 
     return {
         "api_base_url": api_base_url,
