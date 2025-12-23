@@ -186,4 +186,4 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy bank-statements-web/dist --project-name=statements-web
+          command: pages deploy bank-statements-web/dist --project-name=bank-statements-web
