@@ -3,7 +3,8 @@ from decimal import Decimal
 from typing import Callable, Iterator, Optional
 from uuid import UUID, uuid4
 
-from fastapi import APIRouter, Depends, FastAPI, HTTPException, Query, status
+from fastapi import APIRouter, Depends, FastAPI, HTTPException, Query
+from starlette import status as http_status
 
 from app.api.routes.auth import require_current_user
 from app.api.schemas import (
@@ -38,7 +39,7 @@ def register_transaction_routes(
     @router.post(
         "",
         response_model=TransactionResponse,
-        status_code=status.HTTP_201_CREATED,
+        status_code=http_status.HTTP_201_CREATED,
     )
     def create_transaction(
         transaction_data: TransactionCreateRequest,
@@ -52,7 +53,7 @@ def register_transaction_routes(
         account = internal.account_service.get_account(transaction_data.account_id, current_user.id)
         if not account:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
+                status_code=http_status.HTTP_404_NOT_FOUND,
                 detail=f"Account with ID {transaction_data.account_id} not found",
             )
 
@@ -127,7 +128,7 @@ def register_transaction_routes(
             account = internal.account_service.get_account(account_id, current_user.id)
             if not account:
                 raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
+                    status_code=http_status.HTTP_404_NOT_FOUND,
                     detail=f"Account with ID {account_id} not found",
                 )
 
@@ -451,7 +452,7 @@ def register_transaction_routes(
                     category_uuid = UUID(request.category_id)
                 except ValueError:
                     raise HTTPException(
-                        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                        status_code=http_status.HTTP_422_UNPROCESSABLE_ENTITY,
                         detail=f"Invalid UUID format for category_id: {request.category_id}",
                     )
 
@@ -467,7 +468,7 @@ def register_transaction_routes(
             return BulkUpdateTransactionsResponse(updated_count=updated_count, message=message)
         except Exception as e:
             raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Error updating transactions: {str(e)}",
             )
 
@@ -483,7 +484,7 @@ def register_transaction_routes(
         transaction = internal.transaction_service.get_transaction(transaction_id, current_user.id)
         if not transaction:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
+                status_code=http_status.HTTP_404_NOT_FOUND,
                 detail=f"Transaction with ID {transaction_id} not found",
             )
         return transaction
@@ -510,14 +511,14 @@ def register_transaction_routes(
         )
         if not updated_transaction:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
+                status_code=http_status.HTTP_404_NOT_FOUND,
                 detail=f"Transaction with ID {transaction_id} not found",
             )
         return updated_transaction
 
     @router.delete(
         "/{transaction_id}",
-        status_code=status.HTTP_204_NO_CONTENT,
+        status_code=http_status.HTTP_204_NO_CONTENT,
     )
     def delete_transaction(
         transaction_id: UUID,
@@ -527,7 +528,7 @@ def register_transaction_routes(
         deleted = internal.transaction_service.delete_transaction(transaction_id, current_user.id)
         if not deleted:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
+                status_code=http_status.HTTP_404_NOT_FOUND,
                 detail=f"Transaction with ID {transaction_id} not found",
             )
         return None
@@ -549,7 +550,7 @@ def register_transaction_routes(
         )
         if not updated_transaction:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
+                status_code=http_status.HTTP_404_NOT_FOUND,
                 detail=f"Transaction with ID {transaction_id} not found",
             )
         return updated_transaction
@@ -569,7 +570,7 @@ def register_transaction_routes(
         )
         if not updated_transaction:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
+                status_code=http_status.HTTP_404_NOT_FOUND,
                 detail=f"Transaction with ID {transaction_id} not found",
             )
         return updated_transaction
