@@ -40,6 +40,15 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 15
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
 
+    # Cookie settings (derived from API_BASE_URL)
+    @property
+    def COOKIE_SECURE(self) -> bool:
+        return self.API_BASE_URL.startswith("https")
+
+    @property
+    def COOKIE_SAMESITE(self) -> str:
+        return "none" if self.COOKIE_SECURE else "lax"
+
     # OAuth settings
     GOOGLE_OAUTH_CLIENT_ID: str = os.getenv("GOOGLE_OAUTH_CLIENT_ID", "")
     GOOGLE_OAUTH_CLIENT_SECRET: str = os.getenv("GOOGLE_OAUTH_CLIENT_SECRET", "")
