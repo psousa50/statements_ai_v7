@@ -176,7 +176,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Generate Cloudflare proxy config
-        run: uvx --from pyyaml python scripts/generate-cloudflare-proxy.py
+        run: pip install pyyaml && python scripts/generate-cloudflare-proxy.py
 
       - name: Build frontend
         working-directory: bank-statements-web
