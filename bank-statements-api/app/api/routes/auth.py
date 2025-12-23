@@ -8,6 +8,7 @@ from fastapi import (
     Cookie,
     Depends,
     FastAPI,
+    Header,
     HTTPException,
     Request,
     Response,
@@ -40,6 +41,16 @@ class UserResponse(BaseModel):
     email: str
     name: Optional[str]
     avatar_url: Optional[str]
+
+
+class TokenResponse(BaseModel):
+    access_token: str
+    refresh_token: str
+    token_type: str = "Bearer"
+
+
+class RefreshRequest(BaseModel):
+    refresh_token: str
 
 
 oauth = OAuth()
@@ -94,13 +105,7 @@ def _clear_auth_cookies(response: Response):
 
 
 def _create_auth_code(access_token: str, refresh_token: str) -> str:
-    """Create a short-lived, one-time auth code for token exchange.
-
-    This is used to work around Safari ITP and other strict third-party cookie
-    policies. Instead of setting cookies directly in the OAuth callback (which
-    may be blocked), we redirect to the frontend with a code that can be
-    exchanged for cookies via a same-origin request.
-    """
+    """Create a short-lived, one-time auth code for token exchange."""
     # Clean up expired codes
     current_time = time.time()
     expired_codes = [
@@ -130,13 +135,32 @@ def _exchange_auth_code(code: str) -> tuple[str, str] | None:
     return access_token, refresh_token
 
 
-def get_current_user_from_cookie(
+def _get_token_from_header(authorization: Optional[str]) -> Optional[str]:
+    """Extract Bearer token from Authorization header."""
+    if not authorization:
+        return None
+    parts = authorization.split()
+    if len(parts) == 2 and parts[0].lower() == "bearer":
+        return parts[1]
+    return None
+
+
+def get_current_user_from_token(
+    authorization: Optional[str] = Header(None),
     access_token: Optional[str] = Cookie(None),
 ) -> Optional[User]:
-    if not access_token:
+    """Get user from Bearer token (header) or cookie."""
+    # Try Authorization header first (for Safari/localStorage flow)
+    token = _get_token_from_header(authorization)
+
+    # Fall back to cookie (for browsers that support cross-origin cookies)
+    if not token:
+        token = access_token
+
+    if not token:
         return None
 
-    payload = decode_access_token(access_token)
+    payload = decode_access_token(token)
     if not payload:
         return None
 
@@ -149,9 +173,10 @@ def get_current_user_from_cookie(
 
 
 def require_current_user(
+    authorization: Optional[str] = Header(None),
     access_token: Optional[str] = Cookie(None),
 ) -> User:
-    user = get_current_user_from_cookie(access_token)
+    user = get_current_user_from_token(authorization, access_token)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated"
@@ -213,11 +238,19 @@ def register_auth_routes(app: FastAPI):
         finally:
             db.close()
 
-    @router.post("/refresh")
-    async def refresh_token(
-        response: Response, refresh_token: Optional[str] = Cookie(None)
+    @router.post("/refresh", response_model=TokenResponse)
+    async def refresh_tokens(
+        response: Response,
+        body: Optional[RefreshRequest] = None,
+        refresh_token: Optional[str] = Cookie(None),
     ):
-        if not refresh_token:
+        """Refresh tokens. Accepts refresh_token from body (for localStorage flow) or cookie."""
+        # Try body first (localStorage flow), then cookie
+        token = body.refresh_token if body else None
+        if not token:
+            token = refresh_token
+
+        if not token:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED, detail="No refresh token"
             )
@@ -228,7 +261,7 @@ def register_auth_routes(app: FastAPI):
             refresh_token_repo = SQLAlchemyRefreshTokenRepository(db)
             auth_service = AuthService(user_repo, refresh_token_repo)
 
-            tokens = auth_service.refresh_access_token(refresh_token)
+            tokens = auth_service.refresh_access_token(token)
             if not tokens:
                 _clear_auth_cookies(response)
                 raise HTTPException(
@@ -236,20 +269,35 @@ def register_auth_routes(app: FastAPI):
                     detail="Invalid refresh token",
                 )
 
+            # Set cookies for browsers that support them
             _set_auth_cookies(response, tokens.access_token, tokens.refresh_token)
-            return {"message": "Token refreshed"}
+
+            # Also return tokens in body for localStorage flow
+            return TokenResponse(
+                access_token=tokens.access_token,
+                refresh_token=tokens.refresh_token,
+            )
         finally:
             db.close()
 
     @router.post("/logout")
-    async def logout(response: Response, refresh_token: Optional[str] = Cookie(None)):
-        if refresh_token:
+    async def logout(
+        response: Response,
+        body: Optional[RefreshRequest] = None,
+        refresh_token: Optional[str] = Cookie(None),
+    ):
+        # Try body first, then cookie
+        token = body.refresh_token if body else None
+        if not token:
+            token = refresh_token
+
+        if token:
             db = SessionLocal()
             try:
                 user_repo = SQLAlchemyUserRepository(db)
                 refresh_token_repo = SQLAlchemyRefreshTokenRepository(db)
                 auth_service = AuthService(user_repo, refresh_token_repo)
-                auth_service.revoke_refresh_token(refresh_token)
+                auth_service.revoke_refresh_token(token)
             finally:
                 db.close()
 
@@ -265,12 +313,12 @@ def register_auth_routes(app: FastAPI):
             avatar_url=user.avatar_url,
         )
 
-    @router.post("/exchange")
+    @router.post("/exchange", response_model=TokenResponse)
     async def exchange_auth_code(response: Response, code: str):
-        """Exchange a one-time auth code for session cookies.
+        """Exchange a one-time auth code for tokens.
 
-        This endpoint is called by the frontend after OAuth callback to set
-        cookies in a same-origin context, working around Safari ITP restrictions.
+        Returns tokens in response body for localStorage storage (Safari ITP workaround).
+        Also sets cookies for browsers that support cross-origin cookies.
         """
         tokens = _exchange_auth_code(code)
         if not tokens:
@@ -280,10 +328,17 @@ def register_auth_routes(app: FastAPI):
             )
 
         access_token, refresh_token = tokens
-        _set_auth_cookies(response, access_token, refresh_token)
-        return {"message": "Authentication successful"}
 
-    @router.post("/test-login")
+        # Set cookies for browsers that support them
+        _set_auth_cookies(response, access_token, refresh_token)
+
+        # Return tokens in body for localStorage flow (Safari)
+        return TokenResponse(
+            access_token=access_token,
+            refresh_token=refresh_token,
+        )
+
+    @router.post("/test-login", response_model=TokenResponse)
     async def test_login(response: Response):
         if not settings.E2E_TEST_MODE:
             raise HTTPException(
@@ -323,11 +378,10 @@ def register_auth_routes(app: FastAPI):
 
             tokens = auth_service.create_tokens_for_user(user)
             _set_auth_cookies(response, tokens.access_token, tokens.refresh_token)
-            return {
-                "message": "Test login successful",
-                "user_id": str(user.id),
-                "account_id": account_id,
-            }
+            return TokenResponse(
+                access_token=tokens.access_token,
+                refresh_token=tokens.refresh_token,
+            )
         finally:
             db.close()
 
