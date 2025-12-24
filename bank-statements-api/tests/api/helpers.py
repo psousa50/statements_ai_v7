@@ -29,7 +29,6 @@ from app.services.statement_processing.statement_upload import StatementUploadSe
 from app.services.transaction import TransactionService
 from app.services.transaction_enhancement import TransactionEnhancer
 
-
 TEST_USER_ID = uuid4()
 
 

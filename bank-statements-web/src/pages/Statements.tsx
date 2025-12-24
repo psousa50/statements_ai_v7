@@ -120,13 +120,7 @@ export const Statements: React.FC = () => {
     })
   }, [statements, sortField, sortDirection, secondarySortField, secondarySortDirection])
 
-  const SortableHeader = ({
-    field,
-    children,
-  }: {
-    field: SortField
-    children: React.ReactNode
-  }) => {
+  const SortableHeader = ({ field, children }: { field: SortField; children: React.ReactNode }) => {
     const isActive = sortField === field
     const direction = isActive ? sortDirection : undefined
 

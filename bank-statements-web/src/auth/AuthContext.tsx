@@ -108,11 +108,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await fetchUser()
   }, [fetchUser])
 
-  return (
-    <AuthContext.Provider value={{ ...state, login, logout, refreshUser }}>
-      {children}
-    </AuthContext.Provider>
-  )
+  return <AuthContext.Provider value={{ ...state, login, logout, refreshUser }}>{children}</AuthContext.Provider>
 }
 
 export const useAuth = (): AuthContextValue => {

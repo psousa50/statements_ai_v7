@@ -2,16 +2,12 @@ from datetime import date
 from decimal import Decimal
 from uuid import uuid4
 
-import pytest
-
 from app.adapters.repositories.account import SQLAlchemyAccountRepository
 from app.adapters.repositories.category import SQLAlchemyCategoryRepository
 from app.adapters.repositories.description_group import SQLAlchemyDescriptionGroupRepository
 from app.adapters.repositories.enhancement_rule import SQLAlchemyEnhancementRuleRepository
 from app.adapters.repositories.statement import SqlAlchemyStatementRepository
 from app.adapters.repositories.transaction import SQLAlchemyTransactionRepository
-from app.domain.models.account import Account
-from app.domain.models.category import Category
 from app.domain.models.description_group import DescriptionGroup
 from app.domain.models.enhancement_rule import EnhancementRule
 from app.domain.models.statement import Statement
@@ -50,9 +46,7 @@ class TestAccountMultiTenancy:
 
 
 class TestCategoryMultiTenancy:
-    def test_user_can_only_see_own_categories(
-        self, db_session, user_a, user_b, category_for_user_a, category_for_user_b
-    ):
+    def test_user_can_only_see_own_categories(self, db_session, user_a, user_b, category_for_user_a, category_for_user_b):
         repo = SQLAlchemyCategoryRepository(db_session)
 
         user_a_categories = repo.get_all(user_a.id)

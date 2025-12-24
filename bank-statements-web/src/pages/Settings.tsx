@@ -1,13 +1,5 @@
 import React from 'react'
-import {
-  Box,
-  Card,
-  CardContent,
-  Typography,
-  Avatar,
-  ToggleButtonGroup,
-  ToggleButton,
-} from '@mui/material'
+import { Box, Card, CardContent, Typography, Avatar, ToggleButtonGroup, ToggleButton } from '@mui/material'
 import LightModeIcon from '@mui/icons-material/LightMode'
 import DarkModeIcon from '@mui/icons-material/DarkMode'
 import SettingsBrightnessIcon from '@mui/icons-material/SettingsBrightness'

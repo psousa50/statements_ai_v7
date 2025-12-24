@@ -18,11 +18,7 @@ class SQLAlchemyCategoryRepository(CategoryRepository):
         return category
 
     def get_by_id(self, category_id: UUID, user_id: UUID) -> Optional[Category]:
-        return (
-            self.db_session.query(Category)
-            .filter(Category.id == category_id, Category.user_id == user_id)
-            .first()
-        )
+        return self.db_session.query(Category).filter(Category.id == category_id, Category.user_id == user_id).first()
 
     def get_all(self, user_id: UUID) -> List[Category]:
         return self.db_session.query(Category).filter(Category.user_id == user_id).all()

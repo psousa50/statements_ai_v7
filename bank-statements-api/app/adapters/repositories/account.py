@@ -18,11 +18,7 @@ class SQLAlchemyAccountRepository(AccountRepository):
         return account
 
     def get_by_id(self, account_id: UUID, user_id: UUID) -> Optional[Account]:
-        return (
-            self.db_session.query(Account)
-            .filter(Account.id == account_id, Account.user_id == user_id)
-            .first()
-        )
+        return self.db_session.query(Account).filter(Account.id == account_id, Account.user_id == user_id).first()
 
     def get_by_name(self, name: str, user_id: UUID) -> Optional[Account]:
         return self.db_session.query(Account).filter(Account.name == name, Account.user_id == user_id).first()

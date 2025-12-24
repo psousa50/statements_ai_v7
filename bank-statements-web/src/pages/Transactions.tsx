@@ -403,11 +403,7 @@ export const TransactionsPage = () => {
               {(filters.transaction_ids?.length || pagination?.total_count) &&
                 ` (${filters.transaction_ids?.length || pagination?.total_count} transactions)`}
             </span>
-            <button
-              className="rule-filter-clear-btn"
-              onClick={handleClearPatternFilter}
-              title="Clear pattern filter"
-            >
+            <button className="rule-filter-clear-btn" onClick={handleClearPatternFilter} title="Clear pattern filter">
               ✕
             </button>
           </div>

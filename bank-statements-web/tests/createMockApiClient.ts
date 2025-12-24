@@ -15,6 +15,7 @@ import {
   CategoryTimeSeriesResponse,
   BulkUpdateTransactionsResponse,
   EnhancementPreviewResponse,
+  SavedFilterResponse,
 } from '@/api/TransactionClient'
 import { TransactionCategorizationClient } from '@/api/TransactionCategorizationClient'
 import { Category, Transaction, TransactionListResponse } from '@/types/Transaction'
@@ -112,6 +113,11 @@ const defaultTransactionClient: TransactionClient = {
     Promise.resolve({
       matched: false,
     } as EnhancementPreviewResponse),
+  createSavedFilter: (transactionIds: string[]) =>
+    Promise.resolve({
+      id: 'mock-saved-filter-id',
+      transaction_ids: transactionIds,
+    } as SavedFilterResponse),
 }
 
 // Default mock category client implementation

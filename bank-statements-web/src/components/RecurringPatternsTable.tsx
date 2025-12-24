@@ -218,9 +218,15 @@ export const RecurringPatternsTable = ({
             <tr>
               <SortableHeader field="description">Description</SortableHeader>
               <SortableHeader field="category">Category</SortableHeader>
-              <SortableHeader field="average_amount" align="right">Monthly Amount</SortableHeader>
-              <SortableHeader field="total_annual_cost" align="right">Annual Cost</SortableHeader>
-              <SortableHeader field="transaction_count" align="right">Occurrences</SortableHeader>
+              <SortableHeader field="average_amount" align="right">
+                Monthly Amount
+              </SortableHeader>
+              <SortableHeader field="total_annual_cost" align="right">
+                Annual Cost
+              </SortableHeader>
+              <SortableHeader field="transaction_count" align="right">
+                Occurrences
+              </SortableHeader>
               <th>First/Last Date</th>
               <th>Actions</th>
             </tr>

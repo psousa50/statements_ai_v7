@@ -150,9 +150,7 @@ class RecurringExpenseAnalyzer:
 
         return patterns
 
-    def _group_by_normalized_description(
-        self, transactions: List[Transaction]
-    ) -> Dict[tuple, List[Transaction]]:
+    def _group_by_normalized_description(self, transactions: List[Transaction]) -> Dict[tuple, List[Transaction]]:
         groups = defaultdict(list)
         for transaction in transactions:
             key = (transaction.normalized_description, transaction.category_id)
