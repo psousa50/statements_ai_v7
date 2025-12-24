@@ -1,8 +1,10 @@
 import React, { useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { Box, Paper, Typography, Button, Divider } from '@mui/material'
+import { Box, Typography, Button } from '@mui/material'
 import GoogleIcon from '@mui/icons-material/Google'
+import AccountBalanceIcon from '@mui/icons-material/AccountBalance'
 import { useAuth } from '../auth/AuthContext'
+import './LoginPage.css'
 
 export const Login: React.FC = () => {
   const { login, isAuthenticated, isLoading } = useAuth()
@@ -22,48 +24,29 @@ export const Login: React.FC = () => {
   }
 
   return (
-    <Box
-      sx={{
-        minHeight: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        bgcolor: 'background.default',
-      }}
-    >
-      <Paper
-        elevation={3}
-        sx={{
-          p: 4,
-          maxWidth: 400,
-          width: '100%',
-          textAlign: 'center',
-        }}
-      >
-        <Typography variant="h4" component="h1" gutterBottom>
+    <Box className="login-page">
+      <Box className="login-card">
+        <Box className="login-icon">
+          <AccountBalanceIcon sx={{ fontSize: 56 }} />
+        </Box>
+        <Typography variant="h4" component="h1" className="login-title">
           Bank Statements
         </Typography>
-        <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
-          Sign in to manage your transactions
+        <Typography variant="body1" className="login-subtitle">
+          Track and categorise your transactions
         </Typography>
 
-        <Divider sx={{ mb: 3 }}>
-          <Typography variant="body2" color="text.secondary">
-            Continue with
-          </Typography>
-        </Divider>
-
         <Button
-          variant="outlined"
+          variant="contained"
           size="large"
           fullWidth
           startIcon={<GoogleIcon />}
           onClick={() => login('google')}
-          sx={{ textTransform: 'none', py: 1.5 }}
+          className="google-button"
         >
-          Google
+          Continue with Google
         </Button>
-      </Paper>
+      </Box>
     </Box>
   )
 }
