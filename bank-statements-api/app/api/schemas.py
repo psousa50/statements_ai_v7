@@ -567,3 +567,21 @@ class DescriptionGroupListResponse(BaseModel):
     total: int
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class SavedFilterCreate(BaseModel):
+    transaction_ids: List[UUID]
+
+
+class SavedFilterResponse(BaseModel):
+    id: UUID
+    transaction_ids: List[UUID]
+
+    model_config = ConfigDict(from_attributes=True)
+
+    @classmethod
+    def from_model(cls, saved_filter) -> "SavedFilterResponse":
+        return cls(
+            id=saved_filter.id,
+            transaction_ids=[UUID(tid) for tid in saved_filter.filter_data.get("transaction_ids", [])],
+        )

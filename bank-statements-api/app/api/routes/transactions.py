@@ -125,6 +125,10 @@ def register_transaction_routes(
             None,
             description="Comma-separated list of transaction IDs to filter by",
         ),
+        saved_filter_id: Optional[UUID] = Query(
+            None,
+            description="ID of a saved filter containing transaction IDs",
+        ),
         internal: InternalDependencies = Depends(provide_dependencies),
         current_user: User = Depends(require_current_user),
     ):
@@ -161,7 +165,15 @@ def register_transaction_routes(
                 )
 
         parsed_transaction_ids = None
-        if transaction_ids:
+        if saved_filter_id:
+            saved_filter = internal.saved_filter_repository.get_by_id(saved_filter_id, current_user.id)
+            if not saved_filter:
+                raise HTTPException(
+                    status_code=http_status.HTTP_404_NOT_FOUND,
+                    detail=f"Saved filter with ID {saved_filter_id} not found or expired",
+                )
+            parsed_transaction_ids = [UUID(tid) for tid in saved_filter.filter_data.get("transaction_ids", [])]
+        elif transaction_ids:
             try:
                 parsed_transaction_ids = [UUID(tid.strip()) for tid in transaction_ids.split(",") if tid.strip()]
             except ValueError:

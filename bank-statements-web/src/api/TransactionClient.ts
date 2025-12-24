@@ -25,6 +25,16 @@ export interface TransactionFilters {
   transaction_type?: 'all' | 'debit' | 'credit'
   active_only?: boolean
   transaction_ids?: string[]
+  saved_filter_id?: string
+}
+
+export interface SavedFilterCreate {
+  transaction_ids: string[]
+}
+
+export interface SavedFilterResponse {
+  id: string
+  transaction_ids: string[]
 }
 
 export interface CategoryTotal {
@@ -111,6 +121,7 @@ export interface TransactionClient {
   delete(id: string): Promise<void>
   bulkUpdateCategory(request: BulkUpdateTransactionsRequest): Promise<BulkUpdateTransactionsResponse>
   previewEnhancement(request: EnhancementPreviewRequest): Promise<EnhancementPreviewResponse>
+  createSavedFilter(transactionIds: string[]): Promise<SavedFilterResponse>
 }
 
 export interface SourceClient {
@@ -121,6 +132,7 @@ export interface SourceClient {
 const BASE_URL = import.meta.env.VITE_API_URL || ''
 const API_URL = `${BASE_URL}/api/v1/transactions`
 const SOURCES_API_URL = `${BASE_URL}/api/v1/sources`
+const SAVED_FILTERS_API_URL = `${BASE_URL}/api/v1/saved-filters`
 
 import axios from 'axios'
 
@@ -181,6 +193,9 @@ export const transactionClient: TransactionClient = {
     }
     if (filters?.transaction_ids && filters.transaction_ids.length > 0) {
       params.append('transaction_ids', filters.transaction_ids.join(','))
+    }
+    if (filters?.saved_filter_id) {
+      params.append('saved_filter_id', filters.saved_filter_id)
     }
 
     const url = params.toString() ? `${API_URL}?${params.toString()}` : API_URL
@@ -327,6 +342,13 @@ export const transactionClient: TransactionClient = {
 
   async previewEnhancement(request: EnhancementPreviewRequest) {
     const response = await axios.post<EnhancementPreviewResponse>(`${API_URL}/preview-enhancement`, request)
+    return response.data
+  },
+
+  async createSavedFilter(transactionIds: string[]) {
+    const response = await axios.post<SavedFilterResponse>(SAVED_FILTERS_API_URL, {
+      transaction_ids: transactionIds,
+    })
     return response.data
   },
 }

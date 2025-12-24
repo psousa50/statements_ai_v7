@@ -92,10 +92,20 @@ export const RecurringPatternsTable = ({
     return sorted
   }, [patterns, sortField, sortDirection, categories])
 
-  const handleViewTransactions = (pattern: RecurringPattern) => {
+  const TRANSACTION_IDS_URL_THRESHOLD = 50
+
+  const handleViewTransactions = async (pattern: RecurringPattern) => {
     const params = new URLSearchParams()
-    params.set('transaction_ids', pattern.transaction_ids.join(','))
     params.set('exclude_transfers', 'false')
+    params.set('pattern_label', pattern.description)
+
+    if (pattern.transaction_ids.length <= TRANSACTION_IDS_URL_THRESHOLD) {
+      params.set('transaction_ids', pattern.transaction_ids.join(','))
+    } else {
+      const savedFilter = await api.transactions.createSavedFilter(pattern.transaction_ids)
+      params.set('saved_filter_id', savedFilter.id)
+    }
+
     window.open(`/transactions?${params.toString()}`, '_blank')
   }
 

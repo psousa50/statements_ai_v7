@@ -32,6 +32,7 @@ export const TransactionsPage = () => {
     const urlExcludeUncategorized = searchParams.get('exclude_uncategorized')
     const urlTransactionType = searchParams.get('transaction_type')
     const urlTransactionIds = searchParams.get('transaction_ids')
+    const urlSavedFilterId = searchParams.get('saved_filter_id')
 
     return {
       page: 1,
@@ -51,10 +52,14 @@ export const TransactionsPage = () => {
       exclude_uncategorized: urlExcludeUncategorized === 'true' ? true : false,
       transaction_type: (urlTransactionType as 'all' | 'debit' | 'credit') || 'all',
       transaction_ids: urlTransactionIds ? urlTransactionIds.split(',') : undefined,
+      saved_filter_id: urlSavedFilterId || undefined,
     }
   }
 
   const [filters, setFilters] = useState<FilterType>(getInitialFilters())
+
+  const patternLabel = searchParams.get('pattern_label')
+  const hasPatternFilter = !!(filters.transaction_ids?.length || filters.saved_filter_id)
 
   // Local state for debounced inputs - initialize from URL params
   const [localDescriptionSearch, setLocalDescriptionSearch] = useState<string>(
@@ -305,6 +310,24 @@ export const TransactionsPage = () => {
     fetchTransactions(clearedFilters)
   }, [filters.page_size, fetchTransactions, navigate])
 
+  const handleClearPatternFilter = useCallback(() => {
+    const { transaction_ids: _, saved_filter_id: __, ...remainingFilters } = filters
+    const clearedFilters = {
+      ...remainingFilters,
+      page: 1,
+      transaction_ids: undefined,
+      saved_filter_id: undefined,
+    }
+    setFilters(clearedFilters)
+    const params = new URLSearchParams(window.location.search)
+    params.delete('transaction_ids')
+    params.delete('saved_filter_id')
+    params.delete('pattern_label')
+    const newUrl = params.toString() ? `/transactions?${params.toString()}` : '/transactions'
+    navigate(newUrl)
+    fetchTransactions(clearedFilters)
+  }, [filters, fetchTransactions, navigate])
+
   const handleCategorizeTransaction = async (transactionId: string, categoryId?: string) => {
     await categorizeTransaction(transactionId, categoryId)
     fetchTransactions({ ...filters, include_running_balance: !!filters.account_id })
@@ -364,6 +387,26 @@ export const TransactionsPage = () => {
               className="rule-filter-clear-btn"
               onClick={handleClearRuleFilter}
               title="Return to normal transaction view"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Pattern Filter Banner */}
+      {hasPatternFilter && (
+        <div className="rule-filter-banner">
+          <div className="rule-filter-content">
+            <span className="rule-filter-text">
+              🔍 {patternLabel || 'Recurring pattern'}
+              {(filters.transaction_ids?.length || pagination?.total_count) &&
+                ` (${filters.transaction_ids?.length || pagination?.total_count} transactions)`}
+            </span>
+            <button
+              className="rule-filter-clear-btn"
+              onClick={handleClearPatternFilter}
+              title="Clear pattern filter"
             >
               ✕
             </button>

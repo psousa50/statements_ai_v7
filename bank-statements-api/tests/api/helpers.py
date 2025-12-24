@@ -9,6 +9,7 @@ from app.adapters.repositories.account import SQLAlchemyAccountRepository
 from app.adapters.repositories.background_job import SQLAlchemyBackgroundJobRepository
 from app.adapters.repositories.category import SQLAlchemyCategoryRepository
 from app.adapters.repositories.enhancement_rule import SQLAlchemyEnhancementRuleRepository
+from app.adapters.repositories.saved_filter import SQLAlchemySavedFilterRepository
 from app.adapters.repositories.statement import SqlAlchemyStatementRepository
 from app.adapters.repositories.transaction import SQLAlchemyTransactionRepository
 from app.api.routes.auth import require_current_user
@@ -61,6 +62,7 @@ def mocked_dependencies(
     account_repository: SQLAlchemyAccountRepository = None,
     recurring_expense_analyzer: RecurringExpenseAnalyzer = None,
     description_group_service: DescriptionGroupService = None,
+    saved_filter_repository: SQLAlchemySavedFilterRepository = None,
 ) -> InternalDependencies:
     if transaction_service is None:
         transaction_service = MagicMock(spec=TransactionService)
@@ -88,6 +90,7 @@ def mocked_dependencies(
         account_repository=account_repository or MagicMock(spec=SQLAlchemyAccountRepository),
         recurring_expense_analyzer=recurring_expense_analyzer or MagicMock(spec=RecurringExpenseAnalyzer),
         description_group_service=description_group_service or MagicMock(spec=DescriptionGroupService),
+        saved_filter_repository=saved_filter_repository or MagicMock(spec=SQLAlchemySavedFilterRepository),
     )
 
 
