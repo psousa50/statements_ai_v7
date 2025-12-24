@@ -135,6 +135,7 @@ class TransactionService:
         exclude_transfers: Optional[bool] = None,
         exclude_uncategorized: Optional[bool] = None,
         transaction_type: Optional[str] = None,
+        transaction_ids: Optional[List[UUID]] = None,
     ) -> TransactionListResponse:
         (
             transactions,
@@ -156,6 +157,7 @@ class TransactionService:
             exclude_transfers=exclude_transfers,
             exclude_uncategorized=exclude_uncategorized,
             transaction_type=transaction_type,
+            transaction_ids=transaction_ids,
         )
 
         if include_running_balance and account_id is not None:

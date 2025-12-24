@@ -66,6 +66,7 @@ class TransactionRepository(ABC):
         exclude_transfers: Optional[bool] = None,
         transaction_type: Optional[str] = None,
         exclude_uncategorized: Optional[bool] = None,
+        transaction_ids: Optional[List[UUID]] = None,
     ) -> Tuple[List[Transaction], int]:
         pass
 

@@ -31,6 +31,7 @@ export const TransactionsPage = () => {
     const urlExcludeTransfers = searchParams.get('exclude_transfers')
     const urlExcludeUncategorized = searchParams.get('exclude_uncategorized')
     const urlTransactionType = searchParams.get('transaction_type')
+    const urlTransactionIds = searchParams.get('transaction_ids')
 
     return {
       page: 1,
@@ -49,6 +50,7 @@ export const TransactionsPage = () => {
       exclude_transfers: urlExcludeTransfers === 'false' ? false : true,
       exclude_uncategorized: urlExcludeUncategorized === 'true' ? true : false,
       transaction_type: (urlTransactionType as 'all' | 'debit' | 'credit') || 'all',
+      transaction_ids: urlTransactionIds ? urlTransactionIds.split(',') : undefined,
     }
   }
 

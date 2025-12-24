@@ -121,6 +121,10 @@ def register_transaction_routes(
             None,
             description="Filter by transaction type: 'debit', 'credit', or 'all'",
         ),
+        transaction_ids: Optional[str] = Query(
+            None,
+            description="Comma-separated list of transaction IDs to filter by",
+        ),
         internal: InternalDependencies = Depends(provide_dependencies),
         current_user: User = Depends(require_current_user),
     ):
@@ -156,6 +160,16 @@ def register_transaction_routes(
                     detail="Invalid category IDs format",
                 )
 
+        parsed_transaction_ids = None
+        if transaction_ids:
+            try:
+                parsed_transaction_ids = [UUID(tid.strip()) for tid in transaction_ids.split(",") if tid.strip()]
+            except ValueError:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Invalid transaction IDs format",
+                )
+
         transactions = internal.transaction_service.get_transactions_paginated(
             user_id=current_user.id,
             page=page,
@@ -174,6 +188,7 @@ def register_transaction_routes(
             exclude_transfers=exclude_transfers,
             exclude_uncategorized=exclude_uncategorized,
             transaction_type=transaction_type,
+            transaction_ids=parsed_transaction_ids,
         )
         return transactions
 

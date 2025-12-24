@@ -94,12 +94,8 @@ export const RecurringPatternsTable = ({
 
   const handleViewTransactions = (pattern: RecurringPattern) => {
     const params = new URLSearchParams()
-    params.set('description_search', pattern.normalized_description)
-    if (pattern.category_id) {
-      params.set('category_ids', pattern.category_id)
-    }
-    params.set('start_date', pattern.first_transaction_date)
-    params.set('end_date', pattern.last_transaction_date)
+    params.set('transaction_ids', pattern.transaction_ids.join(','))
+    params.set('exclude_transfers', 'false')
     window.open(`/transactions?${params.toString()}`, '_blank')
   }
 

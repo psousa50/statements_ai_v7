@@ -163,6 +163,7 @@ class TransactionFilters(BaseModel):
     counterparty_account_id: Optional[UUID] = None
     start_date: Optional[date] = None
     end_date: Optional[date] = None
+    transaction_ids: Optional[List[UUID]] = None
 
 
 class TransactionListResponse(BaseModel):

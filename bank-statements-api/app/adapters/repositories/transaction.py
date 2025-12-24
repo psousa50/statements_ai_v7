@@ -96,6 +96,7 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         exclude_transfers: Optional[bool] = None,
         exclude_uncategorized: Optional[bool] = None,
         transaction_type: Optional[str] = None,
+        transaction_ids: Optional[List[UUID]] = None,
     ) -> Tuple[List[Transaction], int]:
         query = (
             self.db_session.query(Transaction)
@@ -154,6 +155,10 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         elif transaction_type == "credit":
             filters.append(Transaction.amount > 0)
         # For 'all' or None, don't add any filter
+
+        # Transaction IDs filter
+        if transaction_ids:
+            filters.append(Transaction.id.in_(transaction_ids))
 
         if filters:
             query = query.filter(and_(*filters))
