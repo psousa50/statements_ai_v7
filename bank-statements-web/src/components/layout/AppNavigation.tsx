@@ -10,7 +10,11 @@ import AccountBalanceIcon from '@mui/icons-material/AccountBalance'
 import DescriptionIcon from '@mui/icons-material/Description'
 import RepeatIcon from '@mui/icons-material/Repeat'
 
-export const AppNavigation: React.FC = () => {
+interface AppNavigationProps {
+  onNavigate?: () => void
+}
+
+export const AppNavigation: React.FC<AppNavigationProps> = ({ onNavigate }) => {
   const location = useLocation()
 
   return (
@@ -20,6 +24,7 @@ export const AppNavigation: React.FC = () => {
           component={RouterLink}
           to="/transactions"
           selected={location.pathname === '/transactions' || location.pathname === '/'}
+          onClick={onNavigate}
         >
           <ListItemIcon>
             <DashboardIcon />
@@ -33,6 +38,7 @@ export const AppNavigation: React.FC = () => {
           component={RouterLink}
           to="/enhancement-rules"
           selected={location.pathname === '/enhancement-rules'}
+          onClick={onNavigate}
         >
           <ListItemIcon>
             <CategoryIcon />
@@ -42,7 +48,12 @@ export const AppNavigation: React.FC = () => {
       </ListItem>
 
       <ListItem disablePadding>
-        <ListItemButton component={RouterLink} to="/categories" selected={location.pathname === '/categories'}>
+        <ListItemButton
+          component={RouterLink}
+          to="/categories"
+          selected={location.pathname === '/categories'}
+          onClick={onNavigate}
+        >
           <ListItemIcon>
             <AccountTreeIcon />
           </ListItemIcon>
@@ -51,7 +62,12 @@ export const AppNavigation: React.FC = () => {
       </ListItem>
 
       <ListItem disablePadding>
-        <ListItemButton component={RouterLink} to="/accounts" selected={location.pathname === '/accounts'}>
+        <ListItemButton
+          component={RouterLink}
+          to="/accounts"
+          selected={location.pathname === '/accounts'}
+          onClick={onNavigate}
+        >
           <ListItemIcon>
             <AccountBalanceIcon />
           </ListItemIcon>
@@ -60,7 +76,12 @@ export const AppNavigation: React.FC = () => {
       </ListItem>
 
       <ListItem disablePadding>
-        <ListItemButton component={RouterLink} to="/charts" selected={location.pathname === '/charts'}>
+        <ListItemButton
+          component={RouterLink}
+          to="/charts"
+          selected={location.pathname === '/charts'}
+          onClick={onNavigate}
+        >
           <ListItemIcon>
             <BarChartIcon />
           </ListItemIcon>
@@ -69,7 +90,12 @@ export const AppNavigation: React.FC = () => {
       </ListItem>
 
       <ListItem disablePadding>
-        <ListItemButton component={RouterLink} to="/recurring" selected={location.pathname === '/recurring'}>
+        <ListItemButton
+          component={RouterLink}
+          to="/recurring"
+          selected={location.pathname === '/recurring'}
+          onClick={onNavigate}
+        >
           <ListItemIcon>
             <RepeatIcon />
           </ListItemIcon>
@@ -78,7 +104,12 @@ export const AppNavigation: React.FC = () => {
       </ListItem>
 
       <ListItem disablePadding>
-        <ListItemButton component={RouterLink} to="/statements" selected={location.pathname === '/statements'}>
+        <ListItemButton
+          component={RouterLink}
+          to="/statements"
+          selected={location.pathname === '/statements'}
+          onClick={onNavigate}
+        >
           <ListItemIcon>
             <DescriptionIcon />
           </ListItemIcon>
@@ -87,7 +118,12 @@ export const AppNavigation: React.FC = () => {
       </ListItem>
 
       <ListItem disablePadding>
-        <ListItemButton component={RouterLink} to="/upload" selected={location.pathname === '/upload'}>
+        <ListItemButton
+          component={RouterLink}
+          to="/upload"
+          selected={location.pathname === '/upload'}
+          onClick={onNavigate}
+        >
           <ListItemIcon>
             <UploadFileIcon />
           </ListItemIcon>
