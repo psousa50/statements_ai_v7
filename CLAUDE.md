@@ -33,6 +33,11 @@ pnpm check              # Type check (web) + lint (api)
 pnpm verify             # Format + lint + test (both)
 ```
 
+## Deployment
+```bash
+pnpm deploy:setup       # Sync settings.prod.yaml to GitHub secrets + Render env vars
+```
+
 ## Notes
 - Hot reload enabled on both services
 - Update tests when changing behaviour
