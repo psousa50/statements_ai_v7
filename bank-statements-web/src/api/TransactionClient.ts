@@ -75,7 +75,6 @@ export interface EnhancementPreviewResponse {
 export interface RecurringPattern {
   description: string
   normalized_description: string
-  frequency: string
   interval_days: number
   average_amount: number
   amount_variance: number

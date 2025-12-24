@@ -15,7 +15,6 @@ ACTIVE_PATTERNS_DAYS = 365
 class RecurringPattern:
     description: str
     normalized_description: str
-    frequency: str
     interval_days: float
     average_amount: Decimal
     amount_variance: float
@@ -30,7 +29,6 @@ class RecurringPattern:
         return {
             "description": self.description,
             "normalized_description": self.normalized_description,
-            "frequency": self.frequency,
             "interval_days": self.interval_days,
             "average_amount": float(self.average_amount),
             "amount_variance": self.amount_variance,
@@ -138,7 +136,6 @@ class RecurringExpenseAnalyzer:
                 pattern = RecurringPattern(
                     description=description,
                     normalized_description=actual_normalized_description,
-                    frequency="monthly",
                     interval_days=avg_interval,
                     average_amount=avg_amount,
                     amount_variance=variance,
@@ -241,7 +238,6 @@ class RecurringExpenseAnalyzer:
         return RecurringPattern(
             description=description,
             normalized_description=normalized_description,
-            frequency="monthly",
             interval_days=avg_interval,
             average_amount=avg_amount,
             amount_variance=variance,

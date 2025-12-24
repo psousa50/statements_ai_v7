@@ -212,7 +212,6 @@ export const RecurringPatternsTable = ({
             <tr>
               <SortableHeader field="description">Description</SortableHeader>
               <SortableHeader field="category">Category</SortableHeader>
-              <th>Frequency</th>
               <SortableHeader field="average_amount" align="right">Monthly Amount</SortableHeader>
               <SortableHeader field="total_annual_cost" align="right">Annual Cost</SortableHeader>
               <SortableHeader field="transaction_count" align="right">Occurrences</SortableHeader>
@@ -241,9 +240,6 @@ export const RecurringPatternsTable = ({
                     </div>
                   </td>
                   <td>{getCategoryName(pattern.category_id)}</td>
-                  <td>
-                    <span className="frequency-badge">{pattern.frequency}</span>
-                  </td>
                   <td className="amount-cell">{formatCurrency(pattern.average_amount)}</td>
                   <td className="amount-cell">{formatCurrency(pattern.total_annual_cost)}</td>
                   <td className="count-cell">{pattern.transaction_count}</td>
@@ -444,16 +440,6 @@ export const RecurringPatternsTable = ({
           border-radius: 4px;
           font-size: 11px;
           font-weight: 500;
-        }
-
-        .frequency-badge {
-          background: var(--bg-accent);
-          color: var(--button-primary);
-          padding: 4px 8px;
-          border-radius: 4px;
-          font-size: 12px;
-          font-weight: 500;
-          text-transform: capitalize;
         }
 
         .amount-cell {

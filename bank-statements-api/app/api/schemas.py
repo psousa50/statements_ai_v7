@@ -512,7 +512,6 @@ class StatementResponse(BaseModel):
 class RecurringPatternResponse(BaseModel):
     description: str
     normalized_description: str
-    frequency: str
     interval_days: float
     average_amount: Decimal
     amount_variance: float

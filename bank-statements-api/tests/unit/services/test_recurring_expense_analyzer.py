@@ -70,7 +70,6 @@ class TestRecurringExpenseAnalyzer:
         assert len(result.patterns) == 1
         pattern = result.patterns[0]
         assert pattern.normalized_description == "spotify"
-        assert pattern.frequency == "monthly"
         assert pattern.transaction_count == 3
         assert pattern.average_amount == Decimal("9.99")
         assert pattern.amount_variance == 0.0
