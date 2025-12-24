@@ -217,6 +217,54 @@ class TestRecurringExpenseAnalyzer:
         pattern = result.patterns[0]
         assert pattern.category_id == category_id
 
+    def test_same_description_different_categories_are_separate_patterns(self):
+        category_1 = uuid.uuid4()
+        category_2 = uuid.uuid4()
+        transactions = [
+            self.create_transaction(
+                normalized_description="spotify",
+                amount=Decimal("9.99"),
+                transaction_date=date(2024, 1, 1),
+                category_id=category_1,
+            ),
+            self.create_transaction(
+                normalized_description="spotify",
+                amount=Decimal("9.99"),
+                transaction_date=date(2024, 2, 1),
+                category_id=category_1,
+            ),
+            self.create_transaction(
+                normalized_description="spotify",
+                amount=Decimal("9.99"),
+                transaction_date=date(2024, 3, 1),
+                category_id=category_1,
+            ),
+            self.create_transaction(
+                normalized_description="spotify",
+                amount=Decimal("9.99"),
+                transaction_date=date(2024, 1, 15),
+                category_id=category_2,
+            ),
+            self.create_transaction(
+                normalized_description="spotify",
+                amount=Decimal("9.99"),
+                transaction_date=date(2024, 2, 15),
+                category_id=category_2,
+            ),
+            self.create_transaction(
+                normalized_description="spotify",
+                amount=Decimal("9.99"),
+                transaction_date=date(2024, 3, 15),
+                category_id=category_2,
+            ),
+        ]
+
+        result = self.analyzer.analyze_patterns(transactions, self.user_id)
+
+        assert len(result.patterns) == 2
+        categories = {p.category_id for p in result.patterns}
+        assert categories == {category_1, category_2}
+
     def test_analyze_patterns_calculates_annual_cost(self):
         transactions = [
             self.create_transaction(

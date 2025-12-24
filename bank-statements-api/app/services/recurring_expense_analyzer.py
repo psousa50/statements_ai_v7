@@ -99,7 +99,7 @@ class RecurringExpenseAnalyzer:
         groups = self._group_by_normalized_description(transactions)
         patterns = []
 
-        for normalized_description, group_transactions in groups.items():
+        for (normalized_description, category_id), group_transactions in groups.items():
             if len(group_transactions) < self.min_occurrences:
                 continue
 
@@ -130,7 +130,6 @@ class RecurringExpenseAnalyzer:
             variance = max(abs(a - avg_per_txn) / avg_per_txn for a in amounts) if avg_per_txn > 0 else 0
 
             if variance <= self.amount_variance_threshold:
-                category_id = next((t.category_id for t in monthly_transactions if t.category_id), None)
                 description = monthly_transactions[0].description
                 actual_normalized_description = monthly_transactions[0].normalized_description
 
@@ -154,10 +153,13 @@ class RecurringExpenseAnalyzer:
 
         return patterns
 
-    def _group_by_normalized_description(self, transactions: List[Transaction]) -> Dict[str, List[Transaction]]:
+    def _group_by_normalized_description(
+        self, transactions: List[Transaction]
+    ) -> Dict[tuple, List[Transaction]]:
         groups = defaultdict(list)
         for transaction in transactions:
-            groups[transaction.normalized_description].append(transaction)
+            key = (transaction.normalized_description, transaction.category_id)
+            groups[key].append(transaction)
         return {k: v for k, v in groups.items() if len(v) >= self.min_occurrences}
 
     def _filter_to_monthly_sequence(self, sorted_transactions: List[Transaction]) -> List[Transaction]:
@@ -197,7 +199,10 @@ class RecurringExpenseAnalyzer:
         grouped_patterns = defaultdict(list)
 
         for pattern in patterns:
-            group_id = description_to_group.get(pattern.normalized_description, pattern.normalized_description)
+            if pattern.normalized_description in description_to_group:
+                group_id = description_to_group[pattern.normalized_description]
+            else:
+                group_id = (pattern.normalized_description, pattern.category_id)
             grouped_patterns[group_id].append(pattern)
 
         merged_patterns = []
