@@ -35,6 +35,18 @@ Bank statement analyser - upload CSV/XLSX bank statements, parse transactions, c
 - **Category** - Hierarchical categories (parent/child)
 - **EnhancementRule** - Pattern rules for auto-categorisation
 
+## AI Integration
+
+| Feature | Purpose | Status |
+|---------|---------|--------|
+| Schema Detection | Auto-detect column mappings in statements | Disabled (using heuristics) |
+| Transaction Categorisation | AI-powered category assignment | Implemented, not wired |
+| Counterparty Identification | Detect inter-account transfers | Implemented, not wired |
+
+**Provider**: Google Gemini (`gemini-2.0-flash`)
+**Config**: `GEMINI_API_KEY` env var
+**Key files**: `app/ai/` directory (gemini_ai.py, prompts.py, llm_client.py)
+
 ## Common Tasks
 
 | Task | Command/Notes |
