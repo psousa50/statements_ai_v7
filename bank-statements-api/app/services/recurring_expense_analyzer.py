@@ -8,7 +8,7 @@ from uuid import UUID
 from app.domain.models.transaction import Transaction
 from app.ports.repositories.description_group import DescriptionGroupRepository
 
-ACTIVE_PATTERNS_DAYS = 90
+ACTIVE_PATTERNS_DAYS = 365
 
 
 @dataclass
