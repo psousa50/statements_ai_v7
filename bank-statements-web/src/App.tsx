@@ -8,6 +8,7 @@ import { ChartsPage } from './pages/Charts'
 import { RecurringExpensesPage } from './pages/RecurringExpensesPage'
 import { Statements } from './pages/Statements'
 import { Upload } from './pages/Upload'
+import { SettingsPage } from './pages/Settings'
 import { Login } from './pages/Login'
 import { AuthCallback } from './pages/AuthCallback'
 import { AppLayout } from './components/layout/AppLayout'
@@ -43,6 +44,7 @@ const router = createBrowserRouter(
         { path: 'recurring', element: <RecurringExpensesPage /> },
         { path: 'statements', element: <Statements /> },
         { path: 'upload', element: <Upload /> },
+        { path: 'settings', element: <SettingsPage /> },
       ],
     },
   ],
@@ -54,7 +56,6 @@ const router = createBrowserRouter(
   }
 )
 
-// Wrap the entire app with RouterSafeApiProvider
 function App() {
   return (
     <RouterSafeApiProvider>

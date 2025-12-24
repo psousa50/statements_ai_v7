@@ -45,8 +45,8 @@ export const AppLayout = () => {
       <AppBar
         position="fixed"
         sx={{
+          left: { lg: drawerWidth },
           width: { lg: `calc(100% - ${drawerWidth}px)` },
-          ml: { lg: `${drawerWidth}px` },
         }}
       >
         <Toolbar>
@@ -59,10 +59,9 @@ export const AppLayout = () => {
           >
             <MenuIcon />
           </IconButton>
-          <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
-            Bank Statements App
-          </Typography>
-          <UserMenu />
+          <Box sx={{ marginLeft: 'auto' }}>
+            <UserMenu />
+          </Box>
         </Toolbar>
       </AppBar>
 

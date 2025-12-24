@@ -1,10 +1,13 @@
 import React, { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { IconButton, Menu, MenuItem, Avatar, Typography, Box, Divider } from '@mui/material'
+import SettingsIcon from '@mui/icons-material/Settings'
 import LogoutIcon from '@mui/icons-material/Logout'
 import { useAuth } from '../../auth/AuthContext'
 
 export const UserMenu: React.FC = () => {
   const { user, logout } = useAuth()
+  const navigate = useNavigate()
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
   const open = Boolean(anchorEl)
 
@@ -57,6 +60,10 @@ export const UserMenu: React.FC = () => {
           </Typography>
         </Box>
         <Divider />
+        <MenuItem onClick={() => navigate('/settings')}>
+          <SettingsIcon fontSize="small" sx={{ mr: 1 }} />
+          Settings
+        </MenuItem>
         <MenuItem onClick={handleLogout}>
           <LogoutIcon fontSize="small" sx={{ mr: 1 }} />
           Sign out
