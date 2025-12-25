@@ -85,8 +85,6 @@ export const TransactionFilters = ({
     maxAmount !== undefined ||
     descriptionSearch ||
     selectedAccountId ||
-    startDate ||
-    endDate ||
     excludeTransfers === false ||
     categorizationFilter !== 'all' ||
     transactionType !== 'all'
