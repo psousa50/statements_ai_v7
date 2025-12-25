@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { Category, Account } from '../types/Transaction'
 import { CategorySelector } from './CategorySelector'
 import { DatePeriodNavigator } from './DatePeriodNavigator'
@@ -55,6 +55,29 @@ export const TransactionFilters = ({
   onClearFilters,
 }: TransactionFiltersProps) => {
   const [isCollapsed, setIsCollapsed] = useState(false)
+  const [showSecondaryFilters, setShowSecondaryFilters] = useState(false)
+
+  const hasActiveSecondaryFilters =
+    transactionType !== 'all' ||
+    selectedAccountId !== undefined ||
+    minAmount !== undefined ||
+    maxAmount !== undefined ||
+    categorizationFilter !== 'all' ||
+    excludeTransfers === false
+
+  const activeSecondaryFiltersCount = [
+    transactionType !== 'all',
+    selectedAccountId !== undefined,
+    minAmount !== undefined || maxAmount !== undefined,
+    categorizationFilter !== 'all',
+    excludeTransfers === false,
+  ].filter(Boolean).length
+
+  useEffect(() => {
+    if (hasActiveSecondaryFilters && !showSecondaryFilters) {
+      setShowSecondaryFilters(true)
+    }
+  }, [hasActiveSecondaryFilters, showSecondaryFilters])
 
   const hasActiveFilters =
     selectedCategoryIds.length > 0 ||
@@ -91,6 +114,16 @@ export const TransactionFilters = ({
             </button>
           )}
           <button
+            type="button"
+            className={`more-filters-toggle ${showSecondaryFilters ? 'active' : ''}`}
+            onClick={() => setShowSecondaryFilters(!showSecondaryFilters)}
+          >
+            {showSecondaryFilters ? 'Fewer' : 'More'}
+            {!showSecondaryFilters && activeSecondaryFiltersCount > 0 && (
+              <span className="active-filters-badge">{activeSecondaryFiltersCount}</span>
+            )}
+          </button>
+          <button
             onClick={() => setIsCollapsed(!isCollapsed)}
             className="collapse-toggle-button"
             aria-label={isCollapsed ? 'Expand filters' : 'Collapse filters'}
@@ -102,9 +135,7 @@ export const TransactionFilters = ({
 
       {!isCollapsed && (
         <div className="filters-container">
-          {/* Primary Filters Row */}
           <div className="filters-row primary-filters">
-            {/* Search */}
             <div className="filter-group search-group">
               <label htmlFor="description-search" className="filter-label">
                 Search
@@ -119,7 +150,6 @@ export const TransactionFilters = ({
               />
             </div>
 
-            {/* Date Range */}
             <div className="filter-group date-group">
               <label className="filter-label">Date Range</label>
               {onDateRangeChange ? (
@@ -133,114 +163,13 @@ export const TransactionFilters = ({
                 <div className="filter-placeholder">Not available</div>
               )}
             </div>
-          </div>
 
-          {/* Secondary Filters Row */}
-          <div className="filters-row secondary-filters">
-            {/* Transaction Type */}
-            <div className="filter-group">
-              <label htmlFor="transaction-type-filter" className="filter-label">
-                Transaction Type
-              </label>
-              <select
-                id="transaction-type-filter"
-                value={transactionType}
-                onChange={(e) => onTransactionTypeChange(e.target.value as 'all' | 'debit' | 'credit')}
-                className="filter-input filter-select"
-              >
-                <option value="all">All Transactions</option>
-                <option value="debit">Debits Only</option>
-                <option value="credit">Credits Only</option>
-              </select>
-            </div>
-
-            {/* Account */}
-            <div className="filter-group">
-              <label htmlFor="account-filter" className="filter-label">
-                Account
-              </label>
-              <select
-                id="account-filter"
-                value={selectedAccountId || ''}
-                onChange={(e) => onAccountChange(e.target.value || undefined)}
-                className="filter-input filter-select"
-              >
-                <option value="">All Accounts</option>
-                {accounts.map((account) => (
-                  <option key={account.id} value={account.id}>
-                    {account.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Amount Range */}
-            <div className="filter-group amount-group">
-              <label className="filter-label">Amount Range</label>
-              <div className="amount-range-inputs">
-                <input
-                  type="number"
-                  value={minAmount ?? ''}
-                  onChange={(e) => handleAmountChange('min', e.target.value)}
-                  placeholder="Min"
-                  className="filter-input amount-input"
-                  step="0.01"
-                />
-                <span className="amount-separator">to</span>
-                <input
-                  type="number"
-                  value={maxAmount ?? ''}
-                  onChange={(e) => handleAmountChange('max', e.target.value)}
-                  placeholder="Max"
-                  className="filter-input amount-input"
-                  step="0.01"
-                />
-              </div>
-            </div>
-
-            {/* Categorization Filter */}
-            <div className="filter-group">
-              <label htmlFor="categorization-filter" className="filter-label">
-                Categorization
-              </label>
-              <select
-                id="categorization-filter"
-                value={categorizationFilter}
-                onChange={(e) => onCategorizationFilterChange(e.target.value as CategorizationFilter)}
-                className="filter-input filter-select"
-              >
-                <option value="all">All</option>
-                <option value="categorized">Categorized only</option>
-                {!hideUncategorizedOnlyOption && <option value="uncategorized">Uncategorized only</option>}
-              </select>
-            </div>
-
-            {/* Options */}
-            <div className="filter-group options-group">
-              <label className="filter-label">Options</label>
-              <div className="checkbox-container">
-                <label htmlFor="exclude-transfers" className="checkbox-label">
-                  <input
-                    id="exclude-transfers"
-                    type="checkbox"
-                    checked={excludeTransfers !== false}
-                    onChange={(e) => onExcludeTransfersChange(e.target.checked)}
-                    className="checkbox-input"
-                  />
-                  <span className="checkbox-text">Exclude Transfers</span>
-                </label>
-              </div>
-            </div>
-          </div>
-
-          {/* Categories Row - Full width */}
-          <div className="filters-row categories-row">
             <div className="filter-group categories-group">
               <label className="filter-label">Categories</label>
               <CategorySelector
                 categories={categories}
                 selectedCategoryIds={selectedCategoryIds}
-                onCategoryChange={() => {}} // Not used in multiple mode
+                onCategoryChange={() => {}}
                 onCategoryIdsChange={onCategoryChange}
                 placeholder="Type to add categories..."
                 multiple={true}
@@ -249,6 +178,100 @@ export const TransactionFilters = ({
               />
             </div>
           </div>
+
+          {showSecondaryFilters && (
+            <div className="filters-row secondary-filters">
+              <div className="filter-group">
+                <label htmlFor="transaction-type-filter" className="filter-label">
+                  Type
+                </label>
+                <select
+                  id="transaction-type-filter"
+                  value={transactionType}
+                  onChange={(e) => onTransactionTypeChange(e.target.value as 'all' | 'debit' | 'credit')}
+                  className="filter-input filter-select"
+                >
+                  <option value="all">All</option>
+                  <option value="debit">Debits</option>
+                  <option value="credit">Credits</option>
+                </select>
+              </div>
+
+              <div className="filter-group">
+                <label htmlFor="account-filter" className="filter-label">
+                  Account
+                </label>
+                <select
+                  id="account-filter"
+                  value={selectedAccountId || ''}
+                  onChange={(e) => onAccountChange(e.target.value || undefined)}
+                  className="filter-input filter-select"
+                >
+                  <option value="">All Accounts</option>
+                  {accounts.map((account) => (
+                    <option key={account.id} value={account.id}>
+                      {account.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="filter-group amount-group">
+                <label className="filter-label">Amount</label>
+                <div className="amount-range-inputs">
+                  <input
+                    type="number"
+                    value={minAmount ?? ''}
+                    onChange={(e) => handleAmountChange('min', e.target.value)}
+                    placeholder="Min"
+                    className="filter-input amount-input"
+                    step="0.01"
+                  />
+                  <span className="amount-separator">–</span>
+                  <input
+                    type="number"
+                    value={maxAmount ?? ''}
+                    onChange={(e) => handleAmountChange('max', e.target.value)}
+                    placeholder="Max"
+                    className="filter-input amount-input"
+                    step="0.01"
+                  />
+                </div>
+              </div>
+
+              <div className="filter-group">
+                <label htmlFor="categorization-filter" className="filter-label">
+                  Status
+                </label>
+                <select
+                  id="categorization-filter"
+                  value={categorizationFilter}
+                  onChange={(e) => onCategorizationFilterChange(e.target.value as CategorizationFilter)}
+                  className="filter-input filter-select"
+                >
+                  <option value="all">All</option>
+                  <option value="categorized">Categorised</option>
+                  {!hideUncategorizedOnlyOption && <option value="uncategorized">Uncategorised</option>}
+                </select>
+              </div>
+
+              <div className="filter-group options-group">
+                <label className="filter-label">Options</label>
+                <div className="checkbox-container">
+                  <label htmlFor="exclude-transfers" className="checkbox-label">
+                    <input
+                      id="exclude-transfers"
+                      type="checkbox"
+                      checked={excludeTransfers !== false}
+                      onChange={(e) => onExcludeTransfersChange(e.target.checked)}
+                      className="checkbox-input"
+                    />
+                    <span className="checkbox-text">Exclude Transfers</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
