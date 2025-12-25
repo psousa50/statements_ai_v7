@@ -9,13 +9,23 @@ import { TransactionModal } from '../components/TransactionModal'
 import { Pagination } from '../components/Pagination'
 import { CategorizationStatus, TransactionCreate, Transaction } from '../types/Transaction'
 import { TransactionFilters as FilterType } from '../api/TransactionClient'
+import { getMonthRange, formatDateToString } from '../components/DatePeriodNavigator/dateUtils'
 import './TransactionsPage.css'
+
+function getDefaultMonthRange() {
+  const range = getMonthRange(new Date())
+  return {
+    start: formatDateToString(range.startDate),
+    end: formatDateToString(range.endDate),
+  }
+}
+
+const DEFAULT_DATE_RANGE = getDefaultMonthRange()
 
 export const TransactionsPage = () => {
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
 
-  // Initialize filters from URL parameters
   const getInitialFilters = (): FilterType => {
     const urlDescriptionSearch = searchParams.get('description_search')
     const urlMinAmount = searchParams.get('min_amount')
@@ -40,8 +50,8 @@ export const TransactionsPage = () => {
       description_search: urlDescriptionSearch || undefined,
       min_amount: urlMinAmount ? parseFloat(urlMinAmount) : undefined,
       max_amount: urlMaxAmount ? parseFloat(urlMaxAmount) : undefined,
-      start_date: urlStartDate || undefined,
-      end_date: urlEndDate || undefined,
+      start_date: urlStartDate || DEFAULT_DATE_RANGE.start,
+      end_date: urlEndDate || DEFAULT_DATE_RANGE.end,
       status: (urlStatus as CategorizationStatus) || undefined,
       account_id: urlAccountId || undefined,
       category_ids: urlCategoryIds ? urlCategoryIds.split(',') : undefined,
@@ -71,8 +81,12 @@ export const TransactionsPage = () => {
   const [localMaxAmount, setLocalMaxAmount] = useState<number | undefined>(
     searchParams.get('max_amount') ? parseFloat(searchParams.get('max_amount')!) : undefined
   )
-  const [localStartDate, setLocalStartDate] = useState<string>(searchParams.get('start_date') || '')
-  const [localEndDate, setLocalEndDate] = useState<string>(searchParams.get('end_date') || '')
+  const [localStartDate, setLocalStartDate] = useState<string>(
+    searchParams.get('start_date') || DEFAULT_DATE_RANGE.start
+  )
+  const [localEndDate, setLocalEndDate] = useState<string>(
+    searchParams.get('end_date') || DEFAULT_DATE_RANGE.end
+  )
   const [categorizationFilter, setCategorizationFilter] = useState<CategorizationFilter>('all')
 
   const debounceTimeoutRef = useRef<NodeJS.Timeout>()
@@ -109,8 +123,8 @@ export const TransactionsPage = () => {
     setLocalDescriptionSearch(searchParams.get('description_search') || '')
     setLocalMinAmount(searchParams.get('min_amount') ? parseFloat(searchParams.get('min_amount')!) : undefined)
     setLocalMaxAmount(searchParams.get('max_amount') ? parseFloat(searchParams.get('max_amount')!) : undefined)
-    setLocalStartDate(searchParams.get('start_date') || '')
-    setLocalEndDate(searchParams.get('end_date') || '')
+    setLocalStartDate(searchParams.get('start_date') || DEFAULT_DATE_RANGE.start)
+    setLocalEndDate(searchParams.get('end_date') || DEFAULT_DATE_RANGE.end)
   }, [searchParams])
 
   // Load data on mount with initial filters from URL
@@ -275,8 +289,8 @@ export const TransactionsPage = () => {
   }, [])
 
   const handleDateRangeFilter = useCallback((startDate?: string, endDate?: string) => {
-    setLocalStartDate(startDate || '')
-    setLocalEndDate(endDate || '')
+    setLocalStartDate(startDate || DEFAULT_DATE_RANGE.start)
+    setLocalEndDate(endDate || DEFAULT_DATE_RANGE.end)
   }, [])
 
   const handleClearFilters = useCallback(() => {
