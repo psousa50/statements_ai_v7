@@ -101,9 +101,16 @@ export const TransactionFilters = ({
     [minAmount, maxAmount, onAmountRangeChange]
   )
 
+  const handleHeaderClick = (e: React.MouseEvent) => {
+    if ((e.target as HTMLElement).closest('.filter-header-actions')) {
+      return
+    }
+    setIsCollapsed(!isCollapsed)
+  }
+
   return (
     <div className={`transaction-filters-advanced ${isCollapsed ? 'collapsed' : ''}`}>
-      <div className="filter-header">
+      <div className="filter-header" onClick={handleHeaderClick}>
         <h3>Filters</h3>
         <div className="filter-header-actions">
           {hasActiveFilters && (
