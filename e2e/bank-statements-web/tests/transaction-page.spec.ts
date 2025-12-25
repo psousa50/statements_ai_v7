@@ -1,22 +1,29 @@
 import { test, expect } from '@playwright/test';
 import { createTransactions, deleteAllTransactions, getAuthCookies, testLogin } from './api-helper';
 
+function getCurrentMonthDate(day: number): string {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  return `${year}-${month}-${String(day).padStart(2, '0')}`;
+}
+
 test.describe('Transaction Page', () => {
   const testId = `test-${Date.now()}`;
 
   const testTransactions = [
     {
-      date: '2025-01-01',
+      date: getCurrentMonthDate(1),
       description: `Grocery Shopping (${testId})`,
       amount: -75.5,
     },
     {
-      date: '2025-01-02',
+      date: getCurrentMonthDate(2),
       description: `Salary Deposit (${testId})`,
       amount: 2500.0,
     },
     {
-      date: '2025-01-03',
+      date: getCurrentMonthDate(3),
       description: `Restaurant Bill (${testId})`,
       amount: -45.75,
     },
