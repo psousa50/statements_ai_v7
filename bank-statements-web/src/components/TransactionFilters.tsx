@@ -1,8 +1,7 @@
-import { useState, useCallback, useRef, useEffect } from 'react'
-import { DateRangePicker } from 'rsuite'
+import { useState, useCallback } from 'react'
 import { Category, Account } from '../types/Transaction'
 import { CategorySelector } from './CategorySelector'
-import 'rsuite/dist/rsuite.min.css'
+import { DatePeriodNavigator } from './DatePeriodNavigator'
 
 export type CategorizationFilter = 'all' | 'categorized' | 'uncategorized'
 
@@ -31,20 +30,6 @@ interface TransactionFiltersProps {
   onClearFilters: () => void
 }
 
-const formatDateForInput = (date: Date): string => {
-  // Ensure we're working with a valid date and format it as YYYY-MM-DD
-  const validDate = new Date(date)
-  if (isNaN(validDate.getTime())) {
-    throw new Error('Invalid date provided to formatDateForInput')
-  }
-
-  const year = validDate.getFullYear()
-  const month = String(validDate.getMonth() + 1).padStart(2, '0')
-  const day = String(validDate.getDate()).padStart(2, '0')
-
-  return `${year}-${month}-${day}`
-}
-
 export const TransactionFilters = ({
   categories,
   accounts,
@@ -70,24 +55,6 @@ export const TransactionFilters = ({
   onClearFilters,
 }: TransactionFiltersProps) => {
   const [isCollapsed, setIsCollapsed] = useState(false)
-  const datePickerRef = useRef<HTMLDivElement>(null)
-
-  // Date range state for RSuite DateRangePicker
-  const [dateRange, setDateRange] = useState<[Date, Date] | null>(() => {
-    if (startDate && endDate) {
-      return [new Date(startDate), new Date(endDate)]
-    }
-    return null
-  })
-
-  // Update local date range when props change
-  useEffect(() => {
-    if (startDate && endDate) {
-      setDateRange([new Date(startDate), new Date(endDate)])
-    } else {
-      setDateRange(null)
-    }
-  }, [startDate, endDate])
 
   const hasActiveFilters =
     selectedCategoryIds.length > 0 ||
@@ -100,91 +67,6 @@ export const TransactionFilters = ({
     excludeTransfers === false ||
     categorizationFilter !== 'all' ||
     transactionType !== 'all'
-
-  const handleDateRangeChange = useCallback(
-    (range: [Date, Date] | null) => {
-      setDateRange(range)
-
-      if (range && range[0] && range[1] && onDateRangeChange) {
-        const startDateStr = formatDateForInput(range[0])
-        const endDateStr = formatDateForInput(range[1])
-        onDateRangeChange(startDateStr, endDateStr)
-      } else if (range === null && onDateRangeChange) {
-        onDateRangeChange(undefined, undefined)
-      }
-    },
-    [onDateRangeChange]
-  )
-
-  // Define predefined ranges for RSuite
-  const predefinedRanges = [
-    {
-      label: 'Today',
-      value: [new Date(), new Date()] as [Date, Date],
-    },
-    {
-      label: 'Yesterday',
-      value: (() => {
-        const yesterday = new Date()
-        yesterday.setDate(yesterday.getDate() - 1)
-        return [yesterday, yesterday] as [Date, Date]
-      })(),
-    },
-    {
-      label: 'Last 7 Days',
-      value: (() => {
-        const end = new Date()
-        const start = new Date()
-        start.setDate(start.getDate() - 6)
-        return [start, end] as [Date, Date]
-      })(),
-    },
-    {
-      label: 'Last 30 Days',
-      value: (() => {
-        const end = new Date()
-        const start = new Date()
-        start.setDate(start.getDate() - 29)
-        return [start, end] as [Date, Date]
-      })(),
-    },
-    {
-      label: 'This Month',
-      value: (() => {
-        const now = new Date()
-        const start = new Date(now.getFullYear(), now.getMonth(), 1)
-        const end = new Date()
-        return [start, end] as [Date, Date]
-      })(),
-    },
-    {
-      label: 'Last Month',
-      value: (() => {
-        const now = new Date()
-        const start = new Date(now.getFullYear(), now.getMonth() - 1, 1)
-        const end = new Date(now.getFullYear(), now.getMonth(), 0)
-        return [start, end] as [Date, Date]
-      })(),
-    },
-    {
-      label: 'This Year',
-      value: (() => {
-        const now = new Date()
-        const start = new Date(now.getFullYear(), 0, 1)
-        const end = new Date()
-        return [start, end] as [Date, Date]
-      })(),
-    },
-    {
-      label: 'Last Year',
-      value: (() => {
-        const now = new Date()
-        const start = new Date(now.getFullYear() - 1, 0, 1)
-        const end = new Date(now.getFullYear() - 1, 11, 31)
-        return [start, end] as [Date, Date]
-      })(),
-    },
-  ]
 
   const handleAmountChange = useCallback(
     (field: 'min' | 'max', value: string) => {
@@ -241,21 +123,12 @@ export const TransactionFilters = ({
             <div className="filter-group date-group">
               <label className="filter-label">Date Range</label>
               {onDateRangeChange ? (
-                <div className="date-range-picker" ref={datePickerRef}>
-                  <DateRangePicker
-                    value={dateRange}
-                    onChange={handleDateRangeChange}
-                    ranges={predefinedRanges}
-                    placeholder="Select date range"
-                    cleanable
-                    showOneCalendar={false}
-                    format="dd/MM/yyyy"
-                    character=" - "
-                    size="md"
-                    placement="bottomStart"
-                    className="date-range-picker-input"
-                  />
-                </div>
+                <DatePeriodNavigator
+                  startDate={startDate}
+                  endDate={endDate}
+                  onChange={onDateRangeChange}
+                  defaultPeriodType="month"
+                />
               ) : (
                 <div className="filter-placeholder">Not available</div>
               )}
