@@ -179,7 +179,7 @@
 /* Compact header when collapsed */
 .transactions-page .transaction-filters-advanced.collapsed .filter-header {
   margin-bottom: 0;
-  padding-bottom: 0.125rem;
+  padding-bottom: 0.5rem;
   min-height: 24px;
 }
 
