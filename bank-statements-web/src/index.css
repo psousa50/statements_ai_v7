@@ -278,34 +278,6 @@ select:disabled {
   background-color: var(--bg-tertiary);
 }
 
-/* Minimal RSuite Dark Mode Fixes */
-
-/* Fix date hover tooltip */
-.rs-calendar-table-cell-content[title]::after,
-.rs-picker-daterange-panel .rs-tooltip,
-.rs-tooltip.rs-tooltip-placement-top {
-  background-color: var(--bg-tertiary) !important;
-  color: var(--text-primary) !important;
-  border-color: var(--border-primary) !important;
-}
-
-/* Fix predefined range button text contrast */
-.rs-theme-dark .rs-picker-daterange-predefined .rs-picker-daterange-predefined-item {
-  color: rgba(255, 255, 255, 0.8) !important;
-}
-
-.rs-theme-dark .rs-picker-daterange-predefined .rs-picker-daterange-predefined-item:hover {
-  color: rgba(255, 255, 255, 0.95) !important;
-  background-color: rgba(255, 255, 255, 0.1) !important;
-}
-
-/* Fix any remaining tooltip positioning */
-.rs-picker-daterange-panel [role='tooltip'] {
-  background-color: var(--bg-tertiary) !important;
-  color: var(--text-primary) !important;
-  border: 1px solid var(--border-primary) !important;
-}
-
 /* Enhanced Button Variants */
 .button-primary {
   background-color: var(--button-primary);

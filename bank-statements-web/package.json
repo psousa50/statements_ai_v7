@@ -22,11 +22,11 @@
     "date-fns": "^3.6.0",
     "pnpm": "^10.11.1",
     "react": "^18.2.0",
+    "react-day-picker": "^9.13.0",
     "react-dom": "^18.2.0",
     "react-dropzone": "^14.3.8",
     "react-router-dom": "^7.6.0",
-    "recharts": "^2.15.3",
-    "rsuite": "^5.82.0"
+    "recharts": "^2.15.3"
   },
   "devDependencies": {
     "@rollup/rollup-linux-arm64-gnu": "^4.40.2",
