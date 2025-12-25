@@ -1,5 +1,14 @@
 Analyse the current git diff and propose a series of logical, atomic commits.
 
+## Context Awareness
+
+Before analysing the diff, review the current conversation to understand:
+- What problem or feature was being addressed
+- Key decisions or trade-offs discussed
+- The user's original intent
+
+Use this context to write commit messages that explain the rationale behind changes, not just describe what changed. The diff remains the primary source of truth for *what* changed; the conversation provides the *why*.
+
 ## Instructions
 
 1. Run `git diff` to get all unstaged changes and `git diff --cached` for staged changes
