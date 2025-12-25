@@ -289,8 +289,8 @@ export const TransactionsPage = () => {
   }, [])
 
   const handleDateRangeFilter = useCallback((startDate?: string, endDate?: string) => {
-    setLocalStartDate(startDate || DEFAULT_DATE_RANGE.start)
-    setLocalEndDate(endDate || DEFAULT_DATE_RANGE.end)
+    setLocalStartDate(startDate ?? '')
+    setLocalEndDate(endDate ?? '')
   }, [])
 
   const handleClearFilters = useCallback(() => {

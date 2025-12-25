@@ -22,7 +22,7 @@ interface DatePeriodNavigatorProps {
   defaultPeriodType?: PeriodType
 }
 
-const PERIOD_TYPES: PeriodType[] = ['week', 'month', 'year']
+const PERIOD_TYPES: PeriodType[] = ['all', 'week', 'month', 'year']
 
 export function DatePeriodNavigator({
   startDate,
@@ -51,14 +51,12 @@ export function DatePeriodNavigator({
         setCurrentPeriod(parseDateString(startDate))
       }
     } else {
-      const now = new Date()
-      const range = getPeriodRange(defaultPeriodType, now)
-      setCurrentPeriod(now)
-      onChange(formatDateToString(range.startDate), formatDateToString(range.endDate))
+      setPeriodType('all')
+      setIsCustomMode(false)
     }
 
     hasInitialised.current = true
-  }, [startDate, endDate, defaultPeriodType, onChange])
+  }, [startDate, endDate])
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -77,10 +75,14 @@ export function DatePeriodNavigator({
     (newType: PeriodType) => {
       setPeriodType(newType)
       setIsCustomMode(false)
-      const now = new Date()
-      setCurrentPeriod(now)
-      const range = getPeriodRange(newType, now)
-      onChange(formatDateToString(range.startDate), formatDateToString(range.endDate))
+      if (newType === 'all') {
+        onChange(undefined, undefined)
+      } else {
+        const now = new Date()
+        setCurrentPeriod(now)
+        const range = getPeriodRange(newType, now)
+        onChange(formatDateToString(range.startDate), formatDateToString(range.endDate))
+      }
     },
     [onChange]
   )
@@ -123,10 +125,12 @@ export function DatePeriodNavigator({
     [handleNavigate, showCustomPicker]
   )
 
-  const currentRange = getPeriodRange(periodType, currentPeriod)
-  const displayLabel = isCustomMode
-    ? formatCustomRangeLabel(startDate, endDate)
-    : currentRange.displayLabel
+  const isAllDates = periodType === 'all'
+  const displayLabel = isAllDates
+    ? 'All dates'
+    : isCustomMode
+      ? formatCustomRangeLabel(startDate, endDate)
+      : getPeriodRange(periodType, currentPeriod).displayLabel
 
   const dateRangeValue: [Date, Date] | null =
     startDate && endDate ? [parseDateString(startDate), parseDateString(endDate)] : null
@@ -145,65 +149,66 @@ export function DatePeriodNavigator({
             {type.charAt(0).toUpperCase() + type.slice(1)}
           </button>
         ))}
-      </div>
-
-      <div className="period-navigation">
-        <button
-          type="button"
-          className="nav-arrow"
-          onClick={() => handleNavigate('prev')}
-          aria-label={`Previous ${periodType}`}
-        >
-          <ChevronLeftIcon fontSize="small" />
-        </button>
-
-        <span className="period-label" aria-live="polite">
-          {displayLabel}
-        </span>
-
-        <button
-          type="button"
-          className="nav-arrow"
-          onClick={() => handleNavigate('next')}
-          aria-label={`Next ${periodType}`}
-        >
-          <ChevronRightIcon fontSize="small" />
-        </button>
-      </div>
-
-      <div className="custom-picker-container" ref={customPickerRef}>
-        <button
-          type="button"
-          className={`custom-picker-trigger ${isCustomMode ? 'active' : ''}`}
-          onClick={() => setShowCustomPicker(!showCustomPicker)}
-          aria-expanded={showCustomPicker}
-          aria-haspopup="dialog"
-        >
-          Custom
-          <ExpandMoreIcon
-            fontSize="small"
-            className={`custom-picker-chevron ${showCustomPicker ? 'open' : ''}`}
-          />
-        </button>
-
-        {showCustomPicker && (
-          <div className="custom-picker-dropdown" role="dialog" aria-label="Custom date range">
-            <DateRangePicker
-              value={dateRangeValue}
-              onChange={handleCustomDateChange}
-              placeholder="Select date range"
-              cleanable={false}
-              showOneCalendar
-              format="dd/MM/yyyy"
-              character=" - "
-              size="md"
-              placement="bottomEnd"
-              open
-              oneTap={false}
+        <div className="custom-picker-container" ref={customPickerRef}>
+          <button
+            type="button"
+            className={`period-type-btn custom-picker-trigger ${isCustomMode ? 'active' : ''}`}
+            onClick={() => setShowCustomPicker(!showCustomPicker)}
+            aria-expanded={showCustomPicker}
+            aria-haspopup="dialog"
+          >
+            Custom
+            <ExpandMoreIcon
+              fontSize="small"
+              className={`custom-picker-chevron ${showCustomPicker ? 'open' : ''}`}
             />
-          </div>
-        )}
+          </button>
+          {showCustomPicker && (
+            <div className="custom-picker-dropdown" role="dialog" aria-label="Custom date range">
+              <DateRangePicker
+                value={dateRangeValue}
+                onChange={handleCustomDateChange}
+                placeholder="Select date range"
+                cleanable={false}
+                showOneCalendar
+                format="dd/MM/yyyy"
+                character=" - "
+                size="md"
+                placement="bottomEnd"
+                open
+                oneTap={false}
+              />
+            </div>
+          )}
+        </div>
       </div>
+
+      {!isAllDates && (
+        <div className="period-navigation">
+          <button
+            type="button"
+            className="nav-arrow"
+            onClick={() => handleNavigate('prev')}
+            aria-label={`Previous ${periodType}`}
+          >
+            <ChevronLeftIcon fontSize="small" />
+          </button>
+
+          <span className="period-label" aria-live="polite">
+            {displayLabel}
+          </span>
+
+          <button
+            type="button"
+            className="nav-arrow"
+            onClick={() => handleNavigate('next')}
+            aria-label={`Next ${periodType}`}
+          >
+            <ChevronRightIcon fontSize="small" />
+          </button>
+        </div>
+      )}
+
     </div>
   )
 }

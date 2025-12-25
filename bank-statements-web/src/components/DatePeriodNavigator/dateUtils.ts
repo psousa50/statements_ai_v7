@@ -1,4 +1,4 @@
-export type PeriodType = 'week' | 'month' | 'year'
+export type PeriodType = 'all' | 'week' | 'month' | 'year'
 
 export interface PeriodRange {
   startDate: Date
@@ -93,6 +93,8 @@ export function getYearRange(date: Date): PeriodRange {
 
 export function getPeriodRange(periodType: PeriodType, date: Date): PeriodRange {
   switch (periodType) {
+    case 'all':
+      return { startDate: date, endDate: date, displayLabel: 'All dates' }
     case 'week':
       return getWeekRange(date)
     case 'month':
@@ -111,6 +113,8 @@ export function navigatePeriod(
   const delta = direction === 'next' ? 1 : -1
 
   switch (periodType) {
+    case 'all':
+      break
     case 'week':
       result.setDate(result.getDate() + delta * 7)
       break
