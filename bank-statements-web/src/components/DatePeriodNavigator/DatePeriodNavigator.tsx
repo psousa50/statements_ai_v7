@@ -1,6 +1,17 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { DateRangePicker } from 'rsuite'
-import 'rsuite/dist/rsuite.min.css'
+import { DayPicker, DateRange } from 'react-day-picker'
+import 'react-day-picker/style.css'
+import {
+  startOfDay,
+  endOfDay,
+  subDays,
+  startOfMonth,
+  endOfMonth,
+  subMonths,
+  startOfWeek,
+  endOfWeek,
+  subWeeks,
+} from 'date-fns'
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft'
 import ChevronRightIcon from '@mui/icons-material/ChevronRight'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
@@ -22,7 +33,62 @@ interface DatePeriodNavigatorProps {
   defaultPeriodType?: PeriodType
 }
 
+interface PresetRange {
+  label: string
+  getRange: () => { from: Date; to: Date }
+}
+
 const PERIOD_TYPES: PeriodType[] = ['all', 'week', 'month', 'year']
+
+const PRESET_RANGES: PresetRange[] = [
+  {
+    label: 'Today',
+    getRange: () => ({ from: startOfDay(new Date()), to: endOfDay(new Date()) }),
+  },
+  {
+    label: 'Yesterday',
+    getRange: () => {
+      const yesterday = subDays(new Date(), 1)
+      return { from: startOfDay(yesterday), to: endOfDay(yesterday) }
+    },
+  },
+  {
+    label: 'Last 7 days',
+    getRange: () => ({ from: startOfDay(subDays(new Date(), 6)), to: endOfDay(new Date()) }),
+  },
+  {
+    label: 'Last 30 days',
+    getRange: () => ({ from: startOfDay(subDays(new Date(), 29)), to: endOfDay(new Date()) }),
+  },
+  {
+    label: 'This week',
+    getRange: () => ({
+      from: startOfWeek(new Date(), { weekStartsOn: 1 }),
+      to: endOfWeek(new Date(), { weekStartsOn: 1 }),
+    }),
+  },
+  {
+    label: 'Last week',
+    getRange: () => {
+      const lastWeek = subWeeks(new Date(), 1)
+      return {
+        from: startOfWeek(lastWeek, { weekStartsOn: 1 }),
+        to: endOfWeek(lastWeek, { weekStartsOn: 1 }),
+      }
+    },
+  },
+  {
+    label: 'This month',
+    getRange: () => ({ from: startOfMonth(new Date()), to: endOfMonth(new Date()) }),
+  },
+  {
+    label: 'Last month',
+    getRange: () => {
+      const lastMonth = subMonths(new Date(), 1)
+      return { from: startOfMonth(lastMonth), to: endOfMonth(lastMonth) }
+    },
+  },
+]
 
 export function DatePeriodNavigator({
   startDate,
@@ -34,6 +100,8 @@ export function DatePeriodNavigator({
   const [currentPeriod, setCurrentPeriod] = useState<Date>(() => new Date())
   const [isCustomMode, setIsCustomMode] = useState(false)
   const [showCustomPicker, setShowCustomPicker] = useState(false)
+  const [selectedRange, setSelectedRange] = useState<DateRange | undefined>(undefined)
+  const [isSelectingRange, setIsSelectingRange] = useState(false)
   const customPickerRef = useRef<HTMLDivElement>(null)
   const hasInitialised = useRef(false)
 
@@ -50,6 +118,10 @@ export function DatePeriodNavigator({
         setIsCustomMode(true)
         setCurrentPeriod(parseDateString(startDate))
       }
+      setSelectedRange({
+        from: parseDateString(startDate),
+        to: parseDateString(endDate),
+      })
     } else {
       setPeriodType('all')
       setIsCustomMode(false)
@@ -77,11 +149,13 @@ export function DatePeriodNavigator({
       setIsCustomMode(false)
       if (newType === 'all') {
         onChange(undefined, undefined)
+        setSelectedRange(undefined)
       } else {
         const now = new Date()
         setCurrentPeriod(now)
         const range = getPeriodRange(newType, now)
         onChange(formatDateToString(range.startDate), formatDateToString(range.endDate))
+        setSelectedRange({ from: range.startDate, to: range.endDate })
       }
     },
     [onChange]
@@ -94,21 +168,48 @@ export function DatePeriodNavigator({
       setIsCustomMode(false)
       const range = getPeriodRange(periodType, newDate)
       onChange(formatDateToString(range.startDate), formatDateToString(range.endDate))
+      setSelectedRange({ from: range.startDate, to: range.endDate })
     },
     [periodType, currentPeriod, onChange]
   )
 
-  const handleCustomDateChange = useCallback(
-    (range: [Date, Date] | null) => {
-      if (range && range[0] && range[1]) {
-        setIsCustomMode(true)
-        setShowCustomPicker(false)
-        setCurrentPeriod(range[0])
-        onChange(formatDateToString(range[0]), formatDateToString(range[1]))
+  const handleRangeSelect = useCallback(
+    (range: DateRange | undefined) => {
+      setSelectedRange(range)
+      if (range?.from && !range?.to) {
+        setIsSelectingRange(true)
+      } else if (range?.from && range?.to) {
+        if (isSelectingRange || range.from.getTime() !== range.to.getTime()) {
+          setIsCustomMode(true)
+          setShowCustomPicker(false)
+          setCurrentPeriod(range.from)
+          setIsSelectingRange(false)
+          onChange(formatDateToString(range.from), formatDateToString(range.to))
+        }
       }
+    },
+    [onChange, isSelectingRange]
+  )
+
+  const handlePresetClick = useCallback(
+    (preset: PresetRange) => {
+      const { from, to } = preset.getRange()
+      setSelectedRange({ from, to })
+      setIsCustomMode(true)
+      setShowCustomPicker(false)
+      setCurrentPeriod(from)
+      onChange(formatDateToString(from), formatDateToString(to))
     },
     [onChange]
   )
+
+  const handleToggleCustomPicker = useCallback(() => {
+    if (!showCustomPicker) {
+      setSelectedRange(undefined)
+      setIsSelectingRange(false)
+    }
+    setShowCustomPicker(!showCustomPicker)
+  }, [showCustomPicker])
 
   const handleKeyDown = useCallback(
     (event: React.KeyboardEvent) => {
@@ -132,9 +233,6 @@ export function DatePeriodNavigator({
       ? formatCustomRangeLabel(startDate, endDate)
       : getPeriodRange(periodType, currentPeriod).displayLabel
 
-  const dateRangeValue: [Date, Date] | null =
-    startDate && endDate ? [parseDateString(startDate), parseDateString(endDate)] : null
-
   return (
     <div className="date-period-navigator" onKeyDown={handleKeyDown}>
       <div className="period-type-selector" role="group" aria-label="Period type">
@@ -153,7 +251,7 @@ export function DatePeriodNavigator({
           <button
             type="button"
             className={`period-type-btn custom-picker-trigger ${isCustomMode ? 'active' : ''}`}
-            onClick={() => setShowCustomPicker(!showCustomPicker)}
+            onClick={handleToggleCustomPicker}
             aria-expanded={showCustomPicker}
             aria-haspopup="dialog"
           >
@@ -165,19 +263,31 @@ export function DatePeriodNavigator({
           </button>
           {showCustomPicker && (
             <div className="custom-picker-dropdown" role="dialog" aria-label="Custom date range">
-              <DateRangePicker
-                value={dateRangeValue}
-                onChange={handleCustomDateChange}
-                placeholder="Select date range"
-                cleanable={false}
-                showOneCalendar
-                format="dd/MM/yyyy"
-                character=" - "
-                size="md"
-                placement="bottomEnd"
-                open
-                oneTap={false}
-              />
+              <div className="date-picker-layout">
+                <div className="preset-panel">
+                  {PRESET_RANGES.map((preset) => (
+                    <button
+                      key={preset.label}
+                      type="button"
+                      className="preset-btn"
+                      onClick={() => handlePresetClick(preset)}
+                    >
+                      {preset.label}
+                    </button>
+                  ))}
+                </div>
+                <div className="calendar-panel">
+                  <DayPicker
+                    mode="range"
+                    selected={selectedRange}
+                    onSelect={handleRangeSelect}
+                    numberOfMonths={1}
+                    showOutsideDays
+                    weekStartsOn={1}
+                    defaultMonth={selectedRange?.from || new Date()}
+                  />
+                </div>
+              </div>
             </div>
           )}
         </div>
@@ -185,30 +295,33 @@ export function DatePeriodNavigator({
 
       {!isAllDates && (
         <div className="period-navigation">
-          <button
-            type="button"
-            className="nav-arrow"
-            onClick={() => handleNavigate('prev')}
-            aria-label={`Previous ${periodType}`}
-          >
-            <ChevronLeftIcon fontSize="small" />
-          </button>
+          {!isCustomMode && (
+            <button
+              type="button"
+              className="nav-arrow"
+              onClick={() => handleNavigate('prev')}
+              aria-label={`Previous ${periodType}`}
+            >
+              <ChevronLeftIcon fontSize="small" />
+            </button>
+          )}
 
           <span className="period-label" aria-live="polite">
             {displayLabel}
           </span>
 
-          <button
-            type="button"
-            className="nav-arrow"
-            onClick={() => handleNavigate('next')}
-            aria-label={`Next ${periodType}`}
-          >
-            <ChevronRightIcon fontSize="small" />
-          </button>
+          {!isCustomMode && (
+            <button
+              type="button"
+              className="nav-arrow"
+              onClick={() => handleNavigate('next')}
+              aria-label={`Next ${periodType}`}
+            >
+              <ChevronRightIcon fontSize="small" />
+            </button>
+          )}
         </div>
       )}
-
     </div>
   )
 }

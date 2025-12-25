@@ -168,8 +168,21 @@ export function formatCustomRangeLabel(startDateStr?: string, endDateStr?: strin
     return 'Select dates'
   }
 
+  const detectedPeriod = detectPeriodType(startDateStr, endDateStr)
+  if (detectedPeriod) {
+    const startDate = parseDateString(startDateStr)
+    return getPeriodRange(detectedPeriod, startDate).displayLabel
+  }
+
   const startDate = parseDateString(startDateStr)
   const endDate = parseDateString(endDateStr)
+
+  if (isSameDay(startDate, endDate)) {
+    const day = startDate.getDate()
+    const month = formatShortMonth(startDate)
+    const year = startDate.getFullYear()
+    return `${day} ${month} ${year}`
+  }
 
   const startDay = startDate.getDate()
   const endDay = endDate.getDate()
