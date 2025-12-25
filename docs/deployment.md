@@ -226,3 +226,12 @@ Either:
 | `.github/workflows/deploy.yml` | CI/CD pipeline |
 | `scripts/setup-github-secrets.py` | Push secrets to GitHub |
 | `scripts/setup-render-env.py` | Push env vars to Render |
+
+---
+
+## Deplyment links
+- Google Auth: https://console.cloud.google.com/apis/credentials?project=bank-statements-482016
+- Render: https://dashboard.render.com/web/srv-d556v2dactks738d2fi0
+- Cloudflare:  https://dash.cloudflare.com/e5bb20dbe9abd53e2ce8c90f8b8cda33/pages/view/bank-statements-web
+- Neon: https://console.neon.tech/app/projects/plain-sound-47429716?database=neondb&branchId=br-misty-shape-a225ez7n
+- Github: https://github.com/psousa50/statements_ai_v7
