@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
 import { RecurringPattern } from '../api/TransactionClient'
 import { Category } from '../types/Transaction'
@@ -22,11 +22,15 @@ interface RecurringExpensesChartsProps {
   totalMonthlyRecurring: number
 }
 
+type ChartType = 'pie' | 'bar'
+
 export const RecurringExpensesCharts = ({
   patterns,
   categories,
   totalMonthlyRecurring,
 }: RecurringExpensesChartsProps) => {
+  const [chartType, setChartType] = useState<ChartType>('pie')
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-GB', {
       style: 'currency',
@@ -87,65 +91,84 @@ export const RecurringExpensesCharts = ({
       </div>
 
       <div className="recurring-charts-section">
-        <div className="chart-card">
-          <h4>By Category</h4>
-          <ResponsiveContainer width="100%" height={350}>
-            <PieChart>
-              <Pie
-                data={categoryChartData}
-                cx="50%"
-                cy="50%"
-                outerRadius={120}
-                dataKey="value"
-                label={({ name, percent }) => (percent >= 0.05 ? `${name} (${(percent * 100).toFixed(0)}%)` : '')}
-                labelLine={false}
-              >
-                {categoryChartData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.color} />
-                ))}
-              </Pie>
-              <Tooltip
-                formatter={(value: number) => formatCurrency(value)}
-                contentStyle={{
-                  backgroundColor: 'var(--bg-secondary)',
-                  border: '1px solid var(--border-primary)',
-                  borderRadius: '4px',
-                  color: 'var(--text-primary)',
-                }}
-                labelStyle={{ color: 'var(--text-primary)', fontWeight: 600 }}
-                itemStyle={{ color: 'var(--text-primary)' }}
-              />
-            </PieChart>
-          </ResponsiveContainer>
-          <p className="chart-hint">Hover over slices to see smaller categories</p>
+        <div className="chart-type-toggle">
+          <button
+            className={`toggle-btn ${chartType === 'pie' ? 'active' : ''}`}
+            onClick={() => setChartType('pie')}
+          >
+            Pie Chart
+          </button>
+          <button
+            className={`toggle-btn ${chartType === 'bar' ? 'active' : ''}`}
+            onClick={() => setChartType('bar')}
+          >
+            Bar Chart
+          </button>
         </div>
 
-        <div className="chart-card">
-          <h4>Monthly Cost by Category</h4>
-          <ResponsiveContainer width="100%" height={Math.max(350, categoryBarChartData.length * 35)}>
-            <BarChart data={categoryBarChartData} layout="vertical" margin={{ left: 20, right: 20 }}>
-              <XAxis type="number" tickFormatter={(value) => formatCurrency(value)} />
-              <YAxis type="category" dataKey="name" width={120} tick={{ fontSize: 12 }} />
-              <Tooltip
-                formatter={(value: number) => formatCurrency(value)}
-                labelFormatter={(label, payload) => payload?.[0]?.payload?.fullName || label}
-                contentStyle={{
-                  backgroundColor: 'var(--bg-secondary)',
-                  border: '1px solid var(--border-primary)',
-                  borderRadius: '4px',
-                  color: 'var(--text-primary)',
-                }}
-                labelStyle={{ color: 'var(--text-primary)', fontWeight: 600 }}
-                itemStyle={{ color: 'var(--text-primary)' }}
-              />
-              <Bar dataKey="value" radius={[0, 4, 4, 0]}>
-                {categoryBarChartData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.color} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
+        {chartType === 'pie' && (
+          <div className="chart-card">
+            <h4>By Category</h4>
+            <ResponsiveContainer width="100%" height={350}>
+              <PieChart>
+                <Pie
+                  data={categoryChartData}
+                  cx="50%"
+                  cy="50%"
+                  outerRadius={120}
+                  dataKey="value"
+                  label={({ name, percent }) => (percent >= 0.05 ? `${name} (${(percent * 100).toFixed(0)}%)` : '')}
+                  labelLine={false}
+                >
+                  {categoryChartData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip
+                  formatter={(value: number) => formatCurrency(value)}
+                  contentStyle={{
+                    backgroundColor: 'var(--bg-secondary)',
+                    border: '1px solid var(--border-primary)',
+                    borderRadius: '4px',
+                    color: 'var(--text-primary)',
+                  }}
+                  labelStyle={{ color: 'var(--text-primary)', fontWeight: 600 }}
+                  itemStyle={{ color: 'var(--text-primary)' }}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+            <p className="chart-hint">Hover over slices to see smaller categories</p>
+          </div>
+        )}
+
+        {chartType === 'bar' && (
+          <div className="chart-card">
+            <h4>Monthly Cost by Category</h4>
+            <ResponsiveContainer width="100%" height={Math.max(350, categoryBarChartData.length * 35)}>
+              <BarChart data={categoryBarChartData} layout="vertical" margin={{ left: 20, right: 20 }}>
+                <XAxis type="number" tickFormatter={(value) => formatCurrency(value)} />
+                <YAxis type="category" dataKey="name" width={120} tick={{ fontSize: 12 }} />
+                <Tooltip
+                  formatter={(value: number) => formatCurrency(value)}
+                  labelFormatter={(label, payload) => payload?.[0]?.payload?.fullName || label}
+                  contentStyle={{
+                    backgroundColor: 'var(--bg-secondary)',
+                    border: '1px solid var(--border-primary)',
+                    borderRadius: '4px',
+                    color: 'var(--text-primary)',
+                  }}
+                  labelStyle={{ color: 'var(--text-primary)', fontWeight: 600 }}
+                  itemStyle={{ color: 'var(--text-primary)' }}
+                />
+                <Bar dataKey="value" radius={[0, 4, 4, 0]}>
+                  {categoryBarChartData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        )}
       </div>
 
       <style>{`
@@ -194,9 +217,36 @@ export const RecurringExpensesCharts = ({
         }
 
         .recurring-charts-section {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-          gap: 24px;
+          display: flex;
+          flex-direction: column;
+          gap: 16px;
+        }
+
+        .chart-type-toggle {
+          display: flex;
+          gap: 8px;
+        }
+
+        .toggle-btn {
+          padding: 8px 16px;
+          border: 1px solid var(--border-primary);
+          border-radius: 6px;
+          background: var(--bg-primary);
+          color: var(--text-secondary);
+          font-size: 14px;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+
+        .toggle-btn:hover {
+          background: var(--bg-secondary);
+          color: var(--text-primary);
+        }
+
+        .toggle-btn.active {
+          background: var(--button-primary);
+          color: white;
+          border-color: var(--button-primary);
         }
 
         .chart-card {
@@ -227,11 +277,6 @@ export const RecurringExpensesCharts = ({
           fill: var(--text-secondary);
         }
 
-        @media (max-width: 900px) {
-          .recurring-charts-section {
-            grid-template-columns: 1fr;
-          }
-        }
       `}</style>
     </div>
   )
