@@ -359,6 +359,7 @@ export const EnhancementRuleModal: React.FC<EnhancementRuleModalProps> = ({
               'Enter the text pattern to match in transaction descriptions'
             }
             required
+            autoFocus={!isEditing}
           />
 
           <Stack direction="row" spacing={2}>
@@ -405,7 +406,7 @@ export const EnhancementRuleModal: React.FC<EnhancementRuleModalProps> = ({
                 allowClear={true}
                 multiple={false}
                 variant="form"
-                autoFocus={true}
+                autoFocus={isEditing}
                 allowCreate={true}
                 onCategoryCreate={handleCreateCategory}
               />
