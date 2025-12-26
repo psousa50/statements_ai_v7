@@ -6,10 +6,16 @@ export interface Category {
   parent_id?: string
 }
 
+export interface InitialBalance {
+  balance_date: string
+  balance_amount: number
+}
+
 export interface Account {
   id: string
   name: string
   type?: string
+  initial_balance?: InitialBalance
 }
 
 export interface Transaction {

@@ -51,9 +51,26 @@ class AccountUpdate(AccountBase):
     pass
 
 
+class InitialBalanceResponse(BaseModel):
+    balance_date: date
+    balance_amount: Decimal
+
+    model_config = ConfigDict(from_attributes=True)
+
+    @field_serializer("balance_amount")
+    def serialize_balance_amount(self, value: Decimal) -> float:
+        return float(value)
+
+
+class InitialBalanceSetRequest(BaseModel):
+    balance_date: date
+    balance_amount: Decimal
+
+
 class AccountResponse(BaseModel):
     id: UUID
     name: str
+    initial_balance: Optional[InitialBalanceResponse] = None
 
     model_config = ConfigDict(from_attributes=True)
 

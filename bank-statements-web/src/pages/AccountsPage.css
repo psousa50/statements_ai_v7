@@ -234,6 +234,29 @@
   align-items: center;
 }
 
+/* Initial Balance Column */
+.initial-balance-header {
+  text-align: right;
+  width: 250px;
+}
+
+.initial-balance-cell {
+  text-align: right;
+  font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
+  border-radius: 4px;
+}
+
+.initial-balance-cell:hover {
+  background-color: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .accounts-page {
@@ -271,5 +294,13 @@
   .account-actions {
     flex-direction: column;
     gap: 4px;
+  }
+
+  .initial-balance-header {
+    width: auto;
+  }
+
+  .initial-balance-cell {
+    font-size: 0.75rem;
   }
 }

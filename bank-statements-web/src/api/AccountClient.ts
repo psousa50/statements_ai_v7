@@ -15,6 +15,8 @@ export interface AccountClient {
   createAccount: (name: string) => Promise<Account>
   updateAccount: (id: string, name: string) => Promise<Account>
   deleteAccount: (id: string) => Promise<void>
+  setInitialBalance: (id: string, balanceDate: string, balanceAmount: number) => Promise<Account>
+  deleteInitialBalance: (id: string) => Promise<void>
 }
 
 // Use the VITE_API_URL environment variable for the base URL, or default to '' for local development
@@ -44,5 +46,17 @@ export const accountClient: AccountClient = {
 
   deleteAccount: async (id: string): Promise<void> => {
     await axios.delete(`${API_URL}/${id}`)
+  },
+
+  setInitialBalance: async (id: string, balanceDate: string, balanceAmount: number): Promise<Account> => {
+    const response = await axios.put<Account>(`${API_URL}/${id}/initial-balance`, {
+      balance_date: balanceDate,
+      balance_amount: balanceAmount,
+    })
+    return response.data
+  },
+
+  deleteInitialBalance: async (id: string): Promise<void> => {
+    await axios.delete(`${API_URL}/${id}/initial-balance`)
   },
 }

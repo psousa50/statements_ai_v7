@@ -71,6 +71,42 @@ export const useAccounts = () => {
     [api.accounts]
   )
 
+  const setInitialBalance = useCallback(
+    async (id: string, balanceDate: string, balanceAmount: number) => {
+      try {
+        const updatedAccount = await api.accounts.setInitialBalance(id, balanceDate, balanceAmount)
+        setAccounts((prev) =>
+          prev
+            .map((account) => (account.id === id ? updatedAccount : account))
+            .sort((a, b) => a.name.localeCompare(b.name))
+        )
+        return updatedAccount
+      } catch (err) {
+        console.error('Error setting initial balance:', err)
+        setError('Failed to set initial balance. Please try again.')
+        return null
+      }
+    },
+    [api.accounts]
+  )
+
+  const deleteInitialBalance = useCallback(
+    async (id: string) => {
+      try {
+        await api.accounts.deleteInitialBalance(id)
+        setAccounts((prev) =>
+          prev.map((account) => (account.id === id ? { ...account, initial_balance: undefined } : account))
+        )
+        return true
+      } catch (err) {
+        console.error('Error deleting initial balance:', err)
+        setError('Failed to delete initial balance. Please try again.')
+        return false
+      }
+    },
+    [api.accounts]
+  )
+
   useEffect(() => {
     fetchAccounts()
   }, [fetchAccounts])
@@ -83,5 +119,7 @@ export const useAccounts = () => {
     addAccount,
     updateAccount,
     deleteAccount,
+    setInitialBalance,
+    deleteInitialBalance,
   }
 }

@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react'
 import { useAccounts } from '../services/hooks/useAccounts'
 import { AccountModal } from '../components/AccountModal'
+import { InitialBalanceModal } from '../components/InitialBalanceModal'
 import { ConfirmationModal } from '../components/ConfirmationModal'
 import { Toast, ToastProps } from '../components/Toast'
 import { Account } from '../types/Transaction'
@@ -13,12 +14,22 @@ import './AccountsPage.css'
 
 export const AccountsPage = () => {
   const [editingAccount, setEditingAccount] = useState<Account | null>(null)
+  const [editingInitialBalance, setEditingInitialBalance] = useState<Account | null>(null)
   const [isCreating, setIsCreating] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [toast, setToast] = useState<Omit<ToastProps, 'onClose'> | null>(null)
   const [confirmDelete, setConfirmDelete] = useState<Account | null>(null)
 
-  const { accounts, loading, error, addAccount, updateAccount, deleteAccount } = useAccounts()
+  const {
+    accounts,
+    loading,
+    error,
+    addAccount,
+    updateAccount,
+    deleteAccount,
+    setInitialBalance,
+    deleteInitialBalance,
+  } = useAccounts()
 
   // Filter and sort accounts based on search term
   const filteredAccounts = accounts
@@ -104,6 +115,62 @@ export const AccountsPage = () => {
     setToast(null)
   }, [])
 
+  const handleEditInitialBalance = useCallback((account: Account) => {
+    setEditingInitialBalance(account)
+  }, [])
+
+  const handleSaveInitialBalance = useCallback(
+    async (accountId: string, balanceDate: string, balanceAmount: number) => {
+      const result = await setInitialBalance(accountId, balanceDate, balanceAmount)
+      if (result) {
+        setToast({
+          message: 'Initial balance updated successfully',
+          type: 'success',
+        })
+      } else {
+        setToast({
+          message: 'Failed to update initial balance. Please try again.',
+          type: 'error',
+        })
+      }
+      return result
+    },
+    [setInitialBalance]
+  )
+
+  const handleDeleteInitialBalance = useCallback(
+    async (accountId: string) => {
+      const success = await deleteInitialBalance(accountId)
+      if (success) {
+        setToast({
+          message: 'Initial balance removed successfully',
+          type: 'success',
+        })
+      } else {
+        setToast({
+          message: 'Failed to remove initial balance. Please try again.',
+          type: 'error',
+        })
+      }
+      return success
+    },
+    [deleteInitialBalance]
+  )
+
+  const handleCloseInitialBalanceModal = useCallback(() => {
+    setEditingInitialBalance(null)
+  }, [])
+
+  const formatInitialBalance = (account: Account): string => {
+    if (!account.initial_balance) return '-'
+    const amount = account.initial_balance.balance_amount.toLocaleString('en-GB', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })
+    const date = new Date(account.initial_balance.balance_date).toLocaleDateString('en-GB')
+    return `£${amount} as of ${date}`
+  }
+
   return (
     <div className="accounts-page">
       <header className="page-header">
@@ -178,6 +245,7 @@ export const AccountsPage = () => {
               <thead>
                 <tr>
                   <th>Name</th>
+                  <th className="initial-balance-header">Initial Balance</th>
                   <th style={{ textAlign: 'center', width: '120px' }}>Actions</th>
                 </tr>
               </thead>
@@ -185,6 +253,13 @@ export const AccountsPage = () => {
                 {filteredAccounts.map((account) => (
                   <tr key={account.id}>
                     <td className="account-name">{account.name}</td>
+                    <td
+                      className="initial-balance-cell"
+                      onClick={() => handleEditInitialBalance(account)}
+                      title="Click to edit initial balance"
+                    >
+                      {formatInitialBalance(account)}
+                    </td>
                     <td className="account-actions">
                       <ActionIconButton
                         onClick={() => handleEditAccount(account)}
@@ -223,6 +298,14 @@ export const AccountsPage = () => {
         onConfirm={handleConfirmDelete}
         onCancel={handleCancelDelete}
         dangerous={true}
+      />
+
+      <InitialBalanceModal
+        open={!!editingInitialBalance}
+        account={editingInitialBalance}
+        onSave={handleSaveInitialBalance}
+        onDelete={handleDeleteInitialBalance}
+        onClose={handleCloseInitialBalanceModal}
       />
 
       {toast && <Toast message={toast.message} type={toast.type} onClose={handleCloseToast} />}

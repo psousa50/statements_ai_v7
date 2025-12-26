@@ -4,11 +4,33 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, FastAPI, File, HTTPException, UploadFile, status
 
 from app.api.routes.auth import require_current_user
-from app.api.schemas import AccountCreate, AccountListResponse, AccountResponse, AccountUpdate, AccountUploadResponse
+from app.api.schemas import (
+    AccountCreate,
+    AccountListResponse,
+    AccountResponse,
+    AccountUpdate,
+    AccountUploadResponse,
+    InitialBalanceResponse,
+    InitialBalanceSetRequest,
+)
 from app.core.config import settings
 from app.core.dependencies import InternalDependencies
 from app.domain.models.user import User
 from app.logging.utils import log_exception
+
+
+def _build_account_response(account, initial_balance) -> AccountResponse:
+    initial_balance_response = None
+    if initial_balance:
+        initial_balance_response = InitialBalanceResponse(
+            balance_date=initial_balance.balance_date,
+            balance_amount=initial_balance.balance_amount,
+        )
+    return AccountResponse(
+        id=account.id,
+        name=account.name,
+        initial_balance=initial_balance_response,
+    )
 
 
 def register_account_routes(
@@ -53,7 +75,11 @@ def register_account_routes(
     ):
         try:
             accounts = internal.account_service.get_all_accounts(current_user.id)
-            return AccountListResponse(accounts=accounts, total=len(accounts))
+            account_responses = []
+            for account in accounts:
+                initial_balance = internal.initial_balance_service.get_latest_balance(account.id)
+                account_responses.append(_build_account_response(account, initial_balance))
+            return AccountListResponse(accounts=account_responses, total=len(account_responses))
         except Exception as e:
             log_exception("Error retrieving accounts: %s", str(e))
             raise HTTPException(
@@ -74,7 +100,8 @@ def register_account_routes(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail=f"Account with ID {account_id} not found",
                 )
-            return account
+            initial_balance = internal.initial_balance_service.get_latest_balance(account_id)
+            return _build_account_response(account, initial_balance)
         except HTTPException:
             raise
         except Exception as e:
@@ -143,6 +170,81 @@ def register_account_routes(
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"Error deleting account: {str(e)}",
+            )
+
+    @router.put("/{account_id}/initial-balance", response_model=AccountResponse)
+    async def set_initial_balance(
+        account_id: UUID,
+        balance_data: InitialBalanceSetRequest,
+        internal: InternalDependencies = Depends(provide_dependencies),
+        current_user: User = Depends(require_current_user),
+    ):
+        try:
+            account = internal.account_service.get_account(account_id, current_user.id)
+            if not account:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"Account with ID {account_id} not found",
+                )
+
+            existing_balance = internal.initial_balance_service.get_balance_by_date(account_id, balance_data.balance_date)
+
+            if existing_balance:
+                initial_balance = internal.initial_balance_service.update_initial_balance(
+                    existing_balance.id,
+                    balance_data.balance_date,
+                    balance_data.balance_amount,
+                )
+            else:
+                latest_balance = internal.initial_balance_service.get_latest_balance(account_id)
+                if latest_balance:
+                    internal.initial_balance_service.delete_initial_balance(latest_balance.id)
+
+                initial_balance = internal.initial_balance_service.create_initial_balance(
+                    account_id,
+                    balance_data.balance_date,
+                    balance_data.balance_amount,
+                )
+
+            return _build_account_response(account, initial_balance)
+        except HTTPException:
+            raise
+        except Exception as e:
+            log_exception("Error setting initial balance: %s", str(e))
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Error setting initial balance: {str(e)}",
+            )
+
+    @router.delete(
+        "/{account_id}/initial-balance",
+        status_code=status.HTTP_204_NO_CONTENT,
+    )
+    async def delete_initial_balance(
+        account_id: UUID,
+        internal: InternalDependencies = Depends(provide_dependencies),
+        current_user: User = Depends(require_current_user),
+    ):
+        try:
+            account = internal.account_service.get_account(account_id, current_user.id)
+            if not account:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"Account with ID {account_id} not found",
+                )
+
+            initial_balance = internal.initial_balance_service.get_latest_balance(account_id)
+            if initial_balance:
+                internal.initial_balance_service.delete_initial_balance(initial_balance.id)
+
+            return None
+        except HTTPException:
+            raise
+        except Exception as e:
+            log_exception("Error deleting initial balance: %s", str(e))
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Error deleting initial balance: {str(e)}",
             )
 
     @router.post(
