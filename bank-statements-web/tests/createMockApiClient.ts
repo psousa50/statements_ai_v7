@@ -14,6 +14,7 @@ import {
   CategoryTotalsResponse,
   CategoryTimeSeriesResponse,
   BulkUpdateTransactionsResponse,
+  CountSimilarResponse,
   EnhancementPreviewResponse,
   SavedFilterResponse,
 } from '@/api/TransactionClient'
@@ -31,6 +32,7 @@ const defaultTransaction: Transaction = {
   id: '1',
   date: '2023-01-01',
   description: 'Sample Transaction',
+  normalized_description: 'sample transaction',
   amount: 100,
   created_at: '2023-01-01T00:00:00Z',
   categorization_status: 'UNCATEGORIZED',
@@ -106,6 +108,10 @@ const defaultTransactionClient: TransactionClient = {
       updated_count: 0,
       message: 'No transactions updated',
     } as BulkUpdateTransactionsResponse),
+  countSimilar: () =>
+    Promise.resolve({
+      count: 0,
+    } as CountSimilarResponse),
   categorize: function (_id: string, _categoryId?: string): Promise<Transaction> {
     throw new Error('Function not implemented.')
   },

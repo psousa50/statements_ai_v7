@@ -68,6 +68,18 @@ export interface BulkUpdateTransactionsResponse {
   message: string
 }
 
+export interface CountSimilarFilters {
+  normalized_description: string
+  account_id?: string
+  start_date?: string
+  end_date?: string
+  exclude_transfers?: boolean
+}
+
+export interface CountSimilarResponse {
+  count: number
+}
+
 export interface EnhancementPreviewRequest {
   description: string
   amount?: number
@@ -120,6 +132,7 @@ export interface TransactionClient {
   categorize(id: string, categoryId?: string): Promise<Transaction>
   delete(id: string): Promise<void>
   bulkUpdateCategory(request: BulkUpdateTransactionsRequest): Promise<BulkUpdateTransactionsResponse>
+  countSimilar(filters: CountSimilarFilters): Promise<CountSimilarResponse>
   previewEnhancement(request: EnhancementPreviewRequest): Promise<EnhancementPreviewResponse>
   createSavedFilter(transactionIds: string[]): Promise<SavedFilterResponse>
 }
@@ -337,6 +350,25 @@ export const transactionClient: TransactionClient = {
 
   async bulkUpdateCategory(request: BulkUpdateTransactionsRequest) {
     const response = await axios.put<BulkUpdateTransactionsResponse>(`${API_URL}/bulk-update-category`, request)
+    return response.data
+  },
+
+  async countSimilar(filters: CountSimilarFilters) {
+    const params = new URLSearchParams()
+    params.append('normalized_description', filters.normalized_description)
+    if (filters.account_id) {
+      params.append('account_id', filters.account_id)
+    }
+    if (filters.start_date) {
+      params.append('start_date', filters.start_date)
+    }
+    if (filters.end_date) {
+      params.append('end_date', filters.end_date)
+    }
+    if (filters.exclude_transfers !== undefined) {
+      params.append('exclude_transfers', filters.exclude_transfers.toString())
+    }
+    const response = await axios.get<CountSimilarResponse>(`${API_URL}/count-similar?${params.toString()}`)
     return response.data
   },
 

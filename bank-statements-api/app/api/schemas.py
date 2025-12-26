@@ -398,6 +398,10 @@ class BulkUpdateTransactionsResponse(BaseModel):
     message: str
 
 
+class CountSimilarResponse(BaseModel):
+    count: int
+
+
 # Enhancement Rule Schemas
 class EnhancementRuleBase(BaseModel):
     normalized_description_pattern: str = Field(..., min_length=1, max_length=255)

@@ -3,7 +3,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom'
 import { useTransactions } from '../services/hooks/useTransactions'
 import { useCategories } from '../services/hooks/useCategories'
 import { useAccounts } from '../services/hooks/useAccounts'
-import { TransactionTable, TransactionSortField, TransactionSortDirection } from '../components/TransactionTable'
+import { TransactionTable, TransactionSortField, TransactionSortDirection, SimilarCountFilters } from '../components/TransactionTable'
 import { TransactionFilters, CategorizationFilter } from '../components/TransactionFilters'
 import { TransactionModal } from '../components/TransactionModal'
 import { Pagination } from '../components/Pagination'
@@ -101,6 +101,7 @@ export const TransactionsPage = () => {
     addTransaction,
     updateTransaction,
     categorizeTransaction,
+    bulkUpdateCategory,
   } = useTransactions()
 
   const { categories, loading: categoriesLoading, error: categoriesError } = useCategories()
@@ -347,6 +348,14 @@ export const TransactionsPage = () => {
     fetchTransactions({ ...filters, include_running_balance: !!filters.account_id })
   }
 
+  const handleBulkCategorize = async (normalizedDescription: string, categoryId: string) => {
+    const result = await bulkUpdateCategory(normalizedDescription, categoryId)
+    if (result) {
+      fetchTransactions({ ...filters, include_running_balance: !!filters.account_id })
+    }
+    return result
+  }
+
   const handleSaveTransaction = async (transactionData: TransactionCreate, transactionId?: string) => {
     if (transactionId) {
       const updatedTransaction = await updateTransaction(transactionId, transactionData)
@@ -488,6 +497,13 @@ export const TransactionsPage = () => {
               accounts={accounts || []}
               loading={loading}
               onCategorize={handleCategorizeTransaction}
+              onBulkCategorize={handleBulkCategorize}
+              similarCountFilters={{
+                account_id: filters.account_id,
+                start_date: filters.start_date,
+                end_date: filters.end_date,
+                exclude_transfers: filters.exclude_transfers,
+              }}
               onEdit={handleEditTransaction}
               sortField={filters.sort_field as TransactionSortField}
               sortDirection={filters.sort_direction}

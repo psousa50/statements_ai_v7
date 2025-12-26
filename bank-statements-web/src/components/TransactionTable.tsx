@@ -13,12 +13,26 @@ import { ActionIconButton } from './ActionIconButton'
 export type TransactionSortField = 'date' | 'description' | 'amount' | 'created_at'
 export type TransactionSortDirection = 'asc' | 'desc'
 
+interface BulkCategorizeResult {
+  updated_count: number
+  message: string
+}
+
+export interface SimilarCountFilters {
+  account_id?: string
+  start_date?: string
+  end_date?: string
+  exclude_transfers?: boolean
+}
+
 interface TransactionTableProps {
   transactions: Transaction[]
   categories: Category[]
   accounts: Account[]
   loading: boolean
   onCategorize?: (transactionId: string, categoryId?: string) => Promise<void>
+  onBulkCategorize?: (normalizedDescription: string, categoryId: string) => Promise<BulkCategorizeResult | null>
+  similarCountFilters?: SimilarCountFilters
   onEdit?: (transaction: Transaction) => void
   sortField?: TransactionSortField
   sortDirection?: TransactionSortDirection
@@ -30,11 +44,21 @@ interface CategoryCellProps {
   transaction: Transaction
   categories: Category[]
   onCategorize: (transactionId: string, categoryId?: string) => Promise<void>
+  onBulkCategorize?: (normalizedDescription: string, categoryId: string) => Promise<BulkCategorizeResult | null>
+  similarCountFilters?: SimilarCountFilters
   onShowToast: (toast: Omit<ToastProps, 'onClose'>) => void
   onCategoryCreated: (category: Category) => void
 }
 
-const CategoryCell = ({ transaction, categories, onCategorize, onShowToast, onCategoryCreated }: CategoryCellProps) => {
+const CategoryCell = ({
+  transaction,
+  categories,
+  onCategorize,
+  onBulkCategorize,
+  similarCountFilters,
+  onShowToast,
+  onCategoryCreated,
+}: CategoryCellProps) => {
   const [isLoading, setIsLoading] = useState(false)
   const apiClient = useApi()
 
@@ -67,6 +91,41 @@ const CategoryCell = ({ transaction, categories, onCategorize, onShowToast, onCa
               }
             },
           })
+        } else if (categoryId && onBulkCategorize) {
+          const categoryName = categories.find((c) => c.id === categoryId)?.name || 'Category'
+
+          const countResult = await apiClient.transactions.countSimilar({
+            normalized_description: transaction.normalized_description,
+            ...similarCountFilters,
+          })
+          const similarCount = countResult.count - 1
+
+          if (similarCount > 0) {
+            onShowToast({
+              message: `${categoryName} applied`,
+              type: 'success',
+              action: {
+                label: `Apply to ${similarCount} similar`,
+                onClick: async () => {
+                  const result = await onBulkCategorize(transaction.normalized_description, categoryId)
+                  if (result) {
+                    const additionalCount = result.updated_count - 1
+                    if (additionalCount > 0) {
+                      onShowToast({
+                        message: `Updated ${additionalCount} similar transaction${additionalCount === 1 ? '' : 's'}`,
+                        type: 'success',
+                      })
+                    }
+                  }
+                },
+              },
+            })
+          } else {
+            onShowToast({
+              message: `${categoryName} applied`,
+              type: 'success',
+            })
+          }
         }
       } catch (error) {
         console.error('Failed to categorize transaction:', error)
@@ -78,7 +137,7 @@ const CategoryCell = ({ transaction, categories, onCategorize, onShowToast, onCa
         setIsLoading(false)
       }
     },
-    [transaction.id, transaction.category_id, categories, onCategorize, onShowToast]
+    [transaction.id, transaction.category_id, transaction.normalized_description, categories, onCategorize, onBulkCategorize, similarCountFilters, apiClient, onShowToast]
   )
 
   const handleCreateCategory = useCallback(
@@ -164,6 +223,8 @@ export const TransactionTable = ({
   accounts,
   loading,
   onCategorize,
+  onBulkCategorize,
+  similarCountFilters,
   onEdit,
   sortField,
   sortDirection,
@@ -283,6 +344,8 @@ export const TransactionTable = ({
                     transaction={transaction}
                     categories={localCategories}
                     onCategorize={onCategorize}
+                    onBulkCategorize={onBulkCategorize}
+                    similarCountFilters={similarCountFilters}
                     onShowToast={handleShowToast}
                     onCategoryCreated={handleCategoryCreated}
                   />

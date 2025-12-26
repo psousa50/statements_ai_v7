@@ -16,6 +16,7 @@ export interface Transaction {
   id: string
   date: string
   description: string
+  normalized_description: string
   amount: number
   account_id?: string
   created_at: string

@@ -154,6 +154,23 @@ export const useTransactions = () => {
     [api.transactions]
   )
 
+  const bulkUpdateCategory = useCallback(
+    async (normalizedDescription: string, categoryId: string) => {
+      try {
+        const response = await api.transactions.bulkUpdateCategory({
+          normalized_description: normalizedDescription,
+          category_id: categoryId,
+        })
+        return response
+      } catch (err) {
+        console.error('Error bulk updating category:', err)
+        setError('Failed to apply category to similar transactions.')
+        return null
+      }
+    },
+    [api.transactions]
+  )
+
   const getTransactionsByCategory = useCallback(
     (categoryId?: string) => {
       if (!categoryId) {
@@ -186,6 +203,7 @@ export const useTransactions = () => {
     updateTransaction,
     deleteTransaction,
     categorizeTransaction,
+    bulkUpdateCategory,
     getTransactionsByCategory,
     getTransactionsByStatus,
   }

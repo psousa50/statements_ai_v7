@@ -14,6 +14,7 @@ from app.api.schemas import (
     CategoryTimeSeriesResponse,
     CategoryTotalResponse,
     CategoryTotalsResponse,
+    CountSimilarResponse,
     EnhancementPreviewRequest,
     EnhancementPreviewResponse,
     RecurringPatternResponse,
@@ -498,6 +499,29 @@ def register_transaction_routes(
                 status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Error updating transactions: {str(e)}",
             )
+
+    @router.get(
+        "/count-similar",
+        response_model=CountSimilarResponse,
+    )
+    def count_similar_transactions(
+        normalized_description: str = Query(...),
+        account_id: Optional[UUID] = Query(None),
+        start_date: Optional[date] = Query(None),
+        end_date: Optional[date] = Query(None),
+        exclude_transfers: Optional[bool] = Query(None),
+        internal: InternalDependencies = Depends(provide_dependencies),
+        current_user: User = Depends(require_current_user),
+    ):
+        count = internal.transaction_service.count_by_normalized_description(
+            user_id=current_user.id,
+            normalized_description=normalized_description,
+            account_id=account_id,
+            start_date=start_date,
+            end_date=end_date,
+            exclude_transfers=exclude_transfers,
+        )
+        return CountSimilarResponse(count=count)
 
     @router.get(
         "/{transaction_id}",

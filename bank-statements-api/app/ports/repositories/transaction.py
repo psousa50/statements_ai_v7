@@ -184,6 +184,18 @@ class TransactionRepository(ABC):
         pass
 
     @abstractmethod
+    def count_by_normalized_description(
+        self,
+        user_id: UUID,
+        normalized_description: str,
+        account_id: Optional[UUID] = None,
+        start_date: Optional[date] = None,
+        end_date: Optional[date] = None,
+        exclude_transfers: Optional[bool] = None,
+    ) -> int:
+        pass
+
+    @abstractmethod
     def count_matching_rule(self, rule, uncategorized_only: bool = False) -> int:
         """
         Count transactions that would match the given enhancement rule

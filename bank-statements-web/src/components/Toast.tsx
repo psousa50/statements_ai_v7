@@ -1,14 +1,20 @@
 import { useEffect } from 'react'
 
+export interface ToastAction {
+  label: string
+  onClick: () => void
+}
+
 export interface ToastProps {
   message: string
   type?: 'success' | 'error' | 'info'
   duration?: number
   onClose: () => void
   onUndo?: () => void
+  action?: ToastAction
 }
 
-export const Toast = ({ message, type = 'success', duration = 4000, onClose, onUndo }: ToastProps) => {
+export const Toast = ({ message, type = 'success', duration = 4000, onClose, onUndo, action }: ToastProps) => {
   useEffect(() => {
     const timer = setTimeout(onClose, duration)
     return () => clearTimeout(timer)
@@ -16,6 +22,11 @@ export const Toast = ({ message, type = 'success', duration = 4000, onClose, onU
 
   const handleUndo = () => {
     onUndo?.()
+    onClose()
+  }
+
+  const handleAction = () => {
+    action?.onClick()
     onClose()
   }
 
@@ -32,11 +43,18 @@ export const Toast = ({ message, type = 'success', duration = 4000, onClose, onU
           ×
         </button>
       </div>
-      {onUndo && (
+      {(onUndo || action) && (
         <div className="toast-actions">
-          <button className="toast-undo" onClick={handleUndo}>
-            Undo
-          </button>
+          {onUndo && (
+            <button className="toast-undo" onClick={handleUndo}>
+              Undo
+            </button>
+          )}
+          {action && (
+            <button className="toast-action" onClick={handleAction}>
+              {action.label}
+            </button>
+          )}
         </div>
       )}
     </div>

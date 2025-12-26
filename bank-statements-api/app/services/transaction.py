@@ -395,6 +395,24 @@ class TransactionService:
             user_id, normalized_description, category_id
         )
 
+    def count_by_normalized_description(
+        self,
+        user_id: UUID,
+        normalized_description: str,
+        account_id: Optional[UUID] = None,
+        start_date: Optional[date] = None,
+        end_date: Optional[date] = None,
+        exclude_transfers: Optional[bool] = None,
+    ) -> int:
+        return self.transaction_repository.count_by_normalized_description(
+            user_id=user_id,
+            normalized_description=normalized_description,
+            account_id=account_id,
+            start_date=start_date,
+            end_date=end_date,
+            exclude_transfers=exclude_transfers,
+        )
+
     def save_transactions_from_dtos(
         self,
         transaction_dtos: List[TransactionDTO],

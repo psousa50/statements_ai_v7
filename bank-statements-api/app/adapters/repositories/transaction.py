@@ -563,6 +563,36 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
 
         return updated_count
 
+    def count_by_normalized_description(
+        self,
+        user_id: UUID,
+        normalized_description: str,
+        account_id: Optional[UUID] = None,
+        start_date: Optional[date] = None,
+        end_date: Optional[date] = None,
+        exclude_transfers: Optional[bool] = None,
+    ) -> int:
+        query = (
+            self.db_session.query(func.count(Transaction.id))
+            .join(Account, Transaction.account_id == Account.id)
+            .filter(Account.user_id == user_id)
+            .filter(Transaction.normalized_description == normalized_description)
+        )
+
+        if account_id is not None:
+            query = query.filter(Transaction.account_id == account_id)
+
+        if start_date is not None:
+            query = query.filter(Transaction.date >= start_date)
+
+        if end_date is not None:
+            query = query.filter(Transaction.date <= end_date)
+
+        if exclude_transfers is not False:
+            query = query.filter(Transaction.counterparty_account_id.is_(None))
+
+        return query.scalar() or 0
+
     def get_max_sort_index_for_date(self, account_id: UUID, date: date) -> int:
         """
         Get the maximum sort_index for transactions on a given date and account.

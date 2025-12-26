@@ -15,6 +15,7 @@ test('renders transactions page with mock data', async () => {
               id: '1',
               date: '2023-01-01',
               description: 'Test Transaction',
+              normalized_description: 'test transaction',
               amount: 100,
               created_at: '2023-01-01T00:00:00Z',
               categorization_status: 'UNCATEGORIZED',
