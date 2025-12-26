@@ -55,18 +55,19 @@ class StatementAnalyzerService:
 
         sample_data = self._generate_sample_data(raw_df)
 
+        account_id = existing_metadata.account_id if existing_metadata else None
+
+        # Get saved row filters if they exist
+        saved_row_filters = existing_metadata.row_filters if existing_metadata else None
+
         transaction_stats = self._calculate_transaction_statistics(
             raw_df,
             conversion_model.column_mapping,
             conversion_model.header_row_index,
             conversion_model.data_start_row_index,
-            existing_metadata.account_id if existing_metadata else None,
+            account_id,
+            saved_row_filters,
         )
-
-        account_id = existing_metadata.account_id if existing_metadata else None
-
-        # Get saved row filters if they exist
-        saved_row_filters = existing_metadata.row_filters if existing_metadata else None
 
         # Generate filter suggestions
         suggested_filters = self._generate_filter_suggestions(raw_df, conversion_model.column_mapping)
@@ -108,6 +109,7 @@ class StatementAnalyzerService:
         header_row_index: int,
         data_start_row_index: int,
         account_id: Optional[str] = None,
+        saved_row_filters: Optional[list] = None,
     ) -> dict:
         try:
             processed_df = process_dataframe(
@@ -115,6 +117,21 @@ class StatementAnalyzerService:
                 header_row_index,
                 data_start_row_index,
             )
+
+            if saved_row_filters:
+                from app.domain.dto.statement_processing import FilterCondition, FilterOperator, LogicalOperator, RowFilter
+
+                filter_conditions = [
+                    FilterCondition(
+                        column_name=f["column_name"],
+                        operator=FilterOperator(f["operator"]),
+                        value=f["value"],
+                        case_sensitive=f.get("case_sensitive", False),
+                    )
+                    for f in saved_row_filters
+                ]
+                row_filter = RowFilter(conditions=filter_conditions, logical_operator=LogicalOperator.AND)
+                processed_df = self.row_filter_service.apply_filters(processed_df, row_filter)
 
             normalized_df = self.transaction_normalizer.normalize(processed_df, column_mapping)
 
