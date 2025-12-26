@@ -12,11 +12,16 @@ import {
   Box,
   Typography,
   CircularProgress,
+  Tooltip,
+  Button,
 } from '@mui/material'
 import EditIcon from '@mui/icons-material/Edit'
 import DeleteIcon from '@mui/icons-material/Delete'
 import VisibilityIcon from '@mui/icons-material/Visibility'
 import ContentCopyIcon from '@mui/icons-material/ContentCopy'
+import CheckIcon from '@mui/icons-material/Check'
+import CloseIcon from '@mui/icons-material/Close'
+import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome'
 import { EnhancementRule, EnhancementRuleFilters, EnhancementRuleSource, MatchType } from '../types/EnhancementRule'
 
 interface EnhancementRuleTableProps {
@@ -27,6 +32,8 @@ interface EnhancementRuleTableProps {
   onEdit: (rule: EnhancementRule) => void
   onDuplicate: (rule: EnhancementRule) => void
   onDelete: (id: string) => void
+  onApplySuggestion?: (ruleId: string, applyToTransactions: boolean) => void
+  onRejectSuggestion?: (ruleId: string) => void
 }
 
 export const EnhancementRuleTable: React.FC<EnhancementRuleTableProps> = ({
@@ -37,6 +44,8 @@ export const EnhancementRuleTable: React.FC<EnhancementRuleTableProps> = ({
   onEdit,
   onDuplicate,
   onDelete,
+  onApplySuggestion,
+  onRejectSuggestion,
 }) => {
   const handleSort = (field: string) => {
     const isAsc = filters.sort_field === field && filters.sort_direction === 'asc'
@@ -201,6 +210,53 @@ export const EnhancementRuleTable: React.FC<EnhancementRuleTableProps> = ({
                   <Box>
                     <Typography variant="body2">{rule.category.name}</Typography>
                   </Box>
+                ) : rule.ai_suggested_category ? (
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: 0.5,
+                      p: 1,
+                      borderRadius: 1,
+                      bgcolor: 'action.hover',
+                      border: '1px dashed',
+                      borderColor: 'secondary.main',
+                    }}
+                  >
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                      <AutoAwesomeIcon sx={{ fontSize: 14, color: 'secondary.main' }} />
+                      <Typography variant="body2" color="secondary.main">
+                        {rule.ai_suggested_category.name}
+                      </Typography>
+                    </Box>
+                    <Typography variant="caption" color="text.secondary">
+                      {Math.round((rule.ai_category_confidence ?? 0) * 100)}% confidence
+                    </Typography>
+                    {onApplySuggestion && onRejectSuggestion && (
+                      <Box sx={{ display: 'flex', gap: 0.5, mt: 0.5 }}>
+                        <Button
+                          size="small"
+                          variant="contained"
+                          color="success"
+                          startIcon={<CheckIcon sx={{ fontSize: 14 }} />}
+                          onClick={() => onApplySuggestion(rule.id, true)}
+                          sx={{ fontSize: '0.7rem', py: 0.25, px: 1, minWidth: 'auto' }}
+                        >
+                          Accept
+                        </Button>
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          color="error"
+                          startIcon={<CloseIcon sx={{ fontSize: 14 }} />}
+                          onClick={() => onRejectSuggestion(rule.id)}
+                          sx={{ fontSize: '0.7rem', py: 0.25, px: 1, minWidth: 'auto' }}
+                        >
+                          Reject
+                        </Button>
+                      </Box>
+                    )}
+                  </Box>
                 ) : (
                   <Typography variant="body2" color="text.secondary">
                     —
@@ -217,6 +273,53 @@ export const EnhancementRuleTable: React.FC<EnhancementRuleTableProps> = ({
                       </Typography>
                     )}
                   </Typography>
+                ) : rule.ai_suggested_counterparty ? (
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: 0.5,
+                      p: 1,
+                      borderRadius: 1,
+                      bgcolor: 'action.hover',
+                      border: '1px dashed',
+                      borderColor: 'info.main',
+                    }}
+                  >
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                      <AutoAwesomeIcon sx={{ fontSize: 14, color: 'info.main' }} />
+                      <Typography variant="body2" color="info.main">
+                        {rule.ai_suggested_counterparty.name}
+                      </Typography>
+                    </Box>
+                    <Typography variant="caption" color="text.secondary">
+                      {Math.round((rule.ai_counterparty_confidence ?? 0) * 100)}% confidence
+                    </Typography>
+                    {onApplySuggestion && onRejectSuggestion && (
+                      <Box sx={{ display: 'flex', gap: 0.5, mt: 0.5 }}>
+                        <Button
+                          size="small"
+                          variant="contained"
+                          color="success"
+                          startIcon={<CheckIcon sx={{ fontSize: 14 }} />}
+                          onClick={() => onApplySuggestion(rule.id, true)}
+                          sx={{ fontSize: '0.7rem', py: 0.25, px: 1, minWidth: 'auto' }}
+                        >
+                          Accept
+                        </Button>
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          color="error"
+                          startIcon={<CloseIcon sx={{ fontSize: 14 }} />}
+                          onClick={() => onRejectSuggestion(rule.id)}
+                          sx={{ fontSize: '0.7rem', py: 0.25, px: 1, minWidth: 'auto' }}
+                        >
+                          Reject
+                        </Button>
+                      </Box>
+                    )}
+                  </Box>
                 ) : (
                   <Typography variant="body2" color="text.secondary">
                     —

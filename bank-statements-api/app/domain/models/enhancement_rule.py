@@ -1,5 +1,7 @@
 from datetime import datetime, timezone
+from decimal import Decimal
 from enum import Enum
+from typing import Optional
 from uuid import uuid4
 
 from sqlalchemy import Column, Date, DateTime
@@ -55,6 +57,21 @@ class EnhancementRule(Base):
         nullable=True,
     )
 
+    # AI suggestion fields
+    ai_suggested_category_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("categories.id"),
+        nullable=True,
+    )
+    ai_category_confidence = Column(Numeric(precision=5, scale=4), nullable=True)
+    ai_suggested_counterparty_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("accounts.id"),
+        nullable=True,
+    )
+    ai_counterparty_confidence = Column(Numeric(precision=5, scale=4), nullable=True)
+    ai_processed_at = Column(DateTime, nullable=True)
+
     # Metadata
     source = Column(
         SQLAlchemyEnum(
@@ -76,8 +93,10 @@ class EnhancementRule(Base):
     )
 
     # Relationships
-    category = relationship("Category")
-    counterparty_account = relationship("Account")
+    category = relationship("Category", foreign_keys=[category_id])
+    counterparty_account = relationship("Account", foreign_keys=[counterparty_account_id])
+    ai_suggested_category = relationship("Category", foreign_keys=[ai_suggested_category_id])
+    ai_suggested_counterparty = relationship("Account", foreign_keys=[ai_suggested_counterparty_id])
 
     @property
     def rule_type(self) -> str:
@@ -92,6 +111,18 @@ class EnhancementRule(Base):
             return "Counterparty Only"
         else:
             return "Unconfigured"
+
+    @property
+    def has_ai_category_suggestion(self) -> bool:
+        return self.ai_suggested_category_id is not None
+
+    @property
+    def has_ai_counterparty_suggestion(self) -> bool:
+        return self.ai_suggested_counterparty_id is not None
+
+    @property
+    def has_any_ai_suggestion(self) -> bool:
+        return self.has_ai_category_suggestion or self.has_ai_counterparty_suggestion
 
     def matches_transaction(self, transaction) -> bool:
         """Check if this rule matches the given transaction"""

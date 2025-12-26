@@ -267,6 +267,10 @@ const defaultEnhancementRuleClient: EnhancementRuleClient = {
   update: () => Promise.reject(new Error('Not implemented')),
   delete: () => Promise.resolve(),
   cleanupUnused: () => Promise.resolve({ deleted_count: 0, message: 'No unused rules found' }),
+  suggestCategories: () => Promise.resolve({ processed: 0, auto_applied: 0, suggestions: 0, failed: 0 }),
+  suggestCounterparties: () => Promise.resolve({ processed: 0, auto_applied: 0, suggestions: 0, failed: 0 }),
+  applySuggestion: () => Promise.resolve({ rule_id: '', applied: true, transactions_updated: 0 }),
+  rejectSuggestion: () => Promise.resolve({ rule_id: '', applied: false, transactions_updated: 0 }),
 }
 
 const defaultDescriptionGroupClient: DescriptionGroupClient = {

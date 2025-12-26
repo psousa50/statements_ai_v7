@@ -10,11 +10,13 @@ import {
   DialogContent,
   DialogActions,
   CircularProgress,
+  Snackbar,
 } from '@mui/material'
 import AddIcon from '@mui/icons-material/Add'
 import CleanupIcon from '@mui/icons-material/CleaningServices'
+import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome'
 import { useEnhancementRules } from '../services/hooks/useEnhancementRules'
-import { EnhancementRuleFilters, EnhancementRule, SortField } from '../types/EnhancementRule'
+import { EnhancementRuleFilters, EnhancementRule, SortField, AISuggestCategoriesResponse } from '../types/EnhancementRule'
 import { EnhancementRuleTable } from '../components/EnhancementRuleTable'
 import { EnhancementRuleFiltersComponent } from '../components/EnhancementRuleFilters'
 import { EnhancementRuleModal } from '../components/EnhancementRuleModal'
@@ -22,7 +24,8 @@ import { Pagination } from '../components/Pagination'
 import './EnhancementRules.css'
 
 export const EnhancementRules: React.FC = () => {
-  const { loading, error, fetchRules, deleteRule, cleanupUnused } = useEnhancementRules()
+  const { loading, error, fetchRules, deleteRule, cleanupUnused, suggestCategories, applySuggestion, rejectSuggestion } =
+    useEnhancementRules()
 
   const [rules, setRules] = useState<EnhancementRule[]>([])
   const [total, setTotal] = useState(0)
@@ -39,6 +42,13 @@ export const EnhancementRules: React.FC = () => {
   const [duplicateData, setDuplicateData] = useState<Partial<EnhancementRule> | null>(null)
   const [cleanupDialogOpen, setCleanupDialogOpen] = useState(false)
   const [cleanupLoading, setCleanupLoading] = useState(false)
+  const [aiDialogOpen, setAiDialogOpen] = useState(false)
+  const [aiLoading, setAiLoading] = useState(false)
+  const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' }>({
+    open: false,
+    message: '',
+    severity: 'success',
+  })
 
   const loadRules = async () => {
     try {
@@ -137,6 +147,72 @@ export const EnhancementRules: React.FC = () => {
     }
   }
 
+  const handleAISuggest = async () => {
+    setAiLoading(true)
+    try {
+      const result = await suggestCategories({
+        confidence_threshold: 0.8,
+        auto_apply: true,
+      })
+      setAiDialogOpen(false)
+      await loadRules()
+
+      const message =
+        result.auto_applied > 0
+          ? `${result.auto_applied} rules auto-categorised, ${result.suggestions} need review`
+          : result.suggestions > 0
+            ? `${result.suggestions} suggestions ready for review`
+            : result.processed === 0
+              ? 'No unconfigured rules to process'
+              : result.failed > 0
+                ? `AI failed to categorise ${result.failed} rules (check API key)`
+                : 'No suggestions generated'
+
+      setSnackbar({
+        open: true,
+        message,
+        severity: result.auto_applied > 0 || result.suggestions > 0 ? 'success' : 'error',
+      })
+    } catch (err) {
+      console.error('Failed to suggest categories:', err)
+      setSnackbar({
+        open: true,
+        message: 'Failed to generate AI suggestions',
+        severity: 'error',
+      })
+    } finally {
+      setAiLoading(false)
+    }
+  }
+
+  const handleApplySuggestion = async (ruleId: string, applyToTransactions: boolean) => {
+    try {
+      await applySuggestion(ruleId, { apply_to_transactions: applyToTransactions })
+      await loadRules()
+      setSnackbar({
+        open: true,
+        message: 'Suggestion applied successfully',
+        severity: 'success',
+      })
+    } catch (err) {
+      console.error('Failed to apply suggestion:', err)
+      setSnackbar({
+        open: true,
+        message: 'Failed to apply suggestion',
+        severity: 'error',
+      })
+    }
+  }
+
+  const handleRejectSuggestion = async (ruleId: string) => {
+    try {
+      await rejectSuggestion(ruleId)
+      await loadRules()
+    } catch (err) {
+      console.error('Failed to reject suggestion:', err)
+    }
+  }
+
   return (
     <Box sx={{ p: 3 }} className="enhancement-rules-page">
       <Box
@@ -151,6 +227,14 @@ export const EnhancementRules: React.FC = () => {
           Enhancement Rules
         </Typography>
         <Box sx={{ display: 'flex', gap: 2 }}>
+          <Button
+            variant="outlined"
+            color="secondary"
+            startIcon={<AutoAwesomeIcon />}
+            onClick={() => setAiDialogOpen(true)}
+          >
+            AI Suggest
+          </Button>
           <Button variant="outlined" startIcon={<CleanupIcon />} onClick={() => setCleanupDialogOpen(true)}>
             Cleanup Unused
           </Button>
@@ -179,6 +263,8 @@ export const EnhancementRules: React.FC = () => {
           onEdit={handleEditRule}
           onDuplicate={handleDuplicateRule}
           onDelete={handleDeleteRule}
+          onApplySuggestion={handleApplySuggestion}
+          onRejectSuggestion={handleRejectSuggestion}
         />
       </Paper>
 
@@ -231,6 +317,45 @@ export const EnhancementRules: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* AI Suggestion Dialog */}
+      <Dialog open={aiDialogOpen} onClose={() => setAiDialogOpen(false)}>
+        <DialogTitle>AI Category Suggestions</DialogTitle>
+        <DialogContent>
+          <Typography>
+            AI will analyse unconfigured rules and suggest categories based on the transaction description patterns.
+          </Typography>
+          <Typography sx={{ mt: 2, color: 'text.secondary', fontSize: '0.875rem' }}>
+            Rules with high confidence (80%+) will be auto-applied. Lower confidence suggestions will need your review.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setAiDialogOpen(false)} disabled={aiLoading}>
+            Cancel
+          </Button>
+          <Button
+            onClick={handleAISuggest}
+            color="secondary"
+            variant="contained"
+            disabled={aiLoading}
+            startIcon={aiLoading ? <CircularProgress size={16} /> : <AutoAwesomeIcon />}
+          >
+            {aiLoading ? 'Analysing...' : 'Generate Suggestions'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Snackbar for notifications */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={4000}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert severity={snackbar.severity} onClose={() => setSnackbar({ ...snackbar, open: false })}>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   )
 }

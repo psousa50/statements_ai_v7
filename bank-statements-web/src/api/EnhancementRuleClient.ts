@@ -1,5 +1,9 @@
 import axios from 'axios'
 import {
+  AIApplySuggestionRequest,
+  AIApplySuggestionResponse,
+  AISuggestCategoriesRequest,
+  AISuggestCategoriesResponse,
   EnhancementRule,
   EnhancementRuleCreate,
   EnhancementRuleFilters,
@@ -19,6 +23,10 @@ export interface EnhancementRuleClient {
   update(id: string, data: EnhancementRuleUpdate): Promise<EnhancementRule>
   delete(id: string): Promise<void>
   cleanupUnused(): Promise<{ deleted_count: number; message: string }>
+  suggestCategories(request: AISuggestCategoriesRequest): Promise<AISuggestCategoriesResponse>
+  suggestCounterparties(request: AISuggestCategoriesRequest): Promise<AISuggestCategoriesResponse>
+  applySuggestion(ruleId: string, request: AIApplySuggestionRequest): Promise<AIApplySuggestionResponse>
+  rejectSuggestion(ruleId: string): Promise<AIApplySuggestionResponse>
 }
 
 const BASE_URL = import.meta.env.VITE_API_URL || ''
@@ -103,6 +111,26 @@ export const enhancementRuleClient: EnhancementRuleClient = {
 
   async cleanupUnused() {
     const response = await axios.post<{ deleted_count: number; message: string }>(`${API_URL}/cleanup-unused`)
+    return response.data
+  },
+
+  async suggestCategories(request: AISuggestCategoriesRequest) {
+    const response = await axios.post<AISuggestCategoriesResponse>(`${API_URL}/ai/suggest-categories`, request)
+    return response.data
+  },
+
+  async suggestCounterparties(request: AISuggestCategoriesRequest) {
+    const response = await axios.post<AISuggestCategoriesResponse>(`${API_URL}/ai/suggest-counterparties`, request)
+    return response.data
+  },
+
+  async applySuggestion(ruleId: string, request: AIApplySuggestionRequest) {
+    const response = await axios.post<AIApplySuggestionResponse>(`${API_URL}/${ruleId}/ai-suggestion/apply`, request)
+    return response.data
+  },
+
+  async rejectSuggestion(ruleId: string) {
+    const response = await axios.post<AIApplySuggestionResponse>(`${API_URL}/${ruleId}/ai-suggestion/reject`)
     return response.data
   },
 }

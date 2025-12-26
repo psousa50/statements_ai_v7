@@ -125,6 +125,90 @@ Transaction Date,Value Date,Details,Amount,Balance
 """
 
 
+def rule_categorization_prompt(
+    rule_patterns: list[str],
+    categories: List[Category],
+) -> str:
+    root_categories_with_children = {cat.parent_id for cat in categories if cat.parent_id is not None}
+
+    expanded_categories = [
+        Subcategory(str(cat.id), cat.name)
+        for cat in categories
+        if cat.parent_id is not None or cat.id not in root_categories_with_children
+    ]
+
+    categories_info = [f"{{id: {cat.sub_category_id}, name: {cat.subcategory_name}}}" for cat in expanded_categories]
+
+    patterns_text = "\n".join(rule_patterns)
+
+    prompt = f"""
+You are a bank transaction categorization assistant. Your task is to categorize the following transaction description patterns into the most specific and appropriate categories from the provided list.
+
+These are normalized transaction description patterns (not individual transactions). Each pattern represents a merchant or type of transaction that appears regularly.
+
+Patterns:
+{patterns_text}
+
+Available Categories:
+{json.dumps(categories_info, indent=2)}
+
+For each pattern, analyze the description and determine the most specific and appropriate category ID from the list above.
+Choose the category that best matches the nature of transactions matching this pattern.
+
+Return your answer as a JSON object with the following format:
+[
+    {{
+        "pattern": <the exact pattern from the input>,
+        "sub_category_id": <id of the selected subcategory>,
+        "confidence": <a number between 0 and 1 indicating your confidence in this categorization>
+    }}
+]
+
+Only return the JSON object, nothing else.
+"""
+    return prompt
+
+
+def rule_counterparty_prompt(
+    rule_patterns: list[str],
+    accounts: List[Account],
+) -> str:
+    accounts_info = [f"{{id: {account.id}, name: {account.name}}}" for account in accounts]
+
+    patterns_text = "\n".join(rule_patterns)
+
+    prompt = f"""
+You are a bank transaction counterparty identification assistant. Your task is to identify the most likely counterparty account for each transaction description pattern from the provided list.
+
+These are normalized transaction description patterns (not individual transactions). Each pattern represents a merchant or type of transaction that appears regularly.
+
+Patterns:
+{patterns_text}
+
+Available Counterparty Accounts:
+{json.dumps(accounts_info, indent=2)}
+
+For each pattern, analyze the description to determine which counterparty account is most likely involved in transactions matching this pattern.
+
+Consider:
+- Transaction descriptions that might indicate transfers between accounts
+- Account names that might match or relate to the transaction description
+- Common patterns in inter-account transfers (e.g., "TRANSFER FROM SAVINGS" likely relates to a Savings account)
+
+Return your answer as a JSON object with the following format:
+[
+    {{
+        "pattern": <the exact pattern from the input>,
+        "counterparty_account_id": <id of the identified counterparty account, or null if no clear counterparty>,
+        "confidence": <a number between 0 and 1 indicating your confidence in this identification>
+    }}
+]
+
+Only return the JSON object, nothing else.
+"""
+    return prompt
+
+
 def counterparty_identification_prompt(transactions: List[Transaction], accounts: List[Account]) -> str:
     """Create a prompt for LLM to identify counterparty accounts for transactions"""
 

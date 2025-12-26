@@ -33,6 +33,18 @@ export interface EnhancementRule {
     account_number?: string
   }
   transaction_count?: number
+  // AI suggestion fields
+  ai_suggested_category_id?: string
+  ai_category_confidence?: number
+  ai_suggested_counterparty_id?: string
+  ai_counterparty_confidence?: number
+  ai_processed_at?: string
+  ai_suggested_category?: Category
+  ai_suggested_counterparty?: {
+    id: string
+    name: string
+    account_number?: string
+  }
 }
 
 export interface EnhancementRuleCreate {
@@ -157,4 +169,27 @@ export interface EnhancementRuleStats {
   counterparty_usage: CounterpartyUsage[]
   top_rules_by_usage: TopRule[]
   unused_rules: UnusedRule[]
+}
+
+export interface AISuggestCategoriesRequest {
+  rule_ids?: string[]
+  confidence_threshold?: number
+  auto_apply?: boolean
+}
+
+export interface AISuggestCategoriesResponse {
+  processed: number
+  auto_applied: number
+  suggestions: number
+  failed: number
+}
+
+export interface AIApplySuggestionRequest {
+  apply_to_transactions?: boolean
+}
+
+export interface AIApplySuggestionResponse {
+  rule_id: string
+  applied: boolean
+  transactions_updated: number
 }

@@ -7,8 +7,8 @@ from app.adapters.repositories.category import SQLAlchemyCategoryRepository
 from app.ai.llm_client import LLMClient
 from app.ai.prompts import categorization_prompt
 from app.common.json_utils import sanitize_json
-from app.domain.models.categorization import CategorizationResult
-from app.domain.models.transaction import CategorizationStatus, Transaction
+from app.domain.models.categorization import CategorizationResult, CategorizationResultStatus
+from app.domain.models.transaction import Transaction
 from app.ports.categorizers.transaction_categorizer import TransactionCategorizer
 
 logger_content = logging.getLogger("app.llm.big")
@@ -45,7 +45,7 @@ class LLMTransactionCategorizer(TransactionCategorizer):
                 CategorizationResult(
                     transaction_id=transaction.id,  # type: ignore
                     category_id=None,
-                    status=CategorizationStatus.FAILURE,
+                    status=CategorizationResultStatus.FAILURE,
                     error_message="No categories available for categorization",
                 )
                 for transaction in transactions
@@ -69,7 +69,7 @@ class LLMTransactionCategorizer(TransactionCategorizer):
                     CategorizationResult(
                         transaction_id=transaction.id,  # type: ignore
                         category_id=None,
-                        status=CategorizationStatus.FAILURE,
+                        status=CategorizationResultStatus.FAILURE,
                         error_message="Invalid JSON response from LLM",
                     )
                     for transaction in transactions
@@ -118,7 +118,7 @@ class LLMTransactionCategorizer(TransactionCategorizer):
                             CategorizationResult(
                                 transaction_id=transaction.id,  # type: ignore
                                 category_id=category.id,  # type: ignore
-                                status=CategorizationStatus.CATEGORIZED,
+                                status=CategorizationResultStatus.CATEGORIZED,
                                 confidence=matching_result.confidence,
                             )
                         )
@@ -127,7 +127,7 @@ class LLMTransactionCategorizer(TransactionCategorizer):
                             CategorizationResult(
                                 transaction_id=transaction.id,  # type: ignore
                                 category_id=None,
-                                status=CategorizationStatus.FAILURE,
+                                status=CategorizationResultStatus.FAILURE,
                                 error_message=f"Category with ID {matching_result.sub_category_id} not found",
                             )
                         )
@@ -136,7 +136,7 @@ class LLMTransactionCategorizer(TransactionCategorizer):
                         CategorizationResult(
                             transaction_id=transaction.id,  # type: ignore
                             category_id=None,
-                            status=CategorizationStatus.FAILURE,
+                            status=CategorizationResultStatus.FAILURE,
                             error_message="No matching result from LLM",
                         )
                     )
@@ -149,7 +149,7 @@ class LLMTransactionCategorizer(TransactionCategorizer):
                 CategorizationResult(
                     transaction_id=transaction.id,  # type: ignore
                     category_id=None,
-                    status=CategorizationStatus.FAILURE,
+                    status=CategorizationResultStatus.FAILURE,
                     error_message=f"LLM categorization error: {str(e)}",
                 )
                 for transaction in transactions

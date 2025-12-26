@@ -33,6 +33,7 @@ from app.services.statement_processing.statement_analyzer import StatementAnalyz
 from app.services.statement_processing.statement_parser import StatementParser
 from app.services.statement_processing.statement_upload import StatementUploadService
 from app.services.statement_processing.transaction_normalizer import TransactionNormalizer
+from app.services.ai import LLMRuleCategorizer, LLMRuleCounterparty
 from app.services.transaction import TransactionService
 from app.services.transaction_enhancement import TransactionEnhancer
 from app.services.transaction_rule_enhancement import TransactionRuleEnhancementService
@@ -41,10 +42,15 @@ logger = logging.getLogger(__name__)
 
 
 def _create_llm_client() -> LLMClient:
-    if settings.E2E_TEST_MODE or not settings.GEMINI_API_KEY:
+    if settings.E2E_TEST_MODE:
+        logger.info("Using NoopLLMClient (E2E_TEST_MODE)")
+        return NoopLLMClient()
+    if not settings.GEMINI_API_KEY:
+        logger.warning("Using NoopLLMClient (GEMINI_API_KEY not set)")
         return NoopLLMClient()
     from app.ai.gemini_ai import GeminiAI
 
+    logger.info("Using GeminiAI LLM client")
     return GeminiAI()
 
 
@@ -88,6 +94,8 @@ class InternalDependencies:
         recurring_expense_analyzer: RecurringExpenseAnalyzer,
         description_group_service: DescriptionGroupService,
         saved_filter_repository: SQLAlchemySavedFilterRepository,
+        llm_rule_categorizer: LLMRuleCategorizer,
+        llm_rule_counterparty: LLMRuleCounterparty,
     ):
         self.transaction_service = transaction_service
         self.category_service = category_service
@@ -108,6 +116,8 @@ class InternalDependencies:
         self.recurring_expense_analyzer = recurring_expense_analyzer
         self.description_group_service = description_group_service
         self.saved_filter_repository = saved_filter_repository
+        self.llm_rule_categorizer = llm_rule_categorizer
+        self.llm_rule_counterparty = llm_rule_counterparty
 
 
 def build_external_dependencies() -> ExternalDependencies:
@@ -190,6 +200,14 @@ def build_internal_dependencies(
 
     recurring_expense_analyzer = RecurringExpenseAnalyzer(description_group_repository=description_group_repo)
     description_group_service = DescriptionGroupService(description_group_repo)
+    llm_rule_categorizer = LLMRuleCategorizer(
+        categories_repository=category_repo,
+        llm_client=external.llm_client,
+    )
+    llm_rule_counterparty = LLMRuleCounterparty(
+        account_repository=account_repo,
+        llm_client=external.llm_client,
+    )
 
     return InternalDependencies(
         transaction_service=transaction_service,
@@ -211,6 +229,8 @@ def build_internal_dependencies(
         recurring_expense_analyzer=recurring_expense_analyzer,
         description_group_service=description_group_service,
         saved_filter_repository=saved_filter_repo,
+        llm_rule_categorizer=llm_rule_categorizer,
+        llm_rule_counterparty=llm_rule_counterparty,
     )
 
 

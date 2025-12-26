@@ -1,6 +1,12 @@
 import { useState, useCallback } from 'react'
 import { useApi } from '../../api/ApiContext'
-import { EnhancementRuleCreate, EnhancementRuleFilters, EnhancementRuleUpdate } from '../../types/EnhancementRule'
+import {
+  AIApplySuggestionRequest,
+  AISuggestCategoriesRequest,
+  EnhancementRuleCreate,
+  EnhancementRuleFilters,
+  EnhancementRuleUpdate,
+} from '../../types/EnhancementRule'
 
 export const useEnhancementRules = () => {
   const apiClient = useApi()
@@ -126,6 +132,78 @@ export const useEnhancementRules = () => {
     }
   }, [apiClient])
 
+  const suggestCategories = useCallback(
+    async (request: AISuggestCategoriesRequest) => {
+      setLoading(true)
+      setError(null)
+      try {
+        const result = await apiClient.enhancementRules.suggestCategories(request)
+        return result
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : 'Failed to suggest categories'
+        setError(errorMessage)
+        throw err
+      } finally {
+        setLoading(false)
+      }
+    },
+    [apiClient]
+  )
+
+  const suggestCounterparties = useCallback(
+    async (request: AISuggestCategoriesRequest) => {
+      setLoading(true)
+      setError(null)
+      try {
+        const result = await apiClient.enhancementRules.suggestCounterparties(request)
+        return result
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : 'Failed to suggest counterparties'
+        setError(errorMessage)
+        throw err
+      } finally {
+        setLoading(false)
+      }
+    },
+    [apiClient]
+  )
+
+  const applySuggestion = useCallback(
+    async (ruleId: string, request: AIApplySuggestionRequest) => {
+      setLoading(true)
+      setError(null)
+      try {
+        const result = await apiClient.enhancementRules.applySuggestion(ruleId, request)
+        return result
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : 'Failed to apply suggestion'
+        setError(errorMessage)
+        throw err
+      } finally {
+        setLoading(false)
+      }
+    },
+    [apiClient]
+  )
+
+  const rejectSuggestion = useCallback(
+    async (ruleId: string) => {
+      setLoading(true)
+      setError(null)
+      try {
+        const result = await apiClient.enhancementRules.rejectSuggestion(ruleId)
+        return result
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : 'Failed to reject suggestion'
+        setError(errorMessage)
+        throw err
+      } finally {
+        setLoading(false)
+      }
+    },
+    [apiClient]
+  )
+
   return {
     loading,
     error,
@@ -136,5 +214,9 @@ export const useEnhancementRules = () => {
     updateRule,
     deleteRule,
     cleanupUnused,
+    suggestCategories,
+    suggestCounterparties,
+    applySuggestion,
+    rejectSuggestion,
   }
 }

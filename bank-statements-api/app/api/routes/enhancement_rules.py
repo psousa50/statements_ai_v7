@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from typing import Callable, Iterator, List, Optional
 from uuid import UUID
 
@@ -5,6 +6,10 @@ from fastapi import APIRouter, Depends, FastAPI, HTTPException, Query, status
 
 from app.api.routes.auth import require_current_user
 from app.api.schemas import (
+    AIApplySuggestionRequest,
+    AIApplySuggestionResponse,
+    AISuggestCategoriesRequest,
+    AISuggestCategoriesResponse,
     CleanupUnusedRulesResponse,
     EnhancementRuleCreate,
     EnhancementRuleListResponse,
@@ -309,6 +314,268 @@ def register_enhancement_rule_routes(
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Failed to delete enhancement rule: {str(e)}",
+            )
+
+    @router.post(
+        "/ai/suggest-categories",
+        response_model=AISuggestCategoriesResponse,
+    )
+    def suggest_categories(
+        request: AISuggestCategoriesRequest,
+        internal: InternalDependencies = Depends(provide_dependencies),
+        current_user: User = Depends(require_current_user),
+    ) -> AISuggestCategoriesResponse:
+        service = internal.enhancement_rule_management_service
+        categorizer = internal.llm_rule_categorizer
+
+        try:
+            if request.rule_ids:
+                rules = [
+                    service.get_rule(rule_id, current_user.id)
+                    for rule_id in request.rule_ids
+                ]
+                rules = [r for r in rules if r is not None]
+            else:
+                result = service.list_rules(
+                    user_id=current_user.id,
+                    limit=100,
+                    offset=0,
+                    source=EnhancementRuleSource.AI,
+                    show_invalid_only=True,
+                )
+                rules = result["rules"]
+
+            if not rules:
+                return AISuggestCategoriesResponse(
+                    processed=0,
+                    auto_applied=0,
+                    suggestions=0,
+                    failed=0,
+                )
+
+            suggestions = categorizer.suggest_categories(rules, current_user.id)
+
+            processed = len(suggestions)
+            auto_applied = 0
+            suggestion_count = 0
+            failed = 0
+
+            for suggestion in suggestions:
+                if not suggestion.is_successful:
+                    failed += 1
+                    continue
+
+                rule = next((r for r in rules if r.id == suggestion.rule_id), None)
+                if not rule:
+                    failed += 1
+                    continue
+
+                if request.auto_apply and suggestion.confidence >= request.confidence_threshold:
+                    rule.category_id = suggestion.suggested_category_id
+                    rule.ai_suggested_category_id = None
+                    rule.ai_category_confidence = None
+                    rule.ai_processed_at = datetime.now(timezone.utc)
+                    auto_applied += 1
+                else:
+                    rule.ai_suggested_category_id = suggestion.suggested_category_id
+                    rule.ai_category_confidence = suggestion.confidence
+                    rule.ai_processed_at = datetime.now(timezone.utc)
+                    suggestion_count += 1
+
+                internal.enhancement_rule_repository.save(rule)
+
+            return AISuggestCategoriesResponse(
+                processed=processed,
+                auto_applied=auto_applied,
+                suggestions=suggestion_count,
+                failed=failed,
+            )
+
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Failed to suggest categories: {str(e)}",
+            )
+
+    @router.post(
+        "/ai/suggest-counterparties",
+        response_model=AISuggestCategoriesResponse,
+    )
+    def suggest_counterparties(
+        request: AISuggestCategoriesRequest,
+        internal: InternalDependencies = Depends(provide_dependencies),
+        current_user: User = Depends(require_current_user),
+    ) -> AISuggestCategoriesResponse:
+        service = internal.enhancement_rule_management_service
+        counterparty_suggester = internal.llm_rule_counterparty
+
+        try:
+            if request.rule_ids:
+                rules = [
+                    service.get_rule(rule_id, current_user.id)
+                    for rule_id in request.rule_ids
+                ]
+                rules = [r for r in rules if r is not None]
+            else:
+                result = service.list_rules(
+                    user_id=current_user.id,
+                    limit=100,
+                    offset=0,
+                    source=EnhancementRuleSource.AI,
+                    show_invalid_only=True,
+                )
+                rules = result["rules"]
+
+            if not rules:
+                return AISuggestCategoriesResponse(
+                    processed=0,
+                    auto_applied=0,
+                    suggestions=0,
+                    failed=0,
+                )
+
+            suggestions = counterparty_suggester.suggest_counterparties(rules, current_user.id)
+
+            processed = len(suggestions)
+            auto_applied = 0
+            suggestion_count = 0
+            failed = 0
+
+            for suggestion in suggestions:
+                if not suggestion.is_successful:
+                    failed += 1
+                    continue
+
+                rule = next((r for r in rules if r.id == suggestion.rule_id), None)
+                if not rule:
+                    failed += 1
+                    continue
+
+                if request.auto_apply and suggestion.confidence >= request.confidence_threshold:
+                    rule.counterparty_account_id = suggestion.suggested_counterparty_id
+                    rule.ai_suggested_counterparty_id = None
+                    rule.ai_counterparty_confidence = None
+                    rule.ai_processed_at = datetime.now(timezone.utc)
+                    auto_applied += 1
+                else:
+                    rule.ai_suggested_counterparty_id = suggestion.suggested_counterparty_id
+                    rule.ai_counterparty_confidence = suggestion.confidence
+                    rule.ai_processed_at = datetime.now(timezone.utc)
+                    suggestion_count += 1
+
+                internal.enhancement_rule_repository.save(rule)
+
+            return AISuggestCategoriesResponse(
+                processed=processed,
+                auto_applied=auto_applied,
+                suggestions=suggestion_count,
+                failed=failed,
+            )
+
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Failed to suggest counterparties: {str(e)}",
+            )
+
+    @router.post(
+        "/{rule_id}/ai-suggestion/apply",
+        response_model=AIApplySuggestionResponse,
+    )
+    def apply_ai_suggestion(
+        rule_id: UUID,
+        request: AIApplySuggestionRequest,
+        internal: InternalDependencies = Depends(provide_dependencies),
+        current_user: User = Depends(require_current_user),
+    ) -> AIApplySuggestionResponse:
+        service = internal.enhancement_rule_management_service
+
+        try:
+            rule = service.get_rule(rule_id, current_user.id)
+            if not rule:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"Enhancement rule with ID {rule_id} not found",
+                )
+
+            has_category_suggestion = rule.ai_suggested_category_id is not None
+            has_counterparty_suggestion = rule.ai_suggested_counterparty_id is not None
+
+            if not has_category_suggestion and not has_counterparty_suggestion:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Rule has no AI suggestion to apply",
+                )
+
+            if has_category_suggestion:
+                rule.category_id = rule.ai_suggested_category_id
+                rule.ai_suggested_category_id = None
+                rule.ai_category_confidence = None
+
+            if has_counterparty_suggestion:
+                rule.counterparty_account_id = rule.ai_suggested_counterparty_id
+                rule.ai_suggested_counterparty_id = None
+                rule.ai_counterparty_confidence = None
+
+            internal.enhancement_rule_repository.save(rule)
+
+            transactions_updated = 0
+            if request.apply_to_transactions:
+                transactions_updated = service.apply_rule_to_existing_transactions(
+                    rule_id, current_user.id
+                )
+
+            return AIApplySuggestionResponse(
+                rule_id=rule_id,
+                applied=True,
+                transactions_updated=transactions_updated,
+            )
+
+        except HTTPException:
+            raise
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Failed to apply AI suggestion: {str(e)}",
+            )
+
+    @router.post(
+        "/{rule_id}/ai-suggestion/reject",
+        response_model=AIApplySuggestionResponse,
+    )
+    def reject_ai_suggestion(
+        rule_id: UUID,
+        internal: InternalDependencies = Depends(provide_dependencies),
+        current_user: User = Depends(require_current_user),
+    ) -> AIApplySuggestionResponse:
+        service = internal.enhancement_rule_management_service
+
+        try:
+            rule = service.get_rule(rule_id, current_user.id)
+            if not rule:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"Enhancement rule with ID {rule_id} not found",
+                )
+
+            rule.ai_suggested_category_id = None
+            rule.ai_category_confidence = None
+            rule.ai_suggested_counterparty_id = None
+            rule.ai_counterparty_confidence = None
+            internal.enhancement_rule_repository.save(rule)
+
+            return AIApplySuggestionResponse(
+                rule_id=rule_id,
+                applied=False,
+                transactions_updated=0,
+            )
+
+        except HTTPException:
+            raise
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Failed to reject AI suggestion: {str(e)}",
             )
 
     app.include_router(router, prefix=settings.API_V1_STR)

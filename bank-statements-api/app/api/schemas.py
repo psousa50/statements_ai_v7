@@ -477,6 +477,14 @@ class EnhancementRuleResponse(BaseModel):
     category: Optional[CategoryResponse] = None
     counterparty_account: Optional[AccountResponse] = None
     transaction_count: Optional[int] = None
+    # AI suggestion fields
+    ai_suggested_category_id: Optional[UUID] = None
+    ai_category_confidence: Optional[Decimal] = None
+    ai_suggested_counterparty_id: Optional[UUID] = None
+    ai_counterparty_confidence: Optional[Decimal] = None
+    ai_processed_at: Optional[datetime] = None
+    ai_suggested_category: Optional[CategoryResponse] = None
+    ai_suggested_counterparty: Optional[AccountResponse] = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -603,3 +611,30 @@ class SavedFilterResponse(BaseModel):
             id=saved_filter.id,
             transaction_ids=[UUID(tid) for tid in saved_filter.filter_data.get("transaction_ids", [])],
         )
+
+
+class AISuggestCategoriesRequest(BaseModel):
+    rule_ids: Optional[List[UUID]] = None
+    confidence_threshold: float = Field(default=0.8, ge=0.0, le=1.0)
+    auto_apply: bool = False
+
+
+class AISuggestCategoriesResponse(BaseModel):
+    processed: int
+    auto_applied: int
+    suggestions: int
+    failed: int
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class AIApplySuggestionRequest(BaseModel):
+    apply_to_transactions: bool = False
+
+
+class AIApplySuggestionResponse(BaseModel):
+    rule_id: UUID
+    applied: bool
+    transactions_updated: int = 0
+
+    model_config = ConfigDict(from_attributes=True)
