@@ -59,9 +59,8 @@ export const AppLayout = () => {
           >
             <MenuIcon />
           </IconButton>
-          <Box sx={{ marginLeft: 'auto' }}>
-            <UserMenu />
-          </Box>
+          <Box sx={{ flexGrow: 1 }} />
+          <UserMenu />
         </Toolbar>
       </AppBar>
 

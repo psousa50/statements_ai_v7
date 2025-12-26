@@ -525,6 +525,11 @@ select:disabled {
   white-space: nowrap;
 }
 
+/* Material-UI Button Reset - override global button width */
+.MuiButtonBase-root {
+  width: auto !important;
+}
+
 /* Material-UI Icon Button Enhancements for Dark Mode */
 .MuiIconButton-root {
   transition: all 0.2s ease !important;
