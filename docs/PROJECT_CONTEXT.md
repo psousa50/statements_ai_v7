@@ -11,7 +11,7 @@ Bank statement analyser - upload CSV/XLSX bank statements, parse transactions, c
 | Frontend | React + Vite + MUI | Port 5173 (dev) |
 | Backend | FastAPI + SQLAlchemy | Port 8000 (dev) |
 | Database | PostgreSQL 15 | Docker locally, Neon in prod |
-| AI | Google Gemini | Schema detection + categorisation |
+| AI | Groq / Gemini | Groq preferred (better rate limits) |
 
 ## Environments
 
@@ -40,12 +40,26 @@ Bank statement analyser - upload CSV/XLSX bank statements, parse transactions, c
 | Feature | Purpose | Status |
 |---------|---------|--------|
 | Schema Detection | Auto-detect column mappings in statements | Disabled (using heuristics) |
-| Transaction Categorisation | AI-powered category assignment | Implemented, not wired |
+| Rule Category Suggestions | AI suggests categories for enhancement rules | ✅ Wired (Enhancement Rules page) |
+| Rule Counterparty Suggestions | AI suggests counterparties for enhancement rules | ✅ Wired (Enhancement Rules page) |
+| Transaction Categorisation | AI-powered category assignment per transaction | Implemented, not wired |
 | Counterparty Identification | Detect inter-account transfers | Implemented, not wired |
 
-**Provider**: Google Gemini (`gemini-2.0-flash`)
-**Config**: `GEMINI_API_KEY` env var
-**Key files**: `app/ai/` directory (gemini_ai.py, prompts.py, llm_client.py)
+**Providers** (in priority order):
+1. Groq (`llama-3.3-70b-versatile`) - preferred, better rate limits
+2. Google Gemini (`gemini-2.0-flash`) - fallback
+
+**Config**: `GROQ_API_KEY` or `GEMINI_API_KEY` env var
+**Key files**: `app/ai/` directory (groq_ai.py, gemini_ai.py, prompts.py, llm_client.py)
+
+### Enhancement Rules
+
+Rules are auto-generated during statement upload via heuristic normalisation (source: `AUTO`) or manually created (source: `MANUAL`).
+
+When AI suggests a category/counterparty for a rule:
+- `ai_suggested_category_id` / `ai_suggested_counterparty_id` stores the suggestion
+- When applied, these remain set so we can show ✨ indicator for AI-set values
+- Compare `ai_suggested_category_id === category_id` to detect AI-set categories
 
 ## Common Tasks
 
