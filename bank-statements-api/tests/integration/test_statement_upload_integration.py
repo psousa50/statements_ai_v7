@@ -569,36 +569,16 @@ class TestStatementUploadIntegration:
         assert metadata.row_filters[0]["operator"] == "greater_than"
         assert metadata.row_filters[0]["value"] == "100"
 
-        # Verify two statements exist (different uploaded files) but only first has transactions
+        # Verify only one statement exists (second upload had all duplicates, so no statement created)
         statements = db_session.query(Statement).filter(Statement.account_id == account.id).all()
-        assert len(statements) == 2  # Two statements (different uploaded files)
+        assert len(statements) == 1
 
-        # Find which statement has transactions and which doesn't
-        statement_with_transactions = None
-        statement_without_transactions = None
-
-        for statement in statements:
-            transactions = db_session.query(Transaction).filter(Transaction.statement_id == statement.id).all()
-            if len(transactions) > 0:
-                statement_with_transactions = statement
-            else:
-                statement_without_transactions = statement
-
-        # Verify we have one statement with transactions and one without
-        assert statement_with_transactions is not None
-        assert statement_without_transactions is not None
-
-        # Verify the first statement has the correctly filtered transactions
-        transactions = db_session.query(Transaction).filter(Transaction.statement_id == statement_with_transactions.id).all()
+        # Verify the statement has the correctly filtered transactions
+        statement = statements[0]
+        transactions = db_session.query(Transaction).filter(Transaction.statement_id == statement.id).all()
         assert len(transactions) == 2
         amounts = [float(t.amount) for t in transactions]
         assert 150.00 in amounts
         assert 300.00 in amounts
         assert 50.00 not in amounts  # Filtered out
         assert 25.00 not in amounts  # Filtered out
-
-        # Verify the second statement has no transactions (duplicates were filtered out)
-        empty_transactions = (
-            db_session.query(Transaction).filter(Transaction.statement_id == statement_without_transactions.id).all()
-        )
-        assert len(empty_transactions) == 0

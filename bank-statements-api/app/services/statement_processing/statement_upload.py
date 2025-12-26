@@ -229,8 +229,11 @@ class StatementUploadService:
             transactions_saved = persistence_result.transactions_saved
             duplicated_transactions = persistence_result.duplicates_found
 
-            # Update statement with transaction statistics
-            self.statement_repo.update_transaction_statistics(statement.id)
+            if transactions_saved == 0:
+                self.statement_repo.delete(statement.id, user_id)
+                statement = None
+            else:
+                self.statement_repo.update_transaction_statistics(statement.id)
 
         # Save file analysis metadata for future duplicate detection
         # Convert row_filters to serializable format
