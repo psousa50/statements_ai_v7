@@ -24,7 +24,7 @@ class MatchType(str, Enum):
 
 class EnhancementRuleSource(str, Enum):
     MANUAL = "MANUAL"
-    AI = "AI"
+    AUTO = "AUTO"
 
 
 class EnhancementRule(Base):

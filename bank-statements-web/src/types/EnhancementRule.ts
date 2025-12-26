@@ -2,7 +2,7 @@ import { Category } from './Transaction'
 
 export enum EnhancementRuleSource {
   MANUAL = 'MANUAL',
-  AI = 'AI',
+  AUTO = 'AUTO',
 }
 
 export enum MatchType {
@@ -110,7 +110,7 @@ export interface RuleTypeUsage {
   rule_count: number
   transaction_count: number
   manual_rules: number
-  ai_rules: number
+  auto_rules: number
 }
 
 export interface CategoryUsage {
@@ -120,7 +120,7 @@ export interface CategoryUsage {
   rule_count: number
   transaction_count: number
   manual_rules: number
-  ai_rules: number
+  auto_rules: number
 }
 
 export interface CounterpartyUsage {
@@ -129,7 +129,7 @@ export interface CounterpartyUsage {
   rule_count: number
   transaction_count: number
   manual_rules: number
-  ai_rules: number
+  auto_rules: number
 }
 
 export interface TopRule {
@@ -156,13 +156,13 @@ export interface EnhancementRuleStats {
   summary: {
     total_rules: number
     manual_rules: number
-    ai_rules: number
+    auto_rules: number
     category_only_rules: number
     counterparty_only_rules: number
     combined_rules: number
     total_transactions_enhanced: number
     transactions_with_manual_rules: number
-    transactions_with_ai_rules: number
+    transactions_with_auto_rules: number
   }
   rule_type_usage: RuleTypeUsage[]
   category_usage: CategoryUsage[]

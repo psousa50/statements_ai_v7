@@ -189,7 +189,7 @@ export const EnhancementRuleFiltersComponent: React.FC<EnhancementRuleFiltersPro
             <Select value={filters.source || ''} onChange={handleSourceChange} disabled={loading} label="Source">
               <MenuItem value="">All</MenuItem>
               <MenuItem value={EnhancementRuleSource.MANUAL}>Manual</MenuItem>
-              <MenuItem value={EnhancementRuleSource.AI}>AI</MenuItem>
+              <MenuItem value={EnhancementRuleSource.AUTO}>Auto</MenuItem>
             </Select>
           </FormControl>
         </Box>

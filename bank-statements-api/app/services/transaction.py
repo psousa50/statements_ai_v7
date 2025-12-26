@@ -103,7 +103,7 @@ class TransactionService:
             match_type=MatchType.EXACT,
             category_id=None,
             counterparty_account_id=None,
-            source=EnhancementRuleSource.AI,
+            source=EnhancementRuleSource.AUTO,
             created_at=datetime.now(timezone.utc),
             updated_at=datetime.now(timezone.utc),
         )

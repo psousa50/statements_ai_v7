@@ -340,7 +340,7 @@ def register_enhancement_rule_routes(
                     user_id=current_user.id,
                     limit=100,
                     offset=0,
-                    source=EnhancementRuleSource.AI,
+                    source=EnhancementRuleSource.AUTO,
                     show_invalid_only=True,
                 )
                 rules = result["rules"]
@@ -372,7 +372,7 @@ def register_enhancement_rule_routes(
 
                 if request.auto_apply and suggestion.confidence >= request.confidence_threshold:
                     rule.category_id = suggestion.suggested_category_id
-                    rule.ai_suggested_category_id = None
+                    rule.ai_suggested_category_id = suggestion.suggested_category_id
                     rule.ai_category_confidence = None
                     rule.ai_processed_at = datetime.now(timezone.utc)
                     auto_applied += 1
@@ -421,7 +421,7 @@ def register_enhancement_rule_routes(
                     user_id=current_user.id,
                     limit=100,
                     offset=0,
-                    source=EnhancementRuleSource.AI,
+                    source=EnhancementRuleSource.AUTO,
                     show_invalid_only=True,
                 )
                 rules = result["rules"]
@@ -453,7 +453,7 @@ def register_enhancement_rule_routes(
 
                 if request.auto_apply and suggestion.confidence >= request.confidence_threshold:
                     rule.counterparty_account_id = suggestion.suggested_counterparty_id
-                    rule.ai_suggested_counterparty_id = None
+                    rule.ai_suggested_counterparty_id = suggestion.suggested_counterparty_id
                     rule.ai_counterparty_confidence = None
                     rule.ai_processed_at = datetime.now(timezone.utc)
                     auto_applied += 1
@@ -509,12 +509,10 @@ def register_enhancement_rule_routes(
 
             if has_category_suggestion:
                 rule.category_id = rule.ai_suggested_category_id
-                rule.ai_suggested_category_id = None
                 rule.ai_category_confidence = None
 
             if has_counterparty_suggestion:
                 rule.counterparty_account_id = rule.ai_suggested_counterparty_id
-                rule.ai_suggested_counterparty_id = None
                 rule.ai_counterparty_confidence = None
 
             internal.enhancement_rule_repository.save(rule)

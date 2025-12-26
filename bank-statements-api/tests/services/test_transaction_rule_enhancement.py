@@ -73,7 +73,7 @@ class TestTransactionRuleEnhancementService:
                 match_type=MatchType.PREFIX,
                 category_id="category-2",
                 counterparty_account_id=None,
-                source=EnhancementRuleSource.AI,
+                source=EnhancementRuleSource.AUTO,
             ),
         ]
 
@@ -168,7 +168,7 @@ class TestTransactionRuleEnhancementService:
             assert isinstance(rule, EnhancementRule)
             assert rule.category_id is None
             assert rule.counterparty_account_id is None
-            assert rule.source == EnhancementRuleSource.AI
+            assert rule.source == EnhancementRuleSource.AUTO
             assert rule.match_type == MatchType.EXACT
 
     def test_enhance_transactions_handles_empty_descriptions(

@@ -199,7 +199,7 @@ class TestStatementUploadIntegration:
         for rule in enhancement_rules:
             assert rule.source in [
                 EnhancementRuleSource.MANUAL,
-                EnhancementRuleSource.AI,
+                EnhancementRuleSource.AUTO,
             ]
             assert rule.normalized_description_pattern is not None
             assert len(rule.normalized_description_pattern) > 0
@@ -268,7 +268,7 @@ class TestStatementUploadIntegration:
         for rule in enhancement_rules:
             assert rule.source in [
                 EnhancementRuleSource.MANUAL,
-                EnhancementRuleSource.AI,
+                EnhancementRuleSource.AUTO,
             ]
             assert rule.normalized_description_pattern is not None
             assert len(rule.normalized_description_pattern) > 0
@@ -328,7 +328,7 @@ class TestStatementUploadIntegration:
             # All sources should be valid enum values
             valid_sources = {
                 EnhancementRuleSource.MANUAL,
-                EnhancementRuleSource.AI,
+                EnhancementRuleSource.AUTO,
             }
             for rule in enhancement_rules:
                 assert rule.source in valid_sources, f"Invalid enhancement rule source: {rule.source}"

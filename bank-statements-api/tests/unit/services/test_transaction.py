@@ -379,7 +379,7 @@ class TestTransactionService:
         assert saved_rule.normalized_description_pattern == "new merchant"
         assert saved_rule.match_type == MatchType.EXACT
         assert saved_rule.category_id is None
-        assert saved_rule.source == EnhancementRuleSource.AI
+        assert saved_rule.source == EnhancementRuleSource.AUTO
 
     def test_create_transaction_no_duplicate_ai_rule(
         self,
@@ -396,7 +396,7 @@ class TestTransactionService:
             match_type=MatchType.EXACT,
             category_id=None,
             counterparty_account_id=None,
-            source=EnhancementRuleSource.AI,
+            source=EnhancementRuleSource.AUTO,
         )
 
         mock_enhancement_rule_repository.get_all.return_value = []

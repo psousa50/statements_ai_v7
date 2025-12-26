@@ -195,7 +195,7 @@ class EnhancementRuleManagementService:
 
         total_rules = len(all_rules)
         manual_rules = len([r for r in all_rules if r.source == EnhancementRuleSource.MANUAL])
-        ai_rules = len([r for r in all_rules if r.source == EnhancementRuleSource.AI])
+        auto_rules = len([r for r in all_rules if r.source == EnhancementRuleSource.AUTO])
 
         category_only_rules = len([r for r in all_rules if r.category_id and not r.counterparty_account_id])
         counterparty_only_rules = len([r for r in all_rules if r.counterparty_account_id and not r.category_id])
@@ -203,7 +203,7 @@ class EnhancementRuleManagementService:
 
         total_transactions_enhanced = 0
         transactions_with_manual_rules = 0
-        transactions_with_ai_rules = 0
+        transactions_with_auto_rules = 0
 
         for rule in all_rules:
             count = self._get_rule_transaction_count(rule)
@@ -212,7 +212,7 @@ class EnhancementRuleManagementService:
             if rule.source == EnhancementRuleSource.MANUAL:
                 transactions_with_manual_rules += count
             else:
-                transactions_with_ai_rules += count
+                transactions_with_auto_rules += count
 
         rules_with_counts = []
         for rule in all_rules:
@@ -226,13 +226,13 @@ class EnhancementRuleManagementService:
             "summary": {
                 "total_rules": total_rules,
                 "manual_rules": manual_rules,
-                "ai_rules": ai_rules,
+                "auto_rules": auto_rules,
                 "category_only_rules": category_only_rules,
                 "counterparty_only_rules": counterparty_only_rules,
                 "combined_rules": combined_rules,
                 "total_transactions_enhanced": total_transactions_enhanced,
                 "transactions_with_manual_rules": transactions_with_manual_rules,
-                "transactions_with_ai_rules": transactions_with_ai_rules,
+                "transactions_with_auto_rules": transactions_with_auto_rules,
             },
             "top_rules_by_usage": [
                 {

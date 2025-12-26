@@ -207,7 +207,12 @@ export const EnhancementRuleTable: React.FC<EnhancementRuleTableProps> = ({
               </TableCell>
               <TableCell>
                 {rule.category ? (
-                  <Box>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                    {rule.ai_suggested_category_id === rule.category_id && (
+                      <Tooltip title="Set by AI">
+                        <AutoAwesomeIcon sx={{ fontSize: 14, color: 'secondary.main' }} />
+                      </Tooltip>
+                    )}
                     <Typography variant="body2">{rule.category.name}</Typography>
                   </Box>
                 ) : rule.ai_suggested_category ? (
@@ -265,14 +270,21 @@ export const EnhancementRuleTable: React.FC<EnhancementRuleTableProps> = ({
               </TableCell>
               <TableCell>
                 {rule.counterparty_account ? (
-                  <Typography variant="body2">
-                    {rule.counterparty_account.name}
-                    {rule.counterparty_account.account_number && (
-                      <Typography variant="caption" display="block" color="text.secondary">
-                        {rule.counterparty_account.account_number}
-                      </Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                    {rule.ai_suggested_counterparty_id === rule.counterparty_account_id && (
+                      <Tooltip title="Set by AI">
+                        <AutoAwesomeIcon sx={{ fontSize: 14, color: 'info.main' }} />
+                      </Tooltip>
                     )}
-                  </Typography>
+                    <Box>
+                      <Typography variant="body2">{rule.counterparty_account.name}</Typography>
+                      {rule.counterparty_account.account_number && (
+                        <Typography variant="caption" display="block" color="text.secondary">
+                          {rule.counterparty_account.account_number}
+                        </Typography>
+                      )}
+                    </Box>
+                  </Box>
                 ) : rule.ai_suggested_counterparty ? (
                   <Box
                     sx={{

@@ -385,7 +385,7 @@ export const EnhancementRuleModal: React.FC<EnhancementRuleModalProps> = ({
                 onChange={(e) => handleFieldChange('source', e.target.value)}
               >
                 <MenuItem value={EnhancementRuleSource.MANUAL}>Manual</MenuItem>
-                <MenuItem value={EnhancementRuleSource.AI}>AI</MenuItem>
+                <MenuItem value={EnhancementRuleSource.AUTO}>Auto</MenuItem>
               </Select>
             </FormControl>
           </Stack>
