@@ -104,11 +104,7 @@ export function getPeriodRange(periodType: PeriodType, date: Date): PeriodRange 
   }
 }
 
-export function navigatePeriod(
-  periodType: PeriodType,
-  currentDate: Date,
-  direction: 'prev' | 'next'
-): Date {
+export function navigatePeriod(periodType: PeriodType, currentDate: Date, direction: 'prev' | 'next'): Date {
   const result = new Date(currentDate)
   const delta = direction === 'next' ? 1 : -1
 

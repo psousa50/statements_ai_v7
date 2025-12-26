@@ -92,16 +92,10 @@ export const RecurringExpensesCharts = ({
 
       <div className="recurring-charts-section">
         <div className="chart-type-toggle">
-          <button
-            className={`toggle-btn ${chartType === 'pie' ? 'active' : ''}`}
-            onClick={() => setChartType('pie')}
-          >
+          <button className={`toggle-btn ${chartType === 'pie' ? 'active' : ''}`} onClick={() => setChartType('pie')}>
             Pie Chart
           </button>
-          <button
-            className={`toggle-btn ${chartType === 'bar' ? 'active' : ''}`}
-            onClick={() => setChartType('bar')}
-          >
+          <button className={`toggle-btn ${chartType === 'bar' ? 'active' : ''}`} onClick={() => setChartType('bar')}>
             Bar Chart
           </button>
         </div>

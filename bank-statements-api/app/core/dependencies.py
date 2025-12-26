@@ -19,6 +19,7 @@ from app.ai.noop_llm import NoopLLMClient
 from app.core.config import settings
 from app.core.database import SessionLocal
 from app.services.account import AccountService
+from app.services.ai import LLMRuleCategorizer, LLMRuleCounterparty
 from app.services.background.background_job_service import BackgroundJobService
 from app.services.category import CategoryService
 from app.services.description_group import DescriptionGroupService
@@ -33,7 +34,6 @@ from app.services.statement_processing.statement_analyzer import StatementAnalyz
 from app.services.statement_processing.statement_parser import StatementParser
 from app.services.statement_processing.statement_upload import StatementUploadService
 from app.services.statement_processing.transaction_normalizer import TransactionNormalizer
-from app.services.ai import LLMRuleCategorizer, LLMRuleCounterparty
 from app.services.transaction import TransactionService
 from app.services.transaction_enhancement import TransactionEnhancer
 from app.services.transaction_rule_enhancement import TransactionRuleEnhancementService

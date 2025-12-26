@@ -330,10 +330,7 @@ def register_enhancement_rule_routes(
 
         try:
             if request.rule_ids:
-                rules = [
-                    service.get_rule(rule_id, current_user.id)
-                    for rule_id in request.rule_ids
-                ]
+                rules = [service.get_rule(rule_id, current_user.id) for rule_id in request.rule_ids]
                 rules = [r for r in rules if r is not None]
             else:
                 result = service.list_rules(
@@ -411,10 +408,7 @@ def register_enhancement_rule_routes(
 
         try:
             if request.rule_ids:
-                rules = [
-                    service.get_rule(rule_id, current_user.id)
-                    for rule_id in request.rule_ids
-                ]
+                rules = [service.get_rule(rule_id, current_user.id) for rule_id in request.rule_ids]
                 rules = [r for r in rules if r is not None]
             else:
                 result = service.list_rules(
@@ -519,9 +513,7 @@ def register_enhancement_rule_routes(
 
             transactions_updated = 0
             if request.apply_to_transactions:
-                transactions_updated = service.apply_rule_to_existing_transactions(
-                    rule_id, current_user.id
-                )
+                transactions_updated = service.apply_rule_to_existing_transactions(rule_id, current_user.id)
 
             return AIApplySuggestionResponse(
                 rule_id=rule_id,

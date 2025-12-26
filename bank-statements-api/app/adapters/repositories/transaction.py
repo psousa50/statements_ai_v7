@@ -656,7 +656,9 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
 
         update_values = {
             "category_id": to_category_id,
-            "categorization_status": (CategorizationStatus.RULE_BASED if to_category_id else CategorizationStatus.UNCATEGORIZED),
+            "categorization_status": (
+                CategorizationStatus.RULE_BASED if to_category_id else CategorizationStatus.UNCATEGORIZED
+            ),
         }
 
         updated_count = (

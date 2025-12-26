@@ -3,7 +3,12 @@ import { useSearchParams, useNavigate } from 'react-router-dom'
 import { useTransactions } from '../services/hooks/useTransactions'
 import { useCategories } from '../services/hooks/useCategories'
 import { useAccounts } from '../services/hooks/useAccounts'
-import { TransactionTable, TransactionSortField, TransactionSortDirection, SimilarCountFilters } from '../components/TransactionTable'
+import {
+  TransactionTable,
+  TransactionSortField,
+  TransactionSortDirection,
+  SimilarCountFilters,
+} from '../components/TransactionTable'
 import { TransactionFilters, CategorizationFilter } from '../components/TransactionFilters'
 import { TransactionModal } from '../components/TransactionModal'
 import { Pagination } from '../components/Pagination'
@@ -84,9 +89,7 @@ export const TransactionsPage = () => {
   const [localStartDate, setLocalStartDate] = useState<string>(
     searchParams.get('start_date') || DEFAULT_DATE_RANGE.start
   )
-  const [localEndDate, setLocalEndDate] = useState<string>(
-    searchParams.get('end_date') || DEFAULT_DATE_RANGE.end
-  )
+  const [localEndDate, setLocalEndDate] = useState<string>(searchParams.get('end_date') || DEFAULT_DATE_RANGE.end)
   const [categorizationFilter, setCategorizationFilter] = useState<CategorizationFilter>(() => {
     const urlStatus = searchParams.get('status')
     if (urlStatus === 'UNCATEGORIZED') return 'uncategorized'
@@ -492,20 +495,22 @@ export const TransactionsPage = () => {
           <div className="transactions-header">
             <div className="transactions-summary">
               <h2>Transactions</h2>
-              {!loading && transactions.length > 0 && (() => {
-                const total = transactions.reduce((sum, t) => sum + Number(t.amount), 0)
-                return (
-                  <div className="transactions-stats">
-                    <span className="transaction-count">{pagination.total_count} transactions found</span>
-                    <span className="transaction-total">
-                      Total:{' '}
-                      <span className={total < 0 ? 'negative' : 'positive'}>
-                        {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(total)}
+              {!loading &&
+                transactions.length > 0 &&
+                (() => {
+                  const total = transactions.reduce((sum, t) => sum + Number(t.amount), 0)
+                  return (
+                    <div className="transactions-stats">
+                      <span className="transaction-count">{pagination.total_count} transactions found</span>
+                      <span className="transaction-total">
+                        Total:{' '}
+                        <span className={total < 0 ? 'negative' : 'positive'}>
+                          {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(total)}
+                        </span>
                       </span>
-                    </span>
-                  </div>
-                )
-              })()}
+                    </div>
+                  )
+                })()}
             </div>
           </div>
 

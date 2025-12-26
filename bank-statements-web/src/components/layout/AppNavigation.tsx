@@ -1,14 +1,6 @@
 import React from 'react'
 import { Link as RouterLink, useLocation } from 'react-router-dom'
-import {
-  List,
-  ListItem,
-  ListItemButton,
-  ListItemIcon,
-  ListItemText,
-  ListSubheader,
-  Box,
-} from '@mui/material'
+import { List, ListItem, ListItemButton, ListItemIcon, ListItemText, ListSubheader, Box } from '@mui/material'
 import ReceiptLongIcon from '@mui/icons-material/ReceiptLong'
 import UploadFileIcon from '@mui/icons-material/UploadFile'
 import BarChartIcon from '@mui/icons-material/BarChart'
@@ -120,12 +112,7 @@ export const AppNavigation: React.FC<AppNavigationProps> = ({ onNavigate }) => {
           ) : (
             section.items.map((item) => (
               <ListItem key={item.path} disablePadding>
-                <ListItemButton
-                  component={RouterLink}
-                  to={item.path}
-                  selected={isSelected(item)}
-                  onClick={onNavigate}
-                >
+                <ListItemButton component={RouterLink} to={item.path} selected={isSelected(item)} onClick={onNavigate}>
                   <ListItemIcon>{item.icon}</ListItemIcon>
                   <ListItemText primary={item.label} />
                 </ListItemButton>

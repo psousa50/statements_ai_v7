@@ -169,7 +169,18 @@ const CategoryCell = ({
         setIsLoading(false)
       }
     },
-    [transaction.id, transaction.category_id, transaction.normalized_description, categories, onCategorize, onBulkCategorize, onBulkReplaceCategory, similarCountFilters, apiClient, onShowToast]
+    [
+      transaction.id,
+      transaction.category_id,
+      transaction.normalized_description,
+      categories,
+      onCategorize,
+      onBulkCategorize,
+      onBulkReplaceCategory,
+      similarCountFilters,
+      apiClient,
+      onShowToast,
+    ]
   )
 
   const handleCreateCategory = useCallback(

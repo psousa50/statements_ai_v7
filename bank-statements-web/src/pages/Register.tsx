@@ -114,14 +114,7 @@ export const Register: React.FC = () => {
             margin="normal"
             autoComplete="new-password"
           />
-          <Button
-            type="submit"
-            variant="contained"
-            size="large"
-            fullWidth
-            disabled={isSubmitting}
-            sx={{ mt: 2 }}
-          >
+          <Button type="submit" variant="contained" size="large" fullWidth disabled={isSubmitting} sx={{ mt: 2 }}>
             {isSubmitting ? 'Creating account...' : 'Create account'}
           </Button>
         </Box>

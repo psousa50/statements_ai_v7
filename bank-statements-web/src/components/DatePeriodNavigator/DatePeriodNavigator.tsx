@@ -262,10 +262,7 @@ export function DatePeriodNavigator({
             aria-haspopup="dialog"
           >
             Custom
-            <ExpandMoreIcon
-              fontSize="small"
-              className={`custom-picker-chevron ${showCustomPicker ? 'open' : ''}`}
-            />
+            <ExpandMoreIcon fontSize="small" className={`custom-picker-chevron ${showCustomPicker ? 'open' : ''}`} />
           </button>
           {showCustomPicker && (
             <div className="custom-picker-dropdown" role="dialog" aria-label="Custom date range">

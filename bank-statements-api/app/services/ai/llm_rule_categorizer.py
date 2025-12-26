@@ -8,8 +8,8 @@ from app.adapters.repositories.category import SQLAlchemyCategoryRepository
 from app.ai.llm_client import LLMClient
 from app.ai.prompts import rule_categorization_prompt
 from app.common.json_utils import sanitize_json
-from app.domain.models.category import Category
 from app.domain.models.categorization import RuleCategorizationResult
+from app.domain.models.category import Category
 from app.domain.models.enhancement_rule import EnhancementRule
 
 logger = logging.getLogger(__name__)
@@ -158,9 +158,7 @@ class LLMRuleCategorizer:
                 for rule in rules
             ]
 
-    def _find_matching_result(
-        self, pattern: str, llm_results: list[LLMRuleResult]
-    ) -> Optional[LLMRuleResult]:
+    def _find_matching_result(self, pattern: str, llm_results: list[LLMRuleResult]) -> Optional[LLMRuleResult]:
         pattern_normalized = pattern.strip().lower()
         for result in llm_results:
             if result.pattern.strip().lower() == pattern_normalized:

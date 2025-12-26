@@ -84,14 +84,7 @@ export const Login: React.FC = () => {
             margin="normal"
             autoComplete="current-password"
           />
-          <Button
-            type="submit"
-            variant="contained"
-            size="large"
-            fullWidth
-            disabled={isSubmitting}
-            sx={{ mt: 2 }}
-          >
+          <Button type="submit" variant="contained" size="large" fullWidth disabled={isSubmitting} sx={{ mt: 2 }}>
             {isSubmitting ? 'Signing in...' : 'Sign in'}
           </Button>
         </Box>

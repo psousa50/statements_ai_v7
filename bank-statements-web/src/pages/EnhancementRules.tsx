@@ -16,7 +16,12 @@ import AddIcon from '@mui/icons-material/Add'
 import CleanupIcon from '@mui/icons-material/CleaningServices'
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome'
 import { useEnhancementRules } from '../services/hooks/useEnhancementRules'
-import { EnhancementRuleFilters, EnhancementRule, SortField, AISuggestCategoriesResponse } from '../types/EnhancementRule'
+import {
+  EnhancementRuleFilters,
+  EnhancementRule,
+  SortField,
+  AISuggestCategoriesResponse,
+} from '../types/EnhancementRule'
 import { EnhancementRuleTable } from '../components/EnhancementRuleTable'
 import { EnhancementRuleFiltersComponent } from '../components/EnhancementRuleFilters'
 import { EnhancementRuleModal } from '../components/EnhancementRuleModal'
@@ -24,8 +29,16 @@ import { Pagination } from '../components/Pagination'
 import './EnhancementRules.css'
 
 export const EnhancementRules: React.FC = () => {
-  const { loading, error, fetchRules, deleteRule, cleanupUnused, suggestCategories, applySuggestion, rejectSuggestion } =
-    useEnhancementRules()
+  const {
+    loading,
+    error,
+    fetchRules,
+    deleteRule,
+    cleanupUnused,
+    suggestCategories,
+    applySuggestion,
+    rejectSuggestion,
+  } = useEnhancementRules()
 
   const [rules, setRules] = useState<EnhancementRule[]>([])
   const [total, setTotal] = useState(0)

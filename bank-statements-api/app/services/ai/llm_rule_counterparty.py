@@ -125,9 +125,7 @@ class LLMRuleCounterparty:
                 for rule in rules
             ]
 
-    def _find_matching_result(
-        self, pattern: str, llm_results: list[LLMCounterpartyResult]
-    ) -> Optional[LLMCounterpartyResult]:
+    def _find_matching_result(self, pattern: str, llm_results: list[LLMCounterpartyResult]) -> Optional[LLMCounterpartyResult]:
         for result in llm_results:
             if result.pattern == pattern:
                 return result
