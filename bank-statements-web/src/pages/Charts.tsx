@@ -6,6 +6,7 @@ import { useCategories } from '../services/hooks/useCategories'
 import { useAccounts } from '../services/hooks/useAccounts'
 import { TransactionFilters, CategorizationFilter } from '../components/TransactionFilters'
 import { CategoryTimeSeriesChart } from '../components/CategoryTimeSeriesChart'
+import { CategoryTotalsBarChart } from '../components/CategoryTotalsBarChart'
 import { Category } from '../types/Transaction'
 import { TransactionFilters as FilterType } from '../api/TransactionClient'
 import './ChartsPage.css'
@@ -58,7 +59,7 @@ export const ChartsPage = () => {
   const [selectedRootCategory, setSelectedRootCategory] = useState<string | null>(null)
   const [transactionType, setTransactionType] = useState<'all' | 'debit' | 'credit'>('debit')
   const [categorizationFilter, setCategorizationFilter] = useState<CategorizationFilter>('categorized')
-  const [viewMode, setViewMode] = useState<'pie' | 'timeseries'>('pie')
+  const [viewMode, setViewMode] = useState<'pie' | 'bar' | 'timeseries'>('pie')
   const [timeSeriesPeriod, setTimeSeriesPeriod] = useState<'month' | 'week'>('month')
 
   // Local state for debounced inputs
@@ -458,7 +459,7 @@ export const ChartsPage = () => {
   const totalTransactions = chartData.reduce((sum, item) => sum + item.count, 0)
 
   const handleViewModeChange = useCallback(
-    (mode: 'pie' | 'timeseries') => {
+    (mode: 'pie' | 'bar' | 'timeseries') => {
       setViewMode(mode)
       if (mode === 'timeseries') {
         fetchCategoryTimeSeries(selectedRootCategory || undefined, timeSeriesPeriod, filters)
@@ -530,7 +531,6 @@ export const ChartsPage = () => {
             endDate={localEndDate}
             excludeTransfers={filters.exclude_transfers}
             categorizationFilter={categorizationFilter}
-            hideUncategorizedOnlyOption={true}
             transactionType={transactionType}
             defaultTransactionType="debit"
             defaultCategorizationFilter="categorized"
@@ -574,6 +574,9 @@ export const ChartsPage = () => {
                 <button onClick={() => handleViewModeChange('pie')} className={viewMode === 'pie' ? 'active' : ''}>
                   Pie Chart
                 </button>
+                <button onClick={() => handleViewModeChange('bar')} className={viewMode === 'bar' ? 'active' : ''}>
+                  Bar Chart
+                </button>
                 <button
                   onClick={() => handleViewModeChange('timeseries')}
                   className={viewMode === 'timeseries' ? 'active' : ''}
@@ -615,7 +618,7 @@ export const ChartsPage = () => {
                   </div>
                 </>
               )}
-              {chartType === 'sub' && viewMode === 'pie' && (
+              {chartType === 'sub' && (viewMode === 'pie' || viewMode === 'bar') && (
                 <button onClick={handleBackToRoot} className="back-button">
                   ← Back to All Categories
                 </button>
@@ -675,6 +678,8 @@ export const ChartsPage = () => {
                   </PieChart>
                 </ResponsiveContainer>
               )
+            ) : viewMode === 'bar' ? (
+              <CategoryTotalsBarChart data={chartData} loading={loading} onBarClick={handleChartClick} />
             ) : (
               <CategoryTimeSeriesChart
                 dataPoints={timeSeriesData || []}
@@ -685,11 +690,11 @@ export const ChartsPage = () => {
           </div>
 
           <div className="chart-help">
-            {viewMode === 'pie' ? (
+            {viewMode === 'pie' || viewMode === 'bar' ? (
               chartType === 'root' ? (
-                <p>Click on any category slice to see its subcategories breakdown</p>
+                <p>Click on any category to see its subcategories breakdown</p>
               ) : (
-                <p>Click on any subcategory slice to view its transactions</p>
+                <p>Click on any subcategory to view its transactions</p>
               )
             ) : (
               <p>
