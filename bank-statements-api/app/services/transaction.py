@@ -413,6 +413,44 @@ class TransactionService:
             exclude_transfers=exclude_transfers,
         )
 
+    def count_by_category_id(
+        self,
+        user_id: UUID,
+        category_id: UUID,
+        account_id: Optional[UUID] = None,
+        start_date: Optional[date] = None,
+        end_date: Optional[date] = None,
+        exclude_transfers: Optional[bool] = None,
+    ) -> int:
+        return self.transaction_repository.count_by_category_id(
+            user_id=user_id,
+            category_id=category_id,
+            account_id=account_id,
+            start_date=start_date,
+            end_date=end_date,
+            exclude_transfers=exclude_transfers,
+        )
+
+    def bulk_update_by_category_id(
+        self,
+        user_id: UUID,
+        from_category_id: UUID,
+        to_category_id: Optional[UUID],
+        account_id: Optional[UUID] = None,
+        start_date: Optional[date] = None,
+        end_date: Optional[date] = None,
+        exclude_transfers: Optional[bool] = None,
+    ) -> int:
+        return self.transaction_repository.bulk_update_by_category_id(
+            user_id=user_id,
+            from_category_id=from_category_id,
+            to_category_id=to_category_id,
+            account_id=account_id,
+            start_date=start_date,
+            end_date=end_date,
+            exclude_transfers=exclude_transfers,
+        )
+
     def save_transactions_from_dtos(
         self,
         transaction_dtos: List[TransactionDTO],

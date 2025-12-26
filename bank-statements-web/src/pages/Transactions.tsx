@@ -102,6 +102,7 @@ export const TransactionsPage = () => {
     updateTransaction,
     categorizeTransaction,
     bulkUpdateCategory,
+    bulkReplaceCategory,
   } = useTransactions()
 
   const { categories, loading: categoriesLoading, error: categoriesError } = useCategories()
@@ -356,6 +357,19 @@ export const TransactionsPage = () => {
     return result
   }
 
+  const handleBulkReplaceCategory = async (fromCategoryId: string, toCategoryId: string) => {
+    const result = await bulkReplaceCategory(fromCategoryId, toCategoryId, {
+      account_id: filters.account_id,
+      start_date: filters.start_date,
+      end_date: filters.end_date,
+      exclude_transfers: filters.exclude_transfers,
+    })
+    if (result) {
+      fetchTransactions({ ...filters, include_running_balance: !!filters.account_id })
+    }
+    return result
+  }
+
   const handleSaveTransaction = async (transactionData: TransactionCreate, transactionId?: string) => {
     if (transactionId) {
       const updatedTransaction = await updateTransaction(transactionId, transactionData)
@@ -498,6 +512,7 @@ export const TransactionsPage = () => {
               loading={loading}
               onCategorize={handleCategorizeTransaction}
               onBulkCategorize={handleBulkCategorize}
+              onBulkReplaceCategory={handleBulkReplaceCategory}
               similarCountFilters={{
                 account_id: filters.account_id,
                 start_date: filters.start_date,

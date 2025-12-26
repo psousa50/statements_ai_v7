@@ -80,6 +80,28 @@ export interface CountSimilarResponse {
   count: number
 }
 
+export interface CountByCategoryFilters {
+  category_id: string
+  account_id?: string
+  start_date?: string
+  end_date?: string
+  exclude_transfers?: boolean
+}
+
+export interface BulkReplaceCategoryRequest {
+  from_category_id: string
+  to_category_id?: string
+  account_id?: string
+  start_date?: string
+  end_date?: string
+  exclude_transfers?: boolean
+}
+
+export interface BulkReplaceCategoryResponse {
+  updated_count: number
+  message: string
+}
+
 export interface EnhancementPreviewRequest {
   description: string
   amount?: number
@@ -133,6 +155,8 @@ export interface TransactionClient {
   delete(id: string): Promise<void>
   bulkUpdateCategory(request: BulkUpdateTransactionsRequest): Promise<BulkUpdateTransactionsResponse>
   countSimilar(filters: CountSimilarFilters): Promise<CountSimilarResponse>
+  countByCategory(filters: CountByCategoryFilters): Promise<CountSimilarResponse>
+  bulkReplaceCategory(request: BulkReplaceCategoryRequest): Promise<BulkReplaceCategoryResponse>
   previewEnhancement(request: EnhancementPreviewRequest): Promise<EnhancementPreviewResponse>
   createSavedFilter(transactionIds: string[]): Promise<SavedFilterResponse>
 }
@@ -369,6 +393,30 @@ export const transactionClient: TransactionClient = {
       params.append('exclude_transfers', filters.exclude_transfers.toString())
     }
     const response = await axios.get<CountSimilarResponse>(`${API_URL}/count-similar?${params.toString()}`)
+    return response.data
+  },
+
+  async countByCategory(filters: CountByCategoryFilters) {
+    const params = new URLSearchParams()
+    params.append('category_id', filters.category_id)
+    if (filters.account_id) {
+      params.append('account_id', filters.account_id)
+    }
+    if (filters.start_date) {
+      params.append('start_date', filters.start_date)
+    }
+    if (filters.end_date) {
+      params.append('end_date', filters.end_date)
+    }
+    if (filters.exclude_transfers !== undefined) {
+      params.append('exclude_transfers', filters.exclude_transfers.toString())
+    }
+    const response = await axios.get<CountSimilarResponse>(`${API_URL}/count-by-category?${params.toString()}`)
+    return response.data
+  },
+
+  async bulkReplaceCategory(request: BulkReplaceCategoryRequest) {
+    const response = await axios.put<BulkReplaceCategoryResponse>(`${API_URL}/bulk-replace-category`, request)
     return response.data
   },
 

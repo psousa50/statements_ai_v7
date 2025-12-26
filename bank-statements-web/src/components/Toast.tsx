@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useCallback } from 'react'
 
 export interface ToastAction {
   label: string
@@ -12,9 +12,10 @@ export interface ToastProps {
   onClose: () => void
   onUndo?: () => void
   action?: ToastAction
+  actions?: ToastAction[]
 }
 
-export const Toast = ({ message, type = 'success', duration = 4000, onClose, onUndo, action }: ToastProps) => {
+export const Toast = ({ message, type = 'success', duration = 4000, onClose, onUndo, action, actions }: ToastProps) => {
   useEffect(() => {
     const timer = setTimeout(onClose, duration)
     return () => clearTimeout(timer)
@@ -25,10 +26,15 @@ export const Toast = ({ message, type = 'success', duration = 4000, onClose, onU
     onClose()
   }
 
-  const handleAction = () => {
-    action?.onClick()
-    onClose()
-  }
+  const handleAction = useCallback(
+    (actionToRun: ToastAction) => {
+      actionToRun.onClick()
+      onClose()
+    },
+    [onClose]
+  )
+
+  const allActions = actions || (action ? [action] : [])
 
   return (
     <div className={`toast toast-${type}`}>
@@ -43,18 +49,18 @@ export const Toast = ({ message, type = 'success', duration = 4000, onClose, onU
           ×
         </button>
       </div>
-      {(onUndo || action) && (
+      {(onUndo || allActions.length > 0) && (
         <div className="toast-actions">
           {onUndo && (
             <button className="toast-undo" onClick={handleUndo}>
               Undo
             </button>
           )}
-          {action && (
-            <button className="toast-action" onClick={handleAction}>
-              {action.label}
+          {allActions.map((a, index) => (
+            <button key={index} className="toast-action" onClick={() => handleAction(a)}>
+              {a.label}
             </button>
-          )}
+          ))}
         </div>
       )}
     </div>

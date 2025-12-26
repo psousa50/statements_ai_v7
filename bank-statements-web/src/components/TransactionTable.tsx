@@ -32,6 +32,7 @@ interface TransactionTableProps {
   loading: boolean
   onCategorize?: (transactionId: string, categoryId?: string) => Promise<void>
   onBulkCategorize?: (normalizedDescription: string, categoryId: string) => Promise<BulkCategorizeResult | null>
+  onBulkReplaceCategory?: (fromCategoryId: string, toCategoryId: string) => Promise<BulkCategorizeResult | null>
   similarCountFilters?: SimilarCountFilters
   onEdit?: (transaction: Transaction) => void
   sortField?: TransactionSortField
@@ -45,6 +46,7 @@ interface CategoryCellProps {
   categories: Category[]
   onCategorize: (transactionId: string, categoryId?: string) => Promise<void>
   onBulkCategorize?: (normalizedDescription: string, categoryId: string) => Promise<BulkCategorizeResult | null>
+  onBulkReplaceCategory?: (fromCategoryId: string, toCategoryId: string) => Promise<BulkCategorizeResult | null>
   similarCountFilters?: SimilarCountFilters
   onShowToast: (toast: Omit<ToastProps, 'onClose'>) => void
   onCategoryCreated: (category: Category) => void
@@ -55,6 +57,7 @@ const CategoryCell = ({
   categories,
   onCategorize,
   onBulkCategorize,
+  onBulkReplaceCategory,
   similarCountFilters,
   onShowToast,
   onCategoryCreated,
@@ -93,6 +96,7 @@ const CategoryCell = ({
           })
         } else if (categoryId && onBulkCategorize) {
           const categoryName = categories.find((c) => c.id === categoryId)?.name || 'Category'
+          const actions: { label: string; onClick: () => Promise<void> }[] = []
 
           const countResult = await apiClient.transactions.countSimilar({
             normalized_description: transaction.normalized_description,
@@ -101,24 +105,52 @@ const CategoryCell = ({
           const similarCount = countResult.count - 1
 
           if (similarCount > 0) {
+            actions.push({
+              label: `Apply to ${similarCount} similar`,
+              onClick: async () => {
+                const result = await onBulkCategorize(transaction.normalized_description, categoryId)
+                if (result) {
+                  const additionalCount = result.updated_count - 1
+                  if (additionalCount > 0) {
+                    onShowToast({
+                      message: `Updated ${additionalCount} similar transaction${additionalCount === 1 ? '' : 's'}`,
+                      type: 'success',
+                    })
+                  }
+                }
+              },
+            })
+          }
+
+          if (previousCategoryId && onBulkReplaceCategory) {
+            const oldCategoryName = categories.find((c) => c.id === previousCategoryId)?.name || 'old category'
+            const replaceCountResult = await apiClient.transactions.countByCategory({
+              category_id: previousCategoryId,
+              ...similarCountFilters,
+            })
+            const replaceCount = replaceCountResult.count
+
+            if (replaceCount > 0) {
+              actions.push({
+                label: `Replace ${replaceCount} from ${oldCategoryName}`,
+                onClick: async () => {
+                  const result = await onBulkReplaceCategory(previousCategoryId, categoryId)
+                  if (result && result.updated_count > 0) {
+                    onShowToast({
+                      message: `Replaced category for ${result.updated_count} transaction${result.updated_count === 1 ? '' : 's'}`,
+                      type: 'success',
+                    })
+                  }
+                },
+              })
+            }
+          }
+
+          if (actions.length > 0) {
             onShowToast({
               message: `${categoryName} applied`,
               type: 'success',
-              action: {
-                label: `Apply to ${similarCount} similar`,
-                onClick: async () => {
-                  const result = await onBulkCategorize(transaction.normalized_description, categoryId)
-                  if (result) {
-                    const additionalCount = result.updated_count - 1
-                    if (additionalCount > 0) {
-                      onShowToast({
-                        message: `Updated ${additionalCount} similar transaction${additionalCount === 1 ? '' : 's'}`,
-                        type: 'success',
-                      })
-                    }
-                  }
-                },
-              },
+              actions,
             })
           } else {
             onShowToast({
@@ -137,7 +169,7 @@ const CategoryCell = ({
         setIsLoading(false)
       }
     },
-    [transaction.id, transaction.category_id, transaction.normalized_description, categories, onCategorize, onBulkCategorize, similarCountFilters, apiClient, onShowToast]
+    [transaction.id, transaction.category_id, transaction.normalized_description, categories, onCategorize, onBulkCategorize, onBulkReplaceCategory, similarCountFilters, apiClient, onShowToast]
   )
 
   const handleCreateCategory = useCallback(
@@ -224,6 +256,7 @@ export const TransactionTable = ({
   loading,
   onCategorize,
   onBulkCategorize,
+  onBulkReplaceCategory,
   similarCountFilters,
   onEdit,
   sortField,
@@ -345,6 +378,7 @@ export const TransactionTable = ({
                     categories={localCategories}
                     onCategorize={onCategorize}
                     onBulkCategorize={onBulkCategorize}
+                    onBulkReplaceCategory={onBulkReplaceCategory}
                     similarCountFilters={similarCountFilters}
                     onShowToast={handleShowToast}
                     onCategoryCreated={handleCategoryCreated}

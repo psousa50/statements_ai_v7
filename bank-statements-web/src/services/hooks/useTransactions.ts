@@ -171,6 +171,33 @@ export const useTransactions = () => {
     [api.transactions]
   )
 
+  const bulkReplaceCategory = useCallback(
+    async (
+      fromCategoryId: string,
+      toCategoryId: string,
+      filterOptions?: {
+        account_id?: string
+        start_date?: string
+        end_date?: string
+        exclude_transfers?: boolean
+      }
+    ) => {
+      try {
+        const response = await api.transactions.bulkReplaceCategory({
+          from_category_id: fromCategoryId,
+          to_category_id: toCategoryId,
+          ...filterOptions,
+        })
+        return response
+      } catch (err) {
+        console.error('Error bulk replacing category:', err)
+        setError('Failed to replace category for transactions.')
+        return null
+      }
+    },
+    [api.transactions]
+  )
+
   const getTransactionsByCategory = useCallback(
     (categoryId?: string) => {
       if (!categoryId) {
@@ -204,6 +231,7 @@ export const useTransactions = () => {
     deleteTransaction,
     categorizeTransaction,
     bulkUpdateCategory,
+    bulkReplaceCategory,
     getTransactionsByCategory,
     getTransactionsByStatus,
   }

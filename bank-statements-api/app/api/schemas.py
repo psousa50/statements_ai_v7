@@ -402,6 +402,20 @@ class CountSimilarResponse(BaseModel):
     count: int
 
 
+class BulkReplaceCategoryRequest(BaseModel):
+    from_category_id: UUID
+    to_category_id: Optional[UUID] = None
+    account_id: Optional[UUID] = None
+    start_date: Optional[date] = None
+    end_date: Optional[date] = None
+    exclude_transfers: Optional[bool] = None
+
+
+class BulkReplaceCategoryResponse(BaseModel):
+    updated_count: int
+    message: str
+
+
 # Enhancement Rule Schemas
 class EnhancementRuleBase(BaseModel):
     normalized_description_pattern: str = Field(..., min_length=1, max_length=255)

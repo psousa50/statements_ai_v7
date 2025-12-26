@@ -8,6 +8,8 @@ from starlette import status as http_status
 
 from app.api.routes.auth import require_current_user
 from app.api.schemas import (
+    BulkReplaceCategoryRequest,
+    BulkReplaceCategoryResponse,
     BulkUpdateTransactionsRequest,
     BulkUpdateTransactionsResponse,
     CategoryTimeSeriesDataPoint,
@@ -522,6 +524,60 @@ def register_transaction_routes(
             exclude_transfers=exclude_transfers,
         )
         return CountSimilarResponse(count=count)
+
+    @router.get(
+        "/count-by-category",
+        response_model=CountSimilarResponse,
+    )
+    def count_by_category(
+        category_id: UUID = Query(...),
+        account_id: Optional[UUID] = Query(None),
+        start_date: Optional[date] = Query(None),
+        end_date: Optional[date] = Query(None),
+        exclude_transfers: Optional[bool] = Query(None),
+        internal: InternalDependencies = Depends(provide_dependencies),
+        current_user: User = Depends(require_current_user),
+    ):
+        count = internal.transaction_service.count_by_category_id(
+            user_id=current_user.id,
+            category_id=category_id,
+            account_id=account_id,
+            start_date=start_date,
+            end_date=end_date,
+            exclude_transfers=exclude_transfers,
+        )
+        return CountSimilarResponse(count=count)
+
+    @router.put(
+        "/bulk-replace-category",
+        response_model=BulkReplaceCategoryResponse,
+    )
+    def bulk_replace_category(
+        request: BulkReplaceCategoryRequest,
+        internal: InternalDependencies = Depends(provide_dependencies),
+        current_user: User = Depends(require_current_user),
+    ):
+        updated_count = internal.transaction_service.bulk_update_by_category_id(
+            user_id=current_user.id,
+            from_category_id=request.from_category_id,
+            to_category_id=request.to_category_id,
+            account_id=request.account_id,
+            start_date=request.start_date,
+            end_date=request.end_date,
+            exclude_transfers=request.exclude_transfers,
+        )
+
+        from_category = internal.category_repository.get_by_id(request.from_category_id, current_user.id)
+        from_name = from_category.name if from_category else "Unknown"
+
+        if request.to_category_id:
+            to_category = internal.category_repository.get_by_id(request.to_category_id, current_user.id)
+            to_name = to_category.name if to_category else "Unknown"
+            message = f"Replaced '{from_name}' with '{to_name}' for {updated_count} transactions"
+        else:
+            message = f"Removed '{from_name}' from {updated_count} transactions"
+
+        return BulkReplaceCategoryResponse(updated_count=updated_count, message=message)
 
     @router.get(
         "/{transaction_id}",

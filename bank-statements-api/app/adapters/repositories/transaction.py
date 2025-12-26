@@ -593,6 +593,81 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
 
         return query.scalar() or 0
 
+    def count_by_category_id(
+        self,
+        user_id: UUID,
+        category_id: UUID,
+        account_id: Optional[UUID] = None,
+        start_date: Optional[date] = None,
+        end_date: Optional[date] = None,
+        exclude_transfers: Optional[bool] = None,
+    ) -> int:
+        query = (
+            self.db_session.query(func.count(Transaction.id))
+            .join(Account, Transaction.account_id == Account.id)
+            .filter(Account.user_id == user_id)
+            .filter(Transaction.category_id == category_id)
+        )
+
+        if account_id is not None:
+            query = query.filter(Transaction.account_id == account_id)
+
+        if start_date is not None:
+            query = query.filter(Transaction.date >= start_date)
+
+        if end_date is not None:
+            query = query.filter(Transaction.date <= end_date)
+
+        if exclude_transfers is not False:
+            query = query.filter(Transaction.counterparty_account_id.is_(None))
+
+        return query.scalar() or 0
+
+    def bulk_update_by_category_id(
+        self,
+        user_id: UUID,
+        from_category_id: UUID,
+        to_category_id: Optional[UUID],
+        account_id: Optional[UUID] = None,
+        start_date: Optional[date] = None,
+        end_date: Optional[date] = None,
+        exclude_transfers: Optional[bool] = None,
+    ) -> int:
+        subquery = (
+            self.db_session.query(Transaction.id)
+            .join(Account, Transaction.account_id == Account.id)
+            .filter(Account.user_id == user_id)
+            .filter(Transaction.category_id == from_category_id)
+        )
+
+        if account_id is not None:
+            subquery = subquery.filter(Transaction.account_id == account_id)
+
+        if start_date is not None:
+            subquery = subquery.filter(Transaction.date >= start_date)
+
+        if end_date is not None:
+            subquery = subquery.filter(Transaction.date <= end_date)
+
+        if exclude_transfers is not False:
+            subquery = subquery.filter(Transaction.counterparty_account_id.is_(None))
+
+        subquery = subquery.subquery()
+
+        update_values = {
+            "category_id": to_category_id,
+            "categorization_status": (CategorizationStatus.RULE_BASED if to_category_id else CategorizationStatus.UNCATEGORIZED),
+        }
+
+        updated_count = (
+            self.db_session.query(Transaction)
+            .filter(Transaction.id.in_(subquery))
+            .update(update_values, synchronize_session="fetch")
+        )
+        self.db_session.commit()
+
+        return updated_count
+
     def get_max_sort_index_for_date(self, account_id: UUID, date: date) -> int:
         """
         Get the maximum sort_index for transactions on a given date and account.
