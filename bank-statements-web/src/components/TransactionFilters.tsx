@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback } from 'react'
 import { Category, Account } from '../types/Transaction'
 import { CategorySelector } from './CategorySelector'
 import { DatePeriodNavigator } from './DatePeriodNavigator'
@@ -61,29 +61,6 @@ export const TransactionFilters = ({
   onClearFilters,
 }: TransactionFiltersProps) => {
   const [isCollapsed, setIsCollapsed] = useState(false)
-  const [showSecondaryFilters, setShowSecondaryFilters] = useState(false)
-
-  const hasActiveSecondaryFilters =
-    transactionType !== defaultTransactionType ||
-    selectedAccountId !== undefined ||
-    minAmount !== undefined ||
-    maxAmount !== undefined ||
-    categorizationFilter !== defaultCategorizationFilter ||
-    excludeTransfers !== defaultExcludeTransfers
-
-  const activeSecondaryFiltersCount = [
-    transactionType !== defaultTransactionType,
-    selectedAccountId !== undefined,
-    minAmount !== undefined || maxAmount !== undefined,
-    categorizationFilter !== defaultCategorizationFilter,
-    excludeTransfers !== defaultExcludeTransfers,
-  ].filter(Boolean).length
-
-  useEffect(() => {
-    if (hasActiveSecondaryFilters && !showSecondaryFilters) {
-      setShowSecondaryFilters(true)
-    }
-  }, [hasActiveSecondaryFilters, showSecondaryFilters])
 
   const hasActiveFilters =
     selectedCategoryIds.length > 0 ||
@@ -124,16 +101,6 @@ export const TransactionFilters = ({
               Clear All
             </button>
           )}
-          <button
-            type="button"
-            className={`more-filters-toggle ${showSecondaryFilters ? 'active' : ''}`}
-            onClick={() => setShowSecondaryFilters(!showSecondaryFilters)}
-          >
-            {showSecondaryFilters ? 'Fewer' : 'More'}
-            {!showSecondaryFilters && activeSecondaryFiltersCount > 0 && (
-              <span className="active-filters-badge">{activeSecondaryFiltersCount}</span>
-            )}
-          </button>
           <button
             onClick={() => setIsCollapsed(!isCollapsed)}
             className="collapse-toggle-button"
@@ -190,8 +157,7 @@ export const TransactionFilters = ({
             </div>
           </div>
 
-          {showSecondaryFilters && (
-            <div className="filters-row secondary-filters">
+          <div className="filters-row secondary-filters">
               <div className="filter-group">
                 <label htmlFor="transaction-type-filter" className="filter-label">
                   Type
@@ -282,7 +248,6 @@ export const TransactionFilters = ({
                 </div>
               </div>
             </div>
-          )}
         </div>
       )}
     </div>
