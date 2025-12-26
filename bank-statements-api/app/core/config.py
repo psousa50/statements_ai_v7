@@ -6,7 +6,7 @@ from pydantic_settings import BaseSettings
 
 # Load environment variables from the backend .env file
 backend_env_path = Path(__file__).parent.parent.parent / ".env"
-load_dotenv(backend_env_path)
+load_dotenv(backend_env_path, override=True)
 
 
 class Settings(BaseSettings):
@@ -33,6 +33,7 @@ class Settings(BaseSettings):
     # API Keys
     GOOGLE_API_KEY: str = os.getenv("GOOGLE_API_KEY", "")
     GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")
+    GROQ_API_KEY: str = os.getenv("GROQ_API_KEY", "")
 
     # Auth settings
     JWT_SECRET_KEY: str = os.getenv("JWT_SECRET_KEY", "change-me-in-production")

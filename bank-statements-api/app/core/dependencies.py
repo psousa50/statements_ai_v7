@@ -45,13 +45,21 @@ def _create_llm_client() -> LLMClient:
     if settings.E2E_TEST_MODE:
         logger.info("Using NoopLLMClient (E2E_TEST_MODE)")
         return NoopLLMClient()
-    if not settings.GEMINI_API_KEY:
-        logger.warning("Using NoopLLMClient (GEMINI_API_KEY not set)")
-        return NoopLLMClient()
-    from app.ai.gemini_ai import GeminiAI
 
-    logger.info("Using GeminiAI LLM client")
-    return GeminiAI()
+    if settings.GROQ_API_KEY:
+        from app.ai.groq_ai import GroqAI
+
+        logger.info("Using GroqAI LLM client")
+        return GroqAI()
+
+    if settings.GEMINI_API_KEY:
+        from app.ai.gemini_ai import GeminiAI
+
+        logger.info("Using GeminiAI LLM client")
+        return GeminiAI()
+
+    logger.warning("Using NoopLLMClient (no API key set)")
+    return NoopLLMClient()
 
 
 class ExternalDependencies:
