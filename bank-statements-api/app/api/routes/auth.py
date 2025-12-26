@@ -2,7 +2,7 @@ from typing import Optional
 
 from authlib.integrations.starlette_client import OAuth, OAuthError
 from fastapi import APIRouter, Cookie, Depends, FastAPI, HTTPException, Request, Response, status
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 from app.adapters.repositories.refresh_token import SQLAlchemyRefreshTokenRepository
 from app.adapters.repositories.user import SQLAlchemyUserRepository
@@ -20,6 +20,17 @@ class UserResponse(BaseModel):
     email: str
     name: Optional[str]
     avatar_url: Optional[str]
+
+
+class RegisterRequest(BaseModel):
+    email: EmailStr
+    password: str = Field(..., min_length=8)
+    name: Optional[str] = None
+
+
+class LoginRequest(BaseModel):
+    email: EmailStr
+    password: str
 
 
 oauth = OAuth()
@@ -140,6 +151,57 @@ def register_auth_routes(app: FastAPI):
             response.status_code = status.HTTP_302_FOUND
             response.headers["Location"] = settings.WEB_BASE_URL
             return response
+        finally:
+            db.close()
+
+    @router.post("/register", response_model=UserResponse)
+    async def register(request: RegisterRequest, response: Response):
+        db = SessionLocal()
+        try:
+            user_repo = SQLAlchemyUserRepository(db)
+            refresh_token_repo = SQLAlchemyRefreshTokenRepository(db)
+            auth_service = AuthService(user_repo, refresh_token_repo)
+
+            try:
+                user, _ = auth_service.register_user(
+                    email=request.email,
+                    password=request.password,
+                    name=request.name,
+                )
+            except ValueError as e:
+                raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
+
+            tokens = auth_service.create_tokens_for_user(user)
+            _set_auth_cookies(response, tokens.access_token, tokens.refresh_token)
+            return UserResponse(
+                id=str(user.id),
+                email=user.email,
+                name=user.name,
+                avatar_url=user.avatar_url,
+            )
+        finally:
+            db.close()
+
+    @router.post("/login", response_model=UserResponse)
+    async def login(request: LoginRequest, response: Response):
+        db = SessionLocal()
+        try:
+            user_repo = SQLAlchemyUserRepository(db)
+            refresh_token_repo = SQLAlchemyRefreshTokenRepository(db)
+            auth_service = AuthService(user_repo, refresh_token_repo)
+
+            user = auth_service.authenticate_user(request.email, request.password)
+            if not user:
+                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
+
+            tokens = auth_service.create_tokens_for_user(user)
+            _set_auth_cookies(response, tokens.access_token, tokens.refresh_token)
+            return UserResponse(
+                id=str(user.id),
+                email=user.email,
+                name=user.name,
+                avatar_url=user.avatar_url,
+            )
         finally:
             db.close()
 

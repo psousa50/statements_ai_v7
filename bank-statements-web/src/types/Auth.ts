@@ -3,7 +3,7 @@ export interface User {
   email: string
   name?: string
   avatar_url?: string
-  oauth_provider: 'google' | 'github'
+  oauth_provider?: 'google' | 'github'
 }
 
 export interface AuthState {

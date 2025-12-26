@@ -10,6 +10,7 @@ import { Statements } from './pages/Statements'
 import { Upload } from './pages/Upload'
 import { SettingsPage } from './pages/Settings'
 import { Login } from './pages/Login'
+import { Register } from './pages/Register'
 import { AuthCallback } from './pages/AuthCallback'
 import { AppLayout } from './components/layout/AppLayout'
 import { ProtectedRoute } from './auth/ProtectedRoute'
@@ -21,6 +22,10 @@ const router = createBrowserRouter(
     {
       path: '/login',
       element: <Login />,
+    },
+    {
+      path: '/register',
+      element: <Register />,
     },
     {
       path: '/auth/callback',

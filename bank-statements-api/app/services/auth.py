@@ -1,7 +1,8 @@
-from typing import Optional
+from typing import Optional, Tuple
 from uuid import UUID
 
 from app.core.auth.jwt import create_access_token, create_refresh_token, hash_refresh_token
+from app.core.auth.password import hash_password, verify_password
 from app.domain.models.refresh_token import RefreshToken
 from app.domain.models.user import User
 from app.ports.repositories.refresh_token import RefreshTokenRepository
@@ -19,6 +20,37 @@ class AuthService:
         self.user_repository = user_repository
         self.refresh_token_repository = refresh_token_repository
 
+    def register_user(
+        self,
+        email: str,
+        password: str,
+        name: Optional[str] = None,
+    ) -> Tuple[User, bool]:
+        existing_user = self.user_repository.get_by_email(email)
+
+        if existing_user:
+            if existing_user.password_hash:
+                raise ValueError("Email already registered")
+            existing_user.password_hash = hash_password(password)
+            if name:
+                existing_user.name = name
+            return self.user_repository.update(existing_user), True
+
+        user = User(
+            email=email,
+            name=name,
+            password_hash=hash_password(password),
+        )
+        return self.user_repository.create(user), False
+
+    def authenticate_user(self, email: str, password: str) -> Optional[User]:
+        user = self.user_repository.get_by_email(email)
+        if not user or not user.password_hash:
+            return None
+        if not verify_password(password, user.password_hash):
+            return None
+        return user
+
     def get_or_create_user_from_oauth(
         self,
         oauth_provider: str,
@@ -35,6 +67,16 @@ class AuthService:
                 user.avatar_url = avatar_url
                 user = self.user_repository.update(user)
             return user
+
+        existing_user = self.user_repository.get_by_email(email)
+        if existing_user:
+            existing_user.oauth_provider = oauth_provider
+            existing_user.oauth_id = oauth_id
+            if name and not existing_user.name:
+                existing_user.name = name
+            if avatar_url:
+                existing_user.avatar_url = avatar_url
+            return self.user_repository.update(existing_user)
 
         user = User(
             email=email,

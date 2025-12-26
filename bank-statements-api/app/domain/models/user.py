@@ -19,8 +19,9 @@ class User(Base):
     email = Column(String(255), nullable=False, unique=True, index=True)
     name = Column(String(255), nullable=True)
     avatar_url = Column(String, nullable=True)
-    oauth_provider = Column(String(50), nullable=False)
-    oauth_id = Column(String(255), nullable=False)
+    oauth_provider = Column(String(50), nullable=True)
+    oauth_id = Column(String(255), nullable=True)
+    password_hash = Column(String(255), nullable=True)
     created_at = Column(DateTime(timezone=True), default=_utc_now)
     updated_at = Column(DateTime(timezone=True), default=_utc_now, onupdate=_utc_now)
 

@@ -1,10 +1,12 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react'
 import axios, { AxiosError } from 'axios'
 import { User, AuthState } from '../types/Auth'
-import { authClient } from '../api/AuthClient'
+import { authClient, RegisterRequest, LoginRequest } from '../api/AuthClient'
 
 interface AuthContextValue extends AuthState {
   login: (provider: 'google' | 'github') => void
+  loginWithPassword: (data: LoginRequest) => Promise<void>
+  register: (data: RegisterRequest) => Promise<void>
   logout: () => Promise<void>
   refreshUser: () => Promise<void>
 }
@@ -108,7 +110,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await fetchUser()
   }, [fetchUser])
 
-  return <AuthContext.Provider value={{ ...state, login, logout, refreshUser }}>{children}</AuthContext.Provider>
+  const loginWithPassword = useCallback(
+    async (data: LoginRequest) => {
+      const user = await authClient.login(data)
+      setState({ user, isLoading: false, isAuthenticated: true })
+      startRefreshInterval()
+    },
+    [startRefreshInterval]
+  )
+
+  const register = useCallback(
+    async (data: RegisterRequest) => {
+      const user = await authClient.register(data)
+      setState({ user, isLoading: false, isAuthenticated: true })
+      startRefreshInterval()
+    },
+    [startRefreshInterval]
+  )
+
+  return (
+    <AuthContext.Provider value={{ ...state, login, loginWithPassword, register, logout, refreshUser }}>
+      {children}
+    </AuthContext.Provider>
+  )
 }
 
 export const useAuth = (): AuthContextValue => {

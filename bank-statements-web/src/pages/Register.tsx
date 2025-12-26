@@ -1,5 +1,5 @@
 import React, { useEffect, useState, FormEvent } from 'react'
-import { useNavigate, useLocation, Link } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { Box, Typography, Button, TextField, Divider, Alert } from '@mui/material'
 import GoogleIcon from '@mui/icons-material/Google'
 import AccountBalanceIcon from '@mui/icons-material/AccountBalance'
@@ -7,34 +7,44 @@ import { useAuth } from '../auth/AuthContext'
 import { AxiosError } from 'axios'
 import './LoginPage.css'
 
-export const Login: React.FC = () => {
-  const { login, loginWithPassword, isAuthenticated, isLoading } = useAuth()
+export const Register: React.FC = () => {
+  const { login, register, isAuthenticated, isLoading } = useAuth()
   const navigate = useNavigate()
-  const location = useLocation()
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [name, setName] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const from = (location.state as { from?: { pathname: string } })?.from?.pathname || '/'
-
   useEffect(() => {
     if (isAuthenticated && !isLoading) {
-      navigate(from, { replace: true })
+      navigate('/', { replace: true })
     }
-  }, [isAuthenticated, isLoading, navigate, from])
+  }, [isAuthenticated, isLoading, navigate])
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
     setError(null)
+
+    if (password.length < 8) {
+      setError('Password must be at least 8 characters')
+      return
+    }
+
+    if (password !== confirmPassword) {
+      setError('Passwords do not match')
+      return
+    }
+
     setIsSubmitting(true)
 
     try {
-      await loginWithPassword({ email, password })
+      await register({ email, password, name: name || undefined })
     } catch (err) {
       const axiosError = err as AxiosError<{ detail: string }>
-      setError(axiosError.response?.data?.detail || 'Login failed')
+      setError(axiosError.response?.data?.detail || 'Registration failed')
     } finally {
       setIsSubmitting(false)
     }
@@ -51,7 +61,7 @@ export const Login: React.FC = () => {
           <AccountBalanceIcon sx={{ fontSize: 56 }} />
         </Box>
         <Typography variant="h4" component="h1" className="login-title">
-          Bank Statements
+          Create Account
         </Typography>
         <Typography variant="body1" className="login-subtitle">
           Track and categorise your transactions
@@ -64,6 +74,15 @@ export const Login: React.FC = () => {
         )}
 
         <Box component="form" onSubmit={handleSubmit} sx={{ width: '100%' }}>
+          <TextField
+            label="Name (optional)"
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            fullWidth
+            margin="normal"
+            autoComplete="name"
+          />
           <TextField
             label="Email"
             type="email"
@@ -82,7 +101,18 @@ export const Login: React.FC = () => {
             fullWidth
             required
             margin="normal"
-            autoComplete="current-password"
+            autoComplete="new-password"
+            helperText="Minimum 8 characters"
+          />
+          <TextField
+            label="Confirm Password"
+            type="password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            fullWidth
+            required
+            margin="normal"
+            autoComplete="new-password"
           />
           <Button
             type="submit"
@@ -92,12 +122,12 @@ export const Login: React.FC = () => {
             disabled={isSubmitting}
             sx={{ mt: 2 }}
           >
-            {isSubmitting ? 'Signing in...' : 'Sign in'}
+            {isSubmitting ? 'Creating account...' : 'Create account'}
           </Button>
         </Box>
 
         <Typography variant="body2" sx={{ mt: 2 }}>
-          Don't have an account? <Link to="/register">Register</Link>
+          Already have an account? <Link to="/login">Sign in</Link>
         </Typography>
 
         <Divider sx={{ width: '100%', my: 3 }}>or</Divider>
