@@ -486,7 +486,20 @@ export const TransactionsPage = () => {
           <div className="transactions-header">
             <div className="transactions-summary">
               <h2>Transactions</h2>
-              {!loading && <span className="transaction-count">{pagination.total_count} transactions found</span>}
+              {!loading && transactions.length > 0 && (() => {
+                const total = transactions.reduce((sum, t) => sum + Number(t.amount), 0)
+                return (
+                  <div className="transactions-stats">
+                    <span className="transaction-count">{pagination.total_count} transactions found</span>
+                    <span className="transaction-total">
+                      Total:{' '}
+                      <span className={total < 0 ? 'negative' : 'positive'}>
+                        {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(total)}
+                      </span>
+                    </span>
+                  </div>
+                )
+              })()}
             </div>
           </div>
 

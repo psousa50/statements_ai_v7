@@ -1021,10 +1021,32 @@
   margin: 0;
 }
 
+.transactions-page .transactions-stats {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
 .transactions-page .transaction-count {
   font-size: 0.75rem;
   color: var(--text-muted);
   font-weight: 500;
+}
+
+.transactions-page .transaction-total {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.transactions-page .transaction-total .positive {
+  color: var(--positive-amount);
+  font-weight: 600;
+}
+
+.transactions-page .transaction-total .negative {
+  color: var(--negative-amount);
+  font-weight: 600;
 }
 
 .transactions-page .transactions-table-container {
