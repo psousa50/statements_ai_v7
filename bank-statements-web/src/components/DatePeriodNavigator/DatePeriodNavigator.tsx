@@ -123,8 +123,14 @@ export function DatePeriodNavigator({
         to: parseDateString(endDate),
       })
     } else {
-      setPeriodType('all')
+      setPeriodType(defaultPeriodType)
       setIsCustomMode(false)
+      if (defaultPeriodType !== 'all') {
+        const now = new Date()
+        const range = getPeriodRange(defaultPeriodType, now)
+        onChange(formatDateToString(range.startDate), formatDateToString(range.endDate))
+        setSelectedRange({ from: range.startDate, to: range.endDate })
+      }
     }
 
     hasInitialised.current = true
