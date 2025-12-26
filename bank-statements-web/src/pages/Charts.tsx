@@ -1,5 +1,4 @@
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts'
 import { useCategoryTotals, useCategoryTimeSeries } from '../services/hooks/useTransactions'
 import { useCategories } from '../services/hooks/useCategories'
@@ -50,7 +49,6 @@ const COLORS = [
 ]
 
 export const ChartsPage = () => {
-  const navigate = useNavigate()
   const [filters, setFilters] = useState<Omit<FilterType, 'page' | 'page_size'>>({
     exclude_transfers: true,
     transaction_type: 'debit',
@@ -359,38 +357,46 @@ export const ChartsPage = () => {
     }
   }, [categoryTotals, categories, chartType, selectedRootCategory, categorizationFilter])
 
+  const openTransactionsWindow = useCallback(
+    (categoryId: string) => {
+      const params = new URLSearchParams()
+
+      if (filters.description_search) params.set('description_search', filters.description_search)
+      if (filters.min_amount !== undefined) params.set('min_amount', filters.min_amount.toString())
+      if (filters.max_amount !== undefined) params.set('max_amount', filters.max_amount.toString())
+      if (filters.start_date) params.set('start_date', filters.start_date)
+      if (filters.end_date) params.set('end_date', filters.end_date)
+      if (filters.account_id) params.set('account_id', filters.account_id)
+      if (filters.exclude_transfers) params.set('exclude_transfers', 'true')
+      if (filters.transaction_type && filters.transaction_type !== 'all')
+        params.set('transaction_type', filters.transaction_type)
+
+      if (categoryId === 'uncategorized') {
+        params.set('status', 'UNCATEGORIZED')
+      } else if (categoryId !== 'other') {
+        params.set('category_ids', categoryId)
+      }
+
+      window.open(`/transactions?${params.toString()}`, '_blank')
+    },
+    [filters]
+  )
+
   const handleChartClick = useCallback(
     (data: ChartData) => {
-      if (chartType === 'root' && data.id !== 'uncategorized') {
+      if (data.id === 'uncategorized') {
+        openTransactionsWindow(data.id)
+        return
+      }
+
+      if (chartType === 'root') {
         setSelectedRootCategory(data.id)
         setChartType('sub')
-      } else if (chartType === 'sub') {
-        // Navigate to transactions page with current filters plus the selected category
-        const params = new URLSearchParams()
-
-        // Add current filters
-        if (filters.description_search) params.set('description_search', filters.description_search)
-        if (filters.min_amount !== undefined) params.set('min_amount', filters.min_amount.toString())
-        if (filters.max_amount !== undefined) params.set('max_amount', filters.max_amount.toString())
-        if (filters.start_date) params.set('start_date', filters.start_date)
-        if (filters.end_date) params.set('end_date', filters.end_date)
-        if (filters.account_id) params.set('account_id', filters.account_id)
-        if (filters.exclude_transfers) params.set('exclude_transfers', 'true')
-        if (filters.transaction_type && filters.transaction_type !== 'all')
-          params.set('transaction_type', filters.transaction_type)
-
-        // Add category filter - for sub-categories, use the specific category ID
-        if (data.id !== 'uncategorized' && data.id !== 'other') {
-          params.set('category_ids', data.id)
-        } else if (data.id === 'uncategorized') {
-          // For uncategorized, we need to filter by status instead
-          params.set('status', 'UNCATEGORIZED')
-        }
-
-        navigate(`/transactions?${params.toString()}`)
+      } else {
+        openTransactionsWindow(data.id)
       }
     },
-    [chartType, filters, navigate, transactionType]
+    [chartType, openTransactionsWindow]
   )
 
   const handleBackToRoot = useCallback(() => {

@@ -87,7 +87,13 @@ export const TransactionsPage = () => {
   const [localEndDate, setLocalEndDate] = useState<string>(
     searchParams.get('end_date') || DEFAULT_DATE_RANGE.end
   )
-  const [categorizationFilter, setCategorizationFilter] = useState<CategorizationFilter>('all')
+  const [categorizationFilter, setCategorizationFilter] = useState<CategorizationFilter>(() => {
+    const urlStatus = searchParams.get('status')
+    if (urlStatus === 'UNCATEGORIZED') return 'uncategorized'
+    const urlExcludeUncategorized = searchParams.get('exclude_uncategorized')
+    if (urlExcludeUncategorized === 'true') return 'categorized'
+    return 'all'
+  })
 
   const debounceTimeoutRef = useRef<NodeJS.Timeout>()
 
