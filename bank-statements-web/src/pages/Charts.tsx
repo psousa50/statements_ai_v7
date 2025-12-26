@@ -531,6 +531,7 @@ export const ChartsPage = () => {
             endDate={localEndDate}
             excludeTransfers={filters.exclude_transfers}
             categorizationFilter={categorizationFilter}
+            hideUncategorizedOnlyOption={true}
             transactionType={transactionType}
             defaultTransactionType="debit"
             defaultCategorizationFilter="categorized"
