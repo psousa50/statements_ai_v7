@@ -2,9 +2,11 @@ import { format } from 'date-fns'
 import { useState, useCallback, useEffect } from 'react'
 import { Category, Transaction, Account } from '../types/Transaction'
 import { Toast, ToastProps } from './Toast'
+import { ConfirmationModal } from './ConfirmationModal'
 import { CategorySelector } from './CategorySelector'
 import { useApi } from '../api/ApiContext'
 import EditIcon from '@mui/icons-material/Edit'
+import DeleteIcon from '@mui/icons-material/Delete'
 import UnfoldMoreIcon from '@mui/icons-material/UnfoldMore'
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward'
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward'
@@ -35,6 +37,7 @@ interface TransactionTableProps {
   onBulkReplaceCategory?: (fromCategoryId: string, toCategoryId: string) => Promise<BulkCategorizeResult | null>
   similarCountFilters?: SimilarCountFilters
   onEdit?: (transaction: Transaction) => void
+  onDelete?: (transaction: Transaction) => Promise<boolean>
   sortField?: TransactionSortField
   sortDirection?: TransactionSortDirection
   onSort?: (field: TransactionSortField) => void
@@ -270,6 +273,7 @@ export const TransactionTable = ({
   onBulkReplaceCategory,
   similarCountFilters,
   onEdit,
+  onDelete,
   sortField,
   sortDirection,
   onSort,
@@ -277,6 +281,7 @@ export const TransactionTable = ({
 }: TransactionTableProps) => {
   const [toast, setToast] = useState<Omit<ToastProps, 'onClose'> | null>(null)
   const [localCategories, setLocalCategories] = useState<Category[]>(categories)
+  const [pendingDeleteTransaction, setPendingDeleteTransaction] = useState<Transaction | null>(null)
 
   useEffect(() => {
     setLocalCategories(categories)
@@ -289,6 +294,17 @@ export const TransactionTable = ({
   const handleCategoryCreated = useCallback((newCategory: Category) => {
     setLocalCategories((prev) => [...prev, newCategory].sort((a, b) => a.name.localeCompare(b.name)))
   }, [])
+
+  const handleConfirmDelete = useCallback(async () => {
+    if (!pendingDeleteTransaction || !onDelete) return
+    const success = await onDelete(pendingDeleteTransaction)
+    if (success) {
+      handleShowToast({ message: 'Transaction deleted', type: 'success' })
+    } else {
+      handleShowToast({ message: 'Failed to delete transaction', type: 'error' })
+    }
+    setPendingDeleteTransaction(null)
+  }, [pendingDeleteTransaction, onDelete, handleShowToast])
 
   if (loading) {
     return <div className="loading">Loading transactions...</div>
@@ -330,7 +346,7 @@ export const TransactionTable = ({
           {onCategorize && <col style={{ width: '25%' }} />}
           <col style={{ width: '15%' }} />
           <col style={{ width: '15%' }} />
-          {onEdit && <col style={{ width: '5%' }} />}
+          {(onEdit || onDelete) && <col style={{ width: '5%' }} />}
         </colgroup>
         <thead>
           <tr>
@@ -365,7 +381,7 @@ export const TransactionTable = ({
             ) : (
               <th style={{ textAlign: 'left' }}>Account</th>
             )}
-            {onEdit && <th style={{ textAlign: 'center' }}>Actions</th>}
+            {(onEdit || onDelete) && <th style={{ textAlign: 'center' }}>Actions</th>}
           </tr>
         </thead>
         <tbody>
@@ -406,14 +422,24 @@ export const TransactionTable = ({
               ) : (
                 <td>{getAccountName(transaction.account_id)}</td>
               )}
-              {onEdit && (
-                <td style={{ textAlign: 'center' }}>
-                  <ActionIconButton
-                    onClick={() => onEdit(transaction)}
-                    title="Edit transaction"
-                    icon={<EditIcon fontSize="small" />}
-                    color="primary"
-                  />
+              {(onEdit || onDelete) && (
+                <td style={{ textAlign: 'center', display: 'flex', gap: '4px', justifyContent: 'center' }}>
+                  {onEdit && (
+                    <ActionIconButton
+                      onClick={() => onEdit(transaction)}
+                      title="Edit transaction"
+                      icon={<EditIcon fontSize="small" />}
+                      color="primary"
+                    />
+                  )}
+                  {onDelete && (
+                    <ActionIconButton
+                      onClick={() => setPendingDeleteTransaction(transaction)}
+                      title="Delete transaction"
+                      icon={<DeleteIcon fontSize="small" />}
+                      color="error"
+                    />
+                  )}
                 </td>
               )}
             </tr>
@@ -421,6 +447,17 @@ export const TransactionTable = ({
         </tbody>
       </table>
       {toast && <Toast {...toast} onClose={() => setToast(null)} />}
+      {pendingDeleteTransaction && (
+        <ConfirmationModal
+          isOpen={true}
+          title="Delete Transaction"
+          message={`${pendingDeleteTransaction.description} — ${formatDate(pendingDeleteTransaction.date)} — ${formatAmount(pendingDeleteTransaction.amount)}${pendingDeleteTransaction.category_id ? ` — ${localCategories.find((c) => c.id === pendingDeleteTransaction.category_id)?.name || ''}` : ''}`}
+          confirmText="Delete"
+          onConfirm={handleConfirmDelete}
+          onCancel={() => setPendingDeleteTransaction(null)}
+          dangerous
+        />
+      )}
     </div>
   )
 }

@@ -112,6 +112,7 @@ export const TransactionsPage = () => {
     categorizeTransaction,
     bulkUpdateCategory,
     bulkReplaceCategory,
+    deleteTransaction,
   } = useTransactions()
 
   const { categories, loading: categoriesLoading, error: categoriesError } = useCategories()
@@ -400,6 +401,10 @@ export const TransactionsPage = () => {
     setIsModalOpen(true)
   }
 
+  const handleDeleteTransaction = async (transaction: Transaction) => {
+    return deleteTransaction(transaction.id)
+  }
+
   const handleCloseModal = () => {
     setIsModalOpen(false)
     setEditingTransaction(undefined)
@@ -544,6 +549,7 @@ export const TransactionsPage = () => {
                 exclude_transfers: filters.exclude_transfers,
               }}
               onEdit={handleEditTransaction}
+              onDelete={handleDeleteTransaction}
               sortField={filters.sort_field as TransactionSortField}
               sortDirection={filters.sort_direction}
               onSort={handleSort}
