@@ -59,7 +59,7 @@ export const ChartsPage = () => {
   const [selectedRootCategory, setSelectedRootCategory] = useState<string | null>(null)
   const [transactionType, setTransactionType] = useState<'all' | 'debit' | 'credit'>('debit')
   const [categorizationFilter, setCategorizationFilter] = useState<CategorizationFilter>('categorized')
-  const [viewMode, setViewMode] = useState<'pie' | 'bar' | 'timeseries'>('pie')
+  const [viewMode, setViewMode] = useState<'pie' | 'bar' | 'timeseries'>('bar')
   const [timeSeriesPeriod, setTimeSeriesPeriod] = useState<'month' | 'week'>('month')
 
   // Local state for debounced inputs
@@ -572,11 +572,11 @@ export const ChartsPage = () => {
 
             <div className="charts-controls">
               <div className="view-mode-toggle">
-                <button onClick={() => handleViewModeChange('pie')} className={viewMode === 'pie' ? 'active' : ''}>
-                  Pie Chart
-                </button>
                 <button onClick={() => handleViewModeChange('bar')} className={viewMode === 'bar' ? 'active' : ''}>
                   Bar Chart
+                </button>
+                <button onClick={() => handleViewModeChange('pie')} className={viewMode === 'pie' ? 'active' : ''}>
+                  Pie Chart
                 </button>
                 <button
                   onClick={() => handleViewModeChange('timeseries')}
