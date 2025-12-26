@@ -315,8 +315,8 @@ export const TransactionTable = ({
       <table>
         <colgroup>
           <col style={{ width: '15%' }} />
-          <col style={{ width: '30%' }} />
-          {onCategorize && <col style={{ width: '20%' }} />}
+          <col style={{ width: '25%' }} />
+          {onCategorize && <col style={{ width: '25%' }} />}
           <col style={{ width: '15%' }} />
           <col style={{ width: '15%' }} />
           {onEdit && <col style={{ width: '5%' }} />}

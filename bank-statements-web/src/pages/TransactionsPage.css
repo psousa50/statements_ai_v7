@@ -1259,6 +1259,14 @@
   min-width: 150px;
 }
 
+.transactions-page .transaction-table td .category-selector {
+  width: 100%;
+}
+
+.transactions-page .transaction-table td .category-selector-input-container {
+  width: 100% !important;
+}
+
 .transactions-page .category-picker-container {
   display: flex;
   align-items: center;
