@@ -11,6 +11,7 @@ CONFIG_FILE = PROJECT_ROOT / "config" / "settings.prod.yaml"
 RENDER_ENV_VARS = [
     ("DATABASE_URL", ["database", "url"]),
     ("GEMINI_API_KEY", ["secrets", "gemini_api_key"]),
+    ("GROQ_API_KEY", ["secrets", "groq_api_key"]),
     ("JWT_SECRET_KEY", ["secrets", "jwt_secret_key"]),
     ("GOOGLE_OAUTH_CLIENT_ID", ["secrets", "google_oauth_client_id"]),
     ("GOOGLE_OAUTH_CLIENT_SECRET", ["secrets", "google_oauth_client_secret"]),
