@@ -532,6 +532,9 @@ export const ChartsPage = () => {
             categorizationFilter={categorizationFilter}
             hideUncategorizedOnlyOption={true}
             transactionType={transactionType}
+            defaultTransactionType="debit"
+            defaultCategorizationFilter="categorized"
+            defaultExcludeTransfers={true}
             onCategoryChange={handleCategoryFilter}
             onAccountChange={handleAccountFilter}
             onAmountRangeChange={handleAmountRangeFilter}

@@ -19,6 +19,9 @@ interface TransactionFiltersProps {
   categorizationFilter?: CategorizationFilter
   hideUncategorizedOnlyOption?: boolean
   transactionType?: 'all' | 'debit' | 'credit'
+  defaultTransactionType?: 'all' | 'debit' | 'credit'
+  defaultCategorizationFilter?: CategorizationFilter
+  defaultExcludeTransfers?: boolean
   onCategoryChange: (categoryIds: string[]) => void
   onAccountChange: (accountId?: string) => void
   onAmountRangeChange: (minAmount?: number, maxAmount?: number) => void
@@ -44,6 +47,9 @@ export const TransactionFilters = ({
   categorizationFilter = 'all',
   hideUncategorizedOnlyOption = false,
   transactionType = 'all',
+  defaultTransactionType = 'all',
+  defaultCategorizationFilter = 'all',
+  defaultExcludeTransfers = true,
   onCategoryChange,
   onAccountChange,
   onAmountRangeChange,
@@ -58,19 +64,19 @@ export const TransactionFilters = ({
   const [showSecondaryFilters, setShowSecondaryFilters] = useState(false)
 
   const hasActiveSecondaryFilters =
-    transactionType !== 'all' ||
+    transactionType !== defaultTransactionType ||
     selectedAccountId !== undefined ||
     minAmount !== undefined ||
     maxAmount !== undefined ||
-    categorizationFilter !== 'all' ||
-    excludeTransfers === false
+    categorizationFilter !== defaultCategorizationFilter ||
+    excludeTransfers !== defaultExcludeTransfers
 
   const activeSecondaryFiltersCount = [
-    transactionType !== 'all',
+    transactionType !== defaultTransactionType,
     selectedAccountId !== undefined,
     minAmount !== undefined || maxAmount !== undefined,
-    categorizationFilter !== 'all',
-    excludeTransfers === false,
+    categorizationFilter !== defaultCategorizationFilter,
+    excludeTransfers !== defaultExcludeTransfers,
   ].filter(Boolean).length
 
   useEffect(() => {
@@ -85,9 +91,9 @@ export const TransactionFilters = ({
     maxAmount !== undefined ||
     descriptionSearch ||
     selectedAccountId ||
-    excludeTransfers === false ||
-    categorizationFilter !== 'all' ||
-    transactionType !== 'all'
+    excludeTransfers !== defaultExcludeTransfers ||
+    categorizationFilter !== defaultCategorizationFilter ||
+    transactionType !== defaultTransactionType
 
   const handleAmountChange = useCallback(
     (field: 'min' | 'max', value: string) => {
