@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import {
   Box,
   Typography,
@@ -58,6 +58,9 @@ export const EnhancementRules: React.FC = () => {
     severity: 'success',
   })
 
+  const bottomPaginationRef = useRef<HTMLDivElement>(null)
+  const [isBottomPaginationVisible, setIsBottomPaginationVisible] = useState(true)
+
   const loadRules = async () => {
     try {
       const response = await fetchRules(filters)
@@ -71,6 +74,21 @@ export const EnhancementRules: React.FC = () => {
   useEffect(() => {
     loadRules()
   }, [filters])
+
+  useEffect(() => {
+    const element = bottomPaginationRef.current
+    if (!element) return
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsBottomPaginationVisible(entry.isIntersecting)
+      },
+      { threshold: 0.1 }
+    )
+
+    observer.observe(element)
+    return () => observer.disconnect()
+  }, [total, loading])
 
   const handleFiltersChange = (newFilters: EnhancementRuleFilters) => {
     setFilters({ ...newFilters, page: 1 })
@@ -262,7 +280,7 @@ export const EnhancementRules: React.FC = () => {
         <EnhancementRuleFiltersComponent filters={filters} onFiltersChange={handleFiltersChange} loading={loading} />
       </Paper>
 
-      {!loading && rules.length > 10 && (
+      {!loading && total > 0 && !isBottomPaginationVisible && (
         <Paper sx={{ p: 0, mb: 2 }}>
           <div className="transactions-pagination">
             <Pagination
@@ -292,21 +310,23 @@ export const EnhancementRules: React.FC = () => {
         />
       </Paper>
 
-      {!loading && total > 0 && (
-        <Paper sx={{ p: 0 }}>
-          <div className="transactions-pagination">
-            <Pagination
-              currentPage={filters.page || 1}
-              totalPages={Math.ceil(total / (filters.page_size || 50))}
-              totalItems={total}
-              pageSize={filters.page_size || 50}
-              onPageChange={handlePageChange}
-              onPageSizeChange={handlePageSizeChange}
-              itemName="rules"
-            />
-          </div>
-        </Paper>
-      )}
+      <div ref={bottomPaginationRef}>
+        {!loading && total > 0 && (
+          <Paper sx={{ p: 0 }}>
+            <div className="transactions-pagination">
+              <Pagination
+                currentPage={filters.page || 1}
+                totalPages={Math.ceil(total / (filters.page_size || 50))}
+                totalItems={total}
+                pageSize={filters.page_size || 50}
+                onPageChange={handlePageChange}
+                onPageSizeChange={handlePageSizeChange}
+                itemName="rules"
+              />
+            </div>
+          </Paper>
+        )}
+      </div>
 
       {/* Enhancement Rule Modal (Create/Edit) */}
       <EnhancementRuleModal

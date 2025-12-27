@@ -94,6 +94,8 @@ export const TransactionsPage = () => {
   })
 
   const debounceTimeoutRef = useRef<NodeJS.Timeout>()
+  const bottomPaginationRef = useRef<HTMLDivElement>(null)
+  const [isBottomPaginationVisible, setIsBottomPaginationVisible] = useState(true)
 
   const {
     transactions,
@@ -178,6 +180,21 @@ export const TransactionsPage = () => {
       }
     }
   }, [localDescriptionSearch, localMinAmount, localMaxAmount, localStartDate, localEndDate, filters, fetchTransactions])
+
+  useEffect(() => {
+    const element = bottomPaginationRef.current
+    if (!element) return
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsBottomPaginationVisible(entry.isIntersecting)
+      },
+      { threshold: 0.1 }
+    )
+
+    observer.observe(element)
+    return () => observer.disconnect()
+  }, [pagination?.total_count, loading])
 
   const handleFilterChange = useCallback(
     (newFilters: Partial<FilterType>) => {
@@ -514,7 +531,7 @@ export const TransactionsPage = () => {
             </div>
           </div>
 
-          {!loading && pagination.total_count > 0 && (
+          {!loading && pagination.total_count > 0 && !isBottomPaginationVisible && (
             <div className="transactions-pagination">
               <Pagination
                 currentPage={pagination.current_page}
@@ -552,19 +569,21 @@ export const TransactionsPage = () => {
             />
           </div>
 
-          {!loading && pagination.total_count > 0 && (
-            <div className="transactions-pagination">
-              <Pagination
-                currentPage={pagination.current_page}
-                totalPages={pagination.total_pages}
-                totalItems={pagination.total_count}
-                pageSize={pagination.page_size}
-                onPageChange={handlePageChange}
-                onPageSizeChange={handlePageSizeChange}
-                itemName="transactions"
-              />
-            </div>
-          )}
+          <div ref={bottomPaginationRef}>
+            {!loading && pagination.total_count > 0 && (
+              <div className="transactions-pagination">
+                <Pagination
+                  currentPage={pagination.current_page}
+                  totalPages={pagination.total_pages}
+                  totalItems={pagination.total_count}
+                  pageSize={pagination.page_size}
+                  onPageChange={handlePageChange}
+                  onPageSizeChange={handlePageSizeChange}
+                  itemName="transactions"
+                />
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
