@@ -258,3 +258,39 @@ Return your answer as a JSON object with the following format:
 Only return the JSON object, nothing else.
 """
     return prompt
+
+
+def category_generation_prompt(descriptions: List[str]) -> str:
+    descriptions_text = "\n".join(descriptions)
+
+    prompt = f"""
+You are a bank transaction categorization expert. Your task is to analyze the following transaction descriptions and suggest a set of hierarchical categories that would best organize these transactions.
+
+Transaction Descriptions:
+{descriptions_text}
+
+Analyze these descriptions and create logical category groupings. Each category should have:
+1. A parent category name (e.g., "Transport", "Food & Dining", "Shopping")
+2. Relevant subcategories (e.g., under "Transport": "Fuel", "Parking", "Public Transport")
+
+Guidelines:
+- Create meaningful, distinct parent categories
+- Each parent should have 1-5 relevant subcategories
+- Use clear, concise category names
+- Group similar transaction types together
+- Aim for 5-15 parent categories depending on the variety of transactions
+- Include a confidence score indicating how well the category fits the matched descriptions
+
+Return your answer as a JSON array with the following format:
+[
+    {{
+        "parent": "<parent category name>",
+        "subcategories": ["<subcategory 1>", "<subcategory 2>", ...],
+        "confidence": <a number between 0 and 1>,
+        "matched_descriptions": ["<description 1>", "<description 2>", ...]
+    }}
+]
+
+Only return the JSON array, nothing else.
+"""
+    return prompt

@@ -17,6 +17,8 @@ from app.app import register_app_routes
 from app.core.dependencies import InternalDependencies
 from app.domain.models.user import User
 from app.services.account import AccountService
+from app.services.ai import LLMRuleCategorizer, LLMRuleCounterparty
+from app.services.ai.llm_category_generator import LLMCategoryGenerator
 from app.services.background.background_job_service import BackgroundJobService
 from app.services.category import CategoryService
 from app.services.description_group import DescriptionGroupService
@@ -62,6 +64,9 @@ def mocked_dependencies(
     recurring_expense_analyzer: RecurringExpenseAnalyzer = None,
     description_group_service: DescriptionGroupService = None,
     saved_filter_repository: SQLAlchemySavedFilterRepository = None,
+    llm_rule_categorizer: LLMRuleCategorizer = None,
+    llm_rule_counterparty: LLMRuleCounterparty = None,
+    llm_category_generator: LLMCategoryGenerator = None,
 ) -> InternalDependencies:
     if transaction_service is None:
         transaction_service = MagicMock(spec=TransactionService)
@@ -90,6 +95,9 @@ def mocked_dependencies(
         recurring_expense_analyzer=recurring_expense_analyzer or MagicMock(spec=RecurringExpenseAnalyzer),
         description_group_service=description_group_service or MagicMock(spec=DescriptionGroupService),
         saved_filter_repository=saved_filter_repository or MagicMock(spec=SQLAlchemySavedFilterRepository),
+        llm_rule_categorizer=llm_rule_categorizer or MagicMock(spec=LLMRuleCategorizer),
+        llm_rule_counterparty=llm_rule_counterparty or MagicMock(spec=LLMRuleCounterparty),
+        llm_category_generator=llm_category_generator or MagicMock(spec=LLMCategoryGenerator),
     )
 
 

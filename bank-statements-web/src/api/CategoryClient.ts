@@ -5,6 +5,40 @@ export interface CategoryListResponse {
   total: number
 }
 
+export interface SubcategorySuggestion {
+  name: string
+  is_new: boolean
+}
+
+export interface CategorySuggestion {
+  parent_name: string
+  parent_id: string | null
+  parent_is_new: boolean
+  subcategories: SubcategorySuggestion[]
+  confidence: number
+  matched_descriptions: string[]
+}
+
+export interface GenerateCategoriesResponse {
+  suggestions: CategorySuggestion[]
+  total_descriptions_analysed: number
+}
+
+export interface CategorySelectionItem {
+  parent_name: string
+  parent_id: string | null
+  subcategory_names: string[]
+}
+
+export interface CreateSelectedCategoriesRequest {
+  selections: CategorySelectionItem[]
+}
+
+export interface CreateSelectedCategoriesResponse {
+  categories_created: number
+  categories: Category[]
+}
+
 export interface CategoryClient {
   getAll(): Promise<CategoryListResponse>
   getRootCategories(): Promise<CategoryListResponse>
@@ -13,6 +47,8 @@ export interface CategoryClient {
   create(category: { name: string; parent_id?: string }): Promise<Category>
   update(id: string, category: { name: string; parent_id?: string }): Promise<Category>
   delete(id: string): Promise<void>
+  generateSuggestions(): Promise<GenerateCategoriesResponse>
+  createSelectedCategories(request: CreateSelectedCategoriesRequest): Promise<CreateSelectedCategoriesResponse>
 }
 
 // Use the VITE_API_URL environment variable for the base URL, or default to '' for local development
@@ -54,5 +90,15 @@ export const categoryClient: CategoryClient = {
 
   async delete(id: string) {
     await axios.delete(`${API_URL}/${id}`)
+  },
+
+  async generateSuggestions() {
+    const response = await axios.post<GenerateCategoriesResponse>(`${API_URL}/ai/generate-suggestions`)
+    return response.data
+  },
+
+  async createSelectedCategories(request: CreateSelectedCategoriesRequest) {
+    const response = await axios.post<CreateSelectedCategoriesResponse>(`${API_URL}/ai/create-selected`, request)
+    return response.data
   },
 }

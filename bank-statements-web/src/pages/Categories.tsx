@@ -1,12 +1,15 @@
 import { useState, useCallback } from 'react'
 import { useCategories } from '../services/hooks/useCategories'
+import { useCategorySuggestions } from '../services/hooks/useCategorySuggestions'
 import { CategoryTree } from '../components/CategoryTree'
 import { CategoryModal } from '../components/CategoryModal'
+import { CategorySuggestionPanel } from '../components/CategorySuggestionPanel'
 import { ConfirmationModal } from '../components/ConfirmationModal'
 import { Toast, ToastProps } from '../components/Toast'
 import { Category } from '../types/Transaction'
-import { Button } from '@mui/material'
+import { Button, Dialog, DialogTitle, DialogContent } from '@mui/material'
 import AddIcon from '@mui/icons-material/Add'
+import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome'
 import './CategoriesPage.css'
 
 export const CategoriesPage = () => {
@@ -16,8 +19,34 @@ export const CategoriesPage = () => {
   const [searchTerm, setSearchTerm] = useState('')
   const [toast, setToast] = useState<Omit<ToastProps, 'onClose'> | null>(null)
   const [confirmDelete, setConfirmDelete] = useState<Category | null>(null)
+  const [suggestionModalOpen, setSuggestionModalOpen] = useState(false)
 
-  const { categories, rootCategories, loading, error, addCategory, updateCategory, deleteCategory } = useCategories()
+  const {
+    categories,
+    rootCategories,
+    loading,
+    error,
+    addCategory,
+    updateCategory,
+    deleteCategory,
+    fetchCategories,
+    fetchRootCategories,
+  } = useCategories()
+
+  const {
+    suggestions,
+    selectedItems,
+    loading: suggestionsLoading,
+    creating: suggestionsCreating,
+    error: suggestionsError,
+    totalDescriptionsAnalysed,
+    generateSuggestions,
+    toggleParent,
+    toggleSubcategory,
+    createSelected,
+    reset: resetSuggestions,
+    getSelectedCount,
+  } = useCategorySuggestions()
 
   const getCategoryHierarchy = (categoryId: string): string[] => {
     const hierarchy: string[] = [categoryId]
@@ -149,6 +178,34 @@ export const CategoriesPage = () => {
     setToast(null)
   }, [])
 
+  const handleOpenSuggestionModal = useCallback(async () => {
+    setSuggestionModalOpen(true)
+    await generateSuggestions()
+  }, [generateSuggestions])
+
+  const handleCloseSuggestionModal = useCallback(() => {
+    setSuggestionModalOpen(false)
+    resetSuggestions()
+  }, [resetSuggestions])
+
+  const handleCreateSuggestedCategories = useCallback(async () => {
+    const result = await createSelected()
+    if (result && result.categories_created > 0) {
+      setToast({
+        message: `Created ${result.categories_created} categories successfully`,
+        type: 'success',
+      })
+      setSuggestionModalOpen(false)
+      resetSuggestions()
+      await Promise.all([fetchCategories(), fetchRootCategories()])
+    } else if (result && result.categories_created === 0) {
+      setToast({
+        message: 'No new categories to create',
+        type: 'info',
+      })
+    }
+  }, [createSelected, resetSuggestions, fetchCategories, fetchRootCategories])
+
   // Get category stats
   const totalCategories = categories.length
   const rootCategoriesCount = rootCategories.length
@@ -195,6 +252,15 @@ export const CategoriesPage = () => {
             />
           </div>
           <div className="action-buttons">
+            <Button
+              onClick={handleOpenSuggestionModal}
+              variant="outlined"
+              disabled={loading}
+              startIcon={<AutoAwesomeIcon />}
+              sx={{ textTransform: 'none', mr: 1 }}
+            >
+              Generate from Transactions
+            </Button>
             <Button
               onClick={() => handleCreateCategory()}
               variant="contained"
@@ -251,6 +317,25 @@ export const CategoriesPage = () => {
       />
 
       {toast && <Toast message={toast.message} type={toast.type} onClose={handleCloseToast} />}
+
+      <Dialog open={suggestionModalOpen} onClose={handleCloseSuggestionModal} maxWidth="md" fullWidth>
+        <DialogTitle>Generate Categories from Transactions</DialogTitle>
+        <DialogContent>
+          <CategorySuggestionPanel
+            suggestions={suggestions}
+            selectedItems={selectedItems}
+            loading={suggestionsLoading}
+            creating={suggestionsCreating}
+            error={suggestionsError}
+            totalDescriptionsAnalysed={totalDescriptionsAnalysed}
+            onToggleParent={toggleParent}
+            onToggleSubcategory={toggleSubcategory}
+            onCreateSelected={handleCreateSuggestedCategories}
+            onClose={handleCloseSuggestionModal}
+            selectedCount={getSelectedCount()}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

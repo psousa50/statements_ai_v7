@@ -20,6 +20,7 @@ from app.core.config import settings
 from app.core.database import SessionLocal
 from app.services.account import AccountService
 from app.services.ai import LLMRuleCategorizer, LLMRuleCounterparty
+from app.services.ai.llm_category_generator import LLMCategoryGenerator
 from app.services.background.background_job_service import BackgroundJobService
 from app.services.category import CategoryService
 from app.services.description_group import DescriptionGroupService
@@ -104,6 +105,7 @@ class InternalDependencies:
         saved_filter_repository: SQLAlchemySavedFilterRepository,
         llm_rule_categorizer: LLMRuleCategorizer,
         llm_rule_counterparty: LLMRuleCounterparty,
+        llm_category_generator: LLMCategoryGenerator,
     ):
         self.transaction_service = transaction_service
         self.category_service = category_service
@@ -126,6 +128,7 @@ class InternalDependencies:
         self.saved_filter_repository = saved_filter_repository
         self.llm_rule_categorizer = llm_rule_categorizer
         self.llm_rule_counterparty = llm_rule_counterparty
+        self.llm_category_generator = llm_category_generator
 
 
 def build_external_dependencies() -> ExternalDependencies:
@@ -216,6 +219,11 @@ def build_internal_dependencies(
         account_repository=account_repo,
         llm_client=external.llm_client,
     )
+    llm_category_generator = LLMCategoryGenerator(
+        category_repository=category_repo,
+        transaction_repository=transaction_repo,
+        llm_client=external.llm_client,
+    )
 
     return InternalDependencies(
         transaction_service=transaction_service,
@@ -239,6 +247,7 @@ def build_internal_dependencies(
         saved_filter_repository=saved_filter_repo,
         llm_rule_categorizer=llm_rule_categorizer,
         llm_rule_counterparty=llm_rule_counterparty,
+        llm_category_generator=llm_category_generator,
     )
 
 

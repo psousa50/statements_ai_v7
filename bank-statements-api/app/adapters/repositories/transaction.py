@@ -175,6 +175,19 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
 
         return transactions, total
 
+    def get_unique_normalised_descriptions(self, user_id: UUID, limit: int = 200) -> List[str]:
+        results = (
+            self.db_session.query(Transaction.normalized_description)
+            .join(Account, Transaction.account_id == Account.id)
+            .filter(Account.user_id == user_id)
+            .filter(Transaction.normalized_description.isnot(None))
+            .filter(Transaction.normalized_description != "")
+            .distinct()
+            .limit(limit)
+            .all()
+        )
+        return [r[0] for r in results]
+
     def delete_by_statement_id(self, statement_id: UUID) -> int:
         """Delete all transactions associated with a statement"""
         transactions_to_delete = self.db_session.query(Transaction).filter(Transaction.statement_id == statement_id).all()

@@ -279,3 +279,7 @@ class TransactionRepository(ABC):
             Number of transactions deleted
         """
         pass
+
+    @abstractmethod
+    def get_unique_normalised_descriptions(self, user_id: UUID, limit: int = 200) -> List[str]:
+        pass

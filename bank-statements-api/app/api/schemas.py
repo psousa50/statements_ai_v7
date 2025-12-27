@@ -655,3 +655,37 @@ class AIApplySuggestionResponse(BaseModel):
     transactions_updated: int = 0
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class SubcategorySuggestionResponse(BaseModel):
+    name: str
+    is_new: bool
+
+
+class CategorySuggestionResponse(BaseModel):
+    parent_name: str
+    parent_id: Optional[UUID] = None
+    parent_is_new: bool
+    subcategories: List[SubcategorySuggestionResponse]
+    confidence: float
+    matched_descriptions: List[str]
+
+
+class GenerateCategoriesResponse(BaseModel):
+    suggestions: List[CategorySuggestionResponse]
+    total_descriptions_analysed: int
+
+
+class CategorySelectionItem(BaseModel):
+    parent_name: str
+    parent_id: Optional[UUID] = None
+    subcategory_names: List[str]
+
+
+class CreateSelectedCategoriesRequest(BaseModel):
+    selections: List[CategorySelectionItem]
+
+
+class CreateSelectedCategoriesResponse(BaseModel):
+    categories_created: int
+    categories: List[CategoryResponse]

@@ -4,7 +4,18 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, FastAPI, File, HTTPException, UploadFile, status
 
 from app.api.routes.auth import require_current_user
-from app.api.schemas import CategoryCreate, CategoryListResponse, CategoryResponse, CategoryUpdate, CategoryUploadResponse
+from app.api.schemas import (
+    CategoryCreate,
+    CategoryListResponse,
+    CategoryResponse,
+    CategorySuggestionResponse,
+    CategoryUpdate,
+    CategoryUploadResponse,
+    CreateSelectedCategoriesRequest,
+    CreateSelectedCategoriesResponse,
+    GenerateCategoriesResponse,
+    SubcategorySuggestionResponse,
+)
 from app.core.config import settings
 from app.core.dependencies import InternalDependencies
 from app.domain.models.user import User
@@ -196,5 +207,72 @@ def register_category_routes(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Error uploading categories: {str(e)}",
             )
+
+    @router.post(
+        "/ai/generate-suggestions",
+        response_model=GenerateCategoriesResponse,
+        status_code=status.HTTP_200_OK,
+    )
+    def generate_category_suggestions(
+        internal: InternalDependencies = Depends(provide_dependencies),
+        current_user: User = Depends(require_current_user),
+    ):
+        result = internal.llm_category_generator.generate_suggestions(
+            user_id=current_user.id,
+        )
+
+        suggestions = [
+            CategorySuggestionResponse(
+                parent_name=s.parent_name,
+                parent_id=s.parent_id,
+                parent_is_new=s.parent_is_new,
+                subcategories=[SubcategorySuggestionResponse(name=sub.name, is_new=sub.is_new) for sub in s.subcategories],
+                confidence=s.confidence,
+                matched_descriptions=s.matched_descriptions,
+            )
+            for s in result.suggestions
+        ]
+
+        return GenerateCategoriesResponse(
+            suggestions=suggestions,
+            total_descriptions_analysed=result.total_descriptions_analysed,
+        )
+
+    @router.post(
+        "/ai/create-selected",
+        response_model=CreateSelectedCategoriesResponse,
+        status_code=status.HTTP_201_CREATED,
+    )
+    def create_selected_categories(
+        request: CreateSelectedCategoriesRequest,
+        internal: InternalDependencies = Depends(provide_dependencies),
+        current_user: User = Depends(require_current_user),
+    ):
+        created_categories = []
+
+        for selection in request.selections:
+            if selection.parent_id:
+                parent = internal.category_service.get_category(selection.parent_id, current_user.id)
+            else:
+                parent = internal.category_service.upsert_category(
+                    name=selection.parent_name,
+                    user_id=current_user.id,
+                )
+                if parent not in created_categories:
+                    created_categories.append(parent)
+
+            for sub_name in selection.subcategory_names:
+                sub = internal.category_service.upsert_category(
+                    name=sub_name,
+                    user_id=current_user.id,
+                    parent_id=parent.id,
+                )
+                if sub not in created_categories:
+                    created_categories.append(sub)
+
+        return CreateSelectedCategoriesResponse(
+            categories_created=len(created_categories),
+            categories=created_categories,
+        )
 
     app.include_router(router, prefix=settings.API_V1_STR)

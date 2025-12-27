@@ -157,6 +157,16 @@ const defaultCategoryClient: CategoryClient = {
   create: () => Promise.resolve(defaultCategory),
   update: () => Promise.resolve(defaultCategory),
   delete: () => Promise.resolve(),
+  generateSuggestions: () =>
+    Promise.resolve({
+      suggestions: [],
+      total_descriptions_analysed: 0,
+    }),
+  createSelectedCategories: () =>
+    Promise.resolve({
+      categories_created: 0,
+      categories: [],
+    }),
 }
 
 // Default mock account client implementation
