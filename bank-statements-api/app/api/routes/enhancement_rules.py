@@ -337,8 +337,7 @@ def register_enhancement_rule_routes(
                     user_id=current_user.id,
                     limit=100,
                     offset=0,
-                    source=EnhancementRuleSource.AUTO,
-                    show_invalid_only=True,
+                    rule_status_filter="unconfigured",
                 )
                 rules = result["rules"]
 
@@ -413,8 +412,7 @@ def register_enhancement_rule_routes(
                     user_id=current_user.id,
                     limit=100,
                     offset=0,
-                    source=EnhancementRuleSource.AUTO,
-                    show_invalid_only=True,
+                    rule_status_filter="unconfigured",
                 )
                 rules = result["rules"]
 
