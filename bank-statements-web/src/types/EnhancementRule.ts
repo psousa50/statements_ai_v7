@@ -92,6 +92,8 @@ export type SortField =
   | 'created_at'
 export type SortDirection = 'asc' | 'desc'
 
+export type RuleStatusFilter = 'unconfigured' | 'pending' | 'applied'
+
 export interface EnhancementRuleFilters {
   page?: number
   page_size?: number
@@ -102,8 +104,7 @@ export interface EnhancementRuleFilters {
   source?: EnhancementRuleSource
   sort_field?: SortField
   sort_direction?: SortDirection
-  show_invalid_only?: boolean
-  has_pending_suggestions?: boolean
+  rule_status_filter?: RuleStatusFilter
 }
 
 export interface RuleTypeUsage {

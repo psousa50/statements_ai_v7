@@ -52,11 +52,8 @@ def register_enhancement_rule_routes(
         ),
         match_type: Optional[MatchType] = Query(None, description="Filter by match type"),
         source: Optional[EnhancementRuleSource] = Query(None, description="Filter by rule source"),
-        show_invalid_only: Optional[bool] = Query(
-            None, description="Show only invalid rules (rules with no category and no counterparty)"
-        ),
-        has_pending_suggestions: Optional[bool] = Query(
-            None, description="Show only rules with pending AI suggestions"
+        rule_status_filter: Optional[str] = Query(
+            None, description="Filter by rule status: 'unconfigured', 'pending', or 'applied'"
         ),
         sort_field: str = Query("created_at", description="Field to sort by"),
         sort_direction: str = Query("desc", description="Sort direction (asc/desc)"),
@@ -76,8 +73,7 @@ def register_enhancement_rule_routes(
                 counterparty_account_ids=counterparty_account_ids,
                 match_type=match_type,
                 source=source,
-                show_invalid_only=show_invalid_only,
-                has_pending_suggestions=has_pending_suggestions,
+                rule_status_filter=rule_status_filter,
                 sort_field=sort_field,
                 sort_direction=sort_direction,
             )
@@ -371,16 +367,14 @@ def register_enhancement_rule_routes(
                     failed += 1
                     continue
 
+                rule.ai_suggested_category_id = suggestion.suggested_category_id
+                rule.ai_category_confidence = suggestion.confidence
+                rule.ai_processed_at = datetime.now(timezone.utc)
+
                 if request.auto_apply and suggestion.confidence >= request.confidence_threshold:
                     rule.category_id = suggestion.suggested_category_id
-                    rule.ai_suggested_category_id = suggestion.suggested_category_id
-                    rule.ai_category_confidence = None
-                    rule.ai_processed_at = datetime.now(timezone.utc)
                     auto_applied += 1
                 else:
-                    rule.ai_suggested_category_id = suggestion.suggested_category_id
-                    rule.ai_category_confidence = suggestion.confidence
-                    rule.ai_processed_at = datetime.now(timezone.utc)
                     suggestion_count += 1
 
                 internal.enhancement_rule_repository.save(rule)
@@ -449,16 +443,14 @@ def register_enhancement_rule_routes(
                     failed += 1
                     continue
 
+                rule.ai_suggested_counterparty_id = suggestion.suggested_counterparty_id
+                rule.ai_counterparty_confidence = suggestion.confidence
+                rule.ai_processed_at = datetime.now(timezone.utc)
+
                 if request.auto_apply and suggestion.confidence >= request.confidence_threshold:
                     rule.counterparty_account_id = suggestion.suggested_counterparty_id
-                    rule.ai_suggested_counterparty_id = suggestion.suggested_counterparty_id
-                    rule.ai_counterparty_confidence = None
-                    rule.ai_processed_at = datetime.now(timezone.utc)
                     auto_applied += 1
                 else:
-                    rule.ai_suggested_counterparty_id = suggestion.suggested_counterparty_id
-                    rule.ai_counterparty_confidence = suggestion.confidence
-                    rule.ai_processed_at = datetime.now(timezone.utc)
                     suggestion_count += 1
 
                 internal.enhancement_rule_repository.save(rule)

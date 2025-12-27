@@ -11,12 +11,15 @@ import {
   Button,
   Stack,
   SelectChangeEvent,
-  FormControlLabel,
-  Checkbox,
 } from '@mui/material'
 import ClearIcon from '@mui/icons-material/Clear'
 import { useApi } from '../api/ApiContext'
-import { EnhancementRuleFilters, EnhancementRuleSource, MatchType } from '../types/EnhancementRule'
+import {
+  EnhancementRuleFilters,
+  EnhancementRuleSource,
+  MatchType,
+  RuleStatusFilter,
+} from '../types/EnhancementRule'
 import { Category } from '../types/Transaction'
 import { CategorySelector } from './CategorySelector'
 
@@ -128,17 +131,10 @@ export const EnhancementRuleFiltersComponent: React.FC<EnhancementRuleFiltersPro
     })
   }
 
-  const handleInvalidRulesChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleRuleStatusFilterChange = (event: SelectChangeEvent<string>) => {
     onFiltersChange({
       ...filters,
-      show_invalid_only: event.target.checked ? true : undefined,
-    })
-  }
-
-  const handlePendingSuggestionsChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    onFiltersChange({
-      ...filters,
-      has_pending_suggestions: event.target.checked ? true : undefined,
+      rule_status_filter: event.target.value === '' ? undefined : (event.target.value as RuleStatusFilter),
     })
   }
 
@@ -157,8 +153,7 @@ export const EnhancementRuleFiltersComponent: React.FC<EnhancementRuleFiltersPro
     filters.counterparty_account_ids?.length ||
     filters.match_type ||
     filters.source ||
-    filters.show_invalid_only ||
-    filters.has_pending_suggestions
+    filters.rule_status_filter
 
   return (
     <Box>
@@ -242,32 +237,29 @@ export const EnhancementRuleFiltersComponent: React.FC<EnhancementRuleFiltersPro
           </FormControl>
         </Box>
 
-        <Box>
-          <FormControlLabel
-            control={
-              <Checkbox
-                checked={filters.show_invalid_only || false}
-                onChange={handleInvalidRulesChange}
-                disabled={loading}
-                size="small"
-              />
-            }
-            label="Unconfigured Only"
-          />
-        </Box>
-
-        <Box>
-          <FormControlLabel
-            control={
-              <Checkbox
-                checked={filters.has_pending_suggestions || false}
-                onChange={handlePendingSuggestionsChange}
-                disabled={loading}
-                size="small"
-              />
-            }
-            label="Pending Suggestions"
-          />
+        <Box sx={{ minWidth: 150 }}>
+          <FormControl fullWidth size="small">
+            <InputLabel>Rule Status</InputLabel>
+            <Select
+              value={filters.rule_status_filter || ''}
+              onChange={handleRuleStatusFilterChange}
+              disabled={loading}
+              label="Rule Status"
+              displayEmpty
+              renderValue={(value) => {
+                if (!value) return 'All'
+                if (value === 'unconfigured') return 'Unconfigured'
+                if (value === 'pending') return 'AI Pending'
+                if (value === 'applied') return 'AI Applied'
+                return value
+              }}
+            >
+              <MenuItem value="">All</MenuItem>
+              <MenuItem value="unconfigured">Unconfigured</MenuItem>
+              <MenuItem value="pending">AI Pending</MenuItem>
+              <MenuItem value="applied">AI Applied</MenuItem>
+            </Select>
+          </FormControl>
         </Box>
 
         {hasActiveFilters && (

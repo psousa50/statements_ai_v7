@@ -63,11 +63,8 @@ export const enhancementRuleClient: EnhancementRuleClient = {
     if (filters?.sort_direction) {
       params.append('sort_direction', filters.sort_direction)
     }
-    if (filters?.show_invalid_only) {
-      params.append('show_invalid_only', 'true')
-    }
-    if (filters?.has_pending_suggestions) {
-      params.append('has_pending_suggestions', 'true')
+    if (filters?.rule_status_filter) {
+      params.append('rule_status_filter', filters.rule_status_filter)
     }
 
     const url = params.toString() ? `${API_URL}?${params.toString()}` : API_URL

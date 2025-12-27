@@ -47,7 +47,7 @@ export const EnhancementRules: React.FC = () => {
     page_size: 50,
     sort_field: 'usage',
     sort_direction: 'desc',
-    show_invalid_only: true,
+    rule_status_filter: 'unconfigured',
   })
 
   const [modalOpen, setModalOpen] = useState(false)

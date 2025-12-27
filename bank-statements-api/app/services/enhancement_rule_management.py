@@ -31,8 +31,7 @@ class EnhancementRuleManagementService:
         counterparty_account_ids: Optional[List[UUID]] = None,
         match_type: Optional[MatchType] = None,
         source: Optional[EnhancementRuleSource] = None,
-        show_invalid_only: Optional[bool] = None,
-        has_pending_suggestions: Optional[bool] = None,
+        rule_status_filter: Optional[str] = None,
         sort_field: str = "created_at",
         sort_direction: str = "desc",
     ) -> Dict[str, Any]:
@@ -45,8 +44,7 @@ class EnhancementRuleManagementService:
             counterparty_account_ids=counterparty_account_ids,
             match_type=match_type,
             source=source,
-            show_invalid_only=show_invalid_only,
-            has_pending_suggestions=has_pending_suggestions,
+            rule_status_filter=rule_status_filter,
             sort_field=sort_field,
             sort_direction=sort_direction,
         )
@@ -58,8 +56,7 @@ class EnhancementRuleManagementService:
             counterparty_account_ids=counterparty_account_ids,
             match_type=match_type,
             source=source,
-            show_invalid_only=show_invalid_only,
-            has_pending_suggestions=has_pending_suggestions,
+            rule_status_filter=rule_status_filter,
         )
 
         for rule in rules:

@@ -22,8 +22,7 @@ class SQLAlchemyEnhancementRuleRepository(EnhancementRuleRepository):
         counterparty_account_ids: Optional[List[UUID]] = None,
         match_type: Optional[MatchType] = None,
         source: Optional[EnhancementRuleSource] = None,
-        show_invalid_only: Optional[bool] = None,
-        has_pending_suggestions: Optional[bool] = None,
+        rule_status_filter: Optional[str] = None,
         sort_field: str = "created_at",
         sort_direction: str = "desc",
     ) -> List[EnhancementRule]:
@@ -37,12 +36,20 @@ class SQLAlchemyEnhancementRuleRepository(EnhancementRuleRepository):
                 counterparty_account_ids,
                 match_type,
                 source,
-                show_invalid_only,
-                has_pending_suggestions,
+                rule_status_filter,
                 sort_direction,
             )
 
-        query = self.db.query(EnhancementRule).filter(EnhancementRule.user_id == user_id)
+        query = (
+            self.db.query(EnhancementRule)
+            .options(
+                joinedload(EnhancementRule.category),
+                joinedload(EnhancementRule.counterparty_account),
+                joinedload(EnhancementRule.ai_suggested_category),
+                joinedload(EnhancementRule.ai_suggested_counterparty),
+            )
+            .filter(EnhancementRule.user_id == user_id)
+        )
 
         if description_search:
             query = query.filter(EnhancementRule.normalized_description_pattern.ilike(f"%{description_search}%"))
@@ -59,14 +66,38 @@ class SQLAlchemyEnhancementRuleRepository(EnhancementRuleRepository):
         if source:
             query = query.filter(EnhancementRule.source == source)
 
-        if show_invalid_only:
+        if rule_status_filter == "unconfigured":
             query = query.filter(and_(EnhancementRule.category_id.is_(None), EnhancementRule.counterparty_account_id.is_(None)))
-
-        if has_pending_suggestions:
+        elif rule_status_filter == "pending":
             query = query.filter(
                 or_(
-                    EnhancementRule.ai_category_confidence.isnot(None),
-                    EnhancementRule.ai_counterparty_confidence.isnot(None),
+                    and_(
+                        EnhancementRule.ai_suggested_category_id.isnot(None),
+                        or_(
+                            EnhancementRule.category_id.is_(None),
+                            EnhancementRule.category_id != EnhancementRule.ai_suggested_category_id,
+                        ),
+                    ),
+                    and_(
+                        EnhancementRule.ai_suggested_counterparty_id.isnot(None),
+                        or_(
+                            EnhancementRule.counterparty_account_id.is_(None),
+                            EnhancementRule.counterparty_account_id != EnhancementRule.ai_suggested_counterparty_id,
+                        ),
+                    ),
+                )
+            )
+        elif rule_status_filter == "applied":
+            query = query.filter(
+                or_(
+                    and_(
+                        EnhancementRule.ai_suggested_category_id.isnot(None),
+                        EnhancementRule.category_id == EnhancementRule.ai_suggested_category_id,
+                    ),
+                    and_(
+                        EnhancementRule.ai_suggested_counterparty_id.isnot(None),
+                        EnhancementRule.counterparty_account_id == EnhancementRule.ai_suggested_counterparty_id,
+                    ),
                 )
             )
 
@@ -98,11 +129,19 @@ class SQLAlchemyEnhancementRuleRepository(EnhancementRuleRepository):
         counterparty_account_ids: Optional[List[UUID]] = None,
         match_type: Optional[MatchType] = None,
         source: Optional[EnhancementRuleSource] = None,
-        show_invalid_only: Optional[bool] = None,
-        has_pending_suggestions: Optional[bool] = None,
+        rule_status_filter: Optional[str] = None,
         sort_direction: str = "desc",
     ) -> List[EnhancementRule]:
-        query = self.db.query(EnhancementRule).filter(EnhancementRule.user_id == user_id)
+        query = (
+            self.db.query(EnhancementRule)
+            .options(
+                joinedload(EnhancementRule.category),
+                joinedload(EnhancementRule.counterparty_account),
+                joinedload(EnhancementRule.ai_suggested_category),
+                joinedload(EnhancementRule.ai_suggested_counterparty),
+            )
+            .filter(EnhancementRule.user_id == user_id)
+        )
 
         if description_search:
             query = query.filter(EnhancementRule.normalized_description_pattern.ilike(f"%{description_search}%"))
@@ -119,14 +158,38 @@ class SQLAlchemyEnhancementRuleRepository(EnhancementRuleRepository):
         if source:
             query = query.filter(EnhancementRule.source == source)
 
-        if show_invalid_only:
+        if rule_status_filter == "unconfigured":
             query = query.filter(and_(EnhancementRule.category_id.is_(None), EnhancementRule.counterparty_account_id.is_(None)))
-
-        if has_pending_suggestions:
+        elif rule_status_filter == "pending":
             query = query.filter(
                 or_(
-                    EnhancementRule.ai_category_confidence.isnot(None),
-                    EnhancementRule.ai_counterparty_confidence.isnot(None),
+                    and_(
+                        EnhancementRule.ai_suggested_category_id.isnot(None),
+                        or_(
+                            EnhancementRule.category_id.is_(None),
+                            EnhancementRule.category_id != EnhancementRule.ai_suggested_category_id,
+                        ),
+                    ),
+                    and_(
+                        EnhancementRule.ai_suggested_counterparty_id.isnot(None),
+                        or_(
+                            EnhancementRule.counterparty_account_id.is_(None),
+                            EnhancementRule.counterparty_account_id != EnhancementRule.ai_suggested_counterparty_id,
+                        ),
+                    ),
+                )
+            )
+        elif rule_status_filter == "applied":
+            query = query.filter(
+                or_(
+                    and_(
+                        EnhancementRule.ai_suggested_category_id.isnot(None),
+                        EnhancementRule.category_id == EnhancementRule.ai_suggested_category_id,
+                    ),
+                    and_(
+                        EnhancementRule.ai_suggested_counterparty_id.isnot(None),
+                        EnhancementRule.counterparty_account_id == EnhancementRule.ai_suggested_counterparty_id,
+                    ),
                 )
             )
 
@@ -163,8 +226,7 @@ class SQLAlchemyEnhancementRuleRepository(EnhancementRuleRepository):
         counterparty_account_ids: Optional[List[UUID]] = None,
         match_type: Optional[MatchType] = None,
         source: Optional[EnhancementRuleSource] = None,
-        show_invalid_only: Optional[bool] = None,
-        has_pending_suggestions: Optional[bool] = None,
+        rule_status_filter: Optional[str] = None,
     ) -> int:
         query = self.db.query(func.count(EnhancementRule.id)).filter(EnhancementRule.user_id == user_id)
 
@@ -183,14 +245,38 @@ class SQLAlchemyEnhancementRuleRepository(EnhancementRuleRepository):
         if source:
             query = query.filter(EnhancementRule.source == source)
 
-        if show_invalid_only:
+        if rule_status_filter == "unconfigured":
             query = query.filter(and_(EnhancementRule.category_id.is_(None), EnhancementRule.counterparty_account_id.is_(None)))
-
-        if has_pending_suggestions:
+        elif rule_status_filter == "pending":
             query = query.filter(
                 or_(
-                    EnhancementRule.ai_category_confidence.isnot(None),
-                    EnhancementRule.ai_counterparty_confidence.isnot(None),
+                    and_(
+                        EnhancementRule.ai_suggested_category_id.isnot(None),
+                        or_(
+                            EnhancementRule.category_id.is_(None),
+                            EnhancementRule.category_id != EnhancementRule.ai_suggested_category_id,
+                        ),
+                    ),
+                    and_(
+                        EnhancementRule.ai_suggested_counterparty_id.isnot(None),
+                        or_(
+                            EnhancementRule.counterparty_account_id.is_(None),
+                            EnhancementRule.counterparty_account_id != EnhancementRule.ai_suggested_counterparty_id,
+                        ),
+                    ),
+                )
+            )
+        elif rule_status_filter == "applied":
+            query = query.filter(
+                or_(
+                    and_(
+                        EnhancementRule.ai_suggested_category_id.isnot(None),
+                        EnhancementRule.category_id == EnhancementRule.ai_suggested_category_id,
+                    ),
+                    and_(
+                        EnhancementRule.ai_suggested_counterparty_id.isnot(None),
+                        EnhancementRule.counterparty_account_id == EnhancementRule.ai_suggested_counterparty_id,
+                    ),
                 )
             )
 
@@ -205,7 +291,12 @@ class SQLAlchemyEnhancementRuleRepository(EnhancementRuleRepository):
     def find_by_id(self, rule_id: UUID, user_id: UUID) -> Optional[EnhancementRule]:
         return (
             self.db.query(EnhancementRule)
-            .options(joinedload(EnhancementRule.category), joinedload(EnhancementRule.counterparty_account))
+            .options(
+                joinedload(EnhancementRule.category),
+                joinedload(EnhancementRule.counterparty_account),
+                joinedload(EnhancementRule.ai_suggested_category),
+                joinedload(EnhancementRule.ai_suggested_counterparty),
+            )
             .filter(EnhancementRule.id == rule_id, EnhancementRule.user_id == user_id)
             .first()
         )
