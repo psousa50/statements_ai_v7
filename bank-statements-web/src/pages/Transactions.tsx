@@ -515,7 +515,7 @@ export const TransactionsPage = () => {
               {!loading &&
                 transactions.length > 0 &&
                 (() => {
-                  const total = transactions.reduce((sum, t) => sum + Number(t.amount), 0)
+                  const total = pagination.total_amount
                   return (
                     <div className="transactions-stats">
                       <span className="transaction-count">{pagination.total_count} transactions found</span>

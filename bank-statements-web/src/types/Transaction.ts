@@ -48,5 +48,6 @@ export interface TransactionListResponse {
   page: number
   page_size: number
   total_pages: number
+  total_amount?: number
   enhancement_rule?: import('./EnhancementRule').EnhancementRule
 }

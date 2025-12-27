@@ -14,6 +14,7 @@ interface TransactionPagination {
   total_pages: number
   page_size: number
   total_count: number
+  total_amount: number
 }
 
 export const useTransactions = () => {
@@ -27,6 +28,7 @@ export const useTransactions = () => {
     total_pages: 1,
     page_size: 20,
     total_count: 0,
+    total_amount: 0,
   })
 
   const fetchTransactions = useCallback(
@@ -48,6 +50,7 @@ export const useTransactions = () => {
           total_pages: totalPages,
           page_size: pageSize,
           total_count: response.total,
+          total_amount: response.total_amount ?? 0,
         })
       } catch (err) {
         console.error('Error fetching transactions:', err)

@@ -67,7 +67,16 @@ class TransactionRepository(ABC):
         transaction_type: Optional[str] = None,
         exclude_uncategorized: Optional[bool] = None,
         transaction_ids: Optional[List[UUID]] = None,
-    ) -> Tuple[List[Transaction], int]:
+    ) -> Tuple[List[Transaction], int, Decimal]:
+        """
+        Get paginated transactions with filters.
+
+        Returns:
+            Tuple of (transactions, total_count, total_amount)
+            - transactions: List of transactions for the current page
+            - total_count: Total number of matching transactions
+            - total_amount: Sum of amounts for all matching transactions
+        """
         pass
 
     @abstractmethod

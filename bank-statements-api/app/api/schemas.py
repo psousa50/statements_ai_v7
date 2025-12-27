@@ -189,9 +189,14 @@ class TransactionListResponse(BaseModel):
     page: int
     page_size: int
     total_pages: int
+    total_amount: Optional[Decimal] = None
     enhancement_rule: Optional["EnhancementRuleResponse"] = None
 
     model_config = ConfigDict(from_attributes=True)
+
+    @field_serializer("total_amount")
+    def serialize_total_amount(self, value: Optional[Decimal]) -> Optional[float]:
+        return float(value) if value is not None else None
 
 
 class CategoryTotalResponse(BaseModel):

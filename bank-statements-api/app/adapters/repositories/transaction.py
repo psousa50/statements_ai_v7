@@ -97,7 +97,7 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         exclude_uncategorized: Optional[bool] = None,
         transaction_type: Optional[str] = None,
         transaction_ids: Optional[List[UUID]] = None,
-    ) -> Tuple[List[Transaction], int]:
+    ) -> Tuple[List[Transaction], int, Decimal]:
         query = (
             self.db_session.query(Transaction)
             .join(Account, Transaction.account_id == Account.id)
@@ -163,8 +163,18 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         if filters:
             query = query.filter(and_(*filters))
 
-        # Get total count
-        total = query.count()
+        # Get total count and total amount in a single query
+        count_sum_query = (
+            self.db_session.query(
+                func.count(Transaction.id),
+                func.coalesce(func.sum(Transaction.amount), Decimal("0")),
+            )
+            .join(Account, Transaction.account_id == Account.id)
+            .filter(Account.user_id == user_id)
+        )
+        if filters:
+            count_sum_query = count_sum_query.filter(and_(*filters))
+        total, total_amount = count_sum_query.one()
 
         # Apply sorting
         order_clause = self._get_order_clause(sort_field, sort_direction)
@@ -173,7 +183,7 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         # Apply pagination
         transactions = query.offset((page - 1) * page_size).limit(page_size).all()
 
-        return transactions, total
+        return transactions, total, Decimal(str(total_amount)) if total_amount else Decimal("0")
 
     def get_unique_normalised_descriptions(self, user_id: UUID, limit: int = 200) -> List[str]:
         results = (
