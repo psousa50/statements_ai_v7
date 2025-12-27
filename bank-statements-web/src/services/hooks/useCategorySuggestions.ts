@@ -1,9 +1,6 @@
 import { useState, useCallback } from 'react'
 import { useApi } from '../../api/ApiContext'
-import {
-  CategorySuggestion,
-  CategorySelectionItem,
-} from '../../api/CategoryClient'
+import { CategorySuggestion, CategorySelectionItem } from '../../api/CategoryClient'
 
 export const useCategorySuggestions = () => {
   const api = useApi()
@@ -24,9 +21,7 @@ export const useCategorySuggestions = () => {
 
       const initialSelection = new Map<string, Set<string>>()
       response.suggestions.forEach((suggestion) => {
-        const newSubcategories = suggestion.subcategories
-          .filter((sub) => sub.is_new)
-          .map((sub) => sub.name)
+        const newSubcategories = suggestion.subcategories.filter((sub) => sub.is_new).map((sub) => sub.name)
         if (suggestion.parent_is_new || newSubcategories.length > 0) {
           initialSelection.set(suggestion.parent_name, new Set(newSubcategories))
         }
@@ -46,41 +41,42 @@ export const useCategorySuggestions = () => {
       if (newMap.has(parentName)) {
         newMap.delete(parentName)
       } else {
-        const newSubcategories = suggestion.subcategories
-          .filter((sub) => sub.is_new)
-          .map((sub) => sub.name)
+        const newSubcategories = suggestion.subcategories.filter((sub) => sub.is_new).map((sub) => sub.name)
         newMap.set(parentName, new Set(newSubcategories))
       }
       return newMap
     })
   }, [])
 
-  const toggleSubcategory = useCallback((parentName: string, subcategoryName: string) => {
-    setSelectedItems((prev) => {
-      const newMap = new Map(prev)
-      const currentSubs = newMap.get(parentName) || new Set()
-      const newSubs = new Set(currentSubs)
+  const toggleSubcategory = useCallback(
+    (parentName: string, subcategoryName: string) => {
+      setSelectedItems((prev) => {
+        const newMap = new Map(prev)
+        const currentSubs = newMap.get(parentName) || new Set()
+        const newSubs = new Set(currentSubs)
 
-      if (newSubs.has(subcategoryName)) {
-        newSubs.delete(subcategoryName)
-      } else {
-        newSubs.add(subcategoryName)
-      }
+        if (newSubs.has(subcategoryName)) {
+          newSubs.delete(subcategoryName)
+        } else {
+          newSubs.add(subcategoryName)
+        }
 
-      if (newSubs.size === 0) {
-        const suggestion = suggestions.find((s) => s.parent_name === parentName)
-        if (suggestion && !suggestion.parent_is_new) {
-          newMap.delete(parentName)
+        if (newSubs.size === 0) {
+          const suggestion = suggestions.find((s) => s.parent_name === parentName)
+          if (suggestion && !suggestion.parent_is_new) {
+            newMap.delete(parentName)
+          } else {
+            newMap.set(parentName, newSubs)
+          }
         } else {
           newMap.set(parentName, newSubs)
         }
-      } else {
-        newMap.set(parentName, newSubs)
-      }
 
-      return newMap
-    })
-  }, [suggestions])
+        return newMap
+      })
+    },
+    [suggestions]
+  )
 
   const createSelected = useCallback(async () => {
     setCreating(true)

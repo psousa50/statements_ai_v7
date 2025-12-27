@@ -3,12 +3,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom'
 import { useTransactions } from '../services/hooks/useTransactions'
 import { useCategories } from '../services/hooks/useCategories'
 import { useAccounts } from '../services/hooks/useAccounts'
-import {
-  TransactionTable,
-  TransactionSortField,
-  TransactionSortDirection,
-  SimilarCountFilters,
-} from '../components/TransactionTable'
+import { TransactionTable, TransactionSortField, TransactionSortDirection } from '../components/TransactionTable'
 import { TransactionFilters, CategorizationFilter } from '../components/TransactionFilters'
 import { TransactionModal } from '../components/TransactionModal'
 import { Pagination } from '../components/Pagination'

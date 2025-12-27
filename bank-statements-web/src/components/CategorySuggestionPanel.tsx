@@ -1,15 +1,5 @@
 import { useState } from 'react'
-import {
-  Box,
-  Checkbox,
-  Chip,
-  CircularProgress,
-  Collapse,
-  IconButton,
-  Typography,
-  Button,
-  Alert,
-} from '@mui/material'
+import { Box, Checkbox, Chip, CircularProgress, Collapse, IconButton, Typography, Button, Alert } from '@mui/material'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import ChevronRightIcon from '@mui/icons-material/ChevronRight'
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline'
@@ -162,7 +152,9 @@ export const CategorySuggestionPanel = ({
                     <Chip
                       label={`${Math.round(suggestion.confidence * 100)}%`}
                       size="small"
-                      color={suggestion.confidence >= 0.8 ? 'success' : suggestion.confidence >= 0.5 ? 'warning' : 'default'}
+                      color={
+                        suggestion.confidence >= 0.8 ? 'success' : suggestion.confidence >= 0.5 ? 'warning' : 'default'
+                      }
                       sx={{ height: '20px', fontSize: '11px' }}
                     />
                   </Box>

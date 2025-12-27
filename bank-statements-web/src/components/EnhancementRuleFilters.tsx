@@ -14,12 +14,7 @@ import {
 } from '@mui/material'
 import ClearIcon from '@mui/icons-material/Clear'
 import { useApi } from '../api/ApiContext'
-import {
-  EnhancementRuleFilters,
-  EnhancementRuleSource,
-  MatchType,
-  RuleStatusFilter,
-} from '../types/EnhancementRule'
+import { EnhancementRuleFilters, EnhancementRuleSource, MatchType, RuleStatusFilter } from '../types/EnhancementRule'
 import { Category } from '../types/Transaction'
 import { CategorySelector } from './CategorySelector'
 

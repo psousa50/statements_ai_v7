@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react'
 import axios, { AxiosError } from 'axios'
-import { User, AuthState } from '../types/Auth'
+import { AuthState } from '../types/Auth'
 import { authClient, RegisterRequest, LoginRequest } from '../api/AuthClient'
 
 interface AuthContextValue extends AuthState {
