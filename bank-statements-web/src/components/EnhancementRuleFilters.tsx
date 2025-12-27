@@ -135,6 +135,13 @@ export const EnhancementRuleFiltersComponent: React.FC<EnhancementRuleFiltersPro
     })
   }
 
+  const handlePendingSuggestionsChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    onFiltersChange({
+      ...filters,
+      has_pending_suggestions: event.target.checked ? true : undefined,
+    })
+  }
+
   const handleClearFilters = () => {
     onFiltersChange({
       page: 1,
@@ -150,7 +157,8 @@ export const EnhancementRuleFiltersComponent: React.FC<EnhancementRuleFiltersPro
     filters.counterparty_account_ids?.length ||
     filters.match_type ||
     filters.source ||
-    filters.show_invalid_only
+    filters.show_invalid_only ||
+    filters.has_pending_suggestions
 
   return (
     <Box>
@@ -244,7 +252,21 @@ export const EnhancementRuleFiltersComponent: React.FC<EnhancementRuleFiltersPro
                 size="small"
               />
             }
-            label="Show Unconfigured Rules Only"
+            label="Unconfigured Only"
+          />
+        </Box>
+
+        <Box>
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={filters.has_pending_suggestions || false}
+                onChange={handlePendingSuggestionsChange}
+                disabled={loading}
+                size="small"
+              />
+            }
+            label="Pending Suggestions"
           />
         </Box>
 

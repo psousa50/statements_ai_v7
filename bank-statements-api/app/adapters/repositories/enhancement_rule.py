@@ -23,6 +23,7 @@ class SQLAlchemyEnhancementRuleRepository(EnhancementRuleRepository):
         match_type: Optional[MatchType] = None,
         source: Optional[EnhancementRuleSource] = None,
         show_invalid_only: Optional[bool] = None,
+        has_pending_suggestions: Optional[bool] = None,
         sort_field: str = "created_at",
         sort_direction: str = "desc",
     ) -> List[EnhancementRule]:
@@ -37,6 +38,7 @@ class SQLAlchemyEnhancementRuleRepository(EnhancementRuleRepository):
                 match_type,
                 source,
                 show_invalid_only,
+                has_pending_suggestions,
                 sort_direction,
             )
 
@@ -59,6 +61,14 @@ class SQLAlchemyEnhancementRuleRepository(EnhancementRuleRepository):
 
         if show_invalid_only:
             query = query.filter(and_(EnhancementRule.category_id.is_(None), EnhancementRule.counterparty_account_id.is_(None)))
+
+        if has_pending_suggestions:
+            query = query.filter(
+                or_(
+                    EnhancementRule.ai_category_confidence.isnot(None),
+                    EnhancementRule.ai_counterparty_confidence.isnot(None),
+                )
+            )
 
         if sort_field in ["normalized_description_pattern", "normalized_description"]:
             sort_column = EnhancementRule.normalized_description_pattern
@@ -89,6 +99,7 @@ class SQLAlchemyEnhancementRuleRepository(EnhancementRuleRepository):
         match_type: Optional[MatchType] = None,
         source: Optional[EnhancementRuleSource] = None,
         show_invalid_only: Optional[bool] = None,
+        has_pending_suggestions: Optional[bool] = None,
         sort_direction: str = "desc",
     ) -> List[EnhancementRule]:
         query = self.db.query(EnhancementRule).filter(EnhancementRule.user_id == user_id)
@@ -110,6 +121,14 @@ class SQLAlchemyEnhancementRuleRepository(EnhancementRuleRepository):
 
         if show_invalid_only:
             query = query.filter(and_(EnhancementRule.category_id.is_(None), EnhancementRule.counterparty_account_id.is_(None)))
+
+        if has_pending_suggestions:
+            query = query.filter(
+                or_(
+                    EnhancementRule.ai_category_confidence.isnot(None),
+                    EnhancementRule.ai_counterparty_confidence.isnot(None),
+                )
+            )
 
         all_rules = query.all()
 
@@ -145,6 +164,7 @@ class SQLAlchemyEnhancementRuleRepository(EnhancementRuleRepository):
         match_type: Optional[MatchType] = None,
         source: Optional[EnhancementRuleSource] = None,
         show_invalid_only: Optional[bool] = None,
+        has_pending_suggestions: Optional[bool] = None,
     ) -> int:
         query = self.db.query(func.count(EnhancementRule.id)).filter(EnhancementRule.user_id == user_id)
 
@@ -165,6 +185,14 @@ class SQLAlchemyEnhancementRuleRepository(EnhancementRuleRepository):
 
         if show_invalid_only:
             query = query.filter(and_(EnhancementRule.category_id.is_(None), EnhancementRule.counterparty_account_id.is_(None)))
+
+        if has_pending_suggestions:
+            query = query.filter(
+                or_(
+                    EnhancementRule.ai_category_confidence.isnot(None),
+                    EnhancementRule.ai_counterparty_confidence.isnot(None),
+                )
+            )
 
         return query.scalar()
 

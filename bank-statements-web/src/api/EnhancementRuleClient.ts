@@ -66,6 +66,9 @@ export const enhancementRuleClient: EnhancementRuleClient = {
     if (filters?.show_invalid_only) {
       params.append('show_invalid_only', 'true')
     }
+    if (filters?.has_pending_suggestions) {
+      params.append('has_pending_suggestions', 'true')
+    }
 
     const url = params.toString() ? `${API_URL}?${params.toString()}` : API_URL
     const response = await axios.get<EnhancementRuleListResponse>(url)

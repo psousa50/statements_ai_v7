@@ -103,6 +103,7 @@ export interface EnhancementRuleFilters {
   sort_field?: SortField
   sort_direction?: SortDirection
   show_invalid_only?: boolean
+  has_pending_suggestions?: boolean
 }
 
 export interface RuleTypeUsage {
