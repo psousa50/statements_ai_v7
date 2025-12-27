@@ -341,12 +341,12 @@ export const TransactionTable = ({
       <h2>Transactions</h2>
       <table>
         <colgroup>
-          <col style={{ width: '15%' }} />
-          <col style={{ width: '25%' }} />
-          {onCategorize && <col style={{ width: '25%' }} />}
-          <col style={{ width: '15%' }} />
-          <col style={{ width: '15%' }} />
-          {(onEdit || onDelete) && <col style={{ width: '5%' }} />}
+          <col style={{ width: '10%' }} />
+          <col style={{ width: onCategorize ? '33%' : '52%' }} />
+          {onCategorize && <col style={{ width: '29%' }} />}
+          <col style={{ width: '10%' }} />
+          <col style={{ width: onCategorize ? '8%' : '18%' }} />
+          {(onEdit || onDelete) && <col style={{ width: '10%' }} />}
         </colgroup>
         <thead>
           <tr>
@@ -423,23 +423,25 @@ export const TransactionTable = ({
                 <td>{getAccountName(transaction.account_id)}</td>
               )}
               {(onEdit || onDelete) && (
-                <td style={{ textAlign: 'center', display: 'flex', gap: '4px', justifyContent: 'center' }}>
-                  {onEdit && (
-                    <ActionIconButton
-                      onClick={() => onEdit(transaction)}
-                      title="Edit transaction"
-                      icon={<EditIcon fontSize="small" />}
-                      color="primary"
-                    />
-                  )}
-                  {onDelete && (
-                    <ActionIconButton
-                      onClick={() => setPendingDeleteTransaction(transaction)}
-                      title="Delete transaction"
-                      icon={<DeleteIcon fontSize="small" />}
-                      color="error"
-                    />
-                  )}
+                <td style={{ textAlign: 'center' }}>
+                  <div style={{ display: 'flex', gap: '4px', justifyContent: 'center' }}>
+                    {onEdit && (
+                      <ActionIconButton
+                        onClick={() => onEdit(transaction)}
+                        title="Edit transaction"
+                        icon={<EditIcon fontSize="small" />}
+                        color="primary"
+                      />
+                    )}
+                    {onDelete && (
+                      <ActionIconButton
+                        onClick={() => setPendingDeleteTransaction(transaction)}
+                        title="Delete transaction"
+                        icon={<DeleteIcon fontSize="small" />}
+                        color="error"
+                      />
+                    )}
+                  </div>
                 </td>
               )}
             </tr>
