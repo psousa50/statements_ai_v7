@@ -262,6 +262,22 @@ export const EnhancementRules: React.FC = () => {
         <EnhancementRuleFiltersComponent filters={filters} onFiltersChange={handleFiltersChange} loading={loading} />
       </Paper>
 
+      {!loading && rules.length > 10 && (
+        <Paper sx={{ p: 0, mb: 2 }}>
+          <div className="transactions-pagination">
+            <Pagination
+              currentPage={filters.page || 1}
+              totalPages={Math.ceil(total / (filters.page_size || 50))}
+              totalItems={total}
+              pageSize={filters.page_size || 50}
+              onPageChange={handlePageChange}
+              onPageSizeChange={handlePageSizeChange}
+              itemName="rules"
+            />
+          </div>
+        </Paper>
+      )}
+
       <Paper sx={{ p: 0 }}>
         <EnhancementRuleTable
           rules={rules}
