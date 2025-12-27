@@ -42,6 +42,10 @@ jobs:
         working-directory: bank-statements-api
         run: uv sync
 
+      - name: Check formatting and lint
+        working-directory: bank-statements-api
+        run: uv run isort . --check-only && uv run black . --check && uv run ruff check .
+
       - name: Run migrations
         working-directory: bank-statements-api
         env:
@@ -76,6 +80,14 @@ jobs:
       - name: Install dependencies
         working-directory: bank-statements-web
         run: pnpm install --frozen-lockfile
+
+      - name: Type check
+        working-directory: bank-statements-web
+        run: pnpm exec tsc --noEmit
+
+      - name: Lint
+        working-directory: bank-statements-web
+        run: pnpm run lint
 
       - name: Run tests
         working-directory: bank-statements-web
