@@ -73,6 +73,24 @@ class TestTransactionMultiTenancy:
     def test_user_can_only_see_transactions_from_own_accounts(
         self, db_session, user_a, user_b, account_for_user_a, account_for_user_b
     ):
+        stmt_a = Statement(
+            id=uuid4(),
+            filename="user_a.csv",
+            file_type="CSV",
+            content=b"test",
+            account_id=account_for_user_a.id,
+        )
+        stmt_b = Statement(
+            id=uuid4(),
+            filename="user_b.csv",
+            file_type="CSV",
+            content=b"test",
+            account_id=account_for_user_b.id,
+        )
+        db_session.add(stmt_a)
+        db_session.add(stmt_b)
+        db_session.flush()
+
         tx_a = Transaction(
             id=uuid4(),
             date=date(2024, 1, 1),
@@ -80,6 +98,8 @@ class TestTransactionMultiTenancy:
             normalized_description="user a transaction",
             amount=Decimal("100.00"),
             account_id=account_for_user_a.id,
+            statement_id=stmt_a.id,
+            row_index=0,
         )
         tx_b = Transaction(
             id=uuid4(),
@@ -88,6 +108,8 @@ class TestTransactionMultiTenancy:
             normalized_description="user b transaction",
             amount=Decimal("200.00"),
             account_id=account_for_user_b.id,
+            statement_id=stmt_b.id,
+            row_index=0,
         )
         db_session.add(tx_a)
         db_session.add(tx_b)
@@ -106,6 +128,16 @@ class TestTransactionMultiTenancy:
     def test_user_cannot_get_other_users_transaction_by_id(
         self, db_session, user_a, user_b, account_for_user_a, account_for_user_b
     ):
+        stmt_a = Statement(
+            id=uuid4(),
+            filename="user_a.csv",
+            file_type="CSV",
+            content=b"test",
+            account_id=account_for_user_a.id,
+        )
+        db_session.add(stmt_a)
+        db_session.flush()
+
         tx_a = Transaction(
             id=uuid4(),
             date=date(2024, 1, 1),
@@ -113,6 +145,8 @@ class TestTransactionMultiTenancy:
             normalized_description="user a transaction",
             amount=Decimal("100.00"),
             account_id=account_for_user_a.id,
+            statement_id=stmt_a.id,
+            row_index=0,
         )
         db_session.add(tx_a)
         db_session.flush()

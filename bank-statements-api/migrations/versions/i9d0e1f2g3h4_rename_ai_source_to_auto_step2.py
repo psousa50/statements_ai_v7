@@ -15,6 +15,7 @@ depends_on = None
 
 
 def upgrade() -> None:
+    op.execute("COMMIT")
     op.execute("UPDATE enhancement_rules SET source = 'AUTO' WHERE source = 'AI'")
 
 

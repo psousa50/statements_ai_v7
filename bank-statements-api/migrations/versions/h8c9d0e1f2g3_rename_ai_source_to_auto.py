@@ -15,6 +15,7 @@ depends_on = None
 
 
 def upgrade() -> None:
+    op.execute("COMMIT")
     op.execute("ALTER TYPE enhancementrulesource ADD VALUE IF NOT EXISTS 'AUTO'")
 
 

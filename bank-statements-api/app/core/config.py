@@ -6,7 +6,7 @@ from pydantic_settings import BaseSettings
 
 # Load environment variables from the backend .env file
 backend_env_path = Path(__file__).parent.parent.parent / ".env"
-load_dotenv(backend_env_path, override=True)
+load_dotenv(backend_env_path, override=False)
 
 
 class Settings(BaseSettings):
