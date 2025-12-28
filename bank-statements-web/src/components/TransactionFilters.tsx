@@ -156,22 +156,6 @@ export const TransactionFilters = ({
 
           <div className="filters-row secondary-filters">
             <div className="filter-group">
-              <label htmlFor="transaction-type-filter" className="filter-label">
-                Type
-              </label>
-              <select
-                id="transaction-type-filter"
-                value={transactionType}
-                onChange={(e) => onTransactionTypeChange(e.target.value as 'all' | 'debit' | 'credit')}
-                className="filter-input filter-select"
-              >
-                <option value="all">All</option>
-                <option value="debit">Debits</option>
-                <option value="credit">Credits</option>
-              </select>
-            </div>
-
-            <div className="filter-group">
               <label htmlFor="account-filter" className="filter-label">
                 Account
               </label>
@@ -187,6 +171,22 @@ export const TransactionFilters = ({
                     {account.name}
                   </option>
                 ))}
+              </select>
+            </div>
+
+            <div className="filter-group">
+              <label htmlFor="transaction-type-filter" className="filter-label">
+                Type
+              </label>
+              <select
+                id="transaction-type-filter"
+                value={transactionType}
+                onChange={(e) => onTransactionTypeChange(e.target.value as 'all' | 'debit' | 'credit')}
+                className="filter-input filter-select"
+              >
+                <option value="all">All</option>
+                <option value="debit">Debits</option>
+                <option value="credit">Credits</option>
               </select>
             </div>
 

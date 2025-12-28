@@ -22,6 +22,28 @@ function getDefaultMonthRange() {
 
 const DEFAULT_DATE_RANGE = getDefaultMonthRange()
 
+function convertAmountFiltersForApi(
+  minAmount: number | undefined,
+  maxAmount: number | undefined,
+  transactionType: 'all' | 'debit' | 'credit'
+): { min_amount?: number; max_amount?: number } {
+  if (minAmount === undefined && maxAmount === undefined) {
+    return {}
+  }
+
+  const bothPositive =
+    (minAmount === undefined || minAmount >= 0) && (maxAmount === undefined || maxAmount >= 0)
+
+  if (transactionType === 'debit' && bothPositive) {
+    return {
+      min_amount: maxAmount !== undefined ? -maxAmount : undefined,
+      max_amount: minAmount !== undefined ? -minAmount : undefined,
+    }
+  }
+
+  return { min_amount: minAmount, max_amount: maxAmount }
+}
+
 export const TransactionsPage = () => {
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
@@ -139,8 +161,14 @@ export const TransactionsPage = () => {
 
   // Load data on mount with initial filters from URL
   useEffect(() => {
+    const convertedAmounts = convertAmountFiltersForApi(
+      filters.min_amount,
+      filters.max_amount,
+      filters.transaction_type || 'all'
+    )
     fetchTransactions({
       ...filters,
+      ...convertedAmounts,
       include_running_balance: !!filters.account_id,
     })
   }, [fetchTransactions, filters])
@@ -160,6 +188,11 @@ export const TransactionsPage = () => {
         localEndDate !== (filters.end_date || '')
 
       if (needsUpdate) {
+        const convertedAmounts = convertAmountFiltersForApi(
+          localMinAmount,
+          localMaxAmount,
+          filters.transaction_type || 'all'
+        )
         const updatedFilters = {
           ...filters,
           description_search: localDescriptionSearch || undefined,
@@ -171,7 +204,10 @@ export const TransactionsPage = () => {
           include_running_balance: !!filters.account_id,
         }
         setFilters(updatedFilters)
-        fetchTransactions(updatedFilters)
+        fetchTransactions({
+          ...updatedFilters,
+          ...convertedAmounts,
+        })
       }
     }, 500) // 500ms debounce
 
@@ -206,7 +242,15 @@ export const TransactionsPage = () => {
         include_running_balance: !!newFilters.account_id,
       }
       setFilters(updatedFilters)
-      fetchTransactions(updatedFilters)
+      const convertedAmounts = convertAmountFiltersForApi(
+        updatedFilters.min_amount,
+        updatedFilters.max_amount,
+        updatedFilters.transaction_type || 'all'
+      )
+      fetchTransactions({
+        ...updatedFilters,
+        ...convertedAmounts,
+      })
     },
     [filters, fetchTransactions]
   )
@@ -219,7 +263,15 @@ export const TransactionsPage = () => {
         include_running_balance: !!filters.account_id,
       }
       setFilters(updatedFilters)
-      fetchTransactions(updatedFilters)
+      const convertedAmounts = convertAmountFiltersForApi(
+        filters.min_amount,
+        filters.max_amount,
+        filters.transaction_type || 'all'
+      )
+      fetchTransactions({
+        ...updatedFilters,
+        ...convertedAmounts,
+      })
     },
     [filters, fetchTransactions]
   )
@@ -233,7 +285,15 @@ export const TransactionsPage = () => {
         include_running_balance: !!filters.account_id,
       }
       setFilters(updatedFilters)
-      fetchTransactions(updatedFilters)
+      const convertedAmounts = convertAmountFiltersForApi(
+        filters.min_amount,
+        filters.max_amount,
+        filters.transaction_type || 'all'
+      )
+      fetchTransactions({
+        ...updatedFilters,
+        ...convertedAmounts,
+      })
     },
     [filters, fetchTransactions]
   )
@@ -364,18 +424,36 @@ export const TransactionsPage = () => {
     params.delete('pattern_label')
     const newUrl = params.toString() ? `/transactions?${params.toString()}` : '/transactions'
     navigate(newUrl)
-    fetchTransactions(clearedFilters)
+    const convertedAmounts = convertAmountFiltersForApi(
+      clearedFilters.min_amount,
+      clearedFilters.max_amount,
+      clearedFilters.transaction_type || 'all'
+    )
+    fetchTransactions({ ...clearedFilters, ...convertedAmounts })
   }, [filters, fetchTransactions, navigate])
+
+  const fetchWithConvertedAmounts = useCallback(() => {
+    const convertedAmounts = convertAmountFiltersForApi(
+      filters.min_amount,
+      filters.max_amount,
+      filters.transaction_type || 'all'
+    )
+    fetchTransactions({
+      ...filters,
+      ...convertedAmounts,
+      include_running_balance: !!filters.account_id,
+    })
+  }, [filters, fetchTransactions])
 
   const handleCategorizeTransaction = async (transactionId: string, categoryId?: string) => {
     await categorizeTransaction(transactionId, categoryId)
-    fetchTransactions({ ...filters, include_running_balance: !!filters.account_id })
+    fetchWithConvertedAmounts()
   }
 
   const handleBulkCategorize = async (normalizedDescription: string, categoryId: string) => {
     const result = await bulkUpdateCategory(normalizedDescription, categoryId)
     if (result) {
-      fetchTransactions({ ...filters, include_running_balance: !!filters.account_id })
+      fetchWithConvertedAmounts()
     }
     return result
   }
@@ -388,7 +466,7 @@ export const TransactionsPage = () => {
       exclude_transfers: filters.exclude_transfers,
     })
     if (result) {
-      fetchTransactions({ ...filters, include_running_balance: !!filters.account_id })
+      fetchWithConvertedAmounts()
     }
     return result
   }
@@ -397,13 +475,13 @@ export const TransactionsPage = () => {
     if (transactionId) {
       const updatedTransaction = await updateTransaction(transactionId, transactionData)
       if (updatedTransaction) {
-        fetchTransactions({ ...filters, include_running_balance: !!filters.account_id })
+        fetchWithConvertedAmounts()
       }
       return updatedTransaction
     } else {
       const createdTransaction = await addTransaction(transactionData)
       if (createdTransaction) {
-        fetchTransactions({ ...filters, include_running_balance: !!filters.account_id })
+        fetchWithConvertedAmounts()
       }
       return createdTransaction
     }

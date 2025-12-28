@@ -354,8 +354,8 @@
 }
 
 .transactions-page .amount-group {
-  flex: 1.5;
-  min-width: 200px;
+  flex: 1;
+  min-width: 140px;
 }
 
 .transactions-page .options-group {
