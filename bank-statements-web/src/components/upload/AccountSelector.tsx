@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import {
   FormControl,
   InputLabel,
@@ -29,6 +29,7 @@ export const AccountSelector: React.FC<AccountSelectorProps> = ({ value, onChang
   const [openDialog, setOpenDialog] = useState(false)
   const [newAccountName, setNewAccountName] = useState('')
   const [creatingAccount, setCreatingAccount] = useState(false)
+  const accountNameInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     const fetchAccounts = async () => {
@@ -109,11 +110,17 @@ export const AccountSelector: React.FC<AccountSelectorProps> = ({ value, onChang
         Add New Account
       </Button>
 
-      <Dialog open={openDialog} onClose={handleCloseDialog}>
+      <Dialog
+        open={openDialog}
+        onClose={handleCloseDialog}
+        TransitionProps={{
+          onEntered: () => accountNameInputRef.current?.focus(),
+        }}
+      >
         <DialogTitle>Add New Account</DialogTitle>
         <DialogContent>
           <TextField
-            autoFocus
+            inputRef={accountNameInputRef}
             margin="dense"
             id="name"
             label="Account Name"
