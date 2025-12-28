@@ -93,26 +93,34 @@ class TransactionNormalizer:
                 lambda x: x.strftime("%Y-%m-%d") if pd.notna(x) and hasattr(x, "strftime") else x
             )
 
+            invalid_date_mask = result_df["date"].isna() | result_df["date"].apply(
+                lambda x: not isinstance(x, str) or not x.strip()
+            )
+            invalid_count = invalid_date_mask.sum()
+            if invalid_count > 0:
+                logger.warning(f"Dropping {invalid_count} rows with invalid/missing dates")
+                result_df = result_df[~invalid_date_mask].reset_index(drop=True)
+
         return result_df
 
     def _normalize_dates(self, date_series: pd.Series) -> pd.Series:
-        # First try with dayfirst=True (European format: DD/MM/YYYY)
-        normalized = pd.to_datetime(
-            date_series,
-            errors="coerce",
-            dayfirst=True,
-            utc=False,
+        first_valid = date_series.dropna().iloc[0] if not date_series.dropna().empty else None
+        is_iso_format = (
+            first_valid is not None
+            and isinstance(first_valid, str)
+            and len(first_valid) >= 10
+            and first_valid[4] == "-"
+            and first_valid[7] == "-"
         )
 
-        # If many dates failed to parse, try with American format (MM/DD/YYYY)
+        if is_iso_format:
+            return pd.to_datetime(date_series, errors="coerce", utc=False)
+
+        normalized = pd.to_datetime(date_series, errors="coerce", dayfirst=True, utc=False)
+
         if normalized.isna().sum() > len(normalized) * 0.5:
             logger.info("Many dates failed with European format, trying American format")
-            normalized = pd.to_datetime(
-                date_series,
-                errors="coerce",
-                dayfirst=False,
-                utc=False,
-            )
+            normalized = pd.to_datetime(date_series, errors="coerce", dayfirst=False, utc=False)
 
         return normalized
 

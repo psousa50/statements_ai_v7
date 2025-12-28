@@ -94,3 +94,28 @@ class TestTransactionNormalizer:
             match="Not enough columns in DataFrame for positional mapping. Missing: Amount, Description",
         ):
             normalizer.normalize(df, column_mapping)
+
+    def test_normalize_drops_rows_with_invalid_dates(self):
+        normalizer = TransactionNormalizer()
+
+        df = pd.DataFrame(
+            {
+                "Date": ["2023-01-15", "invalid-date", None, "2023-02-20"],
+                "Amount": [100.00, 200.00, 300.00, 400.00],
+                "Description": ["Valid 1", "Invalid date", "Null date", "Valid 2"],
+            }
+        )
+
+        column_mapping = {
+            "date": "Date",
+            "amount": "Amount",
+            "description": "Description",
+        }
+
+        normalized_df = normalizer.normalize(df, column_mapping)
+
+        assert len(normalized_df) == 2
+        assert normalized_df["date"].iloc[0] == "2023-01-15"
+        assert normalized_df["date"].iloc[1] == "2023-02-20"
+        assert normalized_df["description"].iloc[0] == "Valid 1"
+        assert normalized_df["description"].iloc[1] == "Valid 2"
