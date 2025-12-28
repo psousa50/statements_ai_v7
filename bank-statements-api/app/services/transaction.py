@@ -194,6 +194,7 @@ class TransactionService:
         (
             transactions,
             total,
+            total_amount,
         ) = self.transaction_repository.get_transactions_matching_rule_paginated(
             user_id=user_id,
             rule=rule,
@@ -215,6 +216,7 @@ class TransactionService:
             page=page,
             page_size=page_size,
             total_pages=total_pages,
+            total_amount=total_amount,
         )
 
         response.enhancement_rule = rule

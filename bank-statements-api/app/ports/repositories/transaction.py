@@ -274,7 +274,7 @@ class TransactionRepository(ABC):
         sort_field: Optional[str] = None,
         sort_direction: Optional[str] = None,
         uncategorized_only: bool = False,
-    ) -> Tuple[List[Transaction], int]:
+    ) -> Tuple[List[Transaction], int, Decimal]:
         pass
 
     @abstractmethod

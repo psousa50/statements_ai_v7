@@ -885,42 +885,41 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         sort_field: Optional[str] = None,
         sort_direction: Optional[str] = None,
         uncategorized_only: bool = False,
-    ) -> Tuple[List[Transaction], int]:
+    ) -> Tuple[List[Transaction], int, Decimal]:
         from app.domain.models.enhancement_rule import MatchType
 
-        query = self.db_session.query(Transaction).filter(Transaction.user_id == user_id)
+        filters = [Transaction.user_id == user_id]
 
-        # Match description pattern based on rule type (same logic as count_matching_rule)
         if rule.match_type == MatchType.EXACT:
-            query = query.filter(Transaction.normalized_description == rule.normalized_description_pattern)
+            filters.append(Transaction.normalized_description == rule.normalized_description_pattern)
         elif rule.match_type == MatchType.PREFIX:
-            query = query.filter(Transaction.normalized_description.like(f"{rule.normalized_description_pattern}%"))
+            filters.append(Transaction.normalized_description.like(f"{rule.normalized_description_pattern}%"))
         elif rule.match_type == MatchType.INFIX:
-            query = query.filter(Transaction.normalized_description.like(f"%{rule.normalized_description_pattern}%"))
+            filters.append(Transaction.normalized_description.like(f"%{rule.normalized_description_pattern}%"))
 
-        # Apply amount constraints if specified
         if rule.min_amount is not None:
-            query = query.filter(Transaction.amount >= rule.min_amount)
+            filters.append(Transaction.amount >= rule.min_amount)
         if rule.max_amount is not None:
-            query = query.filter(Transaction.amount <= rule.max_amount)
+            filters.append(Transaction.amount <= rule.max_amount)
 
-        # Apply date constraints if specified
         if rule.start_date is not None:
-            query = query.filter(Transaction.date >= rule.start_date)
+            filters.append(Transaction.date >= rule.start_date)
         if rule.end_date is not None:
-            query = query.filter(Transaction.date <= rule.end_date)
+            filters.append(Transaction.date <= rule.end_date)
 
         if uncategorized_only:
-            query = query.filter(Transaction.category_id.is_(None))
+            filters.append(Transaction.category_id.is_(None))
 
-        # Get total count
-        total = query.count()
+        count_sum_query = self.db_session.query(
+            func.count(Transaction.id),
+            func.coalesce(func.sum(Transaction.amount), Decimal("0")),
+        ).filter(and_(*filters))
+        total, total_amount = count_sum_query.one()
 
-        # Apply sorting
+        query = self.db_session.query(Transaction).filter(and_(*filters))
         order_clause = self._get_order_clause(sort_field, sort_direction)
         query = query.order_by(*order_clause)
 
-        # Apply pagination
         transactions = query.offset((page - 1) * page_size).limit(page_size).all()
 
-        return transactions, total
+        return transactions, total, Decimal(str(total_amount)) if total_amount else Decimal("0")
