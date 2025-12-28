@@ -41,6 +41,20 @@ class SQLAlchemyEnhancementRuleRepository(EnhancementRuleRepository):
                 sort_direction,
             )
 
+        if sort_field == "latest_match":
+            return self._get_all_with_latest_match_sorting(
+                user_id,
+                limit,
+                offset,
+                description_search,
+                category_ids,
+                counterparty_account_ids,
+                match_type,
+                source,
+                rule_status_filter,
+                sort_direction,
+            )
+
         query = (
             self.db.query(EnhancementRule)
             .options(
@@ -218,6 +232,112 @@ class SQLAlchemyEnhancementRuleRepository(EnhancementRuleRepository):
         paginated_rules = rules_with_counts[start_idx:end_idx]
 
         return [rule for rule, count in paginated_rules]
+
+    def _get_all_with_latest_match_sorting(
+        self,
+        user_id: UUID,
+        limit: int,
+        offset: int,
+        description_search: Optional[str] = None,
+        category_ids: Optional[List[UUID]] = None,
+        counterparty_account_ids: Optional[List[UUID]] = None,
+        match_type: Optional[MatchType] = None,
+        source: Optional[EnhancementRuleSource] = None,
+        rule_status_filter: Optional[str] = None,
+        sort_direction: str = "desc",
+    ) -> List[EnhancementRule]:
+        query = (
+            self.db.query(EnhancementRule)
+            .options(
+                joinedload(EnhancementRule.category).joinedload(Category.parent),
+                joinedload(EnhancementRule.counterparty_account),
+                joinedload(EnhancementRule.ai_suggested_category).joinedload(Category.parent),
+                joinedload(EnhancementRule.ai_suggested_counterparty),
+            )
+            .filter(EnhancementRule.user_id == user_id)
+        )
+
+        if description_search:
+            query = query.filter(EnhancementRule.normalized_description_pattern.ilike(f"%{description_search}%"))
+
+        if category_ids:
+            query = query.filter(EnhancementRule.category_id.in_(category_ids))
+
+        if counterparty_account_ids:
+            query = query.filter(EnhancementRule.counterparty_account_id.in_(counterparty_account_ids))
+
+        if match_type:
+            query = query.filter(EnhancementRule.match_type == match_type)
+
+        if source:
+            query = query.filter(EnhancementRule.source == source)
+
+        if rule_status_filter == "unconfigured":
+            query = query.filter(and_(EnhancementRule.category_id.is_(None), EnhancementRule.counterparty_account_id.is_(None)))
+        elif rule_status_filter == "pending":
+            query = query.filter(
+                or_(
+                    and_(
+                        EnhancementRule.ai_suggested_category_id.isnot(None),
+                        or_(
+                            EnhancementRule.category_id.is_(None),
+                            EnhancementRule.category_id != EnhancementRule.ai_suggested_category_id,
+                        ),
+                    ),
+                    and_(
+                        EnhancementRule.ai_suggested_counterparty_id.isnot(None),
+                        or_(
+                            EnhancementRule.counterparty_account_id.is_(None),
+                            EnhancementRule.counterparty_account_id != EnhancementRule.ai_suggested_counterparty_id,
+                        ),
+                    ),
+                )
+            )
+        elif rule_status_filter == "applied":
+            query = query.filter(
+                or_(
+                    and_(
+                        EnhancementRule.ai_suggested_category_id.isnot(None),
+                        EnhancementRule.category_id == EnhancementRule.ai_suggested_category_id,
+                    ),
+                    and_(
+                        EnhancementRule.ai_suggested_counterparty_id.isnot(None),
+                        EnhancementRule.counterparty_account_id == EnhancementRule.ai_suggested_counterparty_id,
+                    ),
+                )
+            )
+
+        all_rules = query.all()
+
+        from datetime import date as date_type
+
+        from app.adapters.repositories.transaction import SQLAlchemyTransactionRepository
+
+        transaction_repo = SQLAlchemyTransactionRepository(self.db)
+        min_date = date_type(1900, 1, 1)
+
+        rules_with_dates = []
+        for rule in all_rules:
+            try:
+                latest_date = transaction_repo.get_latest_matching_date(rule)
+            except Exception:
+                latest_date = None
+
+            rules_with_dates.append((rule, latest_date or min_date, latest_date))
+
+        if sort_direction == "asc":
+            rules_with_dates.sort(key=lambda x: x[1])
+        else:
+            rules_with_dates.sort(key=lambda x: x[1], reverse=True)
+
+        start_idx = offset
+        end_idx = offset + limit
+        paginated_rules = rules_with_dates[start_idx:end_idx]
+
+        for rule, _, latest_date in paginated_rules:
+            rule.latest_match_date = latest_date
+
+        return [rule for rule, _, _ in paginated_rules]
 
     def count(
         self,

@@ -180,6 +180,15 @@ export const EnhancementRuleTable: React.FC<EnhancementRuleTableProps> = ({
             </TableCell>
             <TableCell>
               <TableSortLabel
+                active={filters.sort_field === 'latest_match'}
+                direction={filters.sort_field === 'latest_match' ? filters.sort_direction : 'desc'}
+                onClick={() => handleSort('latest_match')}
+              >
+                Latest Match
+              </TableSortLabel>
+            </TableCell>
+            <TableCell>
+              <TableSortLabel
                 active={filters.sort_field === 'source'}
                 direction={filters.sort_field === 'source' ? filters.sort_direction : 'asc'}
                 onClick={() => handleSort('source')}
@@ -383,6 +392,21 @@ export const EnhancementRuleTable: React.FC<EnhancementRuleTableProps> = ({
                 )}
               </TableCell>
               <TableCell>
+                {rule.latest_match_date ? (
+                  <Typography variant="body2">
+                    {new Date(rule.latest_match_date).toLocaleDateString('en-GB', {
+                      day: 'numeric',
+                      month: 'short',
+                      year: 'numeric',
+                    })}
+                  </Typography>
+                ) : (
+                  <Typography variant="body2" color="text.secondary">
+                    —
+                  </Typography>
+                )}
+              </TableCell>
+              <TableCell>
                 <Chip
                   label={rule.source}
                   color={rule.source === EnhancementRuleSource.MANUAL ? 'primary' : 'secondary'}
@@ -479,7 +503,7 @@ export const EnhancementRuleTable: React.FC<EnhancementRuleTableProps> = ({
           ))}
           {rules.length === 0 && !loading && (
             <TableRow>
-              <TableCell colSpan={9} align="center">
+              <TableCell colSpan={10} align="center">
                 <Typography variant="body2" color="text.secondary" sx={{ py: 4 }}>
                   No enhancement rules found
                 </Typography>

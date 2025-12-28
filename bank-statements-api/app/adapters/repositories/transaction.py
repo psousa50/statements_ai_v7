@@ -923,3 +923,27 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         transactions = query.offset((page - 1) * page_size).limit(page_size).all()
 
         return transactions, total, Decimal(str(total_amount)) if total_amount else Decimal("0")
+
+    def get_latest_matching_date(self, rule) -> Optional[date]:
+        from app.domain.models.enhancement_rule import MatchType
+
+        query = self.db_session.query(func.max(Transaction.date)).filter(Transaction.user_id == rule.user_id)
+
+        if rule.match_type == MatchType.EXACT:
+            query = query.filter(Transaction.normalized_description == rule.normalized_description_pattern)
+        elif rule.match_type == MatchType.PREFIX:
+            query = query.filter(Transaction.normalized_description.like(f"{rule.normalized_description_pattern}%"))
+        elif rule.match_type == MatchType.INFIX:
+            query = query.filter(Transaction.normalized_description.like(f"%{rule.normalized_description_pattern}%"))
+
+        if rule.min_amount is not None:
+            query = query.filter(Transaction.amount >= rule.min_amount)
+        if rule.max_amount is not None:
+            query = query.filter(Transaction.amount <= rule.max_amount)
+
+        if rule.start_date is not None:
+            query = query.filter(Transaction.date >= rule.start_date)
+        if rule.end_date is not None:
+            query = query.filter(Transaction.date <= rule.end_date)
+
+        return query.scalar()

@@ -34,6 +34,7 @@ export interface EnhancementRule {
   }
   transaction_count?: number
   pending_transaction_count?: number
+  latest_match_date?: string
   // AI suggestion fields
   ai_suggested_category_id?: string
   ai_category_confidence?: number
@@ -89,6 +90,7 @@ export type SortField =
   | 'category'
   | 'counterparty'
   | 'usage'
+  | 'latest_match'
   | 'source'
   | 'created_at'
 export type SortDirection = 'asc' | 'desc'

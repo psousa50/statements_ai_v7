@@ -529,6 +529,7 @@ class EnhancementRuleResponse(BaseModel):
     counterparty_account: Optional[AccountResponse] = None
     transaction_count: Optional[int] = None
     pending_transaction_count: Optional[int] = None
+    latest_match_date: Optional[date] = None
     # AI suggestion fields
     ai_suggested_category_id: Optional[UUID] = None
     ai_category_confidence: Optional[Decimal] = None

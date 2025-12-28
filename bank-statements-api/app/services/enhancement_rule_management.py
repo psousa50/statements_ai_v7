@@ -62,6 +62,8 @@ class EnhancementRuleManagementService:
         for rule in rules:
             rule.transaction_count = self._get_rule_transaction_count(rule)
             rule.pending_transaction_count = self._get_rule_pending_count(rule)
+            if not hasattr(rule, "latest_match_date") or rule.latest_match_date is None:
+                rule.latest_match_date = self._get_rule_latest_match_date(rule)
 
         return {
             "rules": rules,
@@ -274,6 +276,12 @@ class EnhancementRuleManagementService:
             return self.transaction_repository.count_pending_for_rule(rule)
         except Exception:
             return 0
+
+    def _get_rule_latest_match_date(self, rule: EnhancementRule):
+        try:
+            return self.transaction_repository.get_latest_matching_date(rule)
+        except Exception:
+            return None
 
     def get_matching_transactions_count(self, rule_id: UUID, user_id: UUID) -> Dict[str, Any]:
         rule = self.enhancement_rule_repository.find_by_id(rule_id, user_id)
