@@ -222,7 +222,15 @@ class SQLAlchemyEnhancementRuleRepository(EnhancementRuleRepository):
 
         transaction_repo = SQLAlchemyTransactionRepository(self.db)
 
-        counts = transaction_repo.count_matching_rules_batch(all_rules, uncategorized_only=False)
+        unconfigured_rules = [r for r in all_rules if not r.category_id and not r.counterparty_account_id]
+        configured_rules = [r for r in all_rules if r.category_id or r.counterparty_account_id]
+
+        counts = {}
+        if unconfigured_rules:
+            counts.update(transaction_repo.count_matching_rules_batch(unconfigured_rules, uncategorized_only=True))
+        if configured_rules:
+            counts.update(transaction_repo.count_matching_rules_batch(configured_rules, uncategorized_only=False))
+
         dates = transaction_repo.get_latest_matching_dates_batch(all_rules)
 
         rules_with_data = []
