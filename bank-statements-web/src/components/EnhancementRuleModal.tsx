@@ -40,6 +40,53 @@ interface EnhancementRuleModalProps {
   onSuccess: () => void
 }
 
+type AmountType = 'all' | 'debit' | 'credit'
+
+function inferAmountType(minAmount?: number, maxAmount?: number): AmountType {
+  const hasMin = minAmount !== undefined && minAmount !== null
+  const hasMax = maxAmount !== undefined && maxAmount !== null
+
+  if (!hasMin && !hasMax) return 'all'
+
+  const minNegative = hasMin && minAmount < 0
+  const maxNegative = hasMax && maxAmount < 0
+
+  if (minNegative || maxNegative) return 'debit'
+  return 'credit'
+}
+
+function toDisplayAmounts(
+  minAmount?: number,
+  maxAmount?: number,
+  amountType?: AmountType
+): { displayMin?: number; displayMax?: number } {
+  if (amountType === 'debit') {
+    return {
+      displayMin: maxAmount !== undefined ? Math.abs(maxAmount) : undefined,
+      displayMax: minAmount !== undefined ? Math.abs(minAmount) : undefined,
+    }
+  }
+  return { displayMin: minAmount, displayMax: maxAmount }
+}
+
+function toStorageAmounts(
+  displayMin?: number,
+  displayMax?: number,
+  amountType?: AmountType
+): { min_amount?: number; max_amount?: number } {
+  if (amountType === 'debit') {
+    const bothPositive =
+      (displayMin === undefined || displayMin >= 0) && (displayMax === undefined || displayMax >= 0)
+    if (bothPositive) {
+      return {
+        min_amount: displayMax !== undefined ? -displayMax : undefined,
+        max_amount: displayMin !== undefined ? -displayMin : undefined,
+      }
+    }
+  }
+  return { min_amount: displayMin, max_amount: displayMax }
+}
+
 interface CounterpartyAccount {
   id: string
   name: string
@@ -75,6 +122,11 @@ export const EnhancementRuleModal: React.FC<EnhancementRuleModalProps> = ({
   // State for creating empty copy
   const [createEmptyCopy, setCreateEmptyCopy] = useState(true)
 
+  // State for amount type and display values
+  const [amountType, setAmountType] = useState<AmountType>('all')
+  const [displayMinAmount, setDisplayMinAmount] = useState<number | undefined>(undefined)
+  const [displayMaxAmount, setDisplayMaxAmount] = useState<number | undefined>(undefined)
+
   // Debounce timeout for preview updates
   const debounceTimeoutRef = useRef<NodeJS.Timeout>()
 
@@ -82,6 +134,11 @@ export const EnhancementRuleModal: React.FC<EnhancementRuleModalProps> = ({
   useEffect(() => {
     if (rule) {
       // Editing existing rule
+      const inferredType = inferAmountType(rule.min_amount, rule.max_amount)
+      const { displayMin, displayMax } = toDisplayAmounts(rule.min_amount, rule.max_amount, inferredType)
+      setAmountType(inferredType)
+      setDisplayMinAmount(displayMin)
+      setDisplayMaxAmount(displayMax)
       setFormData({
         normalized_description_pattern: rule.normalized_description_pattern,
         match_type: rule.match_type,
@@ -95,6 +152,15 @@ export const EnhancementRuleModal: React.FC<EnhancementRuleModalProps> = ({
       })
     } else if (duplicateData) {
       // Creating new rule from duplicate data
+      const inferredType = inferAmountType(duplicateData.min_amount, duplicateData.max_amount)
+      const { displayMin, displayMax } = toDisplayAmounts(
+        duplicateData.min_amount,
+        duplicateData.max_amount,
+        inferredType
+      )
+      setAmountType(inferredType)
+      setDisplayMinAmount(displayMin)
+      setDisplayMaxAmount(displayMax)
       setFormData({
         normalized_description_pattern: duplicateData.normalized_description_pattern || '',
         match_type: duplicateData.match_type || MatchType.INFIX,
@@ -108,6 +174,9 @@ export const EnhancementRuleModal: React.FC<EnhancementRuleModalProps> = ({
       })
     } else {
       // Reset form for create mode
+      setAmountType('all')
+      setDisplayMinAmount(undefined)
+      setDisplayMaxAmount(undefined)
       setFormData({
         normalized_description_pattern: '',
         match_type: MatchType.INFIX,
@@ -147,6 +216,16 @@ export const EnhancementRuleModal: React.FC<EnhancementRuleModalProps> = ({
       setApplyToExisting(true)
     }
   }, [formData.category_id, formData.counterparty_account_id, isEditing, rule])
+
+  // Sync display amounts to formData (convert based on amountType)
+  useEffect(() => {
+    const { min_amount, max_amount } = toStorageAmounts(displayMinAmount, displayMaxAmount, amountType)
+    setFormData((prev) => ({
+      ...prev,
+      min_amount,
+      max_amount,
+    }))
+  }, [displayMinAmount, displayMaxAmount, amountType])
 
   // Simple preview effect: always use preview endpoint for everything
   useEffect(() => {
@@ -197,8 +276,8 @@ export const EnhancementRuleModal: React.FC<EnhancementRuleModalProps> = ({
 
   const hasConstraints = () => {
     return !!(
-      (formData.min_amount !== undefined && formData.min_amount !== null) ||
-      (formData.max_amount !== undefined && formData.max_amount !== null) ||
+      displayMinAmount !== undefined ||
+      displayMaxAmount !== undefined ||
       formData.start_date ||
       formData.end_date
     )
@@ -212,9 +291,9 @@ export const EnhancementRuleModal: React.FC<EnhancementRuleModalProps> = ({
     }
 
     if (
-      typeof formData.min_amount === 'number' &&
-      typeof formData.max_amount === 'number' &&
-      formData.min_amount > formData.max_amount
+      typeof displayMinAmount === 'number' &&
+      typeof displayMaxAmount === 'number' &&
+      displayMinAmount > displayMaxAmount
     ) {
       errors.amount_range = 'Minimum amount cannot be greater than maximum amount'
     }
@@ -301,6 +380,10 @@ export const EnhancementRuleModal: React.FC<EnhancementRuleModalProps> = ({
         match_type: MatchType.INFIX,
         source: EnhancementRuleSource.MANUAL,
       })
+      // Reset amount state
+      setAmountType('all')
+      setDisplayMinAmount(undefined)
+      setDisplayMaxAmount(undefined)
     }
     setValidationErrors({})
 
@@ -441,24 +524,39 @@ export const EnhancementRuleModal: React.FC<EnhancementRuleModalProps> = ({
           </Box>
 
           <Stack direction="row" spacing={2}>
+            <FormControl sx={{ minWidth: 120 }}>
+              <InputLabel>Type</InputLabel>
+              <Select
+                value={amountType}
+                label="Type"
+                onChange={(e) => setAmountType(e.target.value as AmountType)}
+              >
+                <MenuItem value="all">All</MenuItem>
+                <MenuItem value="debit">Debits</MenuItem>
+                <MenuItem value="credit">Credits</MenuItem>
+              </Select>
+            </FormControl>
+
             <TextField
               fullWidth
               label="Minimum Amount"
               type="number"
-              value={formData.min_amount || ''}
-              onChange={(e) => handleFieldChange('min_amount', e.target.value ? parseFloat(e.target.value) : undefined)}
+              value={displayMinAmount ?? ''}
+              onChange={(e) => setDisplayMinAmount(e.target.value ? parseFloat(e.target.value) : undefined)}
               error={!!validationErrors.amount_range}
-              helperText="Only apply rule to transactions above this amount"
+              helperText={`Only apply rule to ${amountType === 'debit' ? 'debits' : amountType === 'credit' ? 'credits' : 'transactions'} above this amount`}
+              inputProps={{ min: 0 }}
             />
 
             <TextField
               fullWidth
               label="Maximum Amount"
               type="number"
-              value={formData.max_amount || ''}
-              onChange={(e) => handleFieldChange('max_amount', e.target.value ? parseFloat(e.target.value) : undefined)}
+              value={displayMaxAmount ?? ''}
+              onChange={(e) => setDisplayMaxAmount(e.target.value ? parseFloat(e.target.value) : undefined)}
               error={!!validationErrors.amount_range}
-              helperText={validationErrors.amount_range || 'Only apply rule to transactions below this amount'}
+              helperText={validationErrors.amount_range || `Only apply rule to ${amountType === 'debit' ? 'debits' : amountType === 'credit' ? 'credits' : 'transactions'} below this amount`}
+              inputProps={{ min: 0 }}
             />
           </Stack>
 
