@@ -60,7 +60,9 @@ export const CategorySelector = ({
     }
 
     const [parentName, childName] = parts
-    const parentCategory = categories.find((cat) => cat.name.toLowerCase() === parentName.toLowerCase())
+    const parentCategory = categories.find(
+      (cat) => cat.name.toLowerCase() === parentName.toLowerCase() && !cat.parent_id
+    )
 
     if (!parentCategory) {
       return null
