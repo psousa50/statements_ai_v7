@@ -433,6 +433,7 @@ export const EnhancementRuleModal: React.FC<EnhancementRuleModalProps> = ({
         <Stack spacing={3} sx={{ mt: 1 }}>
           <TextField
             fullWidth
+            size="small"
             label="Description Pattern"
             value={formData.normalized_description_pattern}
             onChange={(e) => handleFieldChange('normalized_description_pattern', e.target.value)}
@@ -446,7 +447,7 @@ export const EnhancementRuleModal: React.FC<EnhancementRuleModalProps> = ({
           />
 
           <Stack direction="row" spacing={2}>
-            <FormControl fullWidth>
+            <FormControl fullWidth size="small">
               <InputLabel>Match Type *</InputLabel>
               <Select
                 value={formData.match_type}
@@ -460,7 +461,7 @@ export const EnhancementRuleModal: React.FC<EnhancementRuleModalProps> = ({
               <FormHelperText>How to match the description pattern</FormHelperText>
             </FormControl>
 
-            <FormControl fullWidth>
+            <FormControl fullWidth size="small">
               <InputLabel>Source</InputLabel>
               <Select
                 value={formData.source}
@@ -479,8 +480,8 @@ export const EnhancementRuleModal: React.FC<EnhancementRuleModalProps> = ({
             </Typography>
           </Box>
 
-          <Stack direction="row" spacing={2}>
-            <FormControl fullWidth>
+          <Stack direction="row" spacing={2} alignItems="flex-start">
+            <Box sx={{ flex: 1 }}>
               <CategorySelector
                 categories={categories}
                 selectedCategoryId={formData.category_id}
@@ -496,9 +497,9 @@ export const EnhancementRuleModal: React.FC<EnhancementRuleModalProps> = ({
               <FormHelperText>
                 Category to assign to matching transactions. Type "Parent &gt; Child" to create a subcategory.
               </FormHelperText>
-            </FormControl>
+            </Box>
 
-            <FormControl fullWidth>
+            <FormControl sx={{ flex: 1 }} size="small">
               <InputLabel>Counterparty Account (Optional)</InputLabel>
               <Select
                 value={formData.counterparty_account_id || ''}
@@ -524,7 +525,7 @@ export const EnhancementRuleModal: React.FC<EnhancementRuleModalProps> = ({
           </Box>
 
           <Stack direction="row" spacing={2}>
-            <FormControl sx={{ minWidth: 120 }}>
+            <FormControl sx={{ minWidth: 120 }} size="small">
               <InputLabel>Type</InputLabel>
               <Select
                 value={amountType}
@@ -539,6 +540,7 @@ export const EnhancementRuleModal: React.FC<EnhancementRuleModalProps> = ({
 
             <TextField
               fullWidth
+              size="small"
               label="Minimum Amount"
               type="number"
               value={displayMinAmount ?? ''}
@@ -550,6 +552,7 @@ export const EnhancementRuleModal: React.FC<EnhancementRuleModalProps> = ({
 
             <TextField
               fullWidth
+              size="small"
               label="Maximum Amount"
               type="number"
               value={displayMaxAmount ?? ''}
@@ -563,6 +566,7 @@ export const EnhancementRuleModal: React.FC<EnhancementRuleModalProps> = ({
           <Stack direction="row" spacing={2}>
             <TextField
               fullWidth
+              size="small"
               label="Start Date"
               type="date"
               value={formData.start_date || ''}
@@ -576,6 +580,7 @@ export const EnhancementRuleModal: React.FC<EnhancementRuleModalProps> = ({
 
             <TextField
               fullWidth
+              size="small"
               label="End Date"
               type="date"
               value={formData.end_date || ''}
