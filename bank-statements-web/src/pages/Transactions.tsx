@@ -8,7 +8,7 @@ import { TransactionFilters, CategorizationFilter } from '../components/Transact
 import { TransactionModal } from '../components/TransactionModal'
 import { Pagination } from '../components/Pagination'
 import { CategorizationStatus, TransactionCreate, Transaction } from '../types/Transaction'
-import { TransactionFilters as FilterType } from '../api/TransactionClient'
+import { TransactionFilters as FilterType, transactionClient } from '../api/TransactionClient'
 import { getMonthRange, formatDateToString } from '../components/DatePeriodNavigator/dateUtils'
 import './TransactionsPage.css'
 
@@ -120,6 +120,7 @@ export const TransactionsPage = () => {
 
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingTransaction, setEditingTransaction] = useState<Transaction | undefined>(undefined)
+  const [isExporting, setIsExporting] = useState(false)
 
   const isRuleFiltering = !!filters.enhancement_rule_id
 
@@ -422,6 +423,15 @@ export const TransactionsPage = () => {
     setEditingTransaction(undefined)
   }
 
+  const handleExportCSV = async () => {
+    setIsExporting(true)
+    try {
+      await transactionClient.exportCSV(filters)
+    } finally {
+      setIsExporting(false)
+    }
+  }
+
   return (
     <div className="transactions-page">
       <header className="page-header">
@@ -432,9 +442,18 @@ export const TransactionsPage = () => {
               View and manage your bank transactions with advanced filtering and categorization
             </p>
           </div>
-          <button className="button-primary" onClick={() => setIsModalOpen(true)}>
-            + New Transaction
-          </button>
+          <div className="page-header-actions">
+            <button
+              className="button-secondary"
+              onClick={handleExportCSV}
+              disabled={isExporting || loading || transactions.length === 0}
+            >
+              {isExporting ? 'Exporting...' : 'Download CSV'}
+            </button>
+            <button className="button-primary" onClick={() => setIsModalOpen(true)}>
+              + New Transaction
+            </button>
+          </div>
         </div>
       </header>
 

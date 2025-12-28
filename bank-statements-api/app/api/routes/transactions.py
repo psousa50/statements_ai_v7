@@ -4,6 +4,7 @@ from typing import Callable, Iterator, Optional
 from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, Query
+from fastapi.responses import StreamingResponse
 from starlette import status as http_status
 
 from app.api.routes.auth import require_current_user
@@ -206,6 +207,87 @@ def register_transaction_routes(
             transaction_ids=parsed_transaction_ids,
         )
         return transactions
+
+    @router.get("/export")
+    def export_transactions(
+        category_ids: Optional[str] = Query(None),
+        status: Optional[CategorizationStatus] = Query(None),
+        min_amount: Optional[Decimal] = Query(None),
+        max_amount: Optional[Decimal] = Query(None),
+        description_search: Optional[str] = Query(None),
+        account_id: Optional[UUID] = Query(None),
+        start_date: Optional[date] = Query(None),
+        end_date: Optional[date] = Query(None),
+        sort_field: Optional[str] = Query(None),
+        sort_direction: Optional[str] = Query(None),
+        exclude_transfers: Optional[bool] = Query(True),
+        exclude_uncategorized: Optional[bool] = Query(False),
+        transaction_type: Optional[str] = Query(None),
+        internal: InternalDependencies = Depends(provide_dependencies),
+        current_user: User = Depends(require_current_user),
+    ):
+        parsed_category_ids = None
+        if category_ids:
+            try:
+                parsed_category_ids = [UUID(cid.strip()) for cid in category_ids.split(",") if cid.strip()]
+            except ValueError:
+                raise HTTPException(status_code=400, detail="Invalid category IDs format")
+
+        response = internal.transaction_service.get_transactions_paginated(
+            user_id=current_user.id,
+            page=1,
+            page_size=50000,
+            category_ids=parsed_category_ids,
+            status=status,
+            min_amount=min_amount,
+            max_amount=max_amount,
+            description_search=description_search,
+            account_id=account_id,
+            start_date=start_date,
+            end_date=end_date,
+            sort_field=sort_field,
+            sort_direction=sort_direction,
+            exclude_transfers=exclude_transfers,
+            exclude_uncategorized=exclude_uncategorized,
+            transaction_type=transaction_type,
+        )
+
+        all_categories = internal.category_repository.get_all(current_user.id)
+        category_names = {c.id: c.name for c in all_categories}
+        category_parents = {c.id: c.parent_id for c in all_categories}
+
+        def get_full_category_name(category_id: UUID) -> str:
+            if category_id not in category_names:
+                return ""
+            name = category_names[category_id]
+            parent_id = category_parents.get(category_id)
+            if parent_id and parent_id in category_names:
+                return f"{category_names[parent_id]} > {name}"
+            return name
+
+        categories = {c.id: get_full_category_name(c.id) for c in all_categories}
+        accounts = {a.id: a.name for a in internal.account_repository.get_all(current_user.id)}
+
+        def escape_csv(value: str) -> str:
+            escaped = value.replace('"', '""')
+            if "," in escaped or '"' in escaped or "\n" in escaped:
+                return f'"{escaped}"'
+            return escaped
+
+        rows = ["Date,Description,Amount,Category,Account\n"]
+        for trx in response.transactions:
+            category_name = categories.get(trx.category_id, "") if trx.category_id else ""
+            account_name = accounts.get(trx.account_id, "") if trx.account_id else ""
+            rows.append(
+                f"{trx.date},{escape_csv(trx.description)},{trx.amount},{escape_csv(category_name)},{escape_csv(account_name)}\n"
+            )
+
+        filename = f"transactions-{date.today().isoformat()}.csv"
+        return StreamingResponse(
+            iter(rows),
+            media_type="text/csv",
+            headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+        )
 
     @router.get(
         "/category-totals",

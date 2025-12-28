@@ -141,6 +141,7 @@ export interface RecurringPatternsResponse {
 
 export interface TransactionClient {
   getAll(filters?: TransactionFilters): Promise<TransactionListResponse>
+  exportCSV(filters?: Omit<TransactionFilters, 'page' | 'page_size'>): Promise<void>
   getCategoryTotals(filters?: Omit<TransactionFilters, 'page' | 'page_size'>): Promise<CategoryTotalsResponse>
   getCategoryTimeSeries(
     categoryId?: string,
@@ -238,6 +239,72 @@ export const transactionClient: TransactionClient = {
     const url = params.toString() ? `${API_URL}?${params.toString()}` : API_URL
     const response = await axios.get<TransactionListResponse>(url)
     return response.data
+  },
+
+  async exportCSV(filters?: Omit<TransactionFilters, 'page' | 'page_size'>) {
+    const params = new URLSearchParams()
+
+    if (filters?.category_ids && filters.category_ids.length > 0) {
+      params.append('category_ids', filters.category_ids.join(','))
+    }
+    if (filters?.status) {
+      params.append('status', filters.status)
+    }
+    if (filters?.min_amount !== undefined) {
+      params.append('min_amount', filters.min_amount.toString())
+    }
+    if (filters?.max_amount !== undefined) {
+      params.append('max_amount', filters.max_amount.toString())
+    }
+    if (filters?.description_search) {
+      params.append('description_search', filters.description_search)
+    }
+    if (filters?.account_id) {
+      params.append('account_id', filters.account_id)
+    }
+    if (filters?.start_date) {
+      params.append('start_date', filters.start_date)
+    }
+    if (filters?.end_date) {
+      params.append('end_date', filters.end_date)
+    }
+    if (filters?.sort_field) {
+      params.append('sort_field', filters.sort_field)
+    }
+    if (filters?.sort_direction) {
+      params.append('sort_direction', filters.sort_direction)
+    }
+    if (filters?.exclude_transfers !== undefined) {
+      params.append('exclude_transfers', filters.exclude_transfers.toString())
+    }
+    if (filters?.exclude_uncategorized !== undefined) {
+      params.append('exclude_uncategorized', filters.exclude_uncategorized.toString())
+    }
+    if (filters?.transaction_type) {
+      params.append('transaction_type', filters.transaction_type)
+    }
+
+    const url = params.toString() ? `${API_URL}/export?${params.toString()}` : `${API_URL}/export`
+    const response = await axios.get(url, { responseType: 'blob' })
+
+    const contentDisposition = response.headers['content-disposition']
+    let filename = 'transactions.csv'
+    if (contentDisposition) {
+      const match = contentDisposition.match(/filename="(.+)"/)
+      if (match) {
+        filename = match[1]
+      }
+    }
+
+    const blob = new Blob([response.data], { type: 'text/csv' })
+    const downloadUrl = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = downloadUrl
+    link.download = filename
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(downloadUrl)
   },
 
   async getCategoryTotals(filters?: Omit<TransactionFilters, 'page' | 'page_size'>) {

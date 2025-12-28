@@ -73,6 +73,7 @@ const defaultTransactionClient: TransactionClient = {
       page_size: 20,
       total_pages: 1,
     } as TransactionListResponse),
+  exportCSV: () => Promise.resolve(),
   getCategoryTotals: () =>
     Promise.resolve({
       totals: [
