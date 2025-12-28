@@ -233,6 +233,7 @@ def register_transaction_routes(
             except ValueError:
                 raise HTTPException(status_code=400, detail="Invalid category IDs format")
 
+        include_running_balance = account_id is not None
         response = internal.transaction_service.get_transactions_paginated(
             user_id=current_user.id,
             page=1,
@@ -250,6 +251,7 @@ def register_transaction_routes(
             exclude_transfers=exclude_transfers,
             exclude_uncategorized=exclude_uncategorized,
             transaction_type=transaction_type,
+            include_running_balance=include_running_balance,
         )
 
         all_categories = internal.category_repository.get_all(current_user.id)
@@ -274,13 +276,21 @@ def register_transaction_routes(
                 return f'"{escaped}"'
             return escaped
 
-        rows = ["Date,Description,Amount,Category,Account\n"]
+        if include_running_balance:
+            rows = ["Date,Description,Amount,Category,Account,Running Balance\n"]
+        else:
+            rows = ["Date,Description,Amount,Category,Account\n"]
+
         for trx in response.transactions:
             category_name = categories.get(trx.category_id, "") if trx.category_id else ""
             account_name = accounts.get(trx.account_id, "") if trx.account_id else ""
-            rows.append(
-                f"{trx.date},{escape_csv(trx.description)},{trx.amount},{escape_csv(category_name)},{escape_csv(account_name)}\n"
+            row = (
+                f"{trx.date},{escape_csv(trx.description)},{trx.amount},{escape_csv(category_name)},{escape_csv(account_name)}"
             )
+            if include_running_balance:
+                running_balance = trx.running_balance if trx.running_balance is not None else ""
+                row += f",{running_balance}"
+            rows.append(row + "\n")
 
         filename = f"transactions-{date.today().isoformat()}.csv"
         return StreamingResponse(
