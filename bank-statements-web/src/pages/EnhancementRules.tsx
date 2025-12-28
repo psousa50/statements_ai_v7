@@ -111,12 +111,22 @@ export const EnhancementRules: React.FC = () => {
   }
 
   const handleSort = (field: string, direction: 'asc' | 'desc') => {
-    setFilters({
-      ...filters,
-      sort_field: field as SortField,
-      sort_direction: direction,
-      page: 1,
-    })
+    if (filters.sort_field === field) {
+      setFilters({
+        ...filters,
+        sort_direction: direction,
+        page: 1,
+      })
+    } else {
+      setFilters({
+        ...filters,
+        secondary_sort_field: filters.sort_field,
+        secondary_sort_direction: filters.sort_direction,
+        sort_field: field as SortField,
+        sort_direction: direction,
+        page: 1,
+      })
+    }
   }
 
   const handleCreateRule = () => {

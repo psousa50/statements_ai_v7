@@ -34,6 +34,8 @@ class EnhancementRuleManagementService:
         rule_status_filter: Optional[str] = None,
         sort_field: str = "created_at",
         sort_direction: str = "desc",
+        secondary_sort_field: Optional[str] = None,
+        secondary_sort_direction: Optional[str] = None,
     ) -> Dict[str, Any]:
         rules = self.enhancement_rule_repository.get_all(
             user_id=user_id,
@@ -47,6 +49,8 @@ class EnhancementRuleManagementService:
             rule_status_filter=rule_status_filter,
             sort_field=sort_field,
             sort_direction=sort_direction,
+            secondary_sort_field=secondary_sort_field,
+            secondary_sort_direction=secondary_sort_direction,
         )
 
         total = self.enhancement_rule_repository.count(

@@ -63,6 +63,12 @@ export const enhancementRuleClient: EnhancementRuleClient = {
     if (filters?.sort_direction) {
       params.append('sort_direction', filters.sort_direction)
     }
+    if (filters?.secondary_sort_field) {
+      params.append('secondary_sort_field', filters.secondary_sort_field)
+    }
+    if (filters?.secondary_sort_direction) {
+      params.append('secondary_sort_direction', filters.secondary_sort_direction)
+    }
     if (filters?.rule_status_filter) {
       params.append('rule_status_filter', filters.rule_status_filter)
     }

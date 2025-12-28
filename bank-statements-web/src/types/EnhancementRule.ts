@@ -107,6 +107,8 @@ export interface EnhancementRuleFilters {
   source?: EnhancementRuleSource
   sort_field?: SortField
   sort_direction?: SortDirection
+  secondary_sort_field?: SortField
+  secondary_sort_direction?: SortDirection
   rule_status_filter?: RuleStatusFilter
 }
 

@@ -26,6 +26,8 @@ class SQLAlchemyEnhancementRuleRepository(EnhancementRuleRepository):
         rule_status_filter: Optional[str] = None,
         sort_field: str = "created_at",
         sort_direction: str = "desc",
+        secondary_sort_field: Optional[str] = None,
+        secondary_sort_direction: Optional[str] = None,
     ) -> List[EnhancementRule]:
         if sort_field == "usage":
             return self._get_all_with_usage_sorting(
@@ -39,6 +41,8 @@ class SQLAlchemyEnhancementRuleRepository(EnhancementRuleRepository):
                 source,
                 rule_status_filter,
                 sort_direction,
+                secondary_sort_field,
+                secondary_sort_direction,
             )
 
         if sort_field == "latest_match":
@@ -53,6 +57,8 @@ class SQLAlchemyEnhancementRuleRepository(EnhancementRuleRepository):
                 source,
                 rule_status_filter,
                 sort_direction,
+                secondary_sort_field,
+                secondary_sort_direction,
             )
 
         query = (
@@ -146,6 +152,8 @@ class SQLAlchemyEnhancementRuleRepository(EnhancementRuleRepository):
         source: Optional[EnhancementRuleSource] = None,
         rule_status_filter: Optional[str] = None,
         sort_direction: str = "desc",
+        secondary_sort_field: Optional[str] = None,
+        secondary_sort_direction: Optional[str] = None,
     ) -> List[EnhancementRule]:
         query = (
             self.db.query(EnhancementRule)
@@ -210,28 +218,87 @@ class SQLAlchemyEnhancementRuleRepository(EnhancementRuleRepository):
 
         all_rules = query.all()
 
-        rules_with_counts = []
+        from app.adapters.repositories.transaction import SQLAlchemyTransactionRepository
+
+        transaction_repo = SQLAlchemyTransactionRepository(self.db)
+
+        rules_with_data = []
         for rule in all_rules:
             try:
-                from app.adapters.repositories.transaction import SQLAlchemyTransactionRepository
-
-                transaction_repo = SQLAlchemyTransactionRepository(self.db)
                 count = transaction_repo.count_matching_rule(rule)
             except Exception:
                 count = 0
 
-            rules_with_counts.append((rule, count))
+            try:
+                latest_date = transaction_repo.get_latest_matching_date(rule)
+            except Exception:
+                latest_date = None
+
+            rules_with_data.append((rule, count, latest_date))
+
+        def get_secondary_value(item):
+            rule, count, latest_date = item
+            if secondary_sort_field == "usage":
+                return count
+            elif secondary_sort_field == "latest_match":
+                from datetime import date as date_type
+
+                return latest_date or date_type(1900, 1, 1)
+            elif secondary_sort_field == "created_at":
+                return rule.created_at
+            elif secondary_sort_field == "normalized_description_pattern":
+                return rule.normalized_description_pattern.lower()
+            return rule.created_at
+
+        secondary_reverse = secondary_sort_direction != "asc" if secondary_sort_direction else True
+
+        def sort_key(item):
+            primary = item[1]
+            if secondary_sort_field:
+                secondary = get_secondary_value(item)
+                return (primary, secondary)
+            return (primary,)
 
         if sort_direction == "asc":
-            rules_with_counts.sort(key=lambda x: x[1])
+            if secondary_sort_field:
+                rules_with_data.sort(key=lambda x: (x[1], get_secondary_value(x)), reverse=False)
+                if secondary_reverse:
+                    rules_with_data.sort(key=lambda x: x[1], reverse=False)
+                    groups = {}
+                    for item in rules_with_data:
+                        key = item[1]
+                        if key not in groups:
+                            groups[key] = []
+                        groups[key].append(item)
+                    rules_with_data = []
+                    for key in sorted(groups.keys()):
+                        group = groups[key]
+                        group.sort(key=get_secondary_value, reverse=True)
+                        rules_with_data.extend(group)
+            else:
+                rules_with_data.sort(key=lambda x: x[1])
         else:
-            rules_with_counts.sort(key=lambda x: x[1], reverse=True)
+            if secondary_sort_field:
+                rules_with_data.sort(key=lambda x: x[1], reverse=True)
+                groups = {}
+                for item in rules_with_data:
+                    key = item[1]
+                    if key not in groups:
+                        groups[key] = []
+                    groups[key].append(item)
+                rules_with_data = []
+                for key in sorted(groups.keys(), reverse=True):
+                    group = groups[key]
+                    group.sort(key=get_secondary_value, reverse=secondary_reverse)
+                    rules_with_data.extend(group)
+            else:
+                rules_with_data.sort(key=lambda x: x[1], reverse=True)
 
         start_idx = offset
         end_idx = offset + limit
-        paginated_rules = rules_with_counts[start_idx:end_idx]
+        paginated_rules = rules_with_data[start_idx:end_idx]
 
-        return [rule for rule, count in paginated_rules]
+        return [rule for rule, count, latest_date in paginated_rules]
 
     def _get_all_with_latest_match_sorting(
         self,
@@ -245,6 +312,8 @@ class SQLAlchemyEnhancementRuleRepository(EnhancementRuleRepository):
         source: Optional[EnhancementRuleSource] = None,
         rule_status_filter: Optional[str] = None,
         sort_direction: str = "desc",
+        secondary_sort_field: Optional[str] = None,
+        secondary_sort_direction: Optional[str] = None,
     ) -> List[EnhancementRule]:
         query = (
             self.db.query(EnhancementRule)
@@ -316,28 +385,75 @@ class SQLAlchemyEnhancementRuleRepository(EnhancementRuleRepository):
         transaction_repo = SQLAlchemyTransactionRepository(self.db)
         min_date = date_type(1900, 1, 1)
 
-        rules_with_dates = []
+        rules_with_data = []
         for rule in all_rules:
             try:
                 latest_date = transaction_repo.get_latest_matching_date(rule)
             except Exception:
                 latest_date = None
 
-            rules_with_dates.append((rule, latest_date or min_date, latest_date))
+            try:
+                count = transaction_repo.count_matching_rule(rule)
+            except Exception:
+                count = 0
+
+            rules_with_data.append((rule, latest_date or min_date, latest_date, count))
+
+        def get_secondary_value(item):
+            rule, sort_date, latest_date, count = item
+            if secondary_sort_field == "usage":
+                return count
+            elif secondary_sort_field == "latest_match":
+                return sort_date
+            elif secondary_sort_field == "created_at":
+                return rule.created_at
+            elif secondary_sort_field == "normalized_description_pattern":
+                return rule.normalized_description_pattern.lower()
+            return rule.created_at
+
+        secondary_reverse = secondary_sort_direction != "asc" if secondary_sort_direction else True
 
         if sort_direction == "asc":
-            rules_with_dates.sort(key=lambda x: x[1])
+            if secondary_sort_field:
+                rules_with_data.sort(key=lambda x: x[1], reverse=False)
+                groups = {}
+                for item in rules_with_data:
+                    key = item[1]
+                    if key not in groups:
+                        groups[key] = []
+                    groups[key].append(item)
+                rules_with_data = []
+                for key in sorted(groups.keys()):
+                    group = groups[key]
+                    group.sort(key=get_secondary_value, reverse=secondary_reverse)
+                    rules_with_data.extend(group)
+            else:
+                rules_with_data.sort(key=lambda x: x[1])
         else:
-            rules_with_dates.sort(key=lambda x: x[1], reverse=True)
+            if secondary_sort_field:
+                rules_with_data.sort(key=lambda x: x[1], reverse=True)
+                groups = {}
+                for item in rules_with_data:
+                    key = item[1]
+                    if key not in groups:
+                        groups[key] = []
+                    groups[key].append(item)
+                rules_with_data = []
+                for key in sorted(groups.keys(), reverse=True):
+                    group = groups[key]
+                    group.sort(key=get_secondary_value, reverse=secondary_reverse)
+                    rules_with_data.extend(group)
+            else:
+                rules_with_data.sort(key=lambda x: x[1], reverse=True)
 
         start_idx = offset
         end_idx = offset + limit
-        paginated_rules = rules_with_dates[start_idx:end_idx]
+        paginated_rules = rules_with_data[start_idx:end_idx]
 
-        for rule, _, latest_date in paginated_rules:
+        for rule, _, latest_date, _ in paginated_rules:
             rule.latest_match_date = latest_date
 
-        return [rule for rule, _, _ in paginated_rules]
+        return [rule for rule, _, _, _ in paginated_rules]
 
     def count(
         self,

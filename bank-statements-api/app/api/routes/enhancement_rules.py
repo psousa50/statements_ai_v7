@@ -57,6 +57,8 @@ def register_enhancement_rule_routes(
         ),
         sort_field: str = Query("created_at", description="Field to sort by"),
         sort_direction: str = Query("desc", description="Sort direction (asc/desc)"),
+        secondary_sort_field: Optional[str] = Query(None, description="Secondary field to sort by"),
+        secondary_sort_direction: Optional[str] = Query(None, description="Secondary sort direction (asc/desc)"),
         internal: InternalDependencies = Depends(provide_dependencies),
         current_user: User = Depends(require_current_user),
     ) -> EnhancementRuleListResponse:
@@ -76,6 +78,8 @@ def register_enhancement_rule_routes(
                 rule_status_filter=rule_status_filter,
                 sort_field=sort_field,
                 sort_direction=sort_direction,
+                secondary_sort_field=secondary_sort_field,
+                secondary_sort_direction=secondary_sort_direction,
             )
 
             return EnhancementRuleListResponse(
