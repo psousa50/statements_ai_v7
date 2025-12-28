@@ -86,6 +86,7 @@ class TransactionService:
                 self._create_unmatched_rule(user_id, normalized_description)
 
         return self.transaction_repository.create_transaction(
+            user_id=user_id,
             transaction_data=enhanced_data,
             after_transaction_id=after_transaction_id,
         )
@@ -552,6 +553,7 @@ class TransactionService:
 
         transaction = Transaction(
             id=uuid4(),
+            user_id=dto.user_id,
             date=date_val,
             amount=Decimal(str(dto.amount)),
             description=dto.description,

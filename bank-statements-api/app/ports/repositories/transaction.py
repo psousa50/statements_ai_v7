@@ -23,6 +23,7 @@ class TransactionRepository(ABC):
     @abstractmethod
     def create_transaction(
         self,
+        user_id: UUID,
         transaction_data: TransactionCreateRequest,
         after_transaction_id: Optional[UUID] = None,
     ) -> Transaction:

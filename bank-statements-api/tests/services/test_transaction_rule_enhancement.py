@@ -34,24 +34,27 @@ class TestTransactionRuleEnhancementService:
         )
 
     @pytest.fixture
-    def sample_dtos(self):
+    def sample_dtos(self, user_id):
         return [
             TransactionDTO(
                 date="2024-01-01",
                 amount=100.0,
                 description="Grocery Store Purchase",
+                user_id=user_id,
                 account_id="acc1",
             ),
             TransactionDTO(
                 date="2024-01-02",
                 amount=-50.0,
                 description="ATM Withdrawal",
+                user_id=user_id,
                 account_id="acc1",
             ),
             TransactionDTO(
                 date="2024-01-03",
                 amount=200.0,
                 description="Salary Payment",
+                user_id=user_id,
                 account_id="acc1",
             ),
         ]
@@ -183,12 +186,14 @@ class TestTransactionRuleEnhancementService:
                 date="2024-01-01",
                 amount=100.0,
                 description="",
+                user_id=user_id,
                 account_id="acc1",
             ),
             TransactionDTO(
                 date="2024-01-02",
                 amount=50.0,
                 description="Valid Description",
+                user_id=user_id,
                 account_id="acc1",
             ),
         ]
@@ -206,12 +211,13 @@ class TestTransactionRuleEnhancementService:
 
         assert mock_enhancement_rule_repository.save.call_count == 1
 
-    def test_enhancement_result_properties(self):
+    def test_enhancement_result_properties(self, user_id):
         dtos = [
             TransactionDTO(
                 date="2024-01-01",
                 amount=100.0,
                 description="Test",
+                user_id=user_id,
                 account_id="acc1",
             )
         ]
@@ -265,30 +271,35 @@ class TestTransactionRuleEnhancementService:
                 date="2024-01-01",
                 amount=100.0,
                 description="Grocery Store Purchase",
+                user_id=user_id,
                 account_id="acc1",
             ),
             TransactionDTO(
                 date="2024-01-02",
                 amount=150.0,
                 description="GROCERY STORE PURCHASE",
+                user_id=user_id,
                 account_id="acc1",
             ),
             TransactionDTO(
                 date="2024-01-03",
                 amount=75.0,
                 description="grocery store purchase",
+                user_id=user_id,
                 account_id="acc1",
             ),
             TransactionDTO(
                 date="2024-01-04",
                 amount=50.0,
                 description="ATM Withdrawal",
+                user_id=user_id,
                 account_id="acc1",
             ),
             TransactionDTO(
                 date="2024-01-05",
                 amount=25.0,
                 description="atm withdrawal",
+                user_id=user_id,
                 account_id="acc1",
             ),
         ]

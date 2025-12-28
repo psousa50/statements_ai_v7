@@ -93,6 +93,7 @@ class TestTransactionMultiTenancy:
 
         tx_a = Transaction(
             id=uuid4(),
+            user_id=user_a.id,
             date=date(2024, 1, 1),
             description="User A Transaction",
             normalized_description="user a transaction",
@@ -103,6 +104,7 @@ class TestTransactionMultiTenancy:
         )
         tx_b = Transaction(
             id=uuid4(),
+            user_id=user_b.id,
             date=date(2024, 1, 1),
             description="User B Transaction",
             normalized_description="user b transaction",
@@ -140,6 +142,7 @@ class TestTransactionMultiTenancy:
 
         tx_a = Transaction(
             id=uuid4(),
+            user_id=user_a.id,
             date=date(2024, 1, 1),
             description="User A Transaction",
             normalized_description="user a transaction",

@@ -9,7 +9,6 @@ from sqlalchemy.orm import Session
 
 from app.common.text_normalization import normalize_description
 from app.domain.dto.statement_processing import TransactionDTO
-from app.domain.models.account import Account
 from app.domain.models.transaction import CategorizationStatus, SourceType, Transaction
 from app.ports.repositories.transaction import TransactionRepository
 
@@ -40,16 +39,14 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
     def get_by_id(self, transaction_id: UUID, user_id: UUID) -> Optional[Transaction]:
         return (
             self.db_session.query(Transaction)
-            .join(Account, Transaction.account_id == Account.id)
-            .filter(Transaction.id == transaction_id, Account.user_id == user_id)
+            .filter(Transaction.id == transaction_id, Transaction.user_id == user_id)
             .first()
         )
 
     def get_all(self, user_id: UUID) -> List[Transaction]:
         return (
             self.db_session.query(Transaction)
-            .join(Account, Transaction.account_id == Account.id)
-            .filter(Account.user_id == user_id)
+            .filter(Transaction.user_id == user_id)
             .order_by(
                 Transaction.date.desc(),
                 Transaction.sort_index.asc(),
@@ -98,11 +95,7 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         transaction_type: Optional[str] = None,
         transaction_ids: Optional[List[UUID]] = None,
     ) -> Tuple[List[Transaction], int, Decimal]:
-        query = (
-            self.db_session.query(Transaction)
-            .join(Account, Transaction.account_id == Account.id)
-            .filter(Account.user_id == user_id)
-        )
+        query = self.db_session.query(Transaction).filter(Transaction.user_id == user_id)
 
         # Apply filters
         filters = []
@@ -169,8 +162,7 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
                 func.count(Transaction.id),
                 func.coalesce(func.sum(Transaction.amount), Decimal("0")),
             )
-            .join(Account, Transaction.account_id == Account.id)
-            .filter(Account.user_id == user_id)
+            .filter(Transaction.user_id == user_id)
         )
         if filters:
             count_sum_query = count_sum_query.filter(and_(*filters))
@@ -188,8 +180,7 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
     def get_unique_normalised_descriptions(self, user_id: UUID, limit: int = 200) -> List[str]:
         results = (
             self.db_session.query(Transaction.normalized_description)
-            .join(Account, Transaction.account_id == Account.id)
-            .filter(Account.user_id == user_id)
+            .filter(Transaction.user_id == user_id)
             .filter(Transaction.normalized_description.isnot(None))
             .filter(Transaction.normalized_description != "")
             .distinct()
@@ -231,8 +222,7 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
                 func.sum(-Transaction.amount).label("total_amount"),
                 func.count(Transaction.id).label("transaction_count"),
             )
-            .join(Account, Transaction.account_id == Account.id)
-            .filter(Account.user_id == user_id)
+            .filter(Transaction.user_id == user_id)
         )
 
         # Apply the same filters as get_paginated
@@ -336,8 +326,7 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
                 func.sum(-Transaction.amount).label("total_amount"),
                 func.count(Transaction.id).label("transaction_count"),
             )
-            .join(Account, Transaction.account_id == Account.id)
-            .filter(Account.user_id == user_id)
+            .filter(Transaction.user_id == user_id)
         )
 
         filters = []
@@ -510,6 +499,7 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
                     account_type_enum = SourceType.MANUAL
 
                 transaction = Transaction(
+                    user_id=transaction_dto.user_id,
                     date=date_val,
                     amount=transaction_dto.amount,
                     description=transaction_dto.description,
@@ -566,8 +556,7 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
     ) -> int:
         subquery = (
             self.db_session.query(Transaction.id)
-            .join(Account, Transaction.account_id == Account.id)
-            .filter(Account.user_id == user_id)
+            .filter(Transaction.user_id == user_id)
             .filter(Transaction.normalized_description == normalized_description)
             .subquery()
         )
@@ -597,8 +586,7 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
     ) -> int:
         query = (
             self.db_session.query(func.count(Transaction.id))
-            .join(Account, Transaction.account_id == Account.id)
-            .filter(Account.user_id == user_id)
+            .filter(Transaction.user_id == user_id)
             .filter(Transaction.normalized_description == normalized_description)
         )
 
@@ -627,8 +615,7 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
     ) -> int:
         query = (
             self.db_session.query(func.count(Transaction.id))
-            .join(Account, Transaction.account_id == Account.id)
-            .filter(Account.user_id == user_id)
+            .filter(Transaction.user_id == user_id)
             .filter(Transaction.category_id == category_id)
         )
 
@@ -658,8 +645,7 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
     ) -> int:
         subquery = (
             self.db_session.query(Transaction.id)
-            .join(Account, Transaction.account_id == Account.id)
-            .filter(Account.user_id == user_id)
+            .filter(Transaction.user_id == user_id)
             .filter(Transaction.category_id == from_category_id)
         )
 
@@ -709,6 +695,7 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
 
     def create_transaction(
         self,
+        user_id: UUID,
         transaction_data,
         after_transaction_id: Optional[UUID] = None,
     ) -> Transaction:
@@ -731,6 +718,7 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
             sort_index = max_sort + 10
 
         transaction = Transaction(
+            user_id=user_id,
             date=transaction_data.date,
             amount=transaction_data.amount,
             description=transaction_data.description,
@@ -795,11 +783,7 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         """Count transactions that would match the given enhancement rule"""
         from app.domain.models.enhancement_rule import MatchType
 
-        query = (
-            self.db_session.query(func.count(Transaction.id))
-            .join(Account, Transaction.account_id == Account.id)
-            .filter(Account.user_id == rule.user_id)
-        )
+        query = self.db_session.query(func.count(Transaction.id)).filter(Transaction.user_id == rule.user_id)
 
         # Match description pattern based on rule type
         if rule.match_type == MatchType.EXACT:
@@ -836,11 +820,7 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         """Find transactions that match the given enhancement rule with pagination"""
         from app.domain.models.enhancement_rule import MatchType
 
-        query = (
-            self.db_session.query(Transaction)
-            .join(Account, Transaction.account_id == Account.id)
-            .filter(Account.user_id == rule.user_id)
-        )
+        query = self.db_session.query(Transaction).filter(Transaction.user_id == rule.user_id)
 
         # Match description pattern based on rule type (same logic as count_matching_rule)
         if rule.match_type == MatchType.EXACT:
@@ -881,11 +861,7 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
     ) -> Tuple[List[Transaction], int]:
         from app.domain.models.enhancement_rule import MatchType
 
-        query = (
-            self.db_session.query(Transaction)
-            .join(Account, Transaction.account_id == Account.id)
-            .filter(Account.user_id == user_id)
-        )
+        query = self.db_session.query(Transaction).filter(Transaction.user_id == user_id)
 
         # Match description pattern based on rule type (same logic as count_matching_rule)
         if rule.match_type == MatchType.EXACT:

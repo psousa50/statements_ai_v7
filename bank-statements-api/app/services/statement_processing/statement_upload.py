@@ -159,6 +159,7 @@ class StatementUploadService:
                 date=row["date"],
                 amount=row["amount"],
                 description=row["description"],
+                user_id=user_id,
                 statement_id=None,  # Will be set during persistence
                 account_id=upload_request.account_id,
                 row_index=index,  # Assign row_index based on position in file

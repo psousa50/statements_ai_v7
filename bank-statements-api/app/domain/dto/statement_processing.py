@@ -78,6 +78,7 @@ class TransactionDTO:
         date: str,
         amount: float,
         description: str,
+        user_id: UUID,
         statement_id: Optional[str] = None,
         account_id: Optional[str] = None,
         id: Optional[str] = None,
@@ -97,6 +98,7 @@ class TransactionDTO:
         self.description = description
         self.statement_id = statement_id
         self.account_id = account_id
+        self.user_id = user_id
         self.created_at = created_at
         self.category_id = category_id
         self.categorization_status = categorization_status
@@ -116,6 +118,7 @@ class TransactionDTO:
             description=entity.description,
             statement_id=str(entity.statement_id) if entity.statement_id else None,
             account_id=str(entity.account_id) if entity.account_id else None,
+            user_id=entity.user_id,
             created_at=entity.created_at,
             category_id=entity.category_id,
             categorization_status=entity.categorization_status.value if entity.categorization_status else None,

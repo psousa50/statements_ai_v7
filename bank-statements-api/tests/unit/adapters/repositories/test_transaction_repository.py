@@ -13,6 +13,7 @@ class TestSQLAlchemyTransactionRepository:
         session = MagicMock()
         repo = SQLAlchemyTransactionRepository(session)
 
+        user_id = uuid.uuid4()
         account_id = uuid.uuid4()
         statement_id = uuid.uuid4()
         category_id = uuid.uuid4()
@@ -22,6 +23,7 @@ class TestSQLAlchemyTransactionRepository:
             date="2025-09-29",
             amount=Decimal("-226.00"),
             description="TRF P/ TITINA",
+            user_id=user_id,
             account_id=str(account_id),
             statement_id=str(statement_id),
             row_index=0,
@@ -58,6 +60,7 @@ class TestSQLAlchemyTransactionRepository:
         session = MagicMock()
         repo = SQLAlchemyTransactionRepository(session)
 
+        user_id = uuid.uuid4()
         account_id = uuid.uuid4()
         statement_id = uuid.uuid4()
 
@@ -65,6 +68,7 @@ class TestSQLAlchemyTransactionRepository:
             date="2025-09-29",
             amount=Decimal("-100.00"),
             description="Some transaction",
+            user_id=user_id,
             account_id=str(account_id),
             statement_id=str(statement_id),
             row_index=0,
@@ -95,6 +99,7 @@ class TestSQLAlchemyTransactionRepository:
         session = MagicMock()
         repo = SQLAlchemyTransactionRepository(session)
 
+        user_id = uuid.uuid4()
         account_id = uuid.uuid4()
         statement_id = uuid.uuid4()
 
@@ -102,6 +107,7 @@ class TestSQLAlchemyTransactionRepository:
             date="2025-09-29",
             amount=Decimal("-226.00"),
             description="TRF P/ TITINA",
+            user_id=user_id,
             account_id=str(account_id),
             statement_id=str(statement_id),
             row_index=0,
