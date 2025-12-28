@@ -19,6 +19,7 @@ import EditIcon from '@mui/icons-material/Edit'
 import DeleteIcon from '@mui/icons-material/Delete'
 import VisibilityIcon from '@mui/icons-material/Visibility'
 import ContentCopyIcon from '@mui/icons-material/ContentCopy'
+import PlayArrowIcon from '@mui/icons-material/PlayArrow'
 import CheckIcon from '@mui/icons-material/Check'
 import CloseIcon from '@mui/icons-material/Close'
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome'
@@ -32,6 +33,7 @@ interface EnhancementRuleTableProps {
   onEdit: (rule: EnhancementRule) => void
   onDuplicate: (rule: EnhancementRule) => void
   onDelete: (id: string) => void
+  onApply?: (rule: EnhancementRule) => void
   onApplySuggestion?: (ruleId: string, applyToTransactions: boolean) => void
   onRejectSuggestion?: (ruleId: string) => void
 }
@@ -44,6 +46,7 @@ export const EnhancementRuleTable: React.FC<EnhancementRuleTableProps> = ({
   onEdit,
   onDuplicate,
   onDelete,
+  onApply,
   onApplySuggestion,
   onRejectSuggestion,
 }) => {
@@ -450,6 +453,26 @@ export const EnhancementRuleTable: React.FC<EnhancementRuleTableProps> = ({
                   >
                     <DeleteIcon fontSize="small" />
                   </IconButton>
+                  {onApply &&
+                    (rule.category_id || rule.counterparty_account_id) &&
+                    (rule.pending_transaction_count ?? 0) > 0 && (
+                      <IconButton
+                        size="small"
+                        onClick={() => onApply(rule)}
+                        disabled={loading}
+                        title="Apply rule to existing transactions"
+                        color="success"
+                        sx={{
+                          minWidth: '0 !important',
+                          padding: '4px !important',
+                          margin: '0 !important',
+                          width: '24px !important',
+                          height: '24px !important',
+                        }}
+                      >
+                        <PlayArrowIcon fontSize="small" />
+                      </IconButton>
+                    )}
                 </Box>
               </TableCell>
             </TableRow>

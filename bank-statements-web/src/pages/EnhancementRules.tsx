@@ -16,6 +16,7 @@ import AddIcon from '@mui/icons-material/Add'
 import CleanupIcon from '@mui/icons-material/CleaningServices'
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome'
 import { useEnhancementRules } from '../services/hooks/useEnhancementRules'
+import { useApi } from '../api/ApiContext'
 import { EnhancementRuleFilters, EnhancementRule, SortField } from '../types/EnhancementRule'
 import { EnhancementRuleTable } from '../components/EnhancementRuleTable'
 import { EnhancementRuleFiltersComponent } from '../components/EnhancementRuleFilters'
@@ -24,11 +25,13 @@ import { Pagination } from '../components/Pagination'
 import './EnhancementRules.css'
 
 export const EnhancementRules: React.FC = () => {
+  const apiClient = useApi()
   const {
     loading,
     error,
     fetchRules,
     deleteRule,
+    updateRule,
     cleanupUnused,
     suggestCategories,
     applySuggestion,
@@ -57,6 +60,11 @@ export const EnhancementRules: React.FC = () => {
     message: '',
     severity: 'success',
   })
+
+  const [applyDialogOpen, setApplyDialogOpen] = useState(false)
+  const [applyingRule, setApplyingRule] = useState<EnhancementRule | null>(null)
+  const [applyMatchingCount, setApplyMatchingCount] = useState<number>(0)
+  const [applyLoading, setApplyLoading] = useState(false)
 
   const bottomPaginationRef = useRef<HTMLDivElement>(null)
   const [isBottomPaginationVisible, setIsBottomPaginationVisible] = useState(true)
@@ -240,6 +248,59 @@ export const EnhancementRules: React.FC = () => {
     }
   }
 
+  const handleApplyClick = async (rule: EnhancementRule) => {
+    try {
+      const countResponse = await apiClient.enhancementRules.getMatchingTransactionsCount(rule.id)
+      setApplyingRule(rule)
+      setApplyMatchingCount(countResponse.count)
+      setApplyDialogOpen(true)
+    } catch (err) {
+      console.error('Failed to get matching count:', err)
+      setSnackbar({
+        open: true,
+        message: 'Failed to get matching transactions count',
+        severity: 'error',
+      })
+    }
+  }
+
+  const handleApplyConfirm = async () => {
+    if (!applyingRule) return
+
+    setApplyLoading(true)
+    try {
+      await updateRule(applyingRule.id, {
+        normalized_description_pattern: applyingRule.normalized_description_pattern,
+        match_type: applyingRule.match_type,
+        category_id: applyingRule.category_id,
+        counterparty_account_id: applyingRule.counterparty_account_id,
+        min_amount: applyingRule.min_amount,
+        max_amount: applyingRule.max_amount,
+        start_date: applyingRule.start_date,
+        end_date: applyingRule.end_date,
+        source: applyingRule.source,
+        apply_to_existing: true,
+      })
+      setApplyDialogOpen(false)
+      setApplyingRule(null)
+      await loadRules()
+      setSnackbar({
+        open: true,
+        message: `Rule applied to ${applyMatchingCount} transactions`,
+        severity: 'success',
+      })
+    } catch (err) {
+      console.error('Failed to apply rule:', err)
+      setSnackbar({
+        open: true,
+        message: 'Failed to apply rule to transactions',
+        severity: 'error',
+      })
+    } finally {
+      setApplyLoading(false)
+    }
+  }
+
   return (
     <Box sx={{ p: 3 }} className="enhancement-rules-page">
       <Box
@@ -306,6 +367,7 @@ export const EnhancementRules: React.FC = () => {
           onEdit={handleEditRule}
           onDuplicate={handleDuplicateRule}
           onDelete={handleDeleteRule}
+          onApply={handleApplyClick}
           onApplySuggestion={handleApplySuggestion}
           onRejectSuggestion={handleRejectSuggestion}
         />
@@ -386,6 +448,57 @@ export const EnhancementRules: React.FC = () => {
             startIcon={aiLoading ? <CircularProgress size={16} /> : <AutoAwesomeIcon />}
           >
             {aiLoading ? 'Analysing...' : 'Generate Suggestions'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Apply Rule Confirmation Dialog */}
+      <Dialog
+        open={applyDialogOpen}
+        onClose={() => {
+          setApplyDialogOpen(false)
+          setApplyingRule(null)
+        }}
+      >
+        <DialogTitle>Apply Rule to Existing Transactions?</DialogTitle>
+        <DialogContent>
+          <Typography>
+            This rule matches <strong>{applyMatchingCount}</strong> transactions that haven't been categorised yet.
+          </Typography>
+          {applyingRule && (
+            <Typography sx={{ mt: 2, color: 'text.secondary', fontSize: '0.875rem' }}>
+              Applying will update these transactions with:
+              {applyingRule.category && (
+                <>
+                  <br />• Category: {applyingRule.category.name}
+                </>
+              )}
+              {applyingRule.counterparty_account && (
+                <>
+                  <br />• Counterparty: {applyingRule.counterparty_account.name}
+                </>
+              )}
+            </Typography>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={() => {
+              setApplyDialogOpen(false)
+              setApplyingRule(null)
+            }}
+            disabled={applyLoading}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleApplyConfirm}
+            color="success"
+            variant="contained"
+            disabled={applyLoading}
+            startIcon={applyLoading ? <CircularProgress size={16} /> : undefined}
+          >
+            {applyLoading ? 'Applying...' : 'Apply'}
           </Button>
         </DialogActions>
       </Dialog>
