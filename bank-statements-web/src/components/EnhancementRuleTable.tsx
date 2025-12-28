@@ -213,7 +213,14 @@ export const EnhancementRuleTable: React.FC<EnhancementRuleTableProps> = ({
                         <AutoAwesomeIcon sx={{ fontSize: 14, color: 'secondary.main' }} />
                       </Tooltip>
                     )}
-                    <Typography variant="body2">{rule.category.name}</Typography>
+                    <Box>
+                      {rule.category.parent && (
+                        <Typography variant="caption" display="block" color="text.secondary">
+                          {rule.category.parent.name}
+                        </Typography>
+                      )}
+                      <Typography variant="body2">{rule.category.name}</Typography>
+                    </Box>
                   </Box>
                 ) : rule.ai_suggested_category ? (
                   <Box
@@ -230,9 +237,16 @@ export const EnhancementRuleTable: React.FC<EnhancementRuleTableProps> = ({
                   >
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                       <AutoAwesomeIcon sx={{ fontSize: 14, color: 'secondary.main' }} />
-                      <Typography variant="body2" color="secondary.main">
-                        {rule.ai_suggested_category.name}
-                      </Typography>
+                      <Box>
+                        {rule.ai_suggested_category.parent && (
+                          <Typography variant="caption" display="block" color="text.secondary">
+                            {rule.ai_suggested_category.parent.name}
+                          </Typography>
+                        )}
+                        <Typography variant="body2" color="secondary.main">
+                          {rule.ai_suggested_category.name}
+                        </Typography>
+                      </Box>
                     </Box>
                     <Typography variant="caption" color="text.secondary">
                       {Math.round((rule.ai_category_confidence ?? 0) * 100)}% confidence

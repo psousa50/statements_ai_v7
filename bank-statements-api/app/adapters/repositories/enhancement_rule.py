@@ -4,6 +4,7 @@ from uuid import UUID
 from sqlalchemy import and_, func, or_
 from sqlalchemy.orm import Session, joinedload
 
+from app.domain.models.category import Category
 from app.domain.models.enhancement_rule import EnhancementRule, EnhancementRuleSource, MatchType
 from app.ports.repositories.enhancement_rule import EnhancementRuleRepository
 
@@ -43,9 +44,9 @@ class SQLAlchemyEnhancementRuleRepository(EnhancementRuleRepository):
         query = (
             self.db.query(EnhancementRule)
             .options(
-                joinedload(EnhancementRule.category),
+                joinedload(EnhancementRule.category).joinedload(Category.parent),
                 joinedload(EnhancementRule.counterparty_account),
-                joinedload(EnhancementRule.ai_suggested_category),
+                joinedload(EnhancementRule.ai_suggested_category).joinedload(Category.parent),
                 joinedload(EnhancementRule.ai_suggested_counterparty),
             )
             .filter(EnhancementRule.user_id == user_id)
@@ -135,9 +136,9 @@ class SQLAlchemyEnhancementRuleRepository(EnhancementRuleRepository):
         query = (
             self.db.query(EnhancementRule)
             .options(
-                joinedload(EnhancementRule.category),
+                joinedload(EnhancementRule.category).joinedload(Category.parent),
                 joinedload(EnhancementRule.counterparty_account),
-                joinedload(EnhancementRule.ai_suggested_category),
+                joinedload(EnhancementRule.ai_suggested_category).joinedload(Category.parent),
                 joinedload(EnhancementRule.ai_suggested_counterparty),
             )
             .filter(EnhancementRule.user_id == user_id)
@@ -292,9 +293,9 @@ class SQLAlchemyEnhancementRuleRepository(EnhancementRuleRepository):
         return (
             self.db.query(EnhancementRule)
             .options(
-                joinedload(EnhancementRule.category),
+                joinedload(EnhancementRule.category).joinedload(Category.parent),
                 joinedload(EnhancementRule.counterparty_account),
-                joinedload(EnhancementRule.ai_suggested_category),
+                joinedload(EnhancementRule.ai_suggested_category).joinedload(Category.parent),
                 joinedload(EnhancementRule.ai_suggested_counterparty),
             )
             .filter(EnhancementRule.id == rule_id, EnhancementRule.user_id == user_id)

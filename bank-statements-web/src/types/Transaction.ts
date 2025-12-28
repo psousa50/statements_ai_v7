@@ -1,9 +1,15 @@
 export type CategorizationStatus = 'UNCATEGORIZED' | 'CATEGORIZED' | 'FAILURE'
 
+export interface CategoryParent {
+  id: string
+  name: string
+}
+
 export interface Category {
   id: string
   name: string
   parent_id?: string
+  parent?: CategoryParent
 }
 
 export interface InitialBalance {

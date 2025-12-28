@@ -24,10 +24,18 @@ class CategoryUpdate(CategoryBase):
     parent_id: Optional[UUID] = None
 
 
+class CategoryParentResponse(BaseModel):
+    id: UUID
+    name: str
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class CategoryResponse(BaseModel):
     id: UUID
     name: str
     parent_id: Optional[UUID] = None
+    parent: Optional[CategoryParentResponse] = None
 
     model_config = ConfigDict(from_attributes=True)
 
