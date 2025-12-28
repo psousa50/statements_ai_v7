@@ -795,7 +795,11 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         """Count transactions that would match the given enhancement rule"""
         from app.domain.models.enhancement_rule import MatchType
 
-        query = self.db_session.query(func.count(Transaction.id))
+        query = (
+            self.db_session.query(func.count(Transaction.id))
+            .join(Account, Transaction.account_id == Account.id)
+            .filter(Account.user_id == rule.user_id)
+        )
 
         # Match description pattern based on rule type
         if rule.match_type == MatchType.EXACT:
@@ -832,7 +836,11 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         """Find transactions that match the given enhancement rule with pagination"""
         from app.domain.models.enhancement_rule import MatchType
 
-        query = self.db_session.query(Transaction)
+        query = (
+            self.db_session.query(Transaction)
+            .join(Account, Transaction.account_id == Account.id)
+            .filter(Account.user_id == rule.user_id)
+        )
 
         # Match description pattern based on rule type (same logic as count_matching_rule)
         if rule.match_type == MatchType.EXACT:
