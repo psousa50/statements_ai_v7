@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react'
+import React, { useState, useCallback, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Box, Container, Paper, Snackbar, Typography, Alert } from '@mui/material'
 import { defaultApiClient } from '../api/createApiClient'
@@ -134,6 +134,44 @@ export const Upload: React.FC = () => {
     setPreviewStats(null)
     setFilterPreview(null)
   }, [])
+
+  const refreshStatsForAccount = useCallback(async () => {
+    if (!analysisResult || !selectedAccount) return
+
+    setIsLoadingPreview(true)
+    try {
+      const validConditions = rowFilter?.conditions?.filter((c) => c.column_name && c.column_name.trim() !== '') || []
+      const result = await defaultApiClient.statements.previewStatistics(analysisResult.uploaded_file_id, {
+        column_mapping: columnMapping,
+        header_row_index: headerRowIndex,
+        data_start_row_index: dataStartRowIndex,
+        row_filters: validConditions.length > 0 ? { ...rowFilter!, conditions: validConditions } : null,
+        account_id: selectedAccount,
+      })
+      setPreviewStats(result)
+      if (result.filter_preview) {
+        setFilterPreview({
+          total_rows: result.filter_preview.total_rows,
+          included_rows: result.filter_preview.included_rows,
+          excluded_rows: result.filter_preview.excluded_rows,
+          included_row_indices: result.filter_preview.included_row_indices,
+          excluded_row_indices: result.filter_preview.excluded_row_indices,
+        })
+      } else {
+        setFilterPreview(null)
+      }
+    } catch (error) {
+      console.error('Error refreshing statistics:', error)
+    } finally {
+      setIsLoadingPreview(false)
+    }
+  }, [analysisResult, selectedAccount, rowFilter, columnMapping, headerRowIndex, dataStartRowIndex])
+
+  useEffect(() => {
+    if (analysisResult && selectedAccount) {
+      refreshStatsForAccount()
+    }
+  }, [selectedAccount])
 
   // Handle finalize upload
   const handleFinalize = async () => {
