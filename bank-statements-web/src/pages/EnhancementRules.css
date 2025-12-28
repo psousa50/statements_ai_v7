@@ -1,23 +1,7 @@
 /* Enhancement Rules Page Pagination Layout */
 .enhancement-rules-page .transactions-pagination {
-  padding: 1.5rem 2rem;
+  padding: 0.5rem 0.75rem;
   border-top: 1px solid var(--border-primary);
   background-color: var(--bg-tertiary);
 }
 
-/* Override pagination container for enhancement rules page layout */
-.enhancement-rules-page .pagination-container {
-  flex-direction: row !important;
-  justify-content: space-between !important;
-  align-items: center !important;
-  flex-wrap: wrap;
-  gap: 1rem;
-}
-
-/* Responsive Design */
-@media (max-width: 768px) {
-  .enhancement-rules-page .pagination-container {
-    flex-direction: column !important;
-    align-items: stretch !important;
-  }
-}

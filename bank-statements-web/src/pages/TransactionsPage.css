@@ -1180,15 +1180,6 @@
   background-color: var(--bg-tertiary);
 }
 
-/* Override pagination container for transactions page layout */
-.transactions-page .pagination-container {
-  flex-direction: row !important;
-  justify-content: space-between !important;
-  align-items: center !important;
-  flex-wrap: wrap;
-  gap: 1rem;
-}
-
 /* ENHANCED RESPONSIVE DESIGN */
 @media (max-width: 1200px) {
   .transactions-page .filters-row {
