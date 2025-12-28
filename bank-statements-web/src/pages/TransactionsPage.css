@@ -266,6 +266,21 @@
   transform: rotate(-90deg);
 }
 
+/* Always-visible date range row */
+.transactions-page .date-range-row {
+  display: flex;
+  align-items: center;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--border-primary);
+  margin-bottom: 0.5rem;
+}
+
+.transactions-page .transaction-filters-advanced.collapsed .date-range-row {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
 /* NEW BEAUTIFUL FILTERS LAYOUT */
 .transactions-page .filters-container {
   display: flex;
