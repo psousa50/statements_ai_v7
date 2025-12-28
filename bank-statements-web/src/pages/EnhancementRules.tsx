@@ -184,15 +184,17 @@ export const EnhancementRules: React.FC = () => {
       await loadRules()
 
       const message =
-        result.auto_applied > 0
-          ? `${result.auto_applied} rules auto-categorised, ${result.suggestions} need review`
-          : result.suggestions > 0
-            ? `${result.suggestions} suggestions ready for review`
-            : result.processed === 0
-              ? 'No unconfigured rules to process'
-              : result.failed > 0
-                ? `AI failed to categorise ${result.failed} rules (check API key)`
-                : 'No suggestions generated'
+        result.error_message
+          ? result.error_message
+          : result.auto_applied > 0
+            ? `${result.auto_applied} rules auto-categorised, ${result.suggestions} need review`
+            : result.suggestions > 0
+              ? `${result.suggestions} suggestions ready for review`
+              : result.processed === 0
+                ? 'No unconfigured rules to process'
+                : result.failed > 0
+                  ? `AI failed to categorise ${result.failed} rules`
+                  : 'No suggestions generated'
 
       setSnackbar({
         open: true,

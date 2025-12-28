@@ -329,6 +329,16 @@ def register_enhancement_rule_routes(
         categorizer = internal.llm_rule_categorizer
 
         try:
+            categories = internal.category_repository.get_all(current_user.id)
+            if not categories:
+                return AISuggestCategoriesResponse(
+                    processed=0,
+                    auto_applied=0,
+                    suggestions=0,
+                    failed=0,
+                    error_message="No categories available. Create categories first.",
+                )
+
             if request.rule_ids:
                 rules = [service.get_rule(rule_id, current_user.id) for rule_id in request.rule_ids]
                 rules = [r for r in rules if r is not None]
@@ -355,10 +365,13 @@ def register_enhancement_rule_routes(
             auto_applied = 0
             suggestion_count = 0
             failed = 0
+            error_messages = set()
 
             for suggestion in suggestions:
                 if not suggestion.is_successful:
                     failed += 1
+                    if suggestion.error_message:
+                        error_messages.add(suggestion.error_message)
                     continue
 
                 rule = next((r for r in rules if r.id == suggestion.rule_id), None)
@@ -378,11 +391,16 @@ def register_enhancement_rule_routes(
 
                 internal.enhancement_rule_repository.save(rule)
 
+            error_message = None
+            if failed > 0 and error_messages:
+                error_message = "; ".join(sorted(error_messages))
+
             return AISuggestCategoriesResponse(
                 processed=processed,
                 auto_applied=auto_applied,
                 suggestions=suggestion_count,
                 failed=failed,
+                error_message=error_message,
             )
 
         except Exception as e:

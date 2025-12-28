@@ -184,6 +184,7 @@ export interface AISuggestCategoriesResponse {
   auto_applied: number
   suggestions: number
   failed: number
+  error_message?: string
 }
 
 export interface AIApplySuggestionRequest {

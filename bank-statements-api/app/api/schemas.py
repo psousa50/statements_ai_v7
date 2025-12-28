@@ -667,6 +667,7 @@ class AISuggestCategoriesResponse(BaseModel):
     auto_applied: int
     suggestions: int
     failed: int
+    error_message: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)
 
