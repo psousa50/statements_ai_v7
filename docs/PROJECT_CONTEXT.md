@@ -61,6 +61,15 @@ When AI suggests a category/counterparty for a rule:
 - When applied, these remain set so we can show ✨ indicator for AI-set values
 - Compare `ai_suggested_category_id === category_id` to detect AI-set categories
 
+**AI Suggestion Targeting**: By default, AI suggestions target **unconfigured rules** (rules with no category AND no counterparty). You can also pass specific `rule_ids` to process any rules.
+
+**Applying Rules to Transactions**: When a rule is applied to existing transactions, it only updates transactions with status:
+- `UNCATEGORIZED` - no category assigned
+- `RULE_BASED` - previously categorised by another rule (can be overwritten)
+- `FAILURE` - failed previous categorisation
+
+Transactions with `MANUAL` status are never overwritten by rules.
+
 ## Common Tasks
 
 | Task | Command/Notes |
