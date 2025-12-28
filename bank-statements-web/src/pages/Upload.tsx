@@ -114,10 +114,16 @@ export const Upload: React.FC = () => {
       })
 
       setTimeout(() => {
-        const url = selectedAccount
-          ? `/transactions?account_id=${encodeURIComponent(selectedAccount)}`
-          : '/transactions'
-        navigate(url)
+        const params = new URLSearchParams()
+        if (selectedAccount) {
+          params.set('account_id', selectedAccount)
+        }
+        if (analysisResult?.date_range?.[0] && analysisResult?.date_range?.[1]) {
+          params.set('start_date', analysisResult.date_range[0])
+          params.set('end_date', analysisResult.date_range[1])
+        }
+        const queryString = params.toString()
+        navigate(`/transactions${queryString ? `?${queryString}` : ''}`)
       }, 2000)
     } catch (error) {
       console.error('Error uploading file:', error)
