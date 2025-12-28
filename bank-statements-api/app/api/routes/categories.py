@@ -1,7 +1,9 @@
+from datetime import date
 from typing import Callable, Iterator
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, FastAPI, File, HTTPException, UploadFile, status
+from starlette.responses import StreamingResponse
 
 from app.api.routes.auth import require_current_user
 from app.api.schemas import (
@@ -70,6 +72,32 @@ def register_category_routes(
         return CategoryListResponse(
             categories=categories,
             total=len(categories),
+        )
+
+    @router.get("/export")
+    def export_categories(
+        internal: InternalDependencies = Depends(provide_dependencies),
+        current_user: User = Depends(require_current_user),
+    ):
+        all_categories = internal.category_service.get_all_categories(current_user.id)
+        category_names = {c.id: c.name for c in all_categories}
+
+        def escape_csv(value: str) -> str:
+            escaped = value.replace('"', '""')
+            if "," in escaped or '"' in escaped or "\n" in escaped:
+                return f'"{escaped}"'
+            return escaped
+
+        rows = ["parent_name,name\n"]
+        for category in all_categories:
+            parent_name = category_names.get(category.parent_id, "") if category.parent_id else ""
+            rows.append(f"{escape_csv(parent_name)},{escape_csv(category.name)}\n")
+
+        filename = f"categories-{date.today().isoformat()}.csv"
+        return StreamingResponse(
+            iter(rows),
+            media_type="text/csv",
+            headers={"Content-Disposition": f'attachment; filename="{filename}"'},
         )
 
     @router.get("/{category_id}", response_model=CategoryResponse)

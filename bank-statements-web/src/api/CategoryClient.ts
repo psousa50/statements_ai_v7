@@ -39,6 +39,13 @@ export interface CreateSelectedCategoriesResponse {
   categories: Category[]
 }
 
+export interface CategoryUploadResponse {
+  categories_created: number
+  categories_found: number
+  total_processed: number
+  categories: Category[]
+}
+
 export interface CategoryClient {
   getAll(): Promise<CategoryListResponse>
   getRootCategories(): Promise<CategoryListResponse>
@@ -49,6 +56,8 @@ export interface CategoryClient {
   delete(id: string): Promise<void>
   generateSuggestions(): Promise<GenerateCategoriesResponse>
   createSelectedCategories(request: CreateSelectedCategoriesRequest): Promise<CreateSelectedCategoriesResponse>
+  exportCategories(): Promise<void>
+  uploadCategories(file: File): Promise<CategoryUploadResponse>
 }
 
 // Use the VITE_API_URL environment variable for the base URL, or default to '' for local development
@@ -99,6 +108,32 @@ export const categoryClient: CategoryClient = {
 
   async createSelectedCategories(request: CreateSelectedCategoriesRequest) {
     const response = await axios.post<CreateSelectedCategoriesResponse>(`${API_URL}/ai/create-selected`, request)
+    return response.data
+  },
+
+  async exportCategories() {
+    const response = await axios.get(`${API_URL}/export`, { responseType: 'blob' })
+    const blob = new Blob([response.data], { type: 'text/csv' })
+    const url = window.URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    const contentDisposition = response.headers['content-disposition']
+    const filename = contentDisposition
+      ? contentDisposition.split('filename=')[1]?.replace(/"/g, '')
+      : `categories-${new Date().toISOString().split('T')[0]}.csv`
+    link.download = filename
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    window.URL.revokeObjectURL(url)
+  },
+
+  async uploadCategories(file: File) {
+    const formData = new FormData()
+    formData.append('file', file)
+    const response = await axios.post<CategoryUploadResponse>(`${API_URL}/upload`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
     return response.data
   },
 }

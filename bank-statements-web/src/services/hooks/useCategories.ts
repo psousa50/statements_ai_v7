@@ -142,6 +142,41 @@ export const useCategories = () => {
     [api.categories]
   )
 
+  const exportCategories = useCallback(async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      await api.categories.exportCategories()
+      return true
+    } catch (err) {
+      console.error('Error exporting categories:', err)
+      setError('Failed to export categories. Please try again later.')
+      return false
+    } finally {
+      setLoading(false)
+    }
+  }, [api.categories])
+
+  const uploadCategories = useCallback(
+    async (file: File) => {
+      setLoading(true)
+      setError(null)
+      try {
+        const result = await api.categories.uploadCategories(file)
+        await fetchCategories()
+        await fetchRootCategories()
+        return result
+      } catch (err) {
+        console.error('Error uploading categories:', err)
+        setError('Failed to upload categories. Please try again later.')
+        return null
+      } finally {
+        setLoading(false)
+      }
+    },
+    [api.categories, fetchCategories, fetchRootCategories]
+  )
+
   useEffect(() => {
     fetchCategories()
     fetchRootCategories()
@@ -158,5 +193,7 @@ export const useCategories = () => {
     addCategory,
     updateCategory,
     deleteCategory,
+    exportCategories,
+    uploadCategories,
   }
 }

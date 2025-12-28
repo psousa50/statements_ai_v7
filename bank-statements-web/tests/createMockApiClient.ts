@@ -168,6 +168,14 @@ const defaultCategoryClient: CategoryClient = {
       categories_created: 0,
       categories: [],
     }),
+  exportCategories: () => Promise.resolve(),
+  uploadCategories: () =>
+    Promise.resolve({
+      categories_created: 0,
+      categories_found: 0,
+      total_processed: 0,
+      categories: [],
+    }),
 }
 
 // Default mock account client implementation

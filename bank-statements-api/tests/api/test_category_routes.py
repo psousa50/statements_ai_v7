@@ -168,3 +168,30 @@ def test_get_subcategories():
     assert subcategories_response.categories[1].id == subcategory_id2
 
     internal_dependencies.category_service.get_subcategories.assert_called_once_with(parent_id, TEST_USER_ID)
+
+
+def test_export_categories():
+    internal_dependencies = mocked_dependencies()
+    client = build_client(internal_dependencies)
+    parent_id = uuid4()
+    subcategory_id = uuid4()
+    mock_categories = [
+        Category(id=parent_id, name="Parent Category", parent_id=None),
+        Category(id=subcategory_id, name="Subcategory", parent_id=parent_id),
+    ]
+    internal_dependencies.category_service.get_all_categories.return_value = mock_categories
+
+    response = client.get("/api/v1/categories/export")
+
+    assert response.status_code == 200
+    assert response.headers["content-type"] == "text/csv; charset=utf-8"
+    assert "attachment" in response.headers["content-disposition"]
+    assert "categories-" in response.headers["content-disposition"]
+
+    content = response.text
+    lines = content.strip().split("\n")
+    assert lines[0] == "parent_name,name"
+    assert lines[1] == ",Parent Category"
+    assert lines[2] == "Parent Category,Subcategory"
+
+    internal_dependencies.category_service.get_all_categories.assert_called_once_with(TEST_USER_ID)

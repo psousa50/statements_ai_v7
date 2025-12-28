@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef } from 'react'
 import { useCategories } from '../services/hooks/useCategories'
 import { useCategorySuggestions } from '../services/hooks/useCategorySuggestions'
 import { CategoryTree } from '../components/CategoryTree'
@@ -10,6 +10,8 @@ import { Category } from '../types/Transaction'
 import { Button, Dialog, DialogTitle, DialogContent } from '@mui/material'
 import AddIcon from '@mui/icons-material/Add'
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome'
+import DownloadIcon from '@mui/icons-material/Download'
+import UploadIcon from '@mui/icons-material/Upload'
 import './CategoriesPage.css'
 
 export const CategoriesPage = () => {
@@ -20,6 +22,7 @@ export const CategoriesPage = () => {
   const [toast, setToast] = useState<Omit<ToastProps, 'onClose'> | null>(null)
   const [confirmDelete, setConfirmDelete] = useState<Category | null>(null)
   const [suggestionModalOpen, setSuggestionModalOpen] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const {
     categories,
@@ -31,6 +34,8 @@ export const CategoriesPage = () => {
     deleteCategory,
     fetchCategories,
     fetchRootCategories,
+    exportCategories,
+    uploadCategories,
   } = useCategories()
 
   const {
@@ -206,6 +211,41 @@ export const CategoriesPage = () => {
     }
   }, [createSelected, resetSuggestions, fetchCategories, fetchRootCategories])
 
+  const handleExportCategories = useCallback(async () => {
+    const success = await exportCategories()
+    if (success) {
+      setToast({ message: 'Categories exported successfully', type: 'success' })
+    } else {
+      setToast({ message: 'Failed to export categories', type: 'error' })
+    }
+  }, [exportCategories])
+
+  const handleUploadClick = useCallback(() => {
+    fileInputRef.current?.click()
+  }, [])
+
+  const handleFileChange = useCallback(
+    async (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0]
+      if (!file) return
+
+      const result = await uploadCategories(file)
+      if (result) {
+        setToast({
+          message: `Imported ${result.categories_created} new categories (${result.categories_found} already existed)`,
+          type: 'success',
+        })
+      } else {
+        setToast({ message: 'Failed to import categories', type: 'error' })
+      }
+
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ''
+      }
+    },
+    [uploadCategories]
+  )
+
   // Get category stats
   const totalCategories = categories.length
   const rootCategoriesCount = rootCategories.length
@@ -252,6 +292,31 @@ export const CategoriesPage = () => {
             />
           </div>
           <div className="action-buttons">
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileChange}
+              accept=".csv"
+              style={{ display: 'none' }}
+            />
+            <Button
+              onClick={handleExportCategories}
+              variant="outlined"
+              disabled={loading}
+              startIcon={<DownloadIcon />}
+              sx={{ textTransform: 'none', mr: 1 }}
+            >
+              Download
+            </Button>
+            <Button
+              onClick={handleUploadClick}
+              variant="outlined"
+              disabled={loading}
+              startIcon={<UploadIcon />}
+              sx={{ textTransform: 'none', mr: 1 }}
+            >
+              Upload
+            </Button>
             <Button
               onClick={handleOpenSuggestionModal}
               variant="outlined"
