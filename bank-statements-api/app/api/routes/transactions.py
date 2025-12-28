@@ -582,6 +582,11 @@ def register_transaction_routes(
                 user_id=current_user.id,
                 normalized_description=request.normalized_description,
                 category_id=category_uuid,
+                account_id=request.account_id,
+                start_date=request.start_date,
+                end_date=request.end_date,
+                exclude_transfers=request.exclude_transfers,
+                enhancement_rule_id=request.enhancement_rule_id,
             )
 
             action = "categorized" if request.category_id else "uncategorized"
@@ -604,6 +609,7 @@ def register_transaction_routes(
         start_date: Optional[date] = Query(None),
         end_date: Optional[date] = Query(None),
         exclude_transfers: Optional[bool] = Query(None),
+        enhancement_rule_id: Optional[UUID] = Query(None),
         internal: InternalDependencies = Depends(provide_dependencies),
         current_user: User = Depends(require_current_user),
     ):
@@ -614,6 +620,7 @@ def register_transaction_routes(
             start_date=start_date,
             end_date=end_date,
             exclude_transfers=exclude_transfers,
+            enhancement_rule_id=enhancement_rule_id,
         )
         return CountSimilarResponse(count=count)
 

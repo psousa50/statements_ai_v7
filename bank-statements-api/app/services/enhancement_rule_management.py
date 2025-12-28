@@ -296,13 +296,9 @@ class EnhancementRuleManagementService:
 
         counts = {}
         if unconfigured_rules:
-            counts.update(
-                self.transaction_repository.count_matching_rules_batch(unconfigured_rules, uncategorized_only=True)
-            )
+            counts.update(self.transaction_repository.count_matching_rules_batch(unconfigured_rules, uncategorized_only=True))
         if configured_rules:
-            counts.update(
-                self.transaction_repository.count_matching_rules_batch(configured_rules, uncategorized_only=False)
-            )
+            counts.update(self.transaction_repository.count_matching_rules_batch(configured_rules, uncategorized_only=False))
 
         pending_counts = self.transaction_repository.count_pending_for_rules_batch(rules)
 

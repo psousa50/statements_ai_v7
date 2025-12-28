@@ -158,11 +158,26 @@ export const useTransactions = () => {
   )
 
   const bulkUpdateCategory = useCallback(
-    async (normalizedDescription: string, categoryId: string) => {
+    async (
+      normalizedDescription: string,
+      categoryId: string,
+      filterOptions?: {
+        account_id?: string
+        start_date?: string
+        end_date?: string
+        exclude_transfers?: boolean
+        enhancement_rule_id?: string
+      }
+    ) => {
       try {
         const response = await api.transactions.bulkUpdateCategory({
           normalized_description: normalizedDescription,
           category_id: categoryId,
+          account_id: filterOptions?.account_id,
+          start_date: filterOptions?.start_date,
+          end_date: filterOptions?.end_date,
+          exclude_transfers: filterOptions?.exclude_transfers,
+          enhancement_rule_id: filterOptions?.enhancement_rule_id,
         })
         return response
       } catch (err) {

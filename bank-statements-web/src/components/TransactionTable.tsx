@@ -25,6 +25,7 @@ export interface SimilarCountFilters {
   start_date?: string
   end_date?: string
   exclude_transfers?: boolean
+  enhancement_rule_id?: string
 }
 
 interface TransactionTableProps {
@@ -33,7 +34,11 @@ interface TransactionTableProps {
   accounts: Account[]
   loading: boolean
   onCategorize?: (transactionId: string, categoryId?: string) => Promise<void>
-  onBulkCategorize?: (normalizedDescription: string, categoryId: string) => Promise<BulkCategorizeResult | null>
+  onBulkCategorize?: (
+    normalizedDescription: string,
+    categoryId: string,
+    filters: SimilarCountFilters
+  ) => Promise<BulkCategorizeResult | null>
   onBulkReplaceCategory?: (fromCategoryId: string, toCategoryId: string) => Promise<BulkCategorizeResult | null>
   similarCountFilters?: SimilarCountFilters
   onEdit?: (transaction: Transaction) => void
@@ -48,7 +53,11 @@ interface CategoryCellProps {
   transaction: Transaction
   categories: Category[]
   onCategorize: (transactionId: string, categoryId?: string) => Promise<void>
-  onBulkCategorize?: (normalizedDescription: string, categoryId: string) => Promise<BulkCategorizeResult | null>
+  onBulkCategorize?: (
+    normalizedDescription: string,
+    categoryId: string,
+    filters: SimilarCountFilters
+  ) => Promise<BulkCategorizeResult | null>
   onBulkReplaceCategory?: (fromCategoryId: string, toCategoryId: string) => Promise<BulkCategorizeResult | null>
   similarCountFilters?: SimilarCountFilters
   onShowToast: (toast: Omit<ToastProps, 'onClose'>) => void
@@ -111,7 +120,11 @@ const CategoryCell = ({
             actions.push({
               label: `Apply to ${similarCount} similar`,
               onClick: async () => {
-                const result = await onBulkCategorize(transaction.normalized_description, categoryId)
+                const result = await onBulkCategorize(
+                  transaction.normalized_description,
+                  categoryId,
+                  similarCountFilters || {}
+                )
                 if (result) {
                   const additionalCount = result.updated_count - 1
                   if (additionalCount > 0) {

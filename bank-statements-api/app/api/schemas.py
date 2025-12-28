@@ -442,6 +442,11 @@ class JobResultResponse(BaseModel):
 class BulkUpdateTransactionsRequest(BaseModel):
     normalized_description: str
     category_id: Optional[str] = None
+    account_id: Optional[UUID] = None
+    start_date: Optional[date] = None
+    end_date: Optional[date] = None
+    exclude_transfers: Optional[bool] = None
+    enhancement_rule_id: Optional[UUID] = None
 
 
 class BulkUpdateTransactionsResponse(BaseModel):

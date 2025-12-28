@@ -395,9 +395,27 @@ class TransactionService:
         user_id: UUID,
         normalized_description: str,
         category_id: Optional[UUID],
+        account_id: Optional[UUID] = None,
+        start_date: Optional[date] = None,
+        end_date: Optional[date] = None,
+        exclude_transfers: Optional[bool] = None,
+        enhancement_rule_id: Optional[UUID] = None,
     ) -> int:
+        rule = None
+        if enhancement_rule_id:
+            rule = self.enhancement_rule_repository.find_by_id(enhancement_rule_id, user_id)
+            if not rule:
+                raise ValueError(f"Enhancement rule with ID {enhancement_rule_id} not found")
+
         return self.transaction_repository.bulk_update_category_by_normalized_description(
-            user_id, normalized_description, category_id
+            user_id=user_id,
+            normalized_description=normalized_description,
+            category_id=category_id,
+            account_id=account_id,
+            start_date=start_date,
+            end_date=end_date,
+            exclude_transfers=exclude_transfers,
+            rule=rule,
         )
 
     def count_by_normalized_description(
@@ -408,7 +426,14 @@ class TransactionService:
         start_date: Optional[date] = None,
         end_date: Optional[date] = None,
         exclude_transfers: Optional[bool] = None,
+        enhancement_rule_id: Optional[UUID] = None,
     ) -> int:
+        rule = None
+        if enhancement_rule_id:
+            rule = self.enhancement_rule_repository.find_by_id(enhancement_rule_id, user_id)
+            if not rule:
+                raise ValueError(f"Enhancement rule with ID {enhancement_rule_id} not found")
+
         return self.transaction_repository.count_by_normalized_description(
             user_id=user_id,
             normalized_description=normalized_description,
@@ -416,6 +441,7 @@ class TransactionService:
             start_date=start_date,
             end_date=end_date,
             exclude_transfers=exclude_transfers,
+            rule=rule,
         )
 
     def count_by_category_id(

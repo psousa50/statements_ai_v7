@@ -75,8 +75,7 @@ function toStorageAmounts(
   amountType?: AmountType
 ): { min_amount?: number; max_amount?: number } {
   if (amountType === 'debit') {
-    const bothPositive =
-      (displayMin === undefined || displayMin >= 0) && (displayMax === undefined || displayMax >= 0)
+    const bothPositive = (displayMin === undefined || displayMin >= 0) && (displayMax === undefined || displayMax >= 0)
     if (bothPositive) {
       return {
         min_amount: displayMax !== undefined ? -displayMax : undefined,
@@ -527,11 +526,7 @@ export const EnhancementRuleModal: React.FC<EnhancementRuleModalProps> = ({
           <Stack direction="row" spacing={2}>
             <FormControl sx={{ minWidth: 120 }} size="small">
               <InputLabel>Type</InputLabel>
-              <Select
-                value={amountType}
-                label="Type"
-                onChange={(e) => setAmountType(e.target.value as AmountType)}
-              >
+              <Select value={amountType} label="Type" onChange={(e) => setAmountType(e.target.value as AmountType)}>
                 <MenuItem value="all">All</MenuItem>
                 <MenuItem value="debit">Debits</MenuItem>
                 <MenuItem value="credit">Credits</MenuItem>
@@ -558,7 +553,10 @@ export const EnhancementRuleModal: React.FC<EnhancementRuleModalProps> = ({
               value={displayMaxAmount ?? ''}
               onChange={(e) => setDisplayMaxAmount(e.target.value ? parseFloat(e.target.value) : undefined)}
               error={!!validationErrors.amount_range}
-              helperText={validationErrors.amount_range || `Only apply rule to ${amountType === 'debit' ? 'debits' : amountType === 'credit' ? 'credits' : 'transactions'} below this amount`}
+              helperText={
+                validationErrors.amount_range ||
+                `Only apply rule to ${amountType === 'debit' ? 'debits' : amountType === 'credit' ? 'credits' : 'transactions'} below this amount`
+              }
               inputProps={{ min: 0 }}
             />
           </Stack>

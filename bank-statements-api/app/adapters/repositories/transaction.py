@@ -542,13 +542,45 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         user_id: UUID,
         normalized_description: str,
         category_id: Optional[UUID],
+        account_id: Optional[UUID] = None,
+        start_date: Optional[date] = None,
+        end_date: Optional[date] = None,
+        exclude_transfers: Optional[bool] = None,
+        rule=None,
     ) -> int:
-        subquery = (
-            self.db_session.query(Transaction.id)
-            .filter(Transaction.user_id == user_id)
-            .filter(Transaction.normalized_description == normalized_description)
-            .subquery()
-        )
+        from app.domain.models.enhancement_rule import MatchType
+
+        subquery = self.db_session.query(Transaction.id).filter(Transaction.user_id == user_id)
+
+        if rule:
+            if rule.match_type == MatchType.EXACT:
+                subquery = subquery.filter(Transaction.normalized_description == rule.normalized_description_pattern)
+            elif rule.match_type == MatchType.PREFIX:
+                subquery = subquery.filter(Transaction.normalized_description.like(f"{rule.normalized_description_pattern}%"))
+            elif rule.match_type == MatchType.INFIX:
+                subquery = subquery.filter(Transaction.normalized_description.like(f"%{rule.normalized_description_pattern}%"))
+
+            if rule.min_amount is not None:
+                subquery = subquery.filter(Transaction.amount >= rule.min_amount)
+            if rule.max_amount is not None:
+                subquery = subquery.filter(Transaction.amount <= rule.max_amount)
+            if rule.start_date is not None:
+                subquery = subquery.filter(Transaction.date >= rule.start_date)
+            if rule.end_date is not None:
+                subquery = subquery.filter(Transaction.date <= rule.end_date)
+
+        subquery = subquery.filter(Transaction.normalized_description == normalized_description)
+
+        if account_id is not None:
+            subquery = subquery.filter(Transaction.account_id == account_id)
+        if start_date is not None:
+            subquery = subquery.filter(Transaction.date >= start_date)
+        if end_date is not None:
+            subquery = subquery.filter(Transaction.date <= end_date)
+        if exclude_transfers is not False:
+            subquery = subquery.filter(Transaction.counterparty_account_id.is_(None))
+
+        subquery = subquery.subquery()
 
         update_values = {
             "category_id": category_id,
@@ -572,22 +604,37 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         start_date: Optional[date] = None,
         end_date: Optional[date] = None,
         exclude_transfers: Optional[bool] = None,
+        rule=None,
     ) -> int:
-        query = (
-            self.db_session.query(func.count(Transaction.id))
-            .filter(Transaction.user_id == user_id)
-            .filter(Transaction.normalized_description == normalized_description)
-        )
+        from app.domain.models.enhancement_rule import MatchType
+
+        query = self.db_session.query(func.count(Transaction.id)).filter(Transaction.user_id == user_id)
+
+        if rule:
+            if rule.match_type == MatchType.EXACT:
+                query = query.filter(Transaction.normalized_description == rule.normalized_description_pattern)
+            elif rule.match_type == MatchType.PREFIX:
+                query = query.filter(Transaction.normalized_description.like(f"{rule.normalized_description_pattern}%"))
+            elif rule.match_type == MatchType.INFIX:
+                query = query.filter(Transaction.normalized_description.like(f"%{rule.normalized_description_pattern}%"))
+
+            if rule.min_amount is not None:
+                query = query.filter(Transaction.amount >= rule.min_amount)
+            if rule.max_amount is not None:
+                query = query.filter(Transaction.amount <= rule.max_amount)
+            if rule.start_date is not None:
+                query = query.filter(Transaction.date >= rule.start_date)
+            if rule.end_date is not None:
+                query = query.filter(Transaction.date <= rule.end_date)
+
+        query = query.filter(Transaction.normalized_description == normalized_description)
 
         if account_id is not None:
             query = query.filter(Transaction.account_id == account_id)
-
         if start_date is not None:
             query = query.filter(Transaction.date >= start_date)
-
         if end_date is not None:
             query = query.filter(Transaction.date <= end_date)
-
         if exclude_transfers is not False:
             query = query.filter(Transaction.counterparty_account_id.is_(None))
 
@@ -953,7 +1000,6 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
             return {}
 
         from sqlalchemy import literal, union_all
-        from sqlalchemy.dialects.postgresql import UUID as PGUUID
 
         from app.domain.models.enhancement_rule import MatchType
 

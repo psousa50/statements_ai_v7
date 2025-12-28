@@ -3,7 +3,12 @@ import { useSearchParams, useNavigate } from 'react-router-dom'
 import { useTransactions } from '../services/hooks/useTransactions'
 import { useCategories } from '../services/hooks/useCategories'
 import { useAccounts } from '../services/hooks/useAccounts'
-import { TransactionTable, TransactionSortField, TransactionSortDirection } from '../components/TransactionTable'
+import {
+  TransactionTable,
+  TransactionSortField,
+  TransactionSortDirection,
+  SimilarCountFilters,
+} from '../components/TransactionTable'
 import { TransactionFilters, CategorizationFilter } from '../components/TransactionFilters'
 import { TransactionModal } from '../components/TransactionModal'
 import { Pagination } from '../components/Pagination'
@@ -20,8 +25,7 @@ function convertAmountFiltersForApi(
     return {}
   }
 
-  const bothPositive =
-    (minAmount === undefined || minAmount >= 0) && (maxAmount === undefined || maxAmount >= 0)
+  const bothPositive = (minAmount === undefined || minAmount >= 0) && (maxAmount === undefined || maxAmount >= 0)
 
   if (transactionType === 'debit' && bothPositive) {
     return {
@@ -437,8 +441,12 @@ export const TransactionsPage = () => {
     fetchWithConvertedAmounts()
   }
 
-  const handleBulkCategorize = async (normalizedDescription: string, categoryId: string) => {
-    const result = await bulkUpdateCategory(normalizedDescription, categoryId)
+  const handleBulkCategorize = async (
+    normalizedDescription: string,
+    categoryId: string,
+    similarFilters: SimilarCountFilters
+  ) => {
+    const result = await bulkUpdateCategory(normalizedDescription, categoryId, similarFilters)
     if (result) {
       fetchWithConvertedAmounts()
     }
@@ -643,6 +651,7 @@ export const TransactionsPage = () => {
                 start_date: filters.start_date,
                 end_date: filters.end_date,
                 exclude_transfers: filters.exclude_transfers,
+                enhancement_rule_id: filters.enhancement_rule_id,
               }}
               onEdit={handleEditTransaction}
               onDelete={handleDeleteTransaction}

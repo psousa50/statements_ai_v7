@@ -61,6 +61,11 @@ export interface CategoryTimeSeriesResponse {
 export interface BulkUpdateTransactionsRequest {
   normalized_description: string
   category_id?: string
+  account_id?: string
+  start_date?: string
+  end_date?: string
+  exclude_transfers?: boolean
+  enhancement_rule_id?: string
 }
 
 export interface BulkUpdateTransactionsResponse {
@@ -74,6 +79,7 @@ export interface CountSimilarFilters {
   start_date?: string
   end_date?: string
   exclude_transfers?: boolean
+  enhancement_rule_id?: string
 }
 
 export interface CountSimilarResponse {
@@ -458,6 +464,9 @@ export const transactionClient: TransactionClient = {
     }
     if (filters.exclude_transfers !== undefined) {
       params.append('exclude_transfers', filters.exclude_transfers.toString())
+    }
+    if (filters.enhancement_rule_id) {
+      params.append('enhancement_rule_id', filters.enhancement_rule_id)
     }
     const response = await axios.get<CountSimilarResponse>(`${API_URL}/count-similar?${params.toString()}`)
     return response.data
