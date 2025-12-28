@@ -61,6 +61,7 @@ class EnhancementRuleManagementService:
 
         for rule in rules:
             rule.transaction_count = self._get_rule_transaction_count(rule)
+            rule.pending_transaction_count = self._get_rule_pending_count(rule)
 
         return {
             "rules": rules,
@@ -72,6 +73,7 @@ class EnhancementRuleManagementService:
 
         if rule:
             rule.transaction_count = self._get_rule_transaction_count(rule)
+            rule.pending_transaction_count = self._get_rule_pending_count(rule)
 
         return rule
 
@@ -264,6 +266,12 @@ class EnhancementRuleManagementService:
         try:
             is_unconfigured = not rule.category_id and not rule.counterparty_account_id
             return self.transaction_repository.count_matching_rule(rule, uncategorized_only=is_unconfigured)
+        except Exception:
+            return 0
+
+    def _get_rule_pending_count(self, rule: EnhancementRule) -> int:
+        try:
+            return self.transaction_repository.count_pending_for_rule(rule)
         except Exception:
             return 0
 

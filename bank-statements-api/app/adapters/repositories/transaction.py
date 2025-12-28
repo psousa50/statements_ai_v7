@@ -38,9 +38,7 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
 
     def get_by_id(self, transaction_id: UUID, user_id: UUID) -> Optional[Transaction]:
         return (
-            self.db_session.query(Transaction)
-            .filter(Transaction.id == transaction_id, Transaction.user_id == user_id)
-            .first()
+            self.db_session.query(Transaction).filter(Transaction.id == transaction_id, Transaction.user_id == user_id).first()
         )
 
     def get_all(self, user_id: UUID) -> List[Transaction]:
@@ -157,13 +155,10 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
             query = query.filter(and_(*filters))
 
         # Get total count and total amount in a single query
-        count_sum_query = (
-            self.db_session.query(
-                func.count(Transaction.id),
-                func.coalesce(func.sum(Transaction.amount), Decimal("0")),
-            )
-            .filter(Transaction.user_id == user_id)
-        )
+        count_sum_query = self.db_session.query(
+            func.count(Transaction.id),
+            func.coalesce(func.sum(Transaction.amount), Decimal("0")),
+        ).filter(Transaction.user_id == user_id)
         if filters:
             count_sum_query = count_sum_query.filter(and_(*filters))
         total, total_amount = count_sum_query.one()
@@ -216,14 +211,11 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         exclude_uncategorized: Optional[bool] = None,
         transaction_type: Optional[str] = None,
     ) -> Dict[Optional[UUID], Dict[str, Decimal]]:
-        query = (
-            self.db_session.query(
-                Transaction.category_id,
-                func.sum(-Transaction.amount).label("total_amount"),
-                func.count(Transaction.id).label("transaction_count"),
-            )
-            .filter(Transaction.user_id == user_id)
-        )
+        query = self.db_session.query(
+            Transaction.category_id,
+            func.sum(-Transaction.amount).label("total_amount"),
+            func.count(Transaction.id).label("transaction_count"),
+        ).filter(Transaction.user_id == user_id)
 
         # Apply the same filters as get_paginated
         filters = []
@@ -319,15 +311,12 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         else:
             period_expr = func.to_char(Transaction.date, "IYYY-IW")
 
-        query = (
-            self.db_session.query(
-                period_expr.label("period"),
-                Transaction.category_id,
-                func.sum(-Transaction.amount).label("total_amount"),
-                func.count(Transaction.id).label("transaction_count"),
-            )
-            .filter(Transaction.user_id == user_id)
-        )
+        query = self.db_session.query(
+            period_expr.label("period"),
+            Transaction.category_id,
+            func.sum(-Transaction.amount).label("total_amount"),
+            func.count(Transaction.id).label("transaction_count"),
+        ).filter(Transaction.user_id == user_id)
 
         filters = []
 
@@ -807,6 +796,44 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
 
         if uncategorized_only:
             query = query.filter(Transaction.category_id.is_(None))
+
+        result = query.scalar()
+        return int(result) if result is not None else 0
+
+    def count_pending_for_rule(self, rule) -> int:
+        from app.domain.models.enhancement_rule import MatchType
+
+        if rule.category_id is None:
+            return 0
+
+        query = self.db_session.query(func.count(Transaction.id)).filter(Transaction.user_id == rule.user_id)
+
+        if rule.match_type == MatchType.EXACT:
+            query = query.filter(Transaction.normalized_description == rule.normalized_description_pattern)
+        elif rule.match_type == MatchType.PREFIX:
+            query = query.filter(Transaction.normalized_description.like(f"{rule.normalized_description_pattern}%"))
+        elif rule.match_type == MatchType.INFIX:
+            query = query.filter(Transaction.normalized_description.like(f"%{rule.normalized_description_pattern}%"))
+
+        if rule.min_amount is not None:
+            query = query.filter(Transaction.amount >= rule.min_amount)
+        if rule.max_amount is not None:
+            query = query.filter(Transaction.amount <= rule.max_amount)
+
+        if rule.start_date is not None:
+            query = query.filter(Transaction.date >= rule.start_date)
+        if rule.end_date is not None:
+            query = query.filter(Transaction.date <= rule.end_date)
+
+        query = query.filter(
+            or_(
+                Transaction.category_id.is_(None),
+                and_(
+                    Transaction.category_id != rule.category_id,
+                    Transaction.categorization_status == CategorizationStatus.RULE_BASED,
+                ),
+            )
+        )
 
         result = query.scalar()
         return int(result) if result is not None else 0

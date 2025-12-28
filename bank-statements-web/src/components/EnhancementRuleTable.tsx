@@ -368,7 +368,16 @@ export const EnhancementRuleTable: React.FC<EnhancementRuleTableProps> = ({
                 )}
               </TableCell>
               <TableCell align="right">
-                <Typography variant="body2">{rule.transaction_count ?? 0}</Typography>
+                {rule.category_id ? (
+                  <Typography
+                    variant="body2"
+                    color={(rule.pending_transaction_count ?? 0) === 0 ? 'success.main' : 'text.primary'}
+                  >
+                    {rule.pending_transaction_count ?? 0} / {rule.transaction_count ?? 0}
+                  </Typography>
+                ) : (
+                  <Typography variant="body2">{rule.transaction_count ?? 0}</Typography>
+                )}
               </TableCell>
               <TableCell>
                 <Chip

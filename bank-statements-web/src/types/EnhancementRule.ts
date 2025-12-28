@@ -33,6 +33,7 @@ export interface EnhancementRule {
     account_number?: string
   }
   transaction_count?: number
+  pending_transaction_count?: number
   // AI suggestion fields
   ai_suggested_category_id?: string
   ai_category_confidence?: number

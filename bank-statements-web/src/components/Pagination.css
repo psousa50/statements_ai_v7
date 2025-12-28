@@ -56,7 +56,6 @@
   justify-content: center;
 }
 
-
 .pagination-button:hover:not(:disabled) {
   background: var(--bg-tertiary);
   border-color: var(--text-accent);

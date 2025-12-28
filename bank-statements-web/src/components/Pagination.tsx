@@ -68,7 +68,11 @@ export const Pagination = ({
       </div>
 
       <div className="pagination-controls">
-        <button onClick={() => onPageChange(currentPage - 1)} disabled={currentPage <= 1} className="pagination-button pagination-arrow">
+        <button
+          onClick={() => onPageChange(currentPage - 1)}
+          disabled={currentPage <= 1}
+          className="pagination-button pagination-arrow"
+        >
           <ChevronLeftIcon fontSize="small" />
         </button>
 
