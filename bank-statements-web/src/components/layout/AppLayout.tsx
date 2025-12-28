@@ -49,11 +49,7 @@ export const AppLayout = () => {
           Menu
         </Typography>
         {!usePermanentDrawer && (
-          <IconButton
-            onClick={handleDrawerToggle}
-            size="small"
-            aria-label="close menu"
-          >
+          <IconButton onClick={handleDrawerToggle} size="small" aria-label="close menu">
             <CloseIcon />
           </IconButton>
         )}
@@ -90,10 +86,7 @@ export const AppLayout = () => {
         </Toolbar>
       </AppBar>
 
-      <Box
-        component="nav"
-        sx={{ width: usePermanentDrawer ? drawerWidth : 0, flexShrink: 0 }}
-      >
+      <Box component="nav" sx={{ width: usePermanentDrawer ? drawerWidth : 0, flexShrink: 0 }}>
         {usePermanentDrawer ? (
           <Drawer
             variant="permanent"
