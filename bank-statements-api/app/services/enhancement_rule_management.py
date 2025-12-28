@@ -166,6 +166,14 @@ class EnhancementRuleManagementService:
         rule.end_date = end_date
         rule.source = source
 
+        if category_id is not None:
+            rule.ai_suggested_category_id = None
+            rule.ai_category_confidence = None
+
+        if counterparty_account_id is not None:
+            rule.ai_suggested_counterparty_id = None
+            rule.ai_counterparty_confidence = None
+
         updated_rule = self.enhancement_rule_repository.save(rule)
 
         if apply_to_existing:
