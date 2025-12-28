@@ -1,3 +1,5 @@
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft'
+import ChevronRightIcon from '@mui/icons-material/ChevronRight'
 import './Pagination.css'
 
 interface PaginationProps {
@@ -66,8 +68,8 @@ export const Pagination = ({
       </div>
 
       <div className="pagination-controls">
-        <button onClick={() => onPageChange(currentPage - 1)} disabled={currentPage <= 1} className="pagination-button">
-          ←
+        <button onClick={() => onPageChange(currentPage - 1)} disabled={currentPage <= 1} className="pagination-button pagination-arrow">
+          <ChevronLeftIcon fontSize="small" />
         </button>
 
         {getPageNumbers().map((page) => (
@@ -83,9 +85,9 @@ export const Pagination = ({
         <button
           onClick={() => onPageChange(currentPage + 1)}
           disabled={currentPage >= totalPages}
-          className="pagination-button"
+          className="pagination-button pagination-arrow"
         >
-          →
+          <ChevronRightIcon fontSize="small" />
         </button>
       </div>
     </div>

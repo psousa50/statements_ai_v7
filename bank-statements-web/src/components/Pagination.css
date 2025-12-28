@@ -43,14 +43,19 @@
   background: var(--bg-primary);
   border: 1px solid var(--border-primary);
   border-radius: 4px;
-  padding: 8px 12px;
+  padding: 0 12px;
+  margin: 0;
+  height: 36px;
   font-size: 0.875rem;
   color: var(--text-primary);
   cursor: pointer;
   transition: all 0.2s;
   min-width: 40px;
-  text-align: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
+
 
 .pagination-button:hover:not(:disabled) {
   background: var(--bg-tertiary);
@@ -72,6 +77,14 @@
   background: var(--button-primary-hover);
 }
 
+.pagination-arrow {
+  padding: 0 8px;
+}
+
+.pagination-arrow svg {
+  display: block;
+}
+
 /* Responsive Design for Pagination */
 @media (max-width: 768px) {
   .pagination-container {
@@ -91,7 +104,8 @@
   }
 
   .pagination-button {
-    padding: 6px 10px;
+    padding: 0 10px;
+    height: 32px;
     font-size: 0.8rem;
     min-width: 36px;
   }
