@@ -117,7 +117,7 @@ export const TransactionFilters = ({
             startDate={startDate}
             endDate={endDate}
             onChange={onDateRangeChange}
-            defaultPeriodType="month"
+            defaultPeriodType="all"
           />
         </div>
       )}
