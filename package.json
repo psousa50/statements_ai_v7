@@ -23,7 +23,7 @@
 
     "========== TESTING ==========": "",
     "test:db:up": "docker-compose --profile test up test-db -d",
-    "test:db:down": "docker-compose --profile test down",
+    "test:db:down": "docker-compose stop test-db && docker-compose rm -f test-db",
     "test:db:migrate": "cd bank-statements-api && DATABASE_URL=postgresql+psycopg://postgres:postgres@localhost:15432/bank_statements_test uv run alembic upgrade head",
     "test": "pnpm run test:unit && pnpm run test:integration && pnpm run test:web",
     "test:unit": "cd bank-statements-api && uv run pytest tests/unit tests/api tests/services -v",
