@@ -1,16 +1,21 @@
 import React from 'react'
-import { Box, Card, CardContent, Typography, Stack, Chip } from '@mui/material'
-import { StatementAnalysisResponse } from '../../api/StatementClient'
+import { Box, Card, CardContent, Typography, Stack, Chip, Skeleton } from '@mui/material'
+import { StatementAnalysisResponse, StatisticsPreviewResponse } from '../../api/StatementClient'
 
 interface AnalysisSummaryProps {
   analysisData: StatementAnalysisResponse
+  previewStats?: StatisticsPreviewResponse | null
+  isLoadingPreview?: boolean
 }
 
-export const AnalysisSummary: React.FC<AnalysisSummaryProps> = ({ analysisData }) => {
+export const AnalysisSummary: React.FC<AnalysisSummaryProps> = ({ analysisData, previewStats, isLoadingPreview }) => {
+  const stats = previewStats || analysisData
+  const isFiltered = !!previewStats
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: 'EUR', // You might want to make this configurable
+      currency: 'EUR',
     }).format(amount)
   }
 
@@ -24,13 +29,21 @@ export const AnalysisSummary: React.FC<AnalysisSummaryProps> = ({ analysisData }
     return `${dateRange[0]} to ${dateRange[1]}`
   }
 
+  const renderValue = (value: React.ReactNode) => {
+    if (isLoadingPreview) {
+      return <Skeleton width={60} height={24} />
+    }
+    return value
+  }
+
   return (
     <Box>
       <Typography variant="h6" gutterBottom>
         Transaction Analysis Summary
       </Typography>
 
-      {/* All cards in one row */}
+      {isFiltered && <Chip size="small" label="Filtered preview" color="info" variant="outlined" sx={{ mb: 1 }} />}
+
       <Box
         sx={{
           display: 'grid',
@@ -38,8 +51,7 @@ export const AnalysisSummary: React.FC<AnalysisSummaryProps> = ({ analysisData }
           gap: 2,
         }}
       >
-        {/* File & Date Info */}
-        <Card variant="outlined">
+        <Card variant="outlined" sx={isFiltered ? { borderColor: 'info.main' } : undefined}>
           <CardContent>
             <Typography color="textSecondary" gutterBottom>
               File Information
@@ -51,52 +63,58 @@ export const AnalysisSummary: React.FC<AnalysisSummaryProps> = ({ analysisData }
                   {analysisData.file_type}
                 </Typography>
               </Box>
-              <Box display="flex" justifyContent="space-between">
+              <Box display="flex" justifyContent="space-between" alignItems="center">
                 <Typography variant="body2">Date Range:</Typography>
-                <Typography variant="body2" fontWeight="bold">
-                  {formatDateRange(analysisData.date_range)}
-                </Typography>
+                {renderValue(
+                  <Typography variant="body2" fontWeight="bold">
+                    {formatDateRange(stats.date_range)}
+                  </Typography>
+                )}
               </Box>
             </Stack>
           </CardContent>
         </Card>
 
-        {/* Transaction Counts */}
-        <Card variant="outlined">
+        <Card variant="outlined" sx={isFiltered ? { borderColor: 'info.main' } : undefined}>
           <CardContent>
             <Typography color="textSecondary" gutterBottom>
               Transaction Counts
             </Typography>
             <Stack spacing={1}>
-              <Box display="flex" justifyContent="space-between">
+              <Box display="flex" justifyContent="space-between" alignItems="center">
                 <Typography variant="body2">Total:</Typography>
-                <Typography variant="body2" fontWeight="bold">
-                  {analysisData.total_transactions}
-                </Typography>
+                {renderValue(
+                  <Typography variant="body2" fontWeight="bold">
+                    {stats.total_transactions}
+                  </Typography>
+                )}
               </Box>
-              <Box display="flex" justifyContent="space-between">
+              <Box display="flex" justifyContent="space-between" alignItems="center">
                 <Typography variant="body2">Unique:</Typography>
-                <Typography variant="body2" fontWeight="bold">
-                  {analysisData.unique_transactions}
-                </Typography>
+                {renderValue(
+                  <Typography variant="body2" fontWeight="bold">
+                    {stats.unique_transactions}
+                  </Typography>
+                )}
               </Box>
               <Box display="flex" justifyContent="space-between" alignItems="center">
                 <Chip
                   size="small"
                   label="Duplicates"
-                  color={analysisData.duplicate_transactions > 0 ? 'warning' : 'success'}
+                  color={stats.duplicate_transactions > 0 ? 'warning' : 'success'}
                   variant="filled"
                 />
-                <Typography variant="body2" fontWeight="bold">
-                  {analysisData.duplicate_transactions}
-                </Typography>
+                {renderValue(
+                  <Typography variant="body2" fontWeight="bold">
+                    {stats.duplicate_transactions}
+                  </Typography>
+                )}
               </Box>
             </Stack>
           </CardContent>
         </Card>
 
-        {/* Amount Summary */}
-        <Card variant="outlined">
+        <Card variant="outlined" sx={isFiltered ? { borderColor: 'info.main' } : undefined}>
           <CardContent>
             <Typography color="textSecondary" gutterBottom>
               Amount Summary
@@ -106,29 +124,35 @@ export const AnalysisSummary: React.FC<AnalysisSummaryProps> = ({ analysisData }
                 <Typography variant="body2" color="textSecondary">
                   Net Total
                 </Typography>
-                <Typography
-                  variant="h6"
-                  color={analysisData.total_amount >= 0 ? 'success.main' : 'error.main'}
-                  fontWeight="bold"
-                >
-                  {formatCurrency(analysisData.total_amount)}
-                </Typography>
+                {renderValue(
+                  <Typography
+                    variant="h6"
+                    color={stats.total_amount >= 0 ? 'success.main' : 'error.main'}
+                    fontWeight="bold"
+                  >
+                    {formatCurrency(stats.total_amount)}
+                  </Typography>
+                )}
               </Box>
-              <Box display="flex" justifyContent="space-between">
+              <Box display="flex" justifyContent="space-between" alignItems="center">
                 <Typography variant="body2" color="success.main">
                   Credits:
                 </Typography>
-                <Typography variant="body2" fontWeight="bold" color="success.main">
-                  {formatCurrency(analysisData.total_credit)}
-                </Typography>
+                {renderValue(
+                  <Typography variant="body2" fontWeight="bold" color="success.main">
+                    {formatCurrency(stats.total_credit)}
+                  </Typography>
+                )}
               </Box>
-              <Box display="flex" justifyContent="space-between">
+              <Box display="flex" justifyContent="space-between" alignItems="center">
                 <Typography variant="body2" color="error.main">
                   Debits:
                 </Typography>
-                <Typography variant="body2" fontWeight="bold" color="error.main">
-                  {formatCurrency(Math.abs(analysisData.total_debit))}
-                </Typography>
+                {renderValue(
+                  <Typography variant="body2" fontWeight="bold" color="error.main">
+                    {formatCurrency(Math.abs(stats.total_debit))}
+                  </Typography>
+                )}
               </Box>
             </Stack>
           </CardContent>

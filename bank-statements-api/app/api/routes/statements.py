@@ -8,15 +8,23 @@ from app.api.routes.auth import require_current_user
 from app.api.schemas import (
     BackgroundJobInfoResponse,
     FilterConditionRequest,
+    FilterPreviewResponse,
     JobStatusResponse,
     StatementAnalysisResponse,
     StatementResponse,
     StatementUploadRequest,
     StatementUploadResponse,
+    StatisticsPreviewRequest,
+    StatisticsPreviewResponse,
 )
 from app.core.config import settings
 from app.core.dependencies import InternalDependencies
-from app.domain.dto.statement_processing import FilterOperator
+from app.domain.dto.statement_processing import (
+    FilterCondition,
+    FilterOperator,
+    LogicalOperator,
+    RowFilter,
+)
 from app.domain.models.user import User
 from app.logging.utils import log_exception
 
@@ -92,6 +100,70 @@ def register_statement_routes(
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"Error analyzing file: {str(e)}",
+            )
+
+    @router.post("/{uploaded_file_id}/preview-statistics", response_model=StatisticsPreviewResponse)
+    async def preview_statistics(
+        uploaded_file_id: str,
+        preview_request: StatisticsPreviewRequest,
+        internal: InternalDependencies = Depends(provide_dependencies),
+        current_user: User = Depends(require_current_user),
+    ):
+        try:
+            row_filter = None
+            if preview_request.row_filters and preview_request.row_filters.conditions:
+                filter_conditions = [
+                    FilterCondition(
+                        column_name=c.column_name,
+                        operator=c.operator,
+                        value=c.value,
+                        case_sensitive=c.case_sensitive,
+                    )
+                    for c in preview_request.row_filters.conditions
+                ]
+                row_filter = RowFilter(
+                    conditions=filter_conditions,
+                    logical_operator=LogicalOperator(preview_request.row_filters.logical_operator.value),
+                )
+
+            result = internal.statement_analyzer_service.preview_statistics(
+                uploaded_file_id=uploaded_file_id,
+                column_mapping=preview_request.column_mapping,
+                header_row_index=preview_request.header_row_index,
+                data_start_row_index=preview_request.data_start_row_index,
+                row_filter=row_filter,
+                account_id=preview_request.account_id,
+            )
+
+            filter_preview_response = None
+            if result.filter_preview:
+                filter_preview_response = FilterPreviewResponse(
+                    total_rows=result.filter_preview.total_rows,
+                    included_rows=result.filter_preview.included_rows,
+                    excluded_rows=result.filter_preview.excluded_rows,
+                    included_row_indices=result.filter_preview.included_row_indices,
+                    excluded_row_indices=result.filter_preview.excluded_row_indices,
+                )
+
+            return StatisticsPreviewResponse(
+                total_transactions=result.total_transactions,
+                unique_transactions=result.unique_transactions,
+                duplicate_transactions=result.duplicate_transactions,
+                date_range=result.date_range,
+                total_amount=result.total_amount,
+                total_debit=result.total_debit,
+                total_credit=result.total_credit,
+                filter_preview=filter_preview_response,
+            )
+        except ValueError as e:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=str(e),
+            )
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Error previewing statistics: {str(e)}",
             )
 
     @router.post("/upload", response_model=StatementUploadResponse)

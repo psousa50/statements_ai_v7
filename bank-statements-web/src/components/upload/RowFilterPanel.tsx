@@ -1,6 +1,17 @@
 import React, { useState } from 'react'
-import { Box, Typography, Paper, Switch, FormControlLabel, Button, Alert, Chip, Divider } from '@mui/material'
-import { Add as AddIcon, FilterList as FilterIcon } from '@mui/icons-material'
+import {
+  Box,
+  Typography,
+  Paper,
+  Switch,
+  FormControlLabel,
+  Button,
+  Alert,
+  Chip,
+  Divider,
+  CircularProgress,
+} from '@mui/material'
+import { Add as AddIcon, FilterList as FilterIcon, Refresh as RefreshIcon } from '@mui/icons-material'
 import { FilterConditionRow } from './FilterConditionRow'
 
 import { FilterOperator, LogicalOperator, FilterCondition, RowFilter } from '../../api/StatementClient'
@@ -27,6 +38,9 @@ interface RowFilterPanelProps {
   filterPreview?: FilterPreview | null
   suggestedFilters?: FilterCondition[]
   savedRowFilters?: FilterCondition[]
+  onUpdatePreview?: () => void
+  onClearPreview?: () => void
+  isLoadingPreview?: boolean
 }
 
 export const RowFilterPanel: React.FC<RowFilterPanelProps> = ({
@@ -39,6 +53,9 @@ export const RowFilterPanel: React.FC<RowFilterPanelProps> = ({
   filterPreview,
   suggestedFilters = [],
   savedRowFilters = [],
+  onUpdatePreview,
+  onClearPreview,
+  isLoadingPreview = false,
 }) => {
   const [isEnabled, setIsEnabled] = useState(!!rowFilter)
   const [internalFilter, setInternalFilter] = useState<RowFilter>(() => {
@@ -52,12 +69,11 @@ export const RowFilterPanel: React.FC<RowFilterPanelProps> = ({
     if (rowFilter) {
       return rowFilter
     }
-    // Default filter
-    const defaultColumn = 'Column 1' // Will be updated when availableColumns is ready
+    // Default filter with empty column - user must select a column
     return {
       conditions: [
         {
-          column_name: defaultColumn,
+          column_name: '',
           operator: FilterOperator.CONTAINS,
           value: '',
           case_sensitive: false,
@@ -91,15 +107,18 @@ export const RowFilterPanel: React.FC<RowFilterPanelProps> = ({
     }))
   }, [sampleData, headerRowIndex, columnMapping])
 
+  const hasValidConditions = internalFilter.conditions.some((c) => c.column_name && c.column_name.trim() !== '')
+
   const handleToggleFilter = (enabled: boolean) => {
     setIsEnabled(enabled)
-    // The useEffect above will handle notifying the parent
+    if (!enabled && onClearPreview) {
+      onClearPreview()
+    }
   }
 
   const handleAddCondition = () => {
-    const defaultColumn = availableColumns.length > 0 ? availableColumns[0].name : 'Column 1'
     const newCondition: FilterCondition = {
-      column_name: defaultColumn,
+      column_name: '',
       operator: FilterOperator.CONTAINS,
       value: '',
       case_sensitive: false,
@@ -266,22 +285,23 @@ export const RowFilterPanel: React.FC<RowFilterPanelProps> = ({
               ))}
             </Box>
 
-            {/* Add Condition Button */}
-            <Button
-              startIcon={<AddIcon />}
-              onClick={handleAddCondition}
-              variant="outlined"
-              size="medium"
-              sx={{
-                mt: 1,
-                '&:hover': {
-                  backgroundColor: 'primary.light',
-                  borderColor: 'primary.main',
-                },
-              }}
-            >
-              Add Filter Condition
-            </Button>
+            {/* Buttons */}
+            <Box sx={{ display: 'flex', gap: 2, mt: 1 }}>
+              <Button startIcon={<AddIcon />} onClick={handleAddCondition} variant="outlined" size="medium">
+                Add Filter Condition
+              </Button>
+              {onUpdatePreview && (
+                <Button
+                  startIcon={isLoadingPreview ? <CircularProgress size={16} /> : <RefreshIcon />}
+                  onClick={onUpdatePreview}
+                  variant="contained"
+                  size="medium"
+                  disabled={!hasValidConditions || isLoadingPreview}
+                >
+                  {isLoadingPreview ? 'Updating...' : 'Update Stats'}
+                </Button>
+              )}
+            </Box>
           </Box>
         </>
       )}

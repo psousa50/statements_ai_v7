@@ -70,6 +70,33 @@ export interface StatementUploadRequest {
   row_filters?: RowFilter | null
 }
 
+export interface FilterPreviewResponse {
+  total_rows: number
+  included_rows: number
+  excluded_rows: number
+  included_row_indices: number[]
+  excluded_row_indices: number[]
+}
+
+export interface StatisticsPreviewRequest {
+  column_mapping: Record<string, string>
+  header_row_index: number
+  data_start_row_index: number
+  row_filters?: RowFilter | null
+  account_id?: string
+}
+
+export interface StatisticsPreviewResponse {
+  total_transactions: number
+  unique_transactions: number
+  duplicate_transactions: number
+  date_range: [string, string]
+  total_amount: number
+  total_debit: number
+  total_credit: number
+  filter_preview?: FilterPreviewResponse
+}
+
 export interface StatementUploadResponse {
   uploaded_file_id: string
   transactions_saved: number
@@ -110,6 +137,7 @@ export interface StatementResponse {
 export interface StatementClient {
   analyzeStatement: (file: File) => Promise<StatementAnalysisResponse>
   uploadStatement: (data: StatementUploadRequest) => Promise<StatementUploadResponse>
+  previewStatistics: (uploadedFileId: string, data: StatisticsPreviewRequest) => Promise<StatisticsPreviewResponse>
   listStatements: () => Promise<StatementResponse[]>
   deleteStatement: (statementId: string) => Promise<{ message: string }>
 }
@@ -129,6 +157,17 @@ export const statementClient: StatementClient = {
 
   uploadStatement: async (data: StatementUploadRequest): Promise<StatementUploadResponse> => {
     const response = await axios.post<StatementUploadResponse>(`${BASE_URL}/api/v1/statements/upload`, data)
+    return response.data
+  },
+
+  previewStatistics: async (
+    uploadedFileId: string,
+    data: StatisticsPreviewRequest
+  ): Promise<StatisticsPreviewResponse> => {
+    const response = await axios.post<StatisticsPreviewResponse>(
+      `${BASE_URL}/api/v1/statements/${uploadedFileId}/preview-statistics`,
+      data
+    )
     return response.data
   },
 

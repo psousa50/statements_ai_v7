@@ -304,6 +304,27 @@ class StatementUploadRequest(BaseModel):
     row_filters: Optional[RowFilterRequest] = None
 
 
+class StatisticsPreviewRequest(BaseModel):
+    column_mapping: Dict[str, str]
+    header_row_index: int
+    data_start_row_index: int
+    row_filters: Optional[RowFilterRequest] = None
+    account_id: Optional[str] = None
+
+
+class StatisticsPreviewResponse(BaseModel):
+    total_transactions: int
+    unique_transactions: int
+    duplicate_transactions: int
+    date_range: Tuple[str, str]
+    total_amount: float
+    total_debit: float
+    total_credit: float
+    filter_preview: Optional[FilterPreviewResponse] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class BackgroundJobInfoResponse(BaseModel):
     job_id: str
     status: str

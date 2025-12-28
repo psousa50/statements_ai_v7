@@ -185,3 +185,25 @@ class FilterPreview:
         self.excluded_rows = excluded_rows
         self.included_row_indices = included_row_indices
         self.excluded_row_indices = excluded_row_indices
+
+
+class StatisticsPreviewDTO:
+    def __init__(
+        self,
+        total_transactions: int,
+        unique_transactions: int,
+        duplicate_transactions: int,
+        date_range: Tuple[str, str],
+        total_amount: float,
+        total_debit: float,
+        total_credit: float,
+        filter_preview: Optional[FilterPreview] = None,
+    ):
+        self.total_transactions = total_transactions
+        self.unique_transactions = unique_transactions
+        self.duplicate_transactions = duplicate_transactions
+        self.date_range = date_range
+        self.total_amount = total_amount
+        self.total_debit = total_debit
+        self.total_credit = total_credit
+        self.filter_preview = filter_preview

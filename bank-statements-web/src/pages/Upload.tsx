@@ -1,8 +1,8 @@
-import React, { useState } from 'react'
+import React, { useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Box, Container, Paper, Snackbar, Typography, Alert } from '@mui/material'
 import { defaultApiClient } from '../api/createApiClient'
-import { StatementAnalysisResponse } from '../api/StatementClient'
+import { StatementAnalysisResponse, StatisticsPreviewResponse } from '../api/StatementClient'
 import { FileUploadZone } from '../components/upload/FileUploadZone'
 import { AnalysisSummary } from '../components/upload/AnalysisSummary'
 import { ColumnMappingTable } from '../components/upload/ColumnMappingTable'
@@ -32,6 +32,8 @@ export const Upload: React.FC = () => {
   const [dataStartRowIndex, setDataStartRowIndex] = useState(1)
   const [rowFilter, setRowFilter] = useState<RowFilter | null>(null)
   const [filterPreview, setFilterPreview] = useState<FilterPreview | null>(null)
+  const [previewStats, setPreviewStats] = useState<StatisticsPreviewResponse | null>(null)
+  const [isLoadingPreview, setIsLoadingPreview] = useState(false)
 
   // State for notifications
   const [notification, setNotification] = useState<{
@@ -87,6 +89,51 @@ export const Upload: React.FC = () => {
 
     return !!columnMapping.date && (hasAmount || hasDebitAndCredit) && !!columnMapping.description && !!selectedAccount
   }, [columnMapping, selectedAccount])
+
+  const handleUpdatePreview = useCallback(async () => {
+    if (!analysisResult || !rowFilter?.conditions?.length) {
+      setPreviewStats(null)
+      setFilterPreview(null)
+      return
+    }
+
+    const validConditions = rowFilter.conditions.filter((c) => c.column_name && c.column_name.trim() !== '')
+    if (validConditions.length === 0) {
+      setPreviewStats(null)
+      setFilterPreview(null)
+      return
+    }
+
+    setIsLoadingPreview(true)
+    try {
+      const result = await defaultApiClient.statements.previewStatistics(analysisResult.uploaded_file_id, {
+        column_mapping: columnMapping,
+        header_row_index: headerRowIndex,
+        data_start_row_index: dataStartRowIndex,
+        row_filters: { ...rowFilter, conditions: validConditions },
+        account_id: selectedAccount || undefined,
+      })
+      setPreviewStats(result)
+      if (result.filter_preview) {
+        setFilterPreview({
+          total_rows: result.filter_preview.total_rows,
+          included_rows: result.filter_preview.included_rows,
+          excluded_rows: result.filter_preview.excluded_rows,
+          included_row_indices: result.filter_preview.included_row_indices,
+          excluded_row_indices: result.filter_preview.excluded_row_indices,
+        })
+      }
+    } catch (error) {
+      console.error('Error previewing statistics:', error)
+    } finally {
+      setIsLoadingPreview(false)
+    }
+  }, [analysisResult, rowFilter, columnMapping, headerRowIndex, dataStartRowIndex, selectedAccount])
+
+  const handleClearPreview = useCallback(() => {
+    setPreviewStats(null)
+    setFilterPreview(null)
+  }, [])
 
   // Handle finalize upload
   const handleFinalize = async () => {
@@ -147,6 +194,7 @@ export const Upload: React.FC = () => {
     })
     setRowFilter(null)
     setFilterPreview(null)
+    setPreviewStats(null)
     // Don't reset the source selection to maintain user preference
   }
 
@@ -176,7 +224,11 @@ export const Upload: React.FC = () => {
                 </Paper>
 
                 <Paper variant="outlined" sx={{ p: 3, flex: 1 }}>
-                  <AnalysisSummary analysisData={analysisResult} />
+                  <AnalysisSummary
+                    analysisData={analysisResult}
+                    previewStats={previewStats}
+                    isLoadingPreview={isLoadingPreview}
+                  />
                 </Paper>
               </Box>
 
@@ -200,6 +252,9 @@ export const Upload: React.FC = () => {
                 filterPreview={filterPreview}
                 suggestedFilters={analysisResult.suggested_filters}
                 savedRowFilters={analysisResult.saved_row_filters}
+                onUpdatePreview={handleUpdatePreview}
+                onClearPreview={handleClearPreview}
+                isLoadingPreview={isLoadingPreview}
               />
 
               <ValidationMessages

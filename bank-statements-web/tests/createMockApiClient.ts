@@ -8,6 +8,7 @@ import {
   StatementClient,
   StatementUploadResponse,
   StatementResponse,
+  StatisticsPreviewResponse,
 } from '@/api/StatementClient'
 import {
   TransactionClient,
@@ -255,6 +256,16 @@ const defaultStatementClient: StatementClient = {
       match_rate_percentage: 50,
       processing_time_ms: 100,
     } as StatementUploadResponse),
+  previewStatistics: () =>
+    Promise.resolve({
+      total_transactions: 2,
+      unique_transactions: 2,
+      duplicate_transactions: 0,
+      date_range: ['2023-01-01', '2023-01-02'],
+      total_amount: 300,
+      total_debit: 0,
+      total_credit: 300,
+    } as StatisticsPreviewResponse),
   listStatements: () => Promise.resolve([] as StatementResponse[]),
   deleteStatement: () => Promise.resolve({ message: 'Statement deleted successfully' }),
 }
