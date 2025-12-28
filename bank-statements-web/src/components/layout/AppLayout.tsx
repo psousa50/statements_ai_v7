@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Outlet } from 'react-router-dom'
 import {
   Box,
@@ -13,15 +13,30 @@ import {
   useTheme,
 } from '@mui/material'
 import MenuIcon from '@mui/icons-material/Menu'
+import CloseIcon from '@mui/icons-material/Close'
 import { AppNavigation } from './AppNavigation'
 import { UserMenu } from './UserMenu'
 
 const drawerWidth = 240
 
+// Detect touch device - iPads and tablets should use toggleable drawer
+const isTouchDevice = () => {
+  if (typeof window === 'undefined') return false
+  return 'ontouchstart' in window || navigator.maxTouchPoints > 0
+}
+
 export const AppLayout = () => {
   const theme = useTheme()
-  const isDesktop = useMediaQuery(theme.breakpoints.up('lg'))
+  const isLargeScreen = useMediaQuery(theme.breakpoints.up('lg'))
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [isTouch, setIsTouch] = useState(false)
+
+  useEffect(() => {
+    setIsTouch(isTouchDevice())
+  }, [])
+
+  // On touch devices (iPad), always use temporary drawer regardless of screen size
+  const usePermanentDrawer = isLargeScreen && !isTouch
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen)
@@ -29,13 +44,22 @@ export const AppLayout = () => {
 
   const drawerContent = (
     <>
-      <Toolbar>
+      <Toolbar sx={{ justifyContent: 'space-between' }}>
         <Typography variant="h6" noWrap component="div">
           Menu
         </Typography>
+        {!usePermanentDrawer && (
+          <IconButton
+            onClick={handleDrawerToggle}
+            size="small"
+            aria-label="close menu"
+          >
+            <CloseIcon />
+          </IconButton>
+        )}
       </Toolbar>
       <Divider />
-      <AppNavigation onNavigate={() => !isDesktop && setMobileOpen(false)} />
+      <AppNavigation onNavigate={() => !usePermanentDrawer && setMobileOpen(false)} />
     </>
   )
 
@@ -45,49 +69,54 @@ export const AppLayout = () => {
       <AppBar
         position="fixed"
         sx={{
-          left: { lg: drawerWidth },
-          width: { lg: `calc(100% - ${drawerWidth}px)` },
+          left: usePermanentDrawer ? drawerWidth : 0,
+          width: usePermanentDrawer ? `calc(100% - ${drawerWidth}px)` : '100%',
         }}
       >
         <Toolbar>
-          <IconButton
-            color="inherit"
-            aria-label="open drawer"
-            edge="start"
-            onClick={handleDrawerToggle}
-            sx={{ mr: 2, display: { lg: 'none' } }}
-          >
-            <MenuIcon />
-          </IconButton>
+          {!usePermanentDrawer && (
+            <IconButton
+              color="inherit"
+              aria-label="open drawer"
+              edge="start"
+              onClick={handleDrawerToggle}
+              sx={{ mr: 2 }}
+            >
+              <MenuIcon />
+            </IconButton>
+          )}
           <Box sx={{ flexGrow: 1 }} />
           <UserMenu />
         </Toolbar>
       </AppBar>
 
-      <Box component="nav" sx={{ width: { lg: drawerWidth }, flexShrink: { lg: 0 } }}>
-        <Drawer
-          variant="temporary"
-          open={mobileOpen}
-          onClose={handleDrawerToggle}
-          ModalProps={{ keepMounted: true }}
-          sx={{
-            display: { xs: 'block', lg: 'none' },
-            '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
-          }}
-        >
-          {drawerContent}
-        </Drawer>
-
-        <Drawer
-          variant="permanent"
-          sx={{
-            display: { xs: 'none', lg: 'block' },
-            '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
-          }}
-          open
-        >
-          {drawerContent}
-        </Drawer>
+      <Box
+        component="nav"
+        sx={{ width: usePermanentDrawer ? drawerWidth : 0, flexShrink: 0 }}
+      >
+        {usePermanentDrawer ? (
+          <Drawer
+            variant="permanent"
+            sx={{
+              '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
+            }}
+            open
+          >
+            {drawerContent}
+          </Drawer>
+        ) : (
+          <Drawer
+            variant="temporary"
+            open={mobileOpen}
+            onClose={handleDrawerToggle}
+            ModalProps={{ keepMounted: true }}
+            sx={{
+              '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
+            }}
+          >
+            {drawerContent}
+          </Drawer>
+        )}
       </Box>
 
       <Box
@@ -99,7 +128,7 @@ export const AppLayout = () => {
           mt: 8,
           maxWidth: '1600px',
           mx: 'auto',
-          width: { lg: `calc(100% - ${drawerWidth}px)` },
+          width: '100%',
         }}
       >
         <Outlet />
