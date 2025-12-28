@@ -134,7 +134,7 @@ class TestStatementUploadServiceRowFilters:
             content=b"test,content\n1,2\n3,4",
         )
         mock_uploaded_file_repo.find_by_id.return_value = uploaded_file_dto
-        mock_file_analysis_metadata_repo.find_by_hash.return_value = None
+        mock_file_analysis_metadata_repo.find_by_hash_and_account.return_value = None
 
         # Mock the compute_hash and statement_parser
         with patch("app.services.common.compute_hash", return_value="test_hash"):
@@ -150,7 +150,9 @@ class TestStatementUploadServiceRowFilters:
                     row_filters=sample_upload_request_with_filters.row_filters,
                 )
 
-                mock_file_analysis_metadata_repo.find_by_hash.assert_called_once_with("test_hash", user_id)
+                mock_file_analysis_metadata_repo.find_by_hash_and_account.assert_called_once_with(
+                    "test_hash", UUID(sample_upload_request_with_filters.account_id)
+                )
                 mock_file_analysis_metadata_repo.save.assert_called_once_with(
                     file_hash="test_hash",
                     column_mapping=sample_upload_request_with_filters.column_mapping,
@@ -182,7 +184,7 @@ class TestStatementUploadServiceRowFilters:
             content=b"test,content\n1,2\n3,4",
         )
         mock_uploaded_file_repo.find_by_id.return_value = uploaded_file_dto
-        mock_file_analysis_metadata_repo.find_by_hash.return_value = None
+        mock_file_analysis_metadata_repo.find_by_hash_and_account.return_value = None
 
         # Mock the compute_hash and statement_parser
         with patch("app.services.common.compute_hash", return_value="test_hash"):
@@ -198,7 +200,9 @@ class TestStatementUploadServiceRowFilters:
                     row_filters=None,
                 )
 
-                mock_file_analysis_metadata_repo.find_by_hash.assert_called_once_with("test_hash", user_id)
+                mock_file_analysis_metadata_repo.find_by_hash_and_account.assert_called_once_with(
+                    "test_hash", UUID(sample_upload_request_without_filters.account_id)
+                )
                 mock_file_analysis_metadata_repo.save.assert_called_once_with(
                     file_hash="test_hash",
                     column_mapping=sample_upload_request_without_filters.column_mapping,

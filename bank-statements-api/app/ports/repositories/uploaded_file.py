@@ -43,3 +43,7 @@ class FileAnalysisMetadataRepository(ABC):
     @abstractmethod
     def find_by_hash(self, file_hash: str, user_id: UUID) -> Optional[FileAnalysisMetadataDTO]:
         pass
+
+    @abstractmethod
+    def find_by_hash_and_account(self, file_hash: str, account_id: UUID) -> Optional[FileAnalysisMetadataDTO]:
+        pass

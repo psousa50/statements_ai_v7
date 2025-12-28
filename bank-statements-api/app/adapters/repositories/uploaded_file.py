@@ -91,15 +91,18 @@ class SQLAlchemyFileAnalysisMetadataRepository(FileAnalysisMetadataRepository):
         account_id: Optional[UUID] = None,
         row_filters: Optional[dict] = None,
     ) -> FileAnalysisMetadataDTO:
-        metadata = self.session.query(FileAnalysisMetadata).filter(FileAnalysisMetadata.file_hash == file_hash).first()
+        metadata = (
+            self.session.query(FileAnalysisMetadata)
+            .filter(FileAnalysisMetadata.file_hash == file_hash, FileAnalysisMetadata.account_id == account_id)
+            .first()
+        )
 
         if not metadata:
-            raise ValueError(f"Metadata with file_hash {file_hash} not found")
+            raise ValueError(f"Metadata with file_hash {file_hash} and account_id {account_id} not found")
 
         metadata.column_mapping = column_mapping
         metadata.header_row_index = header_row_index
         metadata.data_start_row_index = data_start_row_index
-        metadata.account_id = account_id
         metadata.row_filters = row_filters
 
         self.session.commit()
@@ -121,6 +124,27 @@ class SQLAlchemyFileAnalysisMetadataRepository(FileAnalysisMetadataRepository):
             self.session.query(FileAnalysisMetadata)
             .join(Account, FileAnalysisMetadata.account_id == Account.id)
             .filter(FileAnalysisMetadata.file_hash == file_hash, Account.user_id == user_id)
+            .first()
+        )
+
+        if not metadata:
+            return None
+
+        return FileAnalysisMetadataDTO(
+            id=str(metadata.id),
+            file_hash=metadata.file_hash,
+            account_id=str(metadata.account_id) if metadata.account_id else None,
+            column_mapping=metadata.column_mapping,
+            header_row_index=metadata.header_row_index,
+            data_start_row_index=metadata.data_start_row_index,
+            created_at=metadata.created_at,
+            row_filters=metadata.row_filters,
+        )
+
+    def find_by_hash_and_account(self, file_hash: str, account_id: UUID) -> Optional[FileAnalysisMetadataDTO]:
+        metadata = (
+            self.session.query(FileAnalysisMetadata)
+            .filter(FileAnalysisMetadata.file_hash == file_hash, FileAnalysisMetadata.account_id == account_id)
             .first()
         )
 

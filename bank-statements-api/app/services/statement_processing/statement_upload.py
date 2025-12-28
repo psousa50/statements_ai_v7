@@ -333,7 +333,7 @@ class StatementUploadService:
         raw_df = self.statement_parser.parse(uploaded_file.content, uploaded_file.file_type)
         file_hash = compute_hash(uploaded_file.file_type, raw_df)
 
-        existing_metadata = self.file_analysis_metadata_repo.find_by_hash(file_hash, user_id)
+        existing_metadata = self.file_analysis_metadata_repo.find_by_hash_and_account(file_hash, account_id)
         if existing_metadata:
             filters_to_save = row_filters if row_filters is not None else existing_metadata.row_filters
             self.file_analysis_metadata_repo.update(
