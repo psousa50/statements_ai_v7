@@ -222,18 +222,13 @@ class SQLAlchemyEnhancementRuleRepository(EnhancementRuleRepository):
 
         transaction_repo = SQLAlchemyTransactionRepository(self.db)
 
+        counts = transaction_repo.count_matching_rules_batch(all_rules, uncategorized_only=False)
+        dates = transaction_repo.get_latest_matching_dates_batch(all_rules)
+
         rules_with_data = []
         for rule in all_rules:
-            try:
-                count = transaction_repo.count_matching_rule(rule)
-            except Exception:
-                count = 0
-
-            try:
-                latest_date = transaction_repo.get_latest_matching_date(rule)
-            except Exception:
-                latest_date = None
-
+            count = counts.get(rule.id, 0)
+            latest_date = dates.get(rule.id)
             rules_with_data.append((rule, count, latest_date))
 
         def get_secondary_value(item):
@@ -385,18 +380,13 @@ class SQLAlchemyEnhancementRuleRepository(EnhancementRuleRepository):
         transaction_repo = SQLAlchemyTransactionRepository(self.db)
         min_date = date_type(1900, 1, 1)
 
+        dates = transaction_repo.get_latest_matching_dates_batch(all_rules)
+        counts = transaction_repo.count_matching_rules_batch(all_rules, uncategorized_only=False)
+
         rules_with_data = []
         for rule in all_rules:
-            try:
-                latest_date = transaction_repo.get_latest_matching_date(rule)
-            except Exception:
-                latest_date = None
-
-            try:
-                count = transaction_repo.count_matching_rule(rule)
-            except Exception:
-                count = 0
-
+            latest_date = dates.get(rule.id)
+            count = counts.get(rule.id, 0)
             rules_with_data.append((rule, latest_date or min_date, latest_date, count))
 
         def get_secondary_value(item):

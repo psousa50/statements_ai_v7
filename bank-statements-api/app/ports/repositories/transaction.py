@@ -293,3 +293,15 @@ class TransactionRepository(ABC):
     @abstractmethod
     def get_unique_normalised_descriptions(self, user_id: UUID, limit: int = 200) -> List[str]:
         pass
+
+    @abstractmethod
+    def count_matching_rules_batch(self, rules: List, uncategorized_only: bool = False) -> Dict[UUID, int]:
+        pass
+
+    @abstractmethod
+    def count_pending_for_rules_batch(self, rules: List) -> Dict[UUID, int]:
+        pass
+
+    @abstractmethod
+    def get_latest_matching_dates_batch(self, rules: List) -> Dict[UUID, Optional[date]]:
+        pass

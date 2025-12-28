@@ -63,11 +63,7 @@ class EnhancementRuleManagementService:
             rule_status_filter=rule_status_filter,
         )
 
-        for rule in rules:
-            rule.transaction_count = self._get_rule_transaction_count(rule)
-            rule.pending_transaction_count = self._get_rule_pending_count(rule)
-            if not hasattr(rule, "latest_match_date") or rule.latest_match_date is None:
-                rule.latest_match_date = self._get_rule_latest_match_date(rule)
+        self._populate_rule_counts_batch(rules)
 
         return {
             "rules": rules,
@@ -191,12 +187,9 @@ class EnhancementRuleManagementService:
 
     def cleanup_unused_rules(self, user_id: UUID) -> Dict[str, Any]:
         all_rules = self.enhancement_rule_repository.get_all(user_id=user_id, limit=10000)
-        unused_rules = []
 
-        for rule in all_rules:
-            transaction_count = self._get_rule_transaction_count(rule)
-            if transaction_count == 0:
-                unused_rules.append(rule)
+        counts = self.transaction_repository.count_matching_rules_batch(all_rules, uncategorized_only=False)
+        unused_rules = [r for r in all_rules if counts.get(r.id, 0) == 0]
 
         for rule in unused_rules:
             self.enhancement_rule_repository.delete(rule)
@@ -217,23 +210,22 @@ class EnhancementRuleManagementService:
         counterparty_only_rules = len([r for r in all_rules if r.counterparty_account_id and not r.category_id])
         combined_rules = len([r for r in all_rules if r.category_id and r.counterparty_account_id])
 
+        counts = self.transaction_repository.count_matching_rules_batch(all_rules, uncategorized_only=False)
+
         total_transactions_enhanced = 0
         transactions_with_manual_rules = 0
         transactions_with_auto_rules = 0
 
+        rules_with_counts = []
         for rule in all_rules:
-            count = self._get_rule_transaction_count(rule)
+            count = counts.get(rule.id, 0)
+            rules_with_counts.append((rule, count))
             total_transactions_enhanced += count
 
             if rule.source == EnhancementRuleSource.MANUAL:
                 transactions_with_manual_rules += count
             else:
                 transactions_with_auto_rules += count
-
-        rules_with_counts = []
-        for rule in all_rules:
-            count = self._get_rule_transaction_count(rule)
-            rules_with_counts.append((rule, count))
 
         top_rules = sorted(rules_with_counts, key=lambda x: x[1], reverse=True)[:10]
         unused_rules = [r for r, count in rules_with_counts if count == 0]
@@ -294,6 +286,34 @@ class EnhancementRuleManagementService:
             return self.transaction_repository.get_latest_matching_date(rule)
         except Exception:
             return None
+
+    def _populate_rule_counts_batch(self, rules: List[EnhancementRule]) -> None:
+        if not rules:
+            return
+
+        unconfigured_rules = [r for r in rules if not r.category_id and not r.counterparty_account_id]
+        configured_rules = [r for r in rules if r.category_id or r.counterparty_account_id]
+
+        counts = {}
+        if unconfigured_rules:
+            counts.update(
+                self.transaction_repository.count_matching_rules_batch(unconfigured_rules, uncategorized_only=True)
+            )
+        if configured_rules:
+            counts.update(
+                self.transaction_repository.count_matching_rules_batch(configured_rules, uncategorized_only=False)
+            )
+
+        pending_counts = self.transaction_repository.count_pending_for_rules_batch(rules)
+
+        rules_needing_dates = [r for r in rules if not hasattr(r, "latest_match_date") or r.latest_match_date is None]
+        dates = self.transaction_repository.get_latest_matching_dates_batch(rules_needing_dates)
+
+        for rule in rules:
+            rule.transaction_count = counts.get(rule.id, 0)
+            rule.pending_transaction_count = pending_counts.get(rule.id, 0)
+            if rule.id in dates:
+                rule.latest_match_date = dates[rule.id]
 
     def get_matching_transactions_count(self, rule_id: UUID, user_id: UUID) -> Dict[str, Any]:
         rule = self.enhancement_rule_repository.find_by_id(rule_id, user_id)

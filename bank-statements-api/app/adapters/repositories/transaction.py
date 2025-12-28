@@ -947,3 +947,143 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
             query = query.filter(Transaction.date <= rule.end_date)
 
         return query.scalar()
+
+    def count_matching_rules_batch(self, rules: List, uncategorized_only: bool = False) -> Dict[UUID, int]:
+        if not rules:
+            return {}
+
+        from sqlalchemy import literal, union_all
+        from sqlalchemy.dialects.postgresql import UUID as PGUUID
+
+        from app.domain.models.enhancement_rule import MatchType
+
+        subqueries = []
+        for rule in rules:
+            filters = [Transaction.user_id == rule.user_id]
+
+            if rule.match_type == MatchType.EXACT:
+                filters.append(Transaction.normalized_description == rule.normalized_description_pattern)
+            elif rule.match_type == MatchType.PREFIX:
+                filters.append(Transaction.normalized_description.like(f"{rule.normalized_description_pattern}%"))
+            elif rule.match_type == MatchType.INFIX:
+                filters.append(Transaction.normalized_description.like(f"%{rule.normalized_description_pattern}%"))
+
+            if rule.min_amount is not None:
+                filters.append(Transaction.amount >= rule.min_amount)
+            if rule.max_amount is not None:
+                filters.append(Transaction.amount <= rule.max_amount)
+            if rule.start_date is not None:
+                filters.append(Transaction.date >= rule.start_date)
+            if rule.end_date is not None:
+                filters.append(Transaction.date <= rule.end_date)
+
+            if uncategorized_only:
+                filters.append(Transaction.category_id.is_(None))
+
+            subquery = self.db_session.query(
+                literal(str(rule.id)).label("rule_id"),
+                func.count(Transaction.id).label("cnt"),
+            ).filter(and_(*filters))
+            subqueries.append(subquery)
+
+        combined = union_all(*subqueries)
+        results = self.db_session.execute(combined).fetchall()
+
+        return {UUID(row[0]): row[1] for row in results}
+
+    def count_pending_for_rules_batch(self, rules: List) -> Dict[UUID, int]:
+        if not rules:
+            return {}
+
+        rules_with_category = [r for r in rules if r.category_id is not None]
+        if not rules_with_category:
+            return {r.id: 0 for r in rules}
+
+        from sqlalchemy import literal, union_all
+
+        from app.domain.models.enhancement_rule import MatchType
+
+        subqueries = []
+        for rule in rules_with_category:
+            filters = [Transaction.user_id == rule.user_id]
+
+            if rule.match_type == MatchType.EXACT:
+                filters.append(Transaction.normalized_description == rule.normalized_description_pattern)
+            elif rule.match_type == MatchType.PREFIX:
+                filters.append(Transaction.normalized_description.like(f"{rule.normalized_description_pattern}%"))
+            elif rule.match_type == MatchType.INFIX:
+                filters.append(Transaction.normalized_description.like(f"%{rule.normalized_description_pattern}%"))
+
+            if rule.min_amount is not None:
+                filters.append(Transaction.amount >= rule.min_amount)
+            if rule.max_amount is not None:
+                filters.append(Transaction.amount <= rule.max_amount)
+            if rule.start_date is not None:
+                filters.append(Transaction.date >= rule.start_date)
+            if rule.end_date is not None:
+                filters.append(Transaction.date <= rule.end_date)
+
+            filters.append(
+                or_(
+                    Transaction.category_id.is_(None),
+                    and_(
+                        Transaction.category_id != rule.category_id,
+                        Transaction.categorization_status == CategorizationStatus.RULE_BASED,
+                    ),
+                )
+            )
+
+            subquery = self.db_session.query(
+                literal(str(rule.id)).label("rule_id"),
+                func.count(Transaction.id).label("cnt"),
+            ).filter(and_(*filters))
+            subqueries.append(subquery)
+
+        combined = union_all(*subqueries)
+        results = self.db_session.execute(combined).fetchall()
+
+        result_dict = {UUID(row[0]): row[1] for row in results}
+        for rule in rules:
+            if rule.id not in result_dict:
+                result_dict[rule.id] = 0
+
+        return result_dict
+
+    def get_latest_matching_dates_batch(self, rules: List) -> Dict[UUID, Optional[date]]:
+        if not rules:
+            return {}
+
+        from sqlalchemy import literal, union_all
+
+        from app.domain.models.enhancement_rule import MatchType
+
+        subqueries = []
+        for rule in rules:
+            filters = [Transaction.user_id == rule.user_id]
+
+            if rule.match_type == MatchType.EXACT:
+                filters.append(Transaction.normalized_description == rule.normalized_description_pattern)
+            elif rule.match_type == MatchType.PREFIX:
+                filters.append(Transaction.normalized_description.like(f"{rule.normalized_description_pattern}%"))
+            elif rule.match_type == MatchType.INFIX:
+                filters.append(Transaction.normalized_description.like(f"%{rule.normalized_description_pattern}%"))
+
+            if rule.min_amount is not None:
+                filters.append(Transaction.amount >= rule.min_amount)
+            if rule.max_amount is not None:
+                filters.append(Transaction.amount <= rule.max_amount)
+            if rule.start_date is not None:
+                filters.append(Transaction.date >= rule.start_date)
+            if rule.end_date is not None:
+                filters.append(Transaction.date <= rule.end_date)
+
+            subquery = self.db_session.query(
+                literal(str(rule.id)).label("rule_id"),
+                func.max(Transaction.date).label("latest_date"),
+            ).filter(and_(*filters))
+            subqueries.append(subquery)
+
+        combined = union_all(*subqueries)
+        results = self.db_session.execute(combined).fetchall()
+
+        return {UUID(row[0]): row[1] for row in results}
