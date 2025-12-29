@@ -111,17 +111,6 @@ export const TransactionFilters = ({
         </div>
       </div>
 
-      {onDateRangeChange && (
-        <div className="date-range-row">
-          <DatePeriodNavigator
-            startDate={startDate}
-            endDate={endDate}
-            onChange={onDateRangeChange}
-            defaultPeriodType="all"
-          />
-        </div>
-      )}
-
       {!isCollapsed && (
         <div className="filters-container">
           <div className="filters-row primary-filters">
@@ -245,6 +234,17 @@ export const TransactionFilters = ({
               </div>
             </div>
           </div>
+        </div>
+      )}
+
+      {onDateRangeChange && (
+        <div className="date-range-row">
+          <DatePeriodNavigator
+            startDate={startDate}
+            endDate={endDate}
+            onChange={onDateRangeChange}
+            defaultPeriodType="all"
+          />
         </div>
       )}
     </div>
