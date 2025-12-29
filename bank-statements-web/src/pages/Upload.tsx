@@ -51,7 +51,6 @@ export const Upload: React.FC = () => {
     severity: 'info',
   })
 
-
   // Handle file selection
   const handleFileSelected = async (selectedFile: File) => {
     setFile(selectedFile)

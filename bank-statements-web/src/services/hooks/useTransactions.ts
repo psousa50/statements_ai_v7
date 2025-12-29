@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useCallback } from 'react'
 import { CategorizationStatus, Transaction } from '../../types/Transaction'
 import { useApi } from '../../api/ApiContext'
 import {
