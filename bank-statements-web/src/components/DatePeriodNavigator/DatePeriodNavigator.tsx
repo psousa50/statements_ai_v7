@@ -11,6 +11,9 @@ import {
   startOfWeek,
   endOfWeek,
   subWeeks,
+  startOfYear,
+  endOfYear,
+  subYears,
 } from 'date-fns'
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft'
 import ChevronRightIcon from '@mui/icons-material/ChevronRight'
@@ -61,13 +64,6 @@ const PRESET_RANGES: PresetRange[] = [
     getRange: () => ({ from: startOfDay(subDays(new Date(), 29)), to: endOfDay(new Date()) }),
   },
   {
-    label: 'This week',
-    getRange: () => ({
-      from: startOfWeek(new Date(), { weekStartsOn: 1 }),
-      to: endOfWeek(new Date(), { weekStartsOn: 1 }),
-    }),
-  },
-  {
     label: 'Last week',
     getRange: () => {
       const lastWeek = subWeeks(new Date(), 1)
@@ -78,14 +74,17 @@ const PRESET_RANGES: PresetRange[] = [
     },
   },
   {
-    label: 'This month',
-    getRange: () => ({ from: startOfMonth(new Date()), to: endOfMonth(new Date()) }),
-  },
-  {
     label: 'Last month',
     getRange: () => {
       const lastMonth = subMonths(new Date(), 1)
       return { from: startOfMonth(lastMonth), to: endOfMonth(lastMonth) }
+    },
+  },
+  {
+    label: 'Last year',
+    getRange: () => {
+      const lastYear = subYears(new Date(), 1)
+      return { from: startOfYear(lastYear), to: endOfYear(lastYear) }
     },
   },
 ]
