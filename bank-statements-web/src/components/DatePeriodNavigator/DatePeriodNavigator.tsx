@@ -101,7 +101,7 @@ export function DatePeriodNavigator({
   const [isCustomMode, setIsCustomMode] = useState(false)
   const [showCustomPicker, setShowCustomPicker] = useState(false)
   const [selectedRange, setSelectedRange] = useState<DateRange | undefined>(undefined)
-  const [isSelectingRange, setIsSelectingRange] = useState(false)
+  const firstSelectedDateRef = useRef<Date | null>(null)
   const customPickerRef = useRef<HTMLDivElement>(null)
   const hasInitialised = useRef(false)
 
@@ -182,19 +182,31 @@ export function DatePeriodNavigator({
   const handleRangeSelect = useCallback(
     (range: DateRange | undefined) => {
       setSelectedRange(range)
-      if (range?.from && !range?.to) {
-        setIsSelectingRange(true)
-      } else if (range?.from && range?.to) {
-        if (isSelectingRange || range.from.getTime() !== range.to.getTime()) {
+
+      if (!range?.from && firstSelectedDateRef.current) {
+        const date = firstSelectedDateRef.current
+        setIsCustomMode(true)
+        setShowCustomPicker(false)
+        setCurrentPeriod(date)
+        firstSelectedDateRef.current = null
+        onChange(formatDateToString(date), formatDateToString(date))
+        return
+      }
+
+      if (range?.from) {
+        if (range.to && range.from.getTime() !== range.to.getTime()) {
           setIsCustomMode(true)
           setShowCustomPicker(false)
           setCurrentPeriod(range.from)
-          setIsSelectingRange(false)
+          firstSelectedDateRef.current = null
           onChange(formatDateToString(range.from), formatDateToString(range.to))
+          return
         }
+
+        firstSelectedDateRef.current = range.from
       }
     },
-    [onChange, isSelectingRange]
+    [onChange]
   )
 
   const handlePresetClick = useCallback(
@@ -212,7 +224,7 @@ export function DatePeriodNavigator({
   const handleToggleCustomPicker = useCallback(() => {
     if (!showCustomPicker) {
       setSelectedRange(undefined)
-      setIsSelectingRange(false)
+      firstSelectedDateRef.current = null
     }
     setShowCustomPicker(!showCustomPicker)
   }, [showCustomPicker])
