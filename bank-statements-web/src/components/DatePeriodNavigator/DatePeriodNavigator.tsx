@@ -179,46 +179,56 @@ export function DatePeriodNavigator({
     [periodType, currentPeriod, onChange]
   )
 
+  const completeRangeSelection = useCallback(
+    (from: Date, to: Date) => {
+      const startStr = formatDateToString(from)
+      const endStr = formatDateToString(to)
+      const detected = detectPeriodType(startStr, endStr)
+
+      if (detected) {
+        setPeriodType(detected)
+        setIsCustomMode(false)
+      } else {
+        setIsCustomMode(true)
+      }
+
+      setShowCustomPicker(false)
+      setCurrentPeriod(from)
+      firstSelectedDateRef.current = null
+      onChange(startStr, endStr)
+    },
+    [onChange]
+  )
+
   const handleRangeSelect = useCallback(
     (range: DateRange | undefined) => {
       setSelectedRange(range)
 
       if (!range?.from && firstSelectedDateRef.current) {
         const date = firstSelectedDateRef.current
-        setIsCustomMode(true)
-        setShowCustomPicker(false)
-        setCurrentPeriod(date)
-        firstSelectedDateRef.current = null
-        onChange(formatDateToString(date), formatDateToString(date))
+        completeRangeSelection(date, date)
         return
       }
 
       if (range?.from) {
         if (range.to && range.from.getTime() !== range.to.getTime()) {
-          setIsCustomMode(true)
-          setShowCustomPicker(false)
-          setCurrentPeriod(range.from)
-          firstSelectedDateRef.current = null
-          onChange(formatDateToString(range.from), formatDateToString(range.to))
+          completeRangeSelection(range.from, range.to)
           return
         }
 
         firstSelectedDateRef.current = range.from
       }
     },
-    [onChange]
+    [completeRangeSelection]
   )
 
   const handlePresetClick = useCallback(
     (preset: PresetRange) => {
       const { from, to } = preset.getRange()
       setSelectedRange({ from, to })
-      setIsCustomMode(true)
-      setShowCustomPicker(false)
-      setCurrentPeriod(from)
-      onChange(formatDateToString(from), formatDateToString(to))
+      completeRangeSelection(from, to)
     },
-    [onChange]
+    [completeRangeSelection]
   )
 
   const handleToggleCustomPicker = useCallback(() => {
