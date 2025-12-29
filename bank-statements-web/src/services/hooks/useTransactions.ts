@@ -233,10 +233,6 @@ export const useTransactions = () => {
     [transactions]
   )
 
-  useEffect(() => {
-    fetchTransactions()
-  }, [fetchTransactions])
-
   return {
     transactions,
     loading,
