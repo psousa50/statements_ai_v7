@@ -11,6 +11,7 @@ import { UploadFooter } from '../components/upload/UploadFooter'
 import { AccountSelector } from '../components/upload/AccountSelector'
 import { RowFilterPanel, FilterPreview } from '../components/upload/RowFilterPanel'
 import { DroppedRowsWarning } from '../components/upload/DroppedRowsWarning'
+import { AnalysisErrorPanel } from '../components/upload/AnalysisErrorPanel'
 import type { RowFilter } from '../components/upload/RowFilterPanel'
 
 export const Upload: React.FC = () => {
@@ -36,6 +37,9 @@ export const Upload: React.FC = () => {
   const [previewStats, setPreviewStats] = useState<StatisticsPreviewResponse | null>(null)
   const [isLoadingPreview, setIsLoadingPreview] = useState(false)
 
+  // State for analysis errors
+  const [analysisError, setAnalysisError] = useState<{ message: string; fileName: string } | null>(null)
+
   // State for notifications
   const [notification, setNotification] = useState<{
     open: boolean
@@ -52,6 +56,7 @@ export const Upload: React.FC = () => {
   const handleFileSelected = async (selectedFile: File) => {
     setFile(selectedFile)
     setIsAnalyzing(true)
+    setAnalysisError(null)
 
     try {
       const result = await defaultApiClient.statements.analyzeStatement(selectedFile)
@@ -73,11 +78,13 @@ export const Upload: React.FC = () => {
       })
     } catch (error) {
       console.error('Error analyzing file:', error)
-      setNotification({
-        open: true,
-        message: 'Error analyzing file. Please try again.',
-        severity: 'error',
+      const axiosError = error as { response?: { data?: { detail?: string } } }
+      const errorDetail = axiosError.response?.data?.detail || 'Unknown error occurred while analysing the file.'
+      setAnalysisError({
+        message: errorDetail,
+        fileName: selectedFile.name,
       })
+      setFile(null)
     } finally {
       setIsAnalyzing(false)
     }
@@ -253,6 +260,13 @@ export const Upload: React.FC = () => {
         <Paper sx={{ p: 3, mb: 3 }}>
           {!analysisResult ? (
             <>
+              {analysisError && (
+                <AnalysisErrorPanel
+                  errorMessage={analysisError.message}
+                  fileName={analysisError.fileName}
+                  onDismiss={() => setAnalysisError(null)}
+                />
+              )}
               <FileUploadZone onFileSelected={handleFileSelected} isLoading={isAnalyzing} />
             </>
           ) : (
