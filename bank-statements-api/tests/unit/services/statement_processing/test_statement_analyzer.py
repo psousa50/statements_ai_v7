@@ -40,15 +40,18 @@ class TestStatementAnalyzerService:
         )
 
         transaction_normalizer = MagicMock()
-        transaction_normalizer.normalize.return_value = pd.DataFrame(
-            {
-                "date": ["2023-01-01", "2023-01-02"],
-                "amount": [100.00, -200.00],
-                "description": [
-                    "Deposit",
-                    "Withdrawal",
-                ],
-            }
+        transaction_normalizer.normalize.return_value = (
+            pd.DataFrame(
+                {
+                    "date": ["2023-01-01", "2023-01-02"],
+                    "amount": [100.00, -200.00],
+                    "description": [
+                        "Deposit",
+                        "Withdrawal",
+                    ],
+                }
+            ),
+            [],
         )
 
         uploaded_file_repo = MagicMock()
@@ -146,21 +149,23 @@ class TestStatementAnalyzerService:
         )
 
         transaction_normalizer = MagicMock()
-        # Normalize to the same format
-        transaction_normalizer.normalize.return_value = pd.DataFrame(
-            {
-                "date": [
-                    "2023-01-01",
-                    "2023-01-01",
-                    "2023-01-02",
-                ],
-                "amount": [100.00, 100.00, -200.00],
-                "description": [
-                    "Deposit",
-                    "Deposit",
-                    "Withdrawal",
-                ],
-            }
+        transaction_normalizer.normalize.return_value = (
+            pd.DataFrame(
+                {
+                    "date": [
+                        "2023-01-01",
+                        "2023-01-01",
+                        "2023-01-02",
+                    ],
+                    "amount": [100.00, 100.00, -200.00],
+                    "description": [
+                        "Deposit",
+                        "Deposit",
+                        "Withdrawal",
+                    ],
+                }
+            ),
+            [],
         )
 
         uploaded_file_repo = MagicMock()
@@ -254,33 +259,36 @@ class TestStatementAnalyzerService:
         )
 
         transaction_normalizer = MagicMock()
-        transaction_normalizer.normalize.return_value = pd.DataFrame(
-            {
-                "date": [
-                    "2023-01-01",
-                    "2023-01-01",
-                    "2023-01-02",
-                    "2023-01-02",
-                    "2023-01-02",
-                    "2023-01-03",
-                ],
-                "amount": [
-                    100.00,
-                    100.00,
-                    50.00,
-                    50.00,
-                    50.00,
-                    -200.00,
-                ],
-                "description": [
-                    "DepositA",
-                    "DepositA",
-                    "DepositB",
-                    "DepositB",
-                    "DepositB",
-                    "Withdrawal",
-                ],
-            }
+        transaction_normalizer.normalize.return_value = (
+            pd.DataFrame(
+                {
+                    "date": [
+                        "2023-01-01",
+                        "2023-01-01",
+                        "2023-01-02",
+                        "2023-01-02",
+                        "2023-01-02",
+                        "2023-01-03",
+                    ],
+                    "amount": [
+                        100.00,
+                        100.00,
+                        50.00,
+                        50.00,
+                        50.00,
+                        -200.00,
+                    ],
+                    "description": [
+                        "DepositA",
+                        "DepositA",
+                        "DepositB",
+                        "DepositB",
+                        "DepositB",
+                        "Withdrawal",
+                    ],
+                }
+            ),
+            [],
         )
 
         uploaded_file_repo = MagicMock()
@@ -362,22 +370,24 @@ class TestStatementAnalyzerService:
         )
 
         transaction_normalizer = MagicMock()
-        # Return the normalized data as strings (as would happen in real processing)
-        transaction_normalizer.normalize.return_value = pd.DataFrame(
-            {
-                "date": [
-                    "2023-01-01",
-                    "2023-01-01",
-                ],  # String dates
-                "amount": [
-                    100.50,
-                    100.50,
-                ],  # Float amounts
-                "description": [
-                    "Coffee Shop",
-                    "Coffee Shop",
-                ],
-            }
+        transaction_normalizer.normalize.return_value = (
+            pd.DataFrame(
+                {
+                    "date": [
+                        "2023-01-01",
+                        "2023-01-01",
+                    ],
+                    "amount": [
+                        100.50,
+                        100.50,
+                    ],
+                    "description": [
+                        "Coffee Shop",
+                        "Coffee Shop",
+                    ],
+                }
+            ),
+            [],
         )
 
         uploaded_file_repo = MagicMock()
@@ -457,15 +467,18 @@ class TestStatementAnalyzerService:
         )
 
         transaction_normalizer = MagicMock()
-        transaction_normalizer.normalize.return_value = pd.DataFrame(
-            {
-                "date": ["2023-01-01", "2023-01-01"],
-                "amount": [50.00, 50.00],
-                "description": [
-                    "Transaction X",
-                    "Transaction X",
-                ],
-            }
+        transaction_normalizer.normalize.return_value = (
+            pd.DataFrame(
+                {
+                    "date": ["2023-01-01", "2023-01-01"],
+                    "amount": [50.00, 50.00],
+                    "description": [
+                        "Transaction X",
+                        "Transaction X",
+                    ],
+                }
+            ),
+            [],
         )
 
         uploaded_file_repo = MagicMock()
@@ -548,12 +561,15 @@ class TestStatementAnalyzerService:
                 "Description": ["Coffee Shop"],
             }
         )
-        transaction_normalizer.normalize.return_value = pd.DataFrame(
-            {
-                "date": ["2023-01-01"],
-                "amount": [50.00],
-                "description": ["Coffee Shop"],
-            }
+        transaction_normalizer.normalize.return_value = (
+            pd.DataFrame(
+                {
+                    "date": ["2023-01-01"],
+                    "amount": [50.00],
+                    "description": ["Coffee Shop"],
+                }
+            ),
+            [],
         )
         uploaded_file_repo.save.return_value = UploadedFileDTO(
             id=str(uuid.uuid4()),
@@ -600,15 +616,18 @@ class TestStatementAnalyzerService:
                 ],
             }
         )
-        transaction_normalizer.normalize.return_value = pd.DataFrame(
-            {
-                "date": ["2023-01-01", "2023-01-01"],
-                "amount": [50.00, 50.00],
-                "description": [
-                    "Coffee Shop",
-                    "Coffee Shop",
-                ],
-            }
+        transaction_normalizer.normalize.return_value = (
+            pd.DataFrame(
+                {
+                    "date": ["2023-01-01", "2023-01-01"],
+                    "amount": [50.00, 50.00],
+                    "description": [
+                        "Coffee Shop",
+                        "Coffee Shop",
+                    ],
+                }
+            ),
+            [],
         )
         # DB still has same 1 transaction
         transaction_repo.find_matching_transactions.return_value = [mock_tx]

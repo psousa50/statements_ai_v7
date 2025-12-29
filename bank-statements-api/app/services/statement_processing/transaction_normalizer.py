@@ -1,16 +1,25 @@
 import logging
 import re
+from typing import Tuple
 
 import numpy as np
 import pandas as pd
+
+from app.domain.dto.statement_processing import DroppedRowInfo
 
 logger_content = logging.getLogger("app.llm.big")
 logger = logging.getLogger("app")
 
 
 class TransactionNormalizer:
-    def normalize(self, df: pd.DataFrame, column_mapping: dict) -> pd.DataFrame:
+    def normalize(
+        self,
+        df: pd.DataFrame,
+        column_mapping: dict,
+        data_start_row_index: int = 0,
+    ) -> Tuple[pd.DataFrame, list[DroppedRowInfo]]:
         result_df = pd.DataFrame()
+        dropped_rows: list[DroppedRowInfo] = []
 
         has_amount = "amount" in column_mapping and column_mapping["amount"]
         has_debit_credit = (
@@ -70,20 +79,22 @@ class TransactionNormalizer:
                 f"Not enough columns in DataFrame for positional mapping. Missing: {', '.join(missing_df_columns)}"
             )
 
+        original_dates = df[date_col].copy()
         result_df["date"] = self._normalize_dates(df[date_col])
 
         if has_amount:
-            result_df["amount"] = self._normalize_amounts(df[amount_col])
+            original_amounts = df[amount_col].copy()
+            result_df["amount"], invalid_amount_mask = self._normalize_amounts(df[amount_col])
         else:
-            debit_amounts = self._normalize_amounts(df[debit_col])
-            credit_amounts = self._normalize_amounts(df[credit_col])
+            debit_amounts, debit_invalid = self._normalize_amounts(df[debit_col])
+            credit_amounts, credit_invalid = self._normalize_amounts(df[credit_col])
 
             debit_amounts = debit_amounts.fillna(0)
             credit_amounts = credit_amounts.fillna(0)
 
-            # Debit amounts are negative (money going out), credit amounts are positive (money coming in)
-            # Combine them into a single amount column
             result_df["amount"] = credit_amounts - debit_amounts
+            original_amounts = df[debit_col].astype(str) + " / " + df[credit_col].astype(str)
+            invalid_amount_mask = debit_invalid | credit_invalid
 
         descriptions = df[description_col]
         result_df["description"] = descriptions.fillna("").astype(str)
@@ -96,12 +107,46 @@ class TransactionNormalizer:
             invalid_date_mask = result_df["date"].isna() | result_df["date"].apply(
                 lambda x: not isinstance(x, str) or not x.strip()
             )
-            invalid_count = invalid_date_mask.sum()
-            if invalid_count > 0:
-                logger.warning(f"Dropping {invalid_count} rows with invalid/missing dates")
-                result_df = result_df[~invalid_date_mask].reset_index(drop=True)
+            invalid_date_count = invalid_date_mask.sum()
+            if invalid_date_count > 0:
+                logger.warning(f"Dropping {invalid_date_count} rows with invalid/missing dates")
 
-        return result_df
+                for idx in result_df[invalid_date_mask].index:
+                    file_row = data_start_row_index + idx + 1
+                    dropped_rows.append(
+                        DroppedRowInfo(
+                            file_row_number=file_row,
+                            date_value=str(original_dates.iloc[idx]) if pd.notna(original_dates.iloc[idx]) else "",
+                            description=result_df.at[idx, "description"],
+                            amount=str(original_amounts.iloc[idx]) if pd.notna(original_amounts.iloc[idx]) else "",
+                            reason="invalid_date",
+                        )
+                    )
+
+                result_df = result_df[~invalid_date_mask].reset_index(drop=True)
+                invalid_amount_mask = invalid_amount_mask[~invalid_date_mask].reset_index(drop=True)
+                original_amounts = original_amounts[~invalid_date_mask].reset_index(drop=True)
+                original_dates = original_dates[~invalid_date_mask].reset_index(drop=True)
+
+        invalid_amount_count = invalid_amount_mask.sum()
+        if invalid_amount_count > 0:
+            logger.warning(f"Dropping {invalid_amount_count} rows with invalid amounts")
+
+            for idx in result_df[invalid_amount_mask].index:
+                file_row = data_start_row_index + idx + 1
+                dropped_rows.append(
+                    DroppedRowInfo(
+                        file_row_number=file_row,
+                        date_value=str(original_dates.iloc[idx]) if pd.notna(original_dates.iloc[idx]) else "",
+                        description=result_df.at[idx, "description"],
+                        amount=str(original_amounts.iloc[idx]) if pd.notna(original_amounts.iloc[idx]) else "",
+                        reason="invalid_amount",
+                    )
+                )
+
+            result_df = result_df[~invalid_amount_mask].reset_index(drop=True)
+
+        return result_df, dropped_rows
 
     def _normalize_dates(self, date_series: pd.Series) -> pd.Series:
         first_valid = date_series.dropna().iloc[0] if not date_series.dropna().empty else None
@@ -124,8 +169,10 @@ class TransactionNormalizer:
 
         return normalized
 
-    def _normalize_amounts(self, amount_series: pd.Series) -> pd.Series:
-        def clean_value(val):
+    def _normalize_amounts(self, amount_series: pd.Series) -> Tuple[pd.Series, pd.Series]:
+        invalid_mask = pd.Series([False] * len(amount_series), index=amount_series.index)
+
+        def clean_value(idx, val):
             if pd.isna(val):
                 return np.nan
 
@@ -134,19 +181,25 @@ class TransactionNormalizer:
 
             val_str = str(val).strip()
 
-            val_str = re.sub(r"[^\d,.\-eE]", "", val_str)
-
-            if "," in val_str and "." in val_str:
-                if val_str.rfind(",") > val_str.rfind("."):
-                    val_str = val_str.replace(".", "").replace(",", ".")
-                else:
-                    val_str = val_str.replace(",", "")
-            elif "," in val_str and "." not in val_str:
-                val_str = val_str.replace(",", ".")
-
-            try:
-                return float(val_str)
-            except ValueError:
+            if re.search(r"[^\d,.\-eE\s$€£¥₹%()]", val_str):
+                invalid_mask.iloc[idx] = True
                 return np.nan
 
-        return amount_series.apply(clean_value)
+            cleaned = re.sub(r"[^\d,.\-eE]", "", val_str)
+
+            if "," in cleaned and "." in cleaned:
+                if cleaned.rfind(",") > cleaned.rfind("."):
+                    cleaned = cleaned.replace(".", "").replace(",", ".")
+                else:
+                    cleaned = cleaned.replace(",", "")
+            elif "," in cleaned and "." not in cleaned:
+                cleaned = cleaned.replace(",", ".")
+
+            try:
+                return float(cleaned)
+            except ValueError:
+                invalid_mask.iloc[idx] = True
+                return np.nan
+
+        result = pd.Series([clean_value(i, v) for i, v in enumerate(amount_series)], index=amount_series.index)
+        return result, invalid_mask

@@ -10,6 +10,7 @@ import { ValidationMessages } from '../components/upload/ValidationMessages'
 import { UploadFooter } from '../components/upload/UploadFooter'
 import { AccountSelector } from '../components/upload/AccountSelector'
 import { RowFilterPanel, FilterPreview } from '../components/upload/RowFilterPanel'
+import { DroppedRowsWarning } from '../components/upload/DroppedRowsWarning'
 import type { RowFilter } from '../components/upload/RowFilterPanel'
 
 export const Upload: React.FC = () => {
@@ -45,6 +46,7 @@ export const Upload: React.FC = () => {
     message: '',
     severity: 'info',
   })
+
 
   // Handle file selection
   const handleFileSelected = async (selectedFile: File) => {
@@ -189,13 +191,18 @@ export const Upload: React.FC = () => {
         row_filters: rowFilter,
       })
 
+      let message = `Successfully uploaded ${result.transactions_saved} transactions`
+      if (result.duplicated_transactions > 0) {
+        message += `. ${result.duplicated_transactions} duplicates were skipped`
+      }
+      if (result.dropped_rows_count > 0) {
+        message += `. ${result.dropped_rows_count} rows with invalid dates were skipped`
+      }
+
       setNotification({
         open: true,
-        message:
-          result.duplicated_transactions > 0
-            ? `Successfully uploaded ${result.transactions_saved} transactions. ${result.duplicated_transactions} duplicates were skipped.`
-            : `Successfully uploaded ${result.transactions_saved} transactions`,
-        severity: 'success',
+        message,
+        severity: result.dropped_rows_count > 0 ? 'warning' : 'success',
       })
 
       setTimeout(() => {
@@ -269,6 +276,10 @@ export const Upload: React.FC = () => {
                   />
                 </Paper>
               </Box>
+
+              {analysisResult.dropped_rows_count > 0 && (
+                <DroppedRowsWarning droppedRows={analysisResult.dropped_rows} />
+              )}
 
               <ColumnMappingTable
                 sampleData={analysisResult.sample_data}

@@ -23,6 +23,7 @@ class AnalysisResultDTO:
         total_credit: float = 0.0,
         suggested_filters: Optional[List["FilterCondition"]] = None,
         saved_row_filters: Optional[List[dict]] = None,
+        dropped_rows: Optional[List["DroppedRowInfo"]] = None,
     ):
         self.uploaded_file_id = uploaded_file_id
         self.file_type = file_type
@@ -40,6 +41,7 @@ class AnalysisResultDTO:
         self.total_credit = total_credit
         self.suggested_filters = suggested_filters or []
         self.saved_row_filters = saved_row_filters
+        self.dropped_rows = dropped_rows or []
 
 
 class PersistenceRequestDTO:
@@ -210,3 +212,19 @@ class StatisticsPreviewDTO:
         self.total_debit = total_debit
         self.total_credit = total_credit
         self.filter_preview = filter_preview
+
+
+class DroppedRowInfo:
+    def __init__(
+        self,
+        file_row_number: int,
+        date_value: str,
+        description: str,
+        amount: str,
+        reason: str,
+    ):
+        self.file_row_number = file_row_number
+        self.date_value = date_value
+        self.description = description
+        self.amount = amount
+        self.reason = reason

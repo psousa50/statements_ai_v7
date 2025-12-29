@@ -7,6 +7,7 @@ from fastapi import APIRouter, BackgroundTasks, Depends, FastAPI, File, HTTPExce
 from app.api.routes.auth import require_current_user
 from app.api.schemas import (
     BackgroundJobInfoResponse,
+    DroppedRowResponse,
     FilterConditionRequest,
     FilterPreviewResponse,
     JobStatusResponse,
@@ -76,6 +77,17 @@ def register_statement_routes(
                         )
                     )
 
+            dropped_rows = [
+                DroppedRowResponse(
+                    file_row_number=row.file_row_number,
+                    date_value=row.date_value,
+                    description=row.description,
+                    amount=row.amount,
+                    reason=row.reason,
+                )
+                for row in result.dropped_rows
+            ]
+
             response_data = {
                 "uploaded_file_id": result.uploaded_file_id,
                 "file_type": result.file_type,
@@ -93,6 +105,8 @@ def register_statement_routes(
                 "total_credit": result.total_credit,
                 "suggested_filters": suggested_filters,
                 "saved_row_filters": saved_row_filters,
+                "dropped_rows": dropped_rows,
+                "dropped_rows_count": len(dropped_rows),
             }
 
             return StatementAnalysisResponse.model_validate(response_data)
@@ -188,19 +202,38 @@ def register_statement_routes(
                 internal_deps=internal,
             )
 
+            dropped_rows_response = [
+                DroppedRowResponse(
+                    file_row_number=row.file_row_number,
+                    date_value=row.date_value,
+                    description=row.description,
+                    amount=row.amount,
+                    reason=row.reason,
+                )
+                for row in result.dropped_rows
+            ]
+
+            message = (
+                f"Successfully processed {result.total_processed} transactions. "
+                f"{result.rule_based_matches} matched by rules ({result.match_rate_percentage}%). "
+                f"{result.duplicated_transactions} duplicates found."
+            )
+            if result.dropped_rows:
+                message += f" {len(result.dropped_rows)} rows skipped due to invalid dates."
+
             response = StatementUploadResponse(
                 uploaded_file_id=result.uploaded_file_id,
                 transactions_saved=result.transactions_saved,
                 duplicated_transactions=result.duplicated_transactions,
                 success=True,
-                message=f"Successfully processed {result.total_processed} transactions. "
-                f"{result.rule_based_matches} matched by rules ({result.match_rate_percentage}%). "
-                f"{result.duplicated_transactions} duplicates found.",
+                message=message,
                 total_processed=result.total_processed,
                 rule_based_matches=result.rule_based_matches,
                 match_rate_percentage=result.match_rate_percentage,
                 processing_time_ms=result.processing_time_ms,
                 background_job=None,
+                dropped_rows=dropped_rows_response,
+                dropped_rows_count=len(result.dropped_rows),
             )
 
             if result.background_job_info:

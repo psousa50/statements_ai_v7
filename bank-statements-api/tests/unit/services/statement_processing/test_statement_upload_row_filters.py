@@ -270,7 +270,9 @@ class TestStatementUploadServiceRowFilters:
                         statement_upload_service.row_filter_service, "apply_filters", return_value=raw_df
                     ) as mock_apply_filters:
                         with patch.object(
-                            statement_upload_service.transaction_normalizer, "normalize", return_value=normalized_df
+                            statement_upload_service.transaction_normalizer,
+                            "normalize",
+                            return_value=(normalized_df, []),
                         ):
                             # Execute
                             statement_upload_service.parse_statement(user_id, upload_request)

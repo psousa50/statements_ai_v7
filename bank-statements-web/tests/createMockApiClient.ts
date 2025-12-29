@@ -243,6 +243,8 @@ const defaultStatementClient: StatementClient = {
       total_amount: 300,
       total_debit: 0,
       total_credit: 300,
+      dropped_rows: [],
+      dropped_rows_count: 0,
     } as StatementAnalysisResponse),
   uploadStatement: (request) =>
     Promise.resolve({

@@ -3,7 +3,7 @@ from typing import List, Optional
 from uuid import UUID
 
 from app.api.schemas import StatementUploadRequest
-from app.domain.dto.statement_processing import FilterCondition, RowFilter, TransactionDTO
+from app.domain.dto.statement_processing import DroppedRowInfo, FilterCondition, RowFilter, TransactionDTO
 from app.domain.dto.statement_upload import EnhancedTransactions, ParsedStatement, SavedStatement, ScheduledJobs
 from app.domain.models.transaction import SourceType
 from app.services.statement_processing.row_filter_service import RowFilterService
@@ -23,6 +23,7 @@ class StatementUploadResult:
         match_rate_percentage: float,
         processing_time_ms: int,
         background_job_info=None,
+        dropped_rows: List[DroppedRowInfo] = None,
     ):
         self.uploaded_file_id = uploaded_file_id
         self.transactions_saved = transactions_saved
@@ -32,6 +33,7 @@ class StatementUploadResult:
         self.match_rate_percentage = match_rate_percentage
         self.processing_time_ms = processing_time_ms
         self.background_job_info = background_job_info
+        self.dropped_rows = dropped_rows or []
 
 
 class StatementUploadService:
@@ -74,7 +76,7 @@ class StatementUploadService:
         if background_tasks and internal_deps:
             self._trigger_immediate_processing(background_tasks, internal_deps)
 
-        return self._build_result(enhanced, saved, jobs)
+        return self._build_result(enhanced, saved, jobs, parsed.dropped_rows)
 
     def parse_statement(self, user_id: UUID, upload_request: StatementUploadRequest) -> ParsedStatement:
         """Step 1: Parse uploaded file to transaction DTOs"""
@@ -150,7 +152,11 @@ class StatementUploadService:
             logger.info(f"Row filtering applied: {original_count} -> {filtered_count} rows")
 
         # Normalize columns (after filtering)
-        normalized_df = self.transaction_normalizer.normalize(processed_df, upload_request.column_mapping)
+        normalized_df, dropped_rows = self.transaction_normalizer.normalize(
+            processed_df,
+            upload_request.column_mapping,
+            data_start_row_index=upload_request.data_start_row_index,
+        )
 
         # Convert to DTOs
         transaction_dtos = []
@@ -160,10 +166,10 @@ class StatementUploadService:
                 amount=row["amount"],
                 description=row["description"],
                 user_id=user_id,
-                statement_id=None,  # Will be set during persistence
+                statement_id=None,
                 account_id=upload_request.account_id,
-                row_index=index,  # Assign row_index based on position in file
-                sort_index=index,  # Initially same as row_index for uploaded transactions
+                row_index=index,
+                sort_index=index,
                 source_type=SourceType.UPLOAD.value,
             )
             transaction_dtos.append(transaction_dto)
@@ -172,6 +178,7 @@ class StatementUploadService:
             uploaded_file_id=UUID(upload_request.uploaded_file_id),
             transaction_dtos=transaction_dtos,
             account_id=UUID(upload_request.account_id),
+            dropped_rows=dropped_rows,
         )
 
     def enhance_transactions(self, user_id: UUID, parsed: ParsedStatement) -> EnhancedTransactions:
@@ -285,8 +292,8 @@ class StatementUploadService:
         enhanced: EnhancedTransactions,
         saved: SavedStatement,
         jobs: ScheduledJobs,
+        dropped_rows: List[DroppedRowInfo] = None,
     ) -> StatementUploadResult:
-        """Build the final result object"""
         return StatementUploadResult(
             uploaded_file_id=saved.uploaded_file_id,
             transactions_saved=saved.transactions_saved,
@@ -295,7 +302,8 @@ class StatementUploadService:
             rule_based_matches=enhanced.rule_based_matches,
             match_rate_percentage=enhanced.match_rate_percentage,
             processing_time_ms=enhanced.processing_time_ms,
-            background_job_info=jobs.categorization_job_info,  # Keep main job info for response
+            background_job_info=jobs.categorization_job_info,
+            dropped_rows=dropped_rows or [],
         )
 
     def _trigger_immediate_processing(self, background_tasks, internal_deps):

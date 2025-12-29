@@ -124,7 +124,7 @@ class StatementAnalyzerService:
         )
 
         if row_filter and row_filter.conditions:
-            normalized_df = self.transaction_normalizer.normalize(processed_df, column_mapping)
+            normalized_df, _ = self.transaction_normalizer.normalize(processed_df, column_mapping)
             total_transactions = len(normalized_df)
             duplicate_transactions = self._count_duplicates(normalized_df, account_id)
             unique_transactions = total_transactions - duplicate_transactions
@@ -218,7 +218,9 @@ class StatementAnalyzerService:
                 row_filter = RowFilter(conditions=filter_conditions, logical_operator=LogicalOperator.AND)
                 processed_df = self.row_filter_service.apply_filters(processed_df, row_filter)
 
-            normalized_df = self.transaction_normalizer.normalize(processed_df, column_mapping)
+            normalized_df, dropped_rows = self.transaction_normalizer.normalize(
+                processed_df, column_mapping, data_start_row_index
+            )
 
             total_transactions = len(normalized_df)
 
@@ -259,10 +261,10 @@ class StatementAnalyzerService:
                 "total_amount": total_amount,
                 "total_debit": total_debit,
                 "total_credit": total_credit,
+                "dropped_rows": dropped_rows,
             }
         except Exception as e:
             logger.warning(f"Failed to calculate transaction statistics: {str(e)}")
-            # Return default values if calculation fails
             return {
                 "total_transactions": 0,
                 "unique_transactions": 0,
@@ -271,6 +273,7 @@ class StatementAnalyzerService:
                 "total_amount": 0.0,
                 "total_debit": 0.0,
                 "total_credit": 0.0,
+                "dropped_rows": [],
             }
 
     def _count_duplicates(self, normalized_df, account_id):

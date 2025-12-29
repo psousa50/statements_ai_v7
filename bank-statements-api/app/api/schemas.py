@@ -299,6 +299,9 @@ class StatementAnalysisResponse(BaseModel):
     suggested_filters: Optional[List[FilterConditionRequest]] = None
     # Previously saved row filters for this file (if any)
     saved_row_filters: Optional[List[FilterConditionRequest]] = None
+    # Rows that will be skipped due to invalid dates
+    dropped_rows: List["DroppedRowResponse"] = []
+    dropped_rows_count: int = 0
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -343,6 +346,14 @@ class BackgroundJobInfoResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class DroppedRowResponse(BaseModel):
+    file_row_number: int
+    date_value: Optional[str] = None
+    description: Optional[str] = None
+    amount: Optional[str] = None
+    reason: str
+
+
 class StatementUploadResponse(BaseModel):
     uploaded_file_id: str
     transactions_saved: int
@@ -350,14 +361,15 @@ class StatementUploadResponse(BaseModel):
     success: bool
     message: str
 
-    # Synchronous categorization results
     total_processed: int
     rule_based_matches: int
     match_rate_percentage: float
     processing_time_ms: int
 
-    # Background job information (if unmatched transactions exist)
     background_job: Optional[BackgroundJobInfoResponse] = None
+
+    dropped_rows: list[DroppedRowResponse] = []
+    dropped_rows_count: int = 0
 
     model_config = ConfigDict(from_attributes=True)
 

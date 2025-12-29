@@ -1,23 +1,24 @@
 from typing import List, Optional
 from uuid import UUID
 
-from app.domain.dto.statement_processing import TransactionDTO
+from app.domain.dto.statement_processing import DroppedRowInfo, TransactionDTO
 from app.domain.models.processing import BackgroundJobInfo
 from app.domain.models.statement import Statement
 
 
 class ParsedStatement:
-    """Result of parsing a statement file"""
 
     def __init__(
         self,
         uploaded_file_id: UUID,
         transaction_dtos: List[TransactionDTO],
         account_id: UUID,
+        dropped_rows: List[DroppedRowInfo] = None,
     ):
         self.uploaded_file_id = uploaded_file_id
         self.transaction_dtos = transaction_dtos
         self.account_id = account_id
+        self.dropped_rows = dropped_rows or []
 
 
 class EnhancedTransactions:

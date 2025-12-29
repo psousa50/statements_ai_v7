@@ -59,6 +59,8 @@ export interface StatementAnalysisResponse {
   total_credit: number
   suggested_filters?: FilterCondition[]
   saved_row_filters?: FilterCondition[]
+  dropped_rows: DroppedRow[]
+  dropped_rows_count: number
 }
 
 export interface StatementUploadRequest {
@@ -97,6 +99,14 @@ export interface StatisticsPreviewResponse {
   filter_preview?: FilterPreviewResponse
 }
 
+export interface DroppedRow {
+  file_row_number: number
+  date_value: string | null
+  description: string | null
+  amount: string | null
+  reason: string
+}
+
 export interface StatementUploadResponse {
   uploaded_file_id: string
   transactions_saved: number
@@ -104,13 +114,11 @@ export interface StatementUploadResponse {
   success: boolean
   message: string
 
-  // Synchronous categorization results
   total_processed: number
   rule_based_matches: number
   match_rate_percentage: number
   processing_time_ms: number
 
-  // Background job information (if unmatched transactions exist)
   background_job?: {
     job_id: string
     status: string
@@ -118,6 +126,9 @@ export interface StatementUploadResponse {
     estimated_completion_seconds?: number
     status_url: string
   }
+
+  dropped_rows: DroppedRow[]
+  dropped_rows_count: number
 
   sample_data?: SampleData[]
 }
