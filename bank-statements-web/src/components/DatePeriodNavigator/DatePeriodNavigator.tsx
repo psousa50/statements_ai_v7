@@ -233,10 +233,10 @@ export function DatePeriodNavigator({
   )
 
   const isAllDates = periodType === 'all'
-  const displayLabel = isAllDates
-    ? 'All dates'
-    : isCustomMode
-      ? formatCustomRangeLabel(startDate, endDate)
+  const displayLabel = isCustomMode
+    ? formatCustomRangeLabel(startDate, endDate)
+    : isAllDates
+      ? 'All dates'
       : getPeriodRange(periodType, currentPeriod).displayLabel
 
   return (
@@ -296,7 +296,7 @@ export function DatePeriodNavigator({
         </div>
       </div>
 
-      {!isAllDates && (
+      {(!isAllDates || isCustomMode) && (
         <div className="period-navigation">
           {!isCustomMode && (
             <button
