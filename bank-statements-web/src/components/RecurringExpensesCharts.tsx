@@ -16,6 +16,8 @@ const CHART_COLORS = [
   '#D084D0',
 ]
 
+const UNCATEGORIZED_COLOR = '#EF4444'
+
 interface RecurringExpensesChartsProps {
   patterns: RecurringPattern[]
   categories: Category[]
@@ -56,7 +58,10 @@ export const RecurringExpensesCharts = ({
 
     return Array.from(categoryTotals.values())
       .sort((a, b) => b.value - a.value)
-      .map((item, index) => ({ ...item, color: CHART_COLORS[index % CHART_COLORS.length] }))
+      .map((item, index) => ({
+        ...item,
+        color: item.name === 'Uncategorised' ? UNCATEGORIZED_COLOR : CHART_COLORS[index % CHART_COLORS.length],
+      }))
   }, [patterns, categories])
 
   const categoryBarChartData = useMemo(() => {

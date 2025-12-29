@@ -27,6 +27,13 @@ const COLORS = [
   '#F0E68C',
 ]
 
+const UNCATEGORIZED_COLOR = '#EF4444'
+
+const getCategoryColor = (name: string, index: number): string => {
+  if (name === 'Uncategorized') return UNCATEGORIZED_COLOR
+  return COLORS[index % COLORS.length]
+}
+
 export const CategoryTimeSeriesChart = ({ dataPoints, categories, loading }: CategoryTimeSeriesChartProps) => {
   const chartData = useMemo(() => {
     if (!dataPoints || dataPoints.length === 0) return []
@@ -106,7 +113,7 @@ export const CategoryTimeSeriesChart = ({ dataPoints, categories, loading }: Cat
             }}
           />
           {categoryNames.map((name, index) => (
-            <Bar key={name} dataKey={name} stackId="1" fill={COLORS[index % COLORS.length]} animationDuration={300} />
+            <Bar key={name} dataKey={name} stackId="1" fill={getCategoryColor(name, index)} animationDuration={300} />
           ))}
         </BarChart>
       </ResponsiveContainer>

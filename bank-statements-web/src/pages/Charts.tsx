@@ -48,6 +48,8 @@ const COLORS = [
   '#F0E68C',
 ]
 
+const UNCATEGORIZED_COLOR = '#EF4444'
+
 export const ChartsPage = () => {
   const [filters, setFilters] = useState<Omit<FilterType, 'page' | 'page_size'>>({
     exclude_transfers: true,
@@ -266,7 +268,7 @@ export const ChartsPage = () => {
           name: id === 'uncategorized' ? 'Uncategorized' : categoryMap.get(id)?.name || 'Unknown',
           value: data.value,
           count: data.count,
-          color: COLORS[index % COLORS.length],
+          color: id === 'uncategorized' ? UNCATEGORIZED_COLOR : COLORS[index % COLORS.length],
         }))
     } else {
       // Show subcategories of selected root category
@@ -352,7 +354,7 @@ export const ChartsPage = () => {
                 : categoryMap.get(id)?.name || 'Unknown',
           value: data.value,
           count: data.count,
-          color: COLORS[index % COLORS.length],
+          color: id === 'uncategorized' ? UNCATEGORIZED_COLOR : COLORS[index % COLORS.length],
         }))
     }
   }, [categoryTotals, categories, chartType, selectedRootCategory, categorizationFilter])
