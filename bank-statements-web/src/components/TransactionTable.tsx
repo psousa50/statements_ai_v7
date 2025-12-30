@@ -3,6 +3,7 @@ import { useState, useCallback, useEffect } from 'react'
 import { Category, Transaction, Account } from '../types/Transaction'
 import { Toast, ToastProps } from './Toast'
 import { ConfirmationModal } from './ConfirmationModal'
+import { BulkCategorizeModal } from './BulkCategorizeModal'
 import { CategorySelector } from './CategorySelector'
 import { useApi } from '../api/ApiContext'
 import EditIcon from '@mui/icons-material/Edit'
@@ -49,6 +50,15 @@ interface TransactionTableProps {
   showRunningBalance?: boolean
 }
 
+interface BulkModalState {
+  normalizedDescription: string
+  categoryId: string
+  categoryName: string
+  previousCategoryId?: string
+  similarCount: number
+  replaceOption?: { categoryName: string; count: number }
+}
+
 interface CategoryCellProps {
   transaction: Transaction
   categories: Category[]
@@ -62,6 +72,7 @@ interface CategoryCellProps {
   similarCountFilters?: SimilarCountFilters
   onShowToast: (toast: Omit<ToastProps, 'onClose'>) => void
   onCategoryCreated: (category: Category) => void
+  onShowBulkModal: (state: BulkModalState) => void
 }
 
 const CategoryCell = ({
@@ -73,6 +84,7 @@ const CategoryCell = ({
   similarCountFilters,
   onShowToast,
   onCategoryCreated,
+  onShowBulkModal,
 }: CategoryCellProps) => {
   const [isLoading, setIsLoading] = useState(false)
   const apiClient = useApi()
@@ -108,7 +120,6 @@ const CategoryCell = ({
           })
         } else if (categoryId && onBulkCategorize) {
           const categoryName = categories.find((c) => c.id === categoryId)?.name || 'Category'
-          const actions: { label: string; onClick: () => Promise<void> }[] = []
 
           const countResult = await apiClient.transactions.countSimilar({
             normalized_description: transaction.normalized_description,
@@ -116,57 +127,26 @@ const CategoryCell = ({
           })
           const similarCount = countResult.count - 1
 
-          if (similarCount > 0) {
-            actions.push({
-              label: `Apply to ${similarCount} similar`,
-              onClick: async () => {
-                const result = await onBulkCategorize(
-                  transaction.normalized_description,
-                  categoryId,
-                  similarCountFilters || {}
-                )
-                if (result) {
-                  const additionalCount = result.updated_count - 1
-                  if (additionalCount > 0) {
-                    onShowToast({
-                      message: `Updated ${additionalCount} similar transaction${additionalCount === 1 ? '' : 's'}`,
-                      type: 'success',
-                    })
-                  }
-                }
-              },
-            })
-          }
-
+          let replaceOption: { categoryName: string; count: number } | undefined
           if (previousCategoryId && onBulkReplaceCategory) {
             const oldCategoryName = categories.find((c) => c.id === previousCategoryId)?.name || 'old category'
             const replaceCountResult = await apiClient.transactions.countByCategory({
               category_id: previousCategoryId,
               ...similarCountFilters,
             })
-            const replaceCount = replaceCountResult.count
-
-            if (replaceCount > 0) {
-              actions.push({
-                label: `Replace ${replaceCount} from ${oldCategoryName}`,
-                onClick: async () => {
-                  const result = await onBulkReplaceCategory(previousCategoryId, categoryId)
-                  if (result && result.updated_count > 0) {
-                    onShowToast({
-                      message: `Replaced category for ${result.updated_count} transaction${result.updated_count === 1 ? '' : 's'}`,
-                      type: 'success',
-                    })
-                  }
-                },
-              })
+            if (replaceCountResult.count > 0) {
+              replaceOption = { categoryName: oldCategoryName, count: replaceCountResult.count }
             }
           }
 
-          if (actions.length > 0) {
-            onShowToast({
-              message: `${categoryName} applied`,
-              type: 'success',
-              actions,
+          if (similarCount > 0 || replaceOption) {
+            onShowBulkModal({
+              normalizedDescription: transaction.normalized_description,
+              categoryId,
+              categoryName,
+              previousCategoryId,
+              similarCount,
+              replaceOption,
             })
           } else {
             onShowToast({
@@ -196,6 +176,7 @@ const CategoryCell = ({
       similarCountFilters,
       apiClient,
       onShowToast,
+      onShowBulkModal,
     ]
   )
 
@@ -295,6 +276,7 @@ export const TransactionTable = ({
   const [toast, setToast] = useState<Omit<ToastProps, 'onClose'> | null>(null)
   const [localCategories, setLocalCategories] = useState<Category[]>(categories)
   const [pendingDeleteTransaction, setPendingDeleteTransaction] = useState<Transaction | null>(null)
+  const [bulkModal, setBulkModal] = useState<BulkModalState | null>(null)
 
   useEffect(() => {
     setLocalCategories(categories)
@@ -303,6 +285,41 @@ export const TransactionTable = ({
   const handleShowToast = useCallback((toastProps: Omit<ToastProps, 'onClose'>) => {
     setToast(toastProps)
   }, [])
+
+  const handleShowBulkModal = useCallback((state: BulkModalState) => {
+    setBulkModal(state)
+  }, [])
+
+  const handleApplyToSimilar = useCallback(async () => {
+    if (!bulkModal || !onBulkCategorize) return
+    const result = await onBulkCategorize(
+      bulkModal.normalizedDescription,
+      bulkModal.categoryId,
+      similarCountFilters || {}
+    )
+    if (result) {
+      const additionalCount = result.updated_count - 1
+      if (additionalCount > 0) {
+        handleShowToast({
+          message: `Updated ${additionalCount} similar transaction${additionalCount === 1 ? '' : 's'}`,
+          type: 'success',
+        })
+      }
+    }
+    setBulkModal(null)
+  }, [bulkModal, onBulkCategorize, similarCountFilters, handleShowToast])
+
+  const handleReplaceFromCategory = useCallback(async () => {
+    if (!bulkModal?.previousCategoryId || !onBulkReplaceCategory) return
+    const result = await onBulkReplaceCategory(bulkModal.previousCategoryId, bulkModal.categoryId)
+    if (result && result.updated_count > 0) {
+      handleShowToast({
+        message: `Replaced category for ${result.updated_count} transaction${result.updated_count === 1 ? '' : 's'}`,
+        type: 'success',
+      })
+    }
+    setBulkModal(null)
+  }, [bulkModal, onBulkReplaceCategory, handleShowToast])
 
   const handleCategoryCreated = useCallback((newCategory: Category) => {
     setLocalCategories((prev) => [...prev, newCategory].sort((a, b) => a.name.localeCompare(b.name)))
@@ -422,6 +439,7 @@ export const TransactionTable = ({
                     similarCountFilters={similarCountFilters}
                     onShowToast={handleShowToast}
                     onCategoryCreated={handleCategoryCreated}
+                    onShowBulkModal={handleShowBulkModal}
                   />
                 </td>
               )}
@@ -471,6 +489,18 @@ export const TransactionTable = ({
           onConfirm={handleConfirmDelete}
           onCancel={() => setPendingDeleteTransaction(null)}
           dangerous
+        />
+      )}
+      {bulkModal && (
+        <BulkCategorizeModal
+          isOpen={true}
+          categoryName={bulkModal.categoryName}
+          normalizedDescription={bulkModal.normalizedDescription}
+          similarCount={bulkModal.similarCount}
+          replaceOption={bulkModal.replaceOption}
+          onApplyToSimilar={handleApplyToSimilar}
+          onReplaceFromCategory={bulkModal.replaceOption ? handleReplaceFromCategory : undefined}
+          onDismiss={() => setBulkModal(null)}
         />
       )}
     </div>

@@ -1,0 +1,70 @@
+.bulk-categorize-modal {
+  max-width: 520px;
+}
+
+.bulk-categorize-intro {
+  margin: 0 0 20px 0;
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+}
+
+.bulk-categorize-intro strong {
+  color: var(--text-primary);
+}
+
+.bulk-option-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.bulk-option-card:last-child {
+  margin-bottom: 0;
+}
+
+.bulk-option-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.bulk-option-icon {
+  font-size: 1.1rem;
+}
+
+.bulk-option-title {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 0.95rem;
+}
+
+.bulk-option-description {
+  margin: 0 0 8px 0;
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.bulk-option-hint {
+  margin: 0 0 16px 0;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  font-style: italic;
+}
+
+.bulk-option-action {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.bulk-option-action button {
+  min-width: 160px;
+}
+
+.bulk-option-action button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
