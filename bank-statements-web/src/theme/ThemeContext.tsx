@@ -162,6 +162,20 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
               },
             },
           },
+          MuiTableCell: {
+            styleOverrides: {
+              head: {
+                backgroundColor: resolvedMode === 'dark' ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.02)',
+                fontWeight: 600,
+                fontSize: '0.6875rem',
+                textTransform: 'uppercase',
+                letterSpacing: '0.08em',
+                color: resolvedMode === 'dark' ? '#cbd5e1' : '#475569',
+                whiteSpace: 'nowrap',
+                borderBottom: resolvedMode === 'dark' ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid #e2e8f0',
+              },
+            },
+          },
         },
       }),
     [resolvedMode]

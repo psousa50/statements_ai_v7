@@ -64,38 +64,27 @@
 
 .statements-table th,
 .statements-table td {
-  padding: 1rem;
   text-align: left;
-  border-bottom: 1px solid var(--border-primary);
 }
 
 .statements-table td:nth-child(4) {
   text-align: right;
 }
 
-.statements-table th {
-  background-color: var(--bg-secondary);
-  font-weight: 600;
-  color: var(--text-secondary);
-  font-size: 0.9rem;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
 .statements-table th.sortable-header {
   cursor: pointer;
   user-select: none;
-  transition: background-color 0.2s;
+  transition: background-color var(--transition-fast);
 }
 
 .statements-table th.sortable-header:hover {
-  background-color: var(--bg-tertiary);
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .statements-table th.sortable-header .header-content {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
 }
 
 .statements-table th.sortable-header .sort-indicator {
@@ -103,11 +92,12 @@
   align-items: center;
   color: var(--text-muted);
   opacity: 0.5;
+  font-size: 0.75rem;
 }
 
 .statements-table th.sortable-header.active .sort-indicator {
   opacity: 1;
-  color: var(--button-primary);
+  color: var(--text-accent);
 }
 
 .statements-table tbody tr:hover {

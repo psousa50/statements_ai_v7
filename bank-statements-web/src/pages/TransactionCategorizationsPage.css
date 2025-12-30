@@ -311,42 +311,19 @@
   background: var(--bg-primary);
 }
 
-/* Table text colors */
-.categorization-table th,
-.categorization-table td {
-  color: var(--text-primary) !important;
-}
-
-.categorization-table th {
-  background: var(--bg-tertiary);
-  padding: 12px 16px;
-  text-align: left;
-  font-weight: 600;
-  color: var(--text-secondary);
-  border-bottom: 1px solid var(--border-primary);
-  white-space: nowrap;
-}
-
 /* Sortable Headers */
 .sortable-header {
-  background: var(--bg-tertiary);
-  padding: 12px 16px;
-  text-align: left;
-  font-weight: 600;
-  color: var(--text-secondary);
-  border-bottom: 1px solid var(--border-primary);
-  white-space: nowrap;
+  cursor: pointer;
   user-select: none;
-  transition: background-color 0.2s;
+  transition: background-color var(--transition-fast);
 }
 
 .sortable-header:hover {
-  background: var(--bg-secondary);
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .sortable-header.active {
-  background: var(--bg-accent);
-  color: var(--text-primary);
+  color: var(--text-accent);
 }
 
 .header-content {

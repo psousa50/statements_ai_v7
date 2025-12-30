@@ -1123,29 +1123,14 @@
 
 .transactions-page .transaction-table th,
 .transactions-page .transaction-table td {
-  padding: 0.75rem 1rem;
   text-align: left;
-  border-bottom: 1px solid var(--glass-border);
-  color: var(--text-primary);
-  background: transparent;
   overflow: visible;
   position: relative;
-  transition: background var(--transition-fast);
 }
 
 .transactions-page .transaction-table th:nth-child(3),
 .transactions-page .transaction-table td:nth-child(3) {
   text-align: right;
-}
-
-.transactions-page .transaction-table th {
-  background: rgba(255, 255, 255, 0.03);
-  font-weight: 600;
-  color: var(--text-muted);
-  font-size: 0.6875rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  border-bottom: 1px solid var(--glass-border);
 }
 
 .transactions-page .transaction-table tbody tr {
@@ -1651,25 +1636,17 @@
 
 /* Sortable Headers */
 .transactions-page .sortable-header {
-  background: var(--bg-tertiary);
-  padding: 12px 16px;
-  text-align: left;
-  font-weight: 600;
-  color: var(--text-secondary);
-  border-bottom: 1px solid var(--border-primary);
-  white-space: nowrap;
-  user-select: none;
-  transition: background-color 0.2s;
   cursor: pointer;
+  user-select: none;
+  transition: background-color var(--transition-fast);
 }
 
 .transactions-page .sortable-header:hover {
-  background: var(--bg-secondary);
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .transactions-page .sortable-header.active {
-  background: var(--bg-accent);
-  color: var(--text-primary);
+  color: var(--text-accent);
 }
 
 .transactions-page .header-content {
@@ -1680,13 +1657,13 @@
 }
 
 .transactions-page .sort-indicator {
-  font-size: 0.875rem;
+  font-size: 0.75rem;
   color: var(--text-muted);
   font-weight: normal;
   opacity: 0.6;
   display: flex;
   align-items: center;
-  transition: all 0.2s;
+  transition: all var(--transition-fast);
 }
 
 .transactions-page .sortable-header:hover .sort-indicator {
@@ -1699,17 +1676,8 @@
 }
 
 .transactions-page .sort-indicator svg {
-  width: 16px;
-  height: 16px;
-}
-
-.transactions-page .transaction-table th {
-  background-color: var(--bg-tertiary);
-  font-weight: 600;
-  color: var(--text-secondary);
-  font-size: 0.6875rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+  width: 14px;
+  height: 14px;
 }
 
 .transactions-page .transaction-table th.text-right,
