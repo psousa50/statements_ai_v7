@@ -159,6 +159,71 @@ export function detectPeriodType(startDateStr: string, endDateStr: string): Peri
   return null
 }
 
+export interface RollingWindow {
+  amount: number
+  unit: 'days' | 'months'
+}
+
+function getDaysDifference(start: Date, end: Date): number {
+  const msPerDay = 24 * 60 * 60 * 1000
+  return Math.round((end.getTime() - start.getTime()) / msPerDay) + 1
+}
+
+function getCalendarMonthsSpan(start: Date, end: Date): number | null {
+  if (start.getDate() !== 1) return null
+
+  const lastDayOfEndMonth = new Date(end.getFullYear(), end.getMonth() + 1, 0).getDate()
+  if (end.getDate() !== lastDayOfEndMonth) return null
+
+  const months =
+    (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth()) + 1
+
+  return months > 0 ? months : null
+}
+
+function getRollingMonthsDifference(start: Date, end: Date): number | null {
+  const startNormalised = new Date(start.getFullYear(), start.getMonth(), start.getDate())
+  const endNormalised = new Date(end.getFullYear(), end.getMonth(), end.getDate())
+
+  const monthsDiff =
+    (endNormalised.getFullYear() - startNormalised.getFullYear()) * 12 +
+    (endNormalised.getMonth() - startNormalised.getMonth())
+
+  if (monthsDiff <= 0) return null
+
+  const expectedEnd = new Date(startNormalised)
+  expectedEnd.setMonth(expectedEnd.getMonth() + monthsDiff)
+
+  const daysDiff = Math.abs(endNormalised.getTime() - expectedEnd.getTime()) / (24 * 60 * 60 * 1000)
+  if (daysDiff <= 3) {
+    return monthsDiff
+  }
+
+  return null
+}
+
+export function detectRollingWindow(startDateStr: string, endDateStr: string): RollingWindow | null {
+  const startDate = parseDateString(startDateStr)
+  const endDate = parseDateString(endDateStr)
+
+  const calendarMonths = getCalendarMonthsSpan(startDate, endDate)
+  if (calendarMonths) {
+    return { amount: calendarMonths, unit: 'months' }
+  }
+
+  const rollingMonths = getRollingMonthsDifference(startDate, endDate)
+  if (rollingMonths) {
+    return { amount: rollingMonths, unit: 'months' }
+  }
+
+  const days = getDaysDifference(startDate, endDate)
+  if (days > 0 && days % 7 === 0) {
+    return { amount: days, unit: 'days' }
+  }
+
+  return null
+}
+
 export function formatCustomRangeLabel(startDateStr?: string, endDateStr?: string): string {
   if (!startDateStr || !endDateStr) {
     return 'Select dates'

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { DayPicker, DateRange } from 'react-day-picker'
 import 'react-day-picker/style.css'
-import { startOfDay, endOfDay, subDays, subMonths } from 'date-fns'
+import { startOfDay, endOfDay, subDays, subMonths, addMonths, addDays } from 'date-fns'
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft'
 import ChevronRightIcon from '@mui/icons-material/ChevronRight'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
@@ -12,7 +12,9 @@ import {
   formatDateToString,
   parseDateString,
   detectPeriodType,
+  detectRollingWindow,
   formatCustomRangeLabel,
+  RollingWindow,
 } from './dateUtils'
 import './DatePeriodNavigator.css'
 
@@ -73,6 +75,7 @@ export function DatePeriodNavigator({
   const [periodType, setPeriodType] = useState<PeriodType>(defaultPeriodType)
   const [currentPeriod, setCurrentPeriod] = useState<Date>(() => new Date())
   const [isCustomMode, setIsCustomMode] = useState(false)
+  const [rollingWindow, setRollingWindow] = useState<RollingWindow | null>(null)
   const [showCustomPicker, setShowCustomPicker] = useState(false)
   const [selectedRange, setSelectedRange] = useState<DateRange | undefined>(undefined)
   const firstSelectedDateRef = useRef<Date | null>(null)
@@ -88,9 +91,11 @@ export function DatePeriodNavigator({
         setPeriodType(detected)
         setCurrentPeriod(parseDateString(startDate))
         setIsCustomMode(false)
+        setRollingWindow(null)
       } else {
         setIsCustomMode(true)
         setCurrentPeriod(parseDateString(startDate))
+        setRollingWindow(detectRollingWindow(startDate, endDate))
       }
       setSelectedRange({
         from: parseDateString(startDate),
@@ -99,6 +104,7 @@ export function DatePeriodNavigator({
     } else {
       setPeriodType(defaultPeriodType)
       setIsCustomMode(false)
+      setRollingWindow(null)
       if (defaultPeriodType !== 'all') {
         const now = new Date()
         const range = getPeriodRange(defaultPeriodType, now)
@@ -127,6 +133,7 @@ export function DatePeriodNavigator({
     (newType: PeriodType) => {
       setPeriodType(newType)
       setIsCustomMode(false)
+      setRollingWindow(null)
       if (newType === 'all') {
         onChange(undefined, undefined)
         setSelectedRange(undefined)
@@ -143,6 +150,25 @@ export function DatePeriodNavigator({
 
   const handleNavigate = useCallback(
     (direction: 'prev' | 'next') => {
+      if (rollingWindow) {
+        const delta = direction === 'next' ? 1 : -1
+        const currentFrom = selectedRange?.from || new Date()
+        const currentTo = selectedRange?.to || new Date()
+        let newFrom: Date
+        let newTo: Date
+        if (rollingWindow.unit === 'months') {
+          newFrom = startOfDay(addMonths(currentFrom, delta * rollingWindow.amount))
+          newTo = endOfDay(addMonths(currentTo, delta * rollingWindow.amount))
+        } else {
+          newFrom = startOfDay(addDays(currentFrom, delta * rollingWindow.amount))
+          newTo = endOfDay(addDays(currentTo, delta * rollingWindow.amount))
+        }
+        setSelectedRange({ from: newFrom, to: newTo })
+        setCurrentPeriod(newFrom)
+        onChange(formatDateToString(newFrom), formatDateToString(newTo))
+        return
+      }
+
       const newDate = navigatePeriod(periodType, currentPeriod, direction)
       setCurrentPeriod(newDate)
       setIsCustomMode(false)
@@ -150,7 +176,7 @@ export function DatePeriodNavigator({
       onChange(formatDateToString(range.startDate), formatDateToString(range.endDate))
       setSelectedRange({ from: range.startDate, to: range.endDate })
     },
-    [periodType, currentPeriod, onChange]
+    [periodType, currentPeriod, onChange, rollingWindow, selectedRange]
   )
 
   const completeRangeSelection = useCallback(
@@ -162,8 +188,10 @@ export function DatePeriodNavigator({
       if (detected) {
         setPeriodType(detected)
         setIsCustomMode(false)
+        setRollingWindow(null)
       } else {
         setIsCustomMode(true)
+        setRollingWindow(detectRollingWindow(startStr, endStr))
       }
 
       setShowCustomPicker(false)
@@ -295,9 +323,9 @@ export function DatePeriodNavigator({
       <div className={`period-navigation ${isAllDates && !isCustomMode ? 'hidden' : ''}`}>
         <button
           type="button"
-          className={`nav-arrow ${isCustomMode ? 'hidden' : ''}`}
+          className={`nav-arrow ${isCustomMode && !rollingWindow ? 'hidden' : ''}`}
           onClick={() => handleNavigate('prev')}
-          aria-label={`Previous ${periodType}`}
+          aria-label={rollingWindow ? 'Previous period' : `Previous ${periodType}`}
         >
           <ChevronLeftIcon fontSize="small" />
         </button>
@@ -308,9 +336,9 @@ export function DatePeriodNavigator({
 
         <button
           type="button"
-          className={`nav-arrow ${isCustomMode ? 'hidden' : ''}`}
+          className={`nav-arrow ${isCustomMode && !rollingWindow ? 'hidden' : ''}`}
           onClick={() => handleNavigate('next')}
-          aria-label={`Next ${periodType}`}
+          aria-label={rollingWindow ? 'Next period' : `Next ${periodType}`}
         >
           <ChevronRightIcon fontSize="small" />
         </button>
