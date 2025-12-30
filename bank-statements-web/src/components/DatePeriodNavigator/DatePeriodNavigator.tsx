@@ -317,35 +317,29 @@ export function DatePeriodNavigator({
         </div>
       </div>
 
-      {(!isAllDates || isCustomMode) && (
-        <div className="period-navigation">
-          {!isCustomMode && (
-            <button
-              type="button"
-              className="nav-arrow"
-              onClick={() => handleNavigate('prev')}
-              aria-label={`Previous ${periodType}`}
-            >
-              <ChevronLeftIcon fontSize="small" />
-            </button>
-          )}
+      <div className={`period-navigation ${isAllDates && !isCustomMode ? 'hidden' : ''}`}>
+        <button
+          type="button"
+          className={`nav-arrow ${isCustomMode ? 'hidden' : ''}`}
+          onClick={() => handleNavigate('prev')}
+          aria-label={`Previous ${periodType}`}
+        >
+          <ChevronLeftIcon fontSize="small" />
+        </button>
 
-          <span className="period-label" aria-live="polite">
-            {displayLabel}
-          </span>
+        <span className="period-label" aria-live="polite">
+          {displayLabel}
+        </span>
 
-          {!isCustomMode && (
-            <button
-              type="button"
-              className="nav-arrow"
-              onClick={() => handleNavigate('next')}
-              aria-label={`Next ${periodType}`}
-            >
-              <ChevronRightIcon fontSize="small" />
-            </button>
-          )}
-        </div>
-      )}
+        <button
+          type="button"
+          className={`nav-arrow ${isCustomMode ? 'hidden' : ''}`}
+          onClick={() => handleNavigate('next')}
+          aria-label={`Next ${periodType}`}
+        >
+          <ChevronRightIcon fontSize="small" />
+        </button>
+      </div>
     </div>
   )
 }
