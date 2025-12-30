@@ -175,8 +175,7 @@ function getCalendarMonthsSpan(start: Date, end: Date): number | null {
   const lastDayOfEndMonth = new Date(end.getFullYear(), end.getMonth() + 1, 0).getDate()
   if (end.getDate() !== lastDayOfEndMonth) return null
 
-  const months =
-    (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth()) + 1
+  const months = (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth()) + 1
 
   return months > 0 ? months : null
 }

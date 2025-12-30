@@ -91,11 +91,7 @@ export const BulkCategorizeModal = ({
                 Use this when transactions from the same merchant should always have this category.
               </p>
               <div className="bulk-option-action">
-                <button
-                  className="button-primary"
-                  onClick={handleApplyToSimilar}
-                  disabled={isLoading}
-                >
+                <button className="button-primary" onClick={handleApplyToSimilar} disabled={isLoading}>
                   {loadingAction === 'similar' ? 'Applying...' : `Apply to ${similarCount} similar`}
                 </button>
               </div>
@@ -110,18 +106,13 @@ export const BulkCategorizeModal = ({
               </div>
               <p className="bulk-option-description">
                 Move <strong>{replaceOption.count}</strong> transaction
-                {replaceOption.count === 1 ? '' : 's'} from "{replaceOption.categoryName}" to "
-                {categoryName}".
+                {replaceOption.count === 1 ? '' : 's'} from "{replaceOption.categoryName}" to "{categoryName}".
               </p>
               <p className="bulk-option-hint">
                 Use this to merge categories or fix miscategorised transactions in bulk.
               </p>
               <div className="bulk-option-action">
-                <button
-                  className="button-secondary"
-                  onClick={handleReplaceFromCategory}
-                  disabled={isLoading}
-                >
+                <button className="button-secondary" onClick={handleReplaceFromCategory} disabled={isLoading}>
                   {loadingAction === 'replace'
                     ? 'Replacing...'
                     : `Replace ${replaceOption.count} from ${replaceOption.categoryName}`}
