@@ -174,18 +174,6 @@ export const AccountsPage = () => {
         <p className="page-description">Create, edit, and manage your bank accounts</p>
       </header>
 
-      {/* Summary Cards */}
-      <div className="summary-cards">
-        <div className="summary-card">
-          <div className="card-value">{accounts.length}</div>
-          <div className="card-label">Total Accounts</div>
-        </div>
-        <div className="summary-card">
-          <div className="card-value">{filteredAccounts.length}</div>
-          <div className="card-label">Filtered Accounts</div>
-        </div>
-      </div>
-
       {error && (
         <div className="error-message">
           <strong>Error:</strong> {error}
