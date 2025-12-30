@@ -67,7 +67,7 @@ export const AccountSelector: React.FC<AccountSelectorProps> = ({ value, onChang
 
     try {
       setCreatingAccount(true)
-      const newAccount = await defaultApiClient.accounts.createAccount(newAccountName.trim())
+      const newAccount = await defaultApiClient.accounts.createAccount(newAccountName.trim(), 'EUR')
       setAccounts((prevAccounts) => [...prevAccounts, newAccount])
       onChange(newAccount.id)
       handleCloseDialog()

@@ -49,6 +49,7 @@ class CategoryListResponse(BaseModel):
 
 class AccountBase(BaseModel):
     name: str
+    currency: str = "EUR"
 
 
 class AccountCreate(AccountBase):
@@ -78,6 +79,7 @@ class InitialBalanceSetRequest(BaseModel):
 class AccountResponse(BaseModel):
     id: UUID
     name: str
+    currency: str
     initial_balance: Optional[InitialBalanceResponse] = None
 
     model_config = ConfigDict(from_attributes=True)

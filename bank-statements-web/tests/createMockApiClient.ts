@@ -50,6 +50,7 @@ const defaultCategory: Category = {
 const defaultAccount: Account = {
   id: '1',
   name: 'Sample Account',
+  currency: 'EUR',
 }
 
 // Default mock transaction categorization

@@ -6,6 +6,7 @@ import { ConfirmationModal } from '../components/ConfirmationModal'
 import { Toast, ToastProps } from '../components/Toast'
 import { Account } from '../types/Transaction'
 import { ActionIconButton } from '../components/ActionIconButton'
+import { formatCurrency } from '../utils/format'
 import EditIcon from '@mui/icons-material/Edit'
 import DeleteIcon from '@mui/icons-material/Delete'
 import AddIcon from '@mui/icons-material/Add'
@@ -72,11 +73,10 @@ export const AccountsPage = () => {
   }, [])
 
   const handleSaveAccount = useCallback(
-    async (name: string, accountId?: string) => {
+    async (name: string, currency: string, accountId?: string) => {
       try {
         if (accountId) {
-          // Updating existing account
-          const updatedAccount = await updateAccount(accountId, name)
+          const updatedAccount = await updateAccount(accountId, name, currency)
           if (updatedAccount) {
             setToast({
               message: `Account "${name}" updated successfully`,
@@ -85,8 +85,7 @@ export const AccountsPage = () => {
             setEditingAccount(null)
           }
         } else {
-          // Creating new account
-          const newAccount = await addAccount(name)
+          const newAccount = await addAccount(name, currency)
           if (newAccount) {
             setToast({
               message: `Account "${name}" created successfully`,
@@ -163,12 +162,9 @@ export const AccountsPage = () => {
 
   const formatInitialBalance = (account: Account): string => {
     if (!account.initial_balance) return '-'
-    const amount = account.initial_balance.balance_amount.toLocaleString('en-GB', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    })
+    const amount = formatCurrency(account.initial_balance.balance_amount, account.currency)
     const date = new Date(account.initial_balance.balance_date).toLocaleDateString('en-GB')
-    return `£${amount} as of ${date}`
+    return `${amount} as of ${date}`
   }
 
   return (
@@ -245,6 +241,7 @@ export const AccountsPage = () => {
               <thead>
                 <tr>
                   <th>Name</th>
+                  <th style={{ width: '80px' }}>Currency</th>
                   <th className="initial-balance-header">Initial Balance</th>
                   <th style={{ textAlign: 'center', width: '120px' }}>Actions</th>
                 </tr>
@@ -253,6 +250,7 @@ export const AccountsPage = () => {
                 {filteredAccounts.map((account) => (
                   <tr key={account.id}>
                     <td className="account-name">{account.name}</td>
+                    <td>{account.currency}</td>
                     <td
                       className="initial-balance-cell"
                       onClick={() => handleEditInitialBalance(account)}

@@ -12,8 +12,8 @@ export interface AccountListResponse {
 export interface AccountClient {
   getAll: () => Promise<Account[]>
   getById: (id: string) => Promise<Account>
-  createAccount: (name: string) => Promise<Account>
-  updateAccount: (id: string, name: string) => Promise<Account>
+  createAccount: (name: string, currency: string) => Promise<Account>
+  updateAccount: (id: string, name: string, currency: string) => Promise<Account>
   deleteAccount: (id: string) => Promise<void>
   setInitialBalance: (id: string, balanceDate: string, balanceAmount: number) => Promise<Account>
   deleteInitialBalance: (id: string) => Promise<void>
@@ -34,13 +34,13 @@ export const accountClient: AccountClient = {
     return response.data
   },
 
-  createAccount: async (name: string): Promise<Account> => {
-    const response = await axios.post<Account>(API_URL, { name })
+  createAccount: async (name: string, currency: string): Promise<Account> => {
+    const response = await axios.post<Account>(API_URL, { name, currency })
     return response.data
   },
 
-  updateAccount: async (id: string, name: string): Promise<Account> => {
-    const response = await axios.put<Account>(`${API_URL}/${id}`, { name })
+  updateAccount: async (id: string, name: string, currency: string): Promise<Account> => {
+    const response = await axios.put<Account>(`${API_URL}/${id}`, { name, currency })
     return response.data
   },
 

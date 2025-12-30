@@ -14,6 +14,7 @@ import { TransactionModal } from '../components/TransactionModal'
 import { Pagination } from '../components/Pagination'
 import { CategorizationStatus, TransactionCreate, Transaction } from '../types/Transaction'
 import { TransactionFilters as FilterType, transactionClient } from '../api/TransactionClient'
+import { formatCurrency } from '../utils/format'
 import './TransactionsPage.css'
 
 function convertAmountFiltersForApi(
@@ -612,10 +613,7 @@ export const TransactionsPage = () => {
                     <div className="transactions-stats">
                       <span className="transaction-count">{pagination.total_count} transactions found</span>
                       <span className="transaction-total">
-                        Total:{' '}
-                        <span className={total < 0 ? 'negative' : 'positive'}>
-                          {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(total)}
-                        </span>
+                        Total: <span className={total < 0 ? 'negative' : 'positive'}>{formatCurrency(total)}</span>
                       </span>
                     </div>
                   )

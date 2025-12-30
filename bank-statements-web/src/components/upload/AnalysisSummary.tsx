@@ -1,6 +1,7 @@
 import React from 'react'
 import { Box, Card, CardContent, Typography, Stack, Chip, Skeleton } from '@mui/material'
 import { StatementAnalysisResponse, StatisticsPreviewResponse } from '../../api/StatementClient'
+import { formatCurrency } from '../../utils/format'
 
 interface AnalysisSummaryProps {
   analysisData: StatementAnalysisResponse
@@ -11,13 +12,6 @@ interface AnalysisSummaryProps {
 export const AnalysisSummary: React.FC<AnalysisSummaryProps> = ({ analysisData, previewStats, isLoadingPreview }) => {
   const stats = previewStats || analysisData
   const isFiltered = !!previewStats
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'EUR',
-    }).format(amount)
-  }
 
   const formatDateRange = (dateRange: [string, string]) => {
     if (!dateRange[0] || !dateRange[1]) {

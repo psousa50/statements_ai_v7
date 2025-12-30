@@ -29,6 +29,7 @@ def _build_account_response(account, initial_balance) -> AccountResponse:
     return AccountResponse(
         id=account.id,
         name=account.name,
+        currency=account.currency,
         initial_balance=initial_balance_response,
     )
 
@@ -57,7 +58,7 @@ def register_account_routes(
                     detail=f"Account with name '{account_data.name}' already exists",
                 )
 
-            account = internal.account_service.create_account(account_data.name, current_user.id)
+            account = internal.account_service.create_account(account_data.name, current_user.id, account_data.currency)
             return account
         except HTTPException:
             raise
@@ -133,7 +134,9 @@ def register_account_routes(
                     detail=f"Account with name '{account_data.name}' already exists",
                 )
 
-            updated_account = internal.account_service.update_account(account_id, account_data.name, current_user.id)
+            updated_account = internal.account_service.update_account(
+                account_id, account_data.name, current_user.id, account_data.currency
+            )
             return updated_account
         except HTTPException:
             raise

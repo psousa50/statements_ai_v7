@@ -11,8 +11,8 @@ class AccountService:
     def __init__(self, account_repository: AccountRepository):
         self.account_repository = account_repository
 
-    def create_account(self, name: str, user_id: UUID) -> Account:
-        account = Account(name=name, user_id=user_id)
+    def create_account(self, name: str, user_id: UUID, currency: str = "EUR") -> Account:
+        account = Account(name=name, user_id=user_id, currency=currency)
         return self.account_repository.create(account)
 
     def get_account(self, account_id: UUID, user_id: UUID) -> Optional[Account]:
@@ -24,10 +24,11 @@ class AccountService:
     def get_all_accounts(self, user_id: UUID) -> List[Account]:
         return self.account_repository.get_all(user_id)
 
-    def update_account(self, account_id: UUID, name: str, user_id: UUID) -> Optional[Account]:
+    def update_account(self, account_id: UUID, name: str, user_id: UUID, currency: str = "EUR") -> Optional[Account]:
         account = self.account_repository.get_by_id(account_id, user_id)
         if account:
             account.name = name
+            account.currency = currency
             return self.account_repository.update(account)
         return None
 
@@ -50,11 +51,13 @@ class AccountService:
             if not name:
                 continue
 
+            currency = row.get("currency", "EUR").strip().upper() or "EUR"
+
             existing_account = self.account_repository.get_by_name(name, user_id)
             if existing_account:
                 accounts.append(existing_account)
             else:
-                new_account = Account(name=name, user_id=user_id)
+                new_account = Account(name=name, user_id=user_id, currency=currency)
                 created_account = self.account_repository.create(new_account)
                 accounts.append(created_account)
 

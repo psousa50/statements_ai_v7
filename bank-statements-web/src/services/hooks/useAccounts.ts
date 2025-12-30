@@ -23,9 +23,9 @@ export const useAccounts = () => {
   }, [api.accounts])
 
   const addAccount = useCallback(
-    async (name: string) => {
+    async (name: string, currency: string) => {
       try {
-        const newAccount = await api.accounts.createAccount(name)
+        const newAccount = await api.accounts.createAccount(name, currency)
         setAccounts((prev) => [...prev, newAccount].sort((a, b) => a.name.localeCompare(b.name)))
         return newAccount
       } catch (err) {
@@ -38,9 +38,9 @@ export const useAccounts = () => {
   )
 
   const updateAccount = useCallback(
-    async (id: string, name: string) => {
+    async (id: string, name: string, currency: string) => {
       try {
-        const updatedAccount = await api.accounts.updateAccount(id, name)
+        const updatedAccount = await api.accounts.updateAccount(id, name, currency)
         setAccounts((prev) =>
           prev
             .map((account) => (account.id === id ? updatedAccount : account))

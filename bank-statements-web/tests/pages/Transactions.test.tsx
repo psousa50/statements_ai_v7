@@ -140,10 +140,7 @@ describe('TransactionsPage', () => {
     })
 
     test('shows total amount in summary', async () => {
-      const transactions = [
-        createTransaction({ id: '1', amount: -100 }),
-        createTransaction({ id: '2', amount: 50 }),
-      ]
+      const transactions = [createTransaction({ id: '1', amount: -100 }), createTransaction({ id: '2', amount: 50 })]
       renderTransactionsPage({
         transactions: createPaginatedResponse(transactions, { total_amount: -50 }),
       })
@@ -262,10 +259,7 @@ describe('TransactionsPage', () => {
   describe('pagination', () => {
     test('shows pagination when there are multiple pages', async () => {
       renderTransactionsPage({
-        transactions: createPaginatedResponse(
-          [createTransaction()],
-          { total: 50, total_pages: 3, page_size: 20 }
-        ),
+        transactions: createPaginatedResponse([createTransaction()], { total: 50, total_pages: 3, page_size: 20 }),
       })
 
       await screen.findByText('Test Transaction')
@@ -275,10 +269,7 @@ describe('TransactionsPage', () => {
 
     test('calls API with new page when navigating', async () => {
       const { apiClient, user } = renderTransactionsPage({
-        transactions: createPaginatedResponse(
-          [createTransaction()],
-          { total: 50, total_pages: 3, page_size: 20 }
-        ),
+        transactions: createPaginatedResponse([createTransaction()], { total: 50, total_pages: 3, page_size: 20 }),
       })
 
       await screen.findByText('Test Transaction')

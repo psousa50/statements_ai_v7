@@ -7,6 +7,7 @@ import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward'
 import UnfoldMoreIcon from '@mui/icons-material/UnfoldMore'
 import MergeIcon from '@mui/icons-material/MergeType'
 import VisibilityIcon from '@mui/icons-material/Visibility'
+import { formatCurrency } from '../utils/format'
 
 type SortField = 'description' | 'category' | 'average_amount' | 'total_annual_cost' | 'transaction_count'
 type SortDirection = 'asc' | 'desc'
@@ -148,13 +149,6 @@ export const RecurringPatternsTable = ({
     setPatternToMerge(null)
     setSelectedTargetPattern('')
     setMergeError(null)
-  }
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-GB', {
-      style: 'currency',
-      currency: 'EUR',
-    }).format(amount)
   }
 
   const formatDate = (dateString: string) => {

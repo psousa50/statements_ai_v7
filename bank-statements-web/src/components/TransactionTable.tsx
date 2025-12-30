@@ -12,6 +12,7 @@ import UnfoldMoreIcon from '@mui/icons-material/UnfoldMore'
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward'
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward'
 import { ActionIconButton } from './ActionIconButton'
+import { formatCurrency } from '../utils/format'
 
 export type TransactionSortField = 'date' | 'description' | 'amount' | 'created_at'
 export type TransactionSortDirection = 'asc' | 'desc'
@@ -352,14 +353,16 @@ export const TransactionTable = ({
     }
   }
 
-  const formatAmount = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(amount)
+  const getAccountCurrency = (accountId?: string) => {
+    if (!accountId) return 'EUR'
+    const account = accounts.find((a) => a.id === accountId)
+    return account?.currency ?? 'EUR'
   }
 
-  // Helper function to get source name by ID
+  const formatAmount = (amount: number, accountId?: string) => {
+    return formatCurrency(amount, getAccountCurrency(accountId))
+  }
+
   const getAccountName = (accountId?: string) => {
     if (!accountId) return 'Unknown'
     const account = accounts.find((a) => a.id === accountId)
@@ -444,11 +447,13 @@ export const TransactionTable = ({
                 </td>
               )}
               <td className={`text-right ${transaction.amount < 0 ? 'negative' : 'positive'}`}>
-                {formatAmount(transaction.amount)}
+                {formatAmount(transaction.amount, transaction.account_id)}
               </td>
               {showRunningBalance ? (
                 <td className="running-balance text-right">
-                  {transaction.running_balance !== undefined ? formatAmount(transaction.running_balance) : '-'}
+                  {transaction.running_balance !== undefined
+                    ? formatAmount(transaction.running_balance, transaction.account_id)
+                    : '-'}
                 </td>
               ) : (
                 <td>{getAccountName(transaction.account_id)}</td>
@@ -484,7 +489,7 @@ export const TransactionTable = ({
         <ConfirmationModal
           isOpen={true}
           title="Delete Transaction"
-          message={`${pendingDeleteTransaction.description} — ${formatDate(pendingDeleteTransaction.date)} — ${formatAmount(pendingDeleteTransaction.amount)}${pendingDeleteTransaction.category_id ? ` — ${localCategories.find((c) => c.id === pendingDeleteTransaction.category_id)?.name || ''}` : ''}`}
+          message={`${pendingDeleteTransaction.description} — ${formatDate(pendingDeleteTransaction.date)} — ${formatAmount(pendingDeleteTransaction.amount, pendingDeleteTransaction.account_id)}${pendingDeleteTransaction.category_id ? ` — ${localCategories.find((c) => c.id === pendingDeleteTransaction.category_id)?.name || ''}` : ''}`}
           confirmText="Delete"
           onConfirm={handleConfirmDelete}
           onCancel={() => setPendingDeleteTransaction(null)}

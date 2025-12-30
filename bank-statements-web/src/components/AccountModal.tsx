@@ -1,15 +1,26 @@
 import { useState, useEffect } from 'react'
 import { Account } from '../types/Transaction'
 
+const CURRENCIES = [
+  { code: 'EUR', symbol: '€', name: 'Euro' },
+  { code: 'GBP', symbol: '£', name: 'British Pound' },
+  { code: 'USD', symbol: '$', name: 'US Dollar' },
+  { code: 'CHF', symbol: 'CHF', name: 'Swiss Franc' },
+  { code: 'JPY', symbol: '¥', name: 'Japanese Yen' },
+  { code: 'CAD', symbol: 'C$', name: 'Canadian Dollar' },
+  { code: 'AUD', symbol: 'A$', name: 'Australian Dollar' },
+]
+
 interface AccountModalProps {
   isOpen: boolean
-  account: Account | null // null for creating, Account object for editing
-  onSave: (name: string, accountId?: string) => Promise<void>
+  account: Account | null
+  onSave: (name: string, currency: string, accountId?: string) => Promise<void>
   onClose: () => void
 }
 
 export const AccountModal = ({ isOpen, account, onSave, onClose }: AccountModalProps) => {
   const [name, setName] = useState('')
+  const [currency, setCurrency] = useState('EUR')
   const [saving, setSaving] = useState(false)
 
   const isEditing = !!account
@@ -18,11 +29,11 @@ export const AccountModal = ({ isOpen, account, onSave, onClose }: AccountModalP
   useEffect(() => {
     if (isOpen) {
       if (account) {
-        // Editing existing account
         setName(account.name)
+        setCurrency(account.currency)
       } else {
-        // Creating new account
         setName('')
+        setCurrency('EUR')
       }
     }
   }, [isOpen, account])
@@ -35,8 +46,7 @@ export const AccountModal = ({ isOpen, account, onSave, onClose }: AccountModalP
 
     setSaving(true)
     try {
-      await onSave(trimmedName, account?.id)
-      // Don't close modal here - let parent component handle it after successful save
+      await onSave(trimmedName, currency, account?.id)
     } catch (error) {
       console.error('Failed to save account:', error)
     } finally {
@@ -78,9 +88,24 @@ export const AccountModal = ({ isOpen, account, onSave, onClose }: AccountModalP
               disabled={saving}
               autoFocus
             />
-            <div className="form-help">
-              Enter a unique name for the account (e.g., "Checking Account", "Savings Account")
-            </div>
+          </div>
+          <div className="form-group">
+            <label htmlFor="account-currency" className="form-label">
+              Currency
+            </label>
+            <select
+              id="account-currency"
+              className="form-input"
+              value={currency}
+              onChange={(e) => setCurrency(e.target.value)}
+              disabled={saving}
+            >
+              {CURRENCIES.map((c) => (
+                <option key={c.code} value={c.code}>
+                  {c.symbol} {c.code} - {c.name}
+                </option>
+              ))}
+            </select>
           </div>
         </div>
 

@@ -20,6 +20,7 @@ export interface InitialBalance {
 export interface Account {
   id: string
   name: string
+  currency: string
   type?: string
   initial_balance?: InitialBalance
 }

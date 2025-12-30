@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
 import { RecurringPattern } from '../api/TransactionClient'
 import { Category } from '../types/Transaction'
+import { formatCurrency } from '../utils/format'
 
 const CHART_COLORS = [
   '#0088FE',
@@ -32,13 +33,6 @@ export const RecurringExpensesCharts = ({
   totalMonthlyRecurring,
 }: RecurringExpensesChartsProps) => {
   const [chartType, setChartType] = useState<ChartType>('pie')
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-GB', {
-      style: 'currency',
-      currency: 'EUR',
-    }).format(amount)
-  }
 
   const categoryChartData = useMemo(() => {
     const categoryTotals = new Map<string, { name: string; value: number }>()

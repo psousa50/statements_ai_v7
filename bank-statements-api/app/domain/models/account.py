@@ -13,6 +13,7 @@ class Account(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     name = Column(String, nullable=False)
+    currency = Column(String(3), nullable=False, default="EUR")
 
     __table_args__ = (UniqueConstraint("user_id", "name", name="uq_accounts_user_name"),)
 
