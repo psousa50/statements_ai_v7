@@ -426,12 +426,12 @@ class TestRecurringExpenseAnalyzer:
             self.create_transaction(
                 normalized_description="cancelled subscription",
                 amount=Decimal("9.99"),
-                transaction_date=old_date - timedelta(days=60),
+                transaction_date=old_date - timedelta(days=62),
             ),
             self.create_transaction(
                 normalized_description="cancelled subscription",
                 amount=Decimal("9.99"),
-                transaction_date=old_date - timedelta(days=30),
+                transaction_date=old_date - timedelta(days=31),
             ),
             self.create_transaction(
                 normalized_description="cancelled subscription",
@@ -441,17 +441,17 @@ class TestRecurringExpenseAnalyzer:
             self.create_transaction(
                 normalized_description="active subscription",
                 amount=Decimal("15.99"),
-                transaction_date=today - timedelta(days=60),
+                transaction_date=today - timedelta(days=62),
             ),
             self.create_transaction(
                 normalized_description="active subscription",
                 amount=Decimal("15.99"),
-                transaction_date=today - timedelta(days=30),
+                transaction_date=today - timedelta(days=31),
             ),
             self.create_transaction(
                 normalized_description="active subscription",
                 amount=Decimal("15.99"),
-                transaction_date=today - timedelta(days=1),
+                transaction_date=today,
             ),
         ]
 
