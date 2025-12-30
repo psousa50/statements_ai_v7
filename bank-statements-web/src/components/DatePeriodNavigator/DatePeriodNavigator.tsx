@@ -1,20 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { DayPicker, DateRange } from 'react-day-picker'
 import 'react-day-picker/style.css'
-import {
-  startOfDay,
-  endOfDay,
-  subDays,
-  startOfMonth,
-  endOfMonth,
-  subMonths,
-  startOfWeek,
-  endOfWeek,
-  subWeeks,
-  startOfYear,
-  endOfYear,
-  subYears,
-} from 'date-fns'
+import { startOfDay, endOfDay, subDays, subMonths } from 'date-fns'
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft'
 import ChevronRightIcon from '@mui/icons-material/ChevronRight'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
@@ -64,28 +51,16 @@ const PRESET_RANGES: PresetRange[] = [
     getRange: () => ({ from: startOfDay(subDays(new Date(), 29)), to: endOfDay(new Date()) }),
   },
   {
-    label: 'Last week',
-    getRange: () => {
-      const lastWeek = subWeeks(new Date(), 1)
-      return {
-        from: startOfWeek(lastWeek, { weekStartsOn: 1 }),
-        to: endOfWeek(lastWeek, { weekStartsOn: 1 }),
-      }
-    },
+    label: 'Last 3 months',
+    getRange: () => ({ from: startOfDay(subMonths(new Date(), 3)), to: endOfDay(new Date()) }),
   },
   {
-    label: 'Last month',
-    getRange: () => {
-      const lastMonth = subMonths(new Date(), 1)
-      return { from: startOfMonth(lastMonth), to: endOfMonth(lastMonth) }
-    },
+    label: 'Last 6 months',
+    getRange: () => ({ from: startOfDay(subMonths(new Date(), 6)), to: endOfDay(new Date()) }),
   },
   {
-    label: 'Last year',
-    getRange: () => {
-      const lastYear = subYears(new Date(), 1)
-      return { from: startOfYear(lastYear), to: endOfYear(lastYear) }
-    },
+    label: 'Last 9 months',
+    getRange: () => ({ from: startOfDay(subMonths(new Date(), 9)), to: endOfDay(new Date()) }),
   },
 ]
 
