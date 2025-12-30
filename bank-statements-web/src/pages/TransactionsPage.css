@@ -161,6 +161,7 @@
   max-height: none;
   overflow: visible;
   width: 100%;
+  z-index: 10;
 }
 
 .transactions-page .filters-sidebar::before {
