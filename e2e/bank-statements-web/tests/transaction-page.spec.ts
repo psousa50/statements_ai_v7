@@ -50,9 +50,9 @@ test.describe('Transaction Page', () => {
     await page.waitForSelector('table tbody tr');
 
     for (const transaction of createdTransactions) {
-      const formattedAmount = new Intl.NumberFormat('en-US', {
+      const formattedAmount = new Intl.NumberFormat('en-GB', {
         style: 'currency',
-        currency: 'USD',
+        currency: 'EUR',
       }).format(transaction.amount);
 
       const matchingRow = rows.filter({

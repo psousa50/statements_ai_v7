@@ -21,6 +21,7 @@ export default defineConfig({
       process.env.PLAYWRIGHT_TEST_BASE_URL ||
       process.env.WEB_BASE_URL ||
       "http://localhost:5173",
+    locale: "en-GB",
     trace: "on-first-retry",
     screenshot: "only-on-failure",
   },
