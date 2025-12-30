@@ -43,16 +43,31 @@
 }
 
 .filters-section {
-  background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-elevated) 100%);
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-md);
   margin-bottom: 2rem;
-  border: 1px solid var(--border-primary);
+  border: 1px solid var(--glass-border);
   transition: all var(--transition-base);
+  position: relative;
+}
+
+.filters-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--accent-purple), var(--accent-blue), var(--accent-cyan));
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
 }
 
 .filters-section:hover {
   box-shadow: var(--shadow-lg);
+  border-color: rgba(255, 255, 255, 0.15);
 }
 
 .charts-layout {
@@ -63,11 +78,13 @@
 
 .charts-content {
   flex: 1;
-  background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-elevated) 100%);
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-md);
   padding: 2rem;
-  border: 1px solid var(--border-primary);
+  border: 1px solid var(--glass-border);
   transition: all var(--transition-base);
   position: relative;
   overflow: hidden;
@@ -79,12 +96,14 @@
   top: 0;
   left: 0;
   right: 0;
-  height: 3px;
-  background: linear-gradient(90deg, var(--accent-blue) 0%, var(--accent-purple) 50%, var(--accent-pink) 100%);
+  height: 2px;
+  background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple), var(--accent-pink));
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
 }
 
 .charts-content:hover {
   box-shadow: var(--shadow-lg);
+  border-color: rgba(255, 255, 255, 0.15);
 }
 
 .charts-header {
@@ -159,18 +178,20 @@
 .view-mode-toggle button:hover,
 .period-toggle button:hover {
   color: var(--text-primary);
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .view-mode-toggle button.active,
 .period-toggle button.active {
-  background: var(--button-primary);
+  background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
   color: white;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
 }
 
 .view-mode-toggle button.active:hover,
 .period-toggle button.active:hover {
-  background: var(--button-primary-hover);
+  background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
 }
 
 .active-toggle {

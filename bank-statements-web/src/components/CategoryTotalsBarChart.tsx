@@ -35,49 +35,46 @@ export const CategoryTotalsBarChart = ({ data, loading, onBarClick }: CategoryTo
     <div style={{ width: '100%', height: 500 }}>
       <ResponsiveContainer>
         <BarChart data={sortedData} layout="vertical" margin={{ top: 10, right: 30, left: 120, bottom: 10 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="var(--border-secondary)" horizontal={true} vertical={false} />
+          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.06)" horizontal={true} vertical={false} />
           <XAxis
             type="number"
-            stroke="var(--text-secondary)"
+            stroke="var(--text-muted)"
             style={{ fontSize: 12 }}
             tickFormatter={(value) => `$${value.toLocaleString()}`}
+            axisLine={{ stroke: 'rgba(255, 255, 255, 0.1)' }}
+            tickLine={{ stroke: 'rgba(255, 255, 255, 0.1)' }}
           />
           <YAxis
             type="category"
             dataKey="name"
-            stroke="var(--text-secondary)"
+            stroke="var(--text-muted)"
             style={{ fontSize: 12 }}
             width={110}
             tick={{ fill: 'var(--text-primary)' }}
+            axisLine={{ stroke: 'rgba(255, 255, 255, 0.1)' }}
+            tickLine={false}
           />
           <Tooltip
-            cursor={{ fill: 'rgba(255, 255, 255, 0.1)' }}
-            contentStyle={{
-              backgroundColor: 'var(--bg-primary)',
-              border: '1px solid var(--border-primary)',
-              borderRadius: '4px',
-              boxShadow: '0 4px 6px var(--shadow-light)',
-            }}
+            cursor={{ fill: 'rgba(255, 255, 255, 0.05)' }}
             content={({ active, payload }) => {
               if (!active || !payload || !payload[0]) return null
               const data = payload[0].payload as ChartData
               return (
                 <div
                   style={{
-                    backgroundColor: 'var(--bg-primary)',
-                    border: '1px solid var(--border-primary)',
-                    borderRadius: '4px',
-                    padding: '8px 12px',
-                    boxShadow: '0 4px 6px var(--shadow-light)',
+                    backgroundColor: 'rgba(30, 41, 59, 0.9)',
+                    backdropFilter: 'blur(8px)',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    borderRadius: '12px',
+                    padding: '12px 16px',
+                    boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
                   }}
                 >
-                  <div style={{ color: 'var(--text-primary)', fontWeight: 'bold', marginBottom: '4px' }}>
-                    {data.name}
-                  </div>
-                  <div style={{ color: 'var(--text-primary)' }}>
+                  <div style={{ color: '#f1f5f9', fontWeight: 600, marginBottom: '4px' }}>{data.name}</div>
+                  <div style={{ color: '#f1f5f9', fontSize: '16px', fontWeight: 600 }}>
                     ${data.value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </div>
-                  <div style={{ color: 'var(--text-secondary)', fontSize: '12px' }}>{data.count} transactions</div>
+                  <div style={{ color: '#94a3b8', fontSize: '12px', marginTop: '4px' }}>{data.count} transactions</div>
                 </div>
               )
             }}
@@ -87,7 +84,7 @@ export const CategoryTotalsBarChart = ({ data, loading, onBarClick }: CategoryTo
             onClick={(data) => handleClick(data as ChartData)}
             style={{ cursor: 'pointer' }}
             animationDuration={300}
-            radius={[0, 4, 4, 0]}
+            radius={[0, 8, 8, 0]}
             activeBar={false}
           >
             {sortedData.map((entry, index) => (

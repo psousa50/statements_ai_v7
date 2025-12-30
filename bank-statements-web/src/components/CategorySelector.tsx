@@ -1,5 +1,6 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
 import { Category } from '../types/Transaction'
+import { getCategoryColorById } from '../utils/categoryColors'
 import './CategorySelector.css'
 
 interface CategorySelectorProps {
@@ -252,19 +253,26 @@ export const CategorySelector = ({
       <div className="category-selector-input-container">
         {/* Selected categories tags (multiple mode only) */}
         {multiple &&
-          selectedCategories.map((category) => (
-            <span key={category.id} className="category-tag">
-              {category.name}
-              <button
-                onClick={() => handleCategoryRemove(category.id)}
-                className="category-tag-remove"
-                type="button"
-                title={`Remove ${category.name}`}
+          selectedCategories.map((category) => {
+            const colorConfig = getCategoryColorById(category.id)
+            return (
+              <span
+                key={category.id}
+                className="category-tag category-tag-gradient"
+                style={{ background: colorConfig.gradient }}
               >
-                ×
-              </button>
-            </span>
-          ))}
+                {category.name}
+                <button
+                  onClick={() => handleCategoryRemove(category.id)}
+                  className="category-tag-remove"
+                  type="button"
+                  title={`Remove ${category.name}`}
+                >
+                  ×
+                </button>
+              </span>
+            )
+          })}
 
         <input
           ref={inputRef}

@@ -148,17 +148,30 @@
   gap: 0.75rem;
 }
 
-/* Filters moved to top - horizontal layout */
+/* Filters moved to top - horizontal layout with glassmorphism */
 .transactions-page .filters-sidebar {
-  background: var(--bg-primary);
-  border: 1px solid var(--border-primary);
-  border-radius: 12px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-xl);
   padding: 0;
-  box-shadow: 0 1px 3px var(--shadow-light);
-  position: static;
+  box-shadow: var(--shadow-md);
+  position: relative;
   max-height: none;
   overflow: visible;
   width: 100%;
+}
+
+.transactions-page .filters-sidebar::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--accent-purple), var(--accent-blue), var(--accent-cyan));
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
 }
 
 .transactions-page .transaction-filters-advanced {
@@ -1016,19 +1029,33 @@
   display: none;
 }
 
-/* Main Content */
+/* Main Content with glassmorphism */
 .transactions-page .transactions-content {
-  background: var(--bg-primary);
-  border: 1px solid var(--border-primary);
-  border-radius: 12px;
-  box-shadow: 0 1px 3px var(--shadow-light);
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-md);
   overflow: visible;
+  position: relative;
+}
+
+.transactions-page .transactions-content::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple));
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
 }
 
 .transactions-page .transactions-header {
-  padding: 0.5rem 0.75rem;
-  border-bottom: 1px solid var(--border-primary);
-  background-color: var(--bg-tertiary);
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--glass-border);
+  background: transparent;
 }
 
 .transactions-page .transactions-summary {
@@ -1076,14 +1103,14 @@
   padding: 0;
 }
 
-/* Enhanced Transaction Table - Now properly supports dark mode */
+/* Modern Glassmorphism Transaction Table */
 .transactions-page .transaction-table {
   width: 100%;
-  background-color: var(--bg-primary);
+  background: transparent;
 }
 
 .transactions-page .transaction-table h2 {
-  display: none; /* Hide the old table title */
+  display: none;
 }
 
 .transactions-page .transaction-table table {
@@ -1091,18 +1118,19 @@
   border-collapse: collapse;
   table-layout: fixed;
   font-size: 0.8125rem;
-  background-color: var(--bg-primary);
+  background: transparent;
 }
 
 .transactions-page .transaction-table th,
 .transactions-page .transaction-table td {
-  padding: 0.5rem 0.75rem;
+  padding: 0.75rem 1rem;
   text-align: left;
-  border-bottom: 1px solid var(--border-primary);
+  border-bottom: 1px solid var(--glass-border);
   color: var(--text-primary);
-  background-color: transparent;
+  background: transparent;
   overflow: visible;
   position: relative;
+  transition: background var(--transition-fast);
 }
 
 .transactions-page .transaction-table th:nth-child(3),
@@ -1111,30 +1139,37 @@
 }
 
 .transactions-page .transaction-table th {
-  background-color: var(--bg-tertiary);
+  background: rgba(255, 255, 255, 0.03);
   font-weight: 600;
-  color: var(--text-secondary);
+  color: var(--text-muted);
   font-size: 0.6875rem;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.08em;
+  border-bottom: 1px solid var(--glass-border);
 }
 
-.transactions-page .transaction-table tr:hover {
-  background-color: var(--bg-tertiary);
+.transactions-page .transaction-table tbody tr {
+  transition: background var(--transition-fast);
 }
 
-.transactions-page .transaction-table tr:hover td {
-  background-color: var(--bg-tertiary);
+.transactions-page .transaction-table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.transactions-page .transaction-table tbody tr:hover td {
+  background: transparent;
 }
 
 .transactions-page .transaction-table .positive {
   color: var(--positive-amount);
   font-weight: 600;
+  text-shadow: 0 0 12px rgba(52, 211, 153, 0.4);
 }
 
 .transactions-page .transaction-table .negative {
   color: var(--negative-amount);
   font-weight: 600;
+  text-shadow: 0 0 12px rgba(248, 113, 113, 0.4);
 }
 
 .transactions-page .transaction-table select {

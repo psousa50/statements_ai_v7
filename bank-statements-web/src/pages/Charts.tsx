@@ -31,21 +31,21 @@ interface LabelProps {
 }
 
 const COLORS = [
-  '#0088FE',
-  '#00C49F',
-  '#FFBB28',
-  '#FF8042',
-  '#8884D8',
-  '#82CA9D',
-  '#FFC658',
-  '#FF7C7C',
-  '#8DD1E1',
-  '#D084D0',
-  '#FFB347',
-  '#87CEEB',
-  '#DDA0DD',
-  '#98FB98',
-  '#F0E68C',
+  '#a78bfa',
+  '#60a5fa',
+  '#34d399',
+  '#fbbf24',
+  '#f472b6',
+  '#22d3ee',
+  '#fb7185',
+  '#818cf8',
+  '#38bdf8',
+  '#4ade80',
+  '#facc15',
+  '#e879f9',
+  '#2dd4bf',
+  '#f97316',
+  '#a3e635',
 ]
 
 const UNCATEGORIZED_COLOR = '#EF4444'
@@ -650,7 +650,9 @@ export const ChartsPage = () => {
                       cy="50%"
                       labelLine={false}
                       label={renderCustomizedLabel}
+                      innerRadius={100}
                       outerRadius={180}
+                      paddingAngle={2}
                       fill="#8884d8"
                       dataKey="value"
                       onClick={handleChartClick}
@@ -671,17 +673,21 @@ export const ChartsPage = () => {
                       }}
                       labelFormatter={(label: string) => `Category: ${label}`}
                       contentStyle={{
-                        backgroundColor: 'var(--bg-primary)',
-                        border: '1px solid var(--border-primary)',
-                        borderRadius: '4px',
-                        color: 'var(--text-primary)',
-                        boxShadow: '0 4px 6px var(--shadow-light)',
+                        backgroundColor: 'rgba(30, 41, 59, 0.9)',
+                        backdropFilter: 'blur(8px)',
+                        border: '1px solid rgba(255, 255, 255, 0.1)',
+                        borderRadius: '12px',
+                        color: '#f1f5f9',
+                        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+                        padding: '12px 16px',
                       }}
                       labelStyle={{
-                        color: 'var(--text-primary)',
+                        color: '#f1f5f9',
+                        fontWeight: 600,
+                        marginBottom: '4px',
                       }}
                       itemStyle={{
-                        color: 'var(--text-secondary)',
+                        color: '#cbd5e1',
                       }}
                     />
                   </PieChart>

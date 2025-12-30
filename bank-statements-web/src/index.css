@@ -50,6 +50,13 @@
   --accent-green: #10b981;
   --accent-orange: #f59e0b;
   --accent-pink: #ec4899;
+  --accent-cyan: #06b6d4;
+  --accent-rose: #f43f5e;
+
+  --glass-bg: var(--bg-primary);
+  --glass-bg-light: var(--bg-tertiary);
+  --glass-border: var(--border-primary);
+  --glass-shadow: var(--shadow-md);
 
   --icon-primary: #3b82f6;
   --icon-success: #10b981;
@@ -73,15 +80,20 @@
   -webkit-text-size-adjust: 100%;
 }
 
-/* Enhanced Dark theme variables */
+/* Enhanced Dark theme variables - Glassmorphism */
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg-primary: #1e293b;
-    --bg-secondary: #0f172a;
+    --bg-primary: #0f172a;
+    --bg-secondary: #1e293b;
     --bg-tertiary: #334155;
-    --bg-accent: #1e3a8a;
-    --bg-hover: #293548;
-    --bg-elevated: #243248;
+    --bg-accent: rgba(59, 130, 246, 0.15);
+    --bg-hover: rgba(255, 255, 255, 0.05);
+    --bg-elevated: rgba(30, 41, 59, 0.8);
+
+    --glass-bg: rgba(30, 41, 59, 0.6);
+    --glass-bg-light: rgba(51, 65, 85, 0.4);
+    --glass-border: rgba(255, 255, 255, 0.1);
+    --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 
     --text-primary: #f1f5f9;
     --text-secondary: #cbd5e1;
@@ -89,15 +101,16 @@
     --text-accent: #60a5fa;
     --text-on-accent: #ffffff;
 
-    --border-primary: #334155;
-    --border-secondary: #475569;
+    --border-primary: rgba(255, 255, 255, 0.08);
+    --border-secondary: rgba(255, 255, 255, 0.12);
     --border-accent: #3b82f6;
 
-    --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
-    --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.4), 0 1px 2px -1px rgba(0, 0, 0, 0.4);
-    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -2px rgba(0, 0, 0, 0.4);
-    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -4px rgba(0, 0, 0, 0.5);
-    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.6), 0 8px 10px -6px rgba(0, 0, 0, 0.6);
+    --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.3);
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.5);
+    --shadow-xl: 0 20px 40px rgba(0, 0, 0, 0.6);
+    --shadow-glow: 0 0 20px rgba(59, 130, 246, 0.2);
 
     --button-primary: #3b82f6;
     --button-primary-hover: #60a5fa;
@@ -110,15 +123,17 @@
     --button-success-hover: #34d399;
 
     --positive-amount: #34d399;
-    --positive-amount-bg: #064e3b;
+    --positive-amount-bg: rgba(16, 185, 129, 0.15);
     --negative-amount: #f87171;
-    --negative-amount-bg: #7f1d1d;
+    --negative-amount-bg: rgba(239, 68, 68, 0.15);
 
     --accent-blue: #60a5fa;
     --accent-purple: #a78bfa;
     --accent-green: #34d399;
     --accent-orange: #fbbf24;
     --accent-pink: #f472b6;
+    --accent-cyan: #22d3ee;
+    --accent-rose: #fb7185;
 
     --icon-primary: #60a5fa;
     --icon-success: #34d399;
@@ -579,4 +594,50 @@ select:disabled {
 
 .MuiSvgIcon-fontSizeLarge {
   font-size: 2rem !important;
+}
+
+/* Glassmorphism Utility Classes */
+.glass-card {
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-md);
+  position: relative;
+}
+
+.glass-card-light {
+  background: var(--glass-bg-light);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+}
+
+.glass-card:hover {
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.glass-card-accent::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple), var(--accent-pink));
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+}
+
+.glass-input {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid var(--glass-border) !important;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.glass-input:focus {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border-color: var(--border-accent) !important;
 }
