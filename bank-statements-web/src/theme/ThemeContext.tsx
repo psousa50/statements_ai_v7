@@ -109,8 +109,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
               paper: {
                 backgroundColor: resolvedMode === 'dark' ? 'rgba(15, 23, 42, 0.95)' : '#ffffff',
                 backdropFilter: resolvedMode === 'dark' ? 'blur(12px)' : 'none',
-                borderRight:
-                  resolvedMode === 'dark' ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid #e2e8f0',
+                borderRight: resolvedMode === 'dark' ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid #e2e8f0',
               },
             },
           },
@@ -119,8 +118,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
               root: {
                 backgroundColor: resolvedMode === 'dark' ? 'rgba(15, 23, 42, 0.9)' : '#ffffff',
                 backdropFilter: resolvedMode === 'dark' ? 'blur(12px)' : 'none',
-                borderBottom:
-                  resolvedMode === 'dark' ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid #e2e8f0',
+                borderBottom: resolvedMode === 'dark' ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid #e2e8f0',
                 boxShadow: 'none',
               },
             },
@@ -131,16 +129,13 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                 borderRadius: 8,
                 margin: '2px 8px',
                 '&.Mui-selected': {
-                  backgroundColor:
-                    resolvedMode === 'dark' ? 'rgba(59, 130, 246, 0.15)' : 'rgba(59, 130, 246, 0.1)',
+                  backgroundColor: resolvedMode === 'dark' ? 'rgba(59, 130, 246, 0.15)' : 'rgba(59, 130, 246, 0.1)',
                   '&:hover': {
-                    backgroundColor:
-                      resolvedMode === 'dark' ? 'rgba(59, 130, 246, 0.2)' : 'rgba(59, 130, 246, 0.15)',
+                    backgroundColor: resolvedMode === 'dark' ? 'rgba(59, 130, 246, 0.2)' : 'rgba(59, 130, 246, 0.15)',
                   },
                 },
                 '&:hover': {
-                  backgroundColor:
-                    resolvedMode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.04)',
+                  backgroundColor: resolvedMode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.04)',
                 },
               },
             },
