@@ -78,10 +78,7 @@ def register_account_routes(
             accounts = internal.account_service.get_all_accounts(current_user.id)
             account_ids = [account.id for account in accounts]
             initial_balances = internal.initial_balance_service.get_latest_balances_for_accounts(account_ids)
-            account_responses = [
-                _build_account_response(account, initial_balances.get(account.id))
-                for account in accounts
-            ]
+            account_responses = [_build_account_response(account, initial_balances.get(account.id)) for account in accounts]
             return AccountListResponse(accounts=account_responses, total=len(account_responses))
         except Exception as e:
             log_exception("Error retrieving accounts: %s", str(e))

@@ -1170,7 +1170,4 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
             .all()
         )
 
-        return {
-            row[0]: starting_balance + Decimal(str(row[1])) if row[1] else starting_balance
-            for row in results
-        }
+        return {row[0]: starting_balance + Decimal(str(row[1])) if row[1] else starting_balance for row in results}

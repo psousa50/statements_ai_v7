@@ -2,6 +2,7 @@ import { expect, test, describe, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, within, waitFor, cleanup } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { TransactionsPage } from '@/pages/Transactions'
 import { ApiProvider } from '@/api/ApiContext'
 import { createMockApiClient } from '../createMockApiClient'
@@ -39,6 +40,15 @@ interface RenderOptions {
   initialRoute?: string
 }
 
+const createTestQueryClient = () =>
+  new QueryClient({
+    defaultOptions: {
+      queries: {
+        retry: false,
+      },
+    },
+  })
+
 const renderTransactionsPage = (options: RenderOptions = {}) => {
   const {
     transactions = createPaginatedResponse([createTransaction()]),
@@ -61,13 +71,16 @@ const renderTransactionsPage = (options: RenderOptions = {}) => {
   })
 
   const user = userEvent.setup()
+  const queryClient = createTestQueryClient()
 
   render(
-    <MemoryRouter initialEntries={[initialRoute]}>
-      <ApiProvider client={apiClient}>
-        <TransactionsPage />
-      </ApiProvider>
-    </MemoryRouter>
+    <QueryClientProvider client={queryClient}>
+      <MemoryRouter initialEntries={[initialRoute]}>
+        <ApiProvider client={apiClient}>
+          <TransactionsPage />
+        </ApiProvider>
+      </MemoryRouter>
+    </QueryClientProvider>
   )
 
   return { apiClient, user }
@@ -175,12 +188,16 @@ describe('TransactionsPage', () => {
         },
       })
 
+      const queryClient = createTestQueryClient()
+
       render(
-        <MemoryRouter>
-          <ApiProvider client={apiClient}>
-            <TransactionsPage />
-          </ApiProvider>
-        </MemoryRouter>
+        <QueryClientProvider client={queryClient}>
+          <MemoryRouter>
+            <ApiProvider client={apiClient}>
+              <TransactionsPage />
+            </ApiProvider>
+          </MemoryRouter>
+        </QueryClientProvider>
       )
 
       expect(screen.getByRole('heading', { name: 'Transactions', level: 1 })).toBeInTheDocument()
@@ -202,12 +219,16 @@ describe('TransactionsPage', () => {
         },
       })
 
+      const queryClient = createTestQueryClient()
+
       render(
-        <MemoryRouter>
-          <ApiProvider client={apiClient}>
-            <TransactionsPage />
-          </ApiProvider>
-        </MemoryRouter>
+        <QueryClientProvider client={queryClient}>
+          <MemoryRouter>
+            <ApiProvider client={apiClient}>
+              <TransactionsPage />
+            </ApiProvider>
+          </MemoryRouter>
+        </QueryClientProvider>
       )
 
       await waitFor(() => {

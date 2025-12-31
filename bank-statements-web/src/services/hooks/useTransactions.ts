@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { CategorizationStatus, Transaction } from '../../types/Transaction'
 import { useApi } from '../../api/ApiContext'
 import {
@@ -8,6 +9,7 @@ import {
   RecurringPatternsResponse,
 } from '../../api/TransactionClient'
 import { EnhancementRule } from '../../types/EnhancementRule'
+import { CATEGORY_QUERY_KEYS } from './useCategories'
 
 interface TransactionPagination {
   current_page: number
@@ -17,8 +19,18 @@ interface TransactionPagination {
   total_amount: number
 }
 
+export const TRANSACTION_QUERY_KEYS = {
+  all: ['transactions'] as const,
+  list: (filters?: TransactionFilters) => ['transactions', 'list', filters] as const,
+  categoryTotals: (filters?: object) => ['transactions', 'categoryTotals', filters] as const,
+  timeSeries: (categoryId?: string, period?: string, filters?: object) =>
+    ['transactions', 'timeSeries', categoryId, period, filters] as const,
+  recurringPatterns: (activeOnly?: boolean) => ['transactions', 'recurringPatterns', activeOnly] as const,
+}
+
 export const useTransactions = () => {
   const api = useApi()
+  const queryClient = useQueryClient()
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [loading, setLoading] = useState<boolean>(false)
   const [error, setError] = useState<string | null>(null)
@@ -36,11 +48,25 @@ export const useTransactions = () => {
       setLoading(true)
       setError(null)
       try {
-        const response = await api.transactions.getAll(filters)
+        const cacheKey = TRANSACTION_QUERY_KEYS.list(filters)
+        const cached = queryClient.getQueryData<{
+          transactions: Transaction[]
+          total: number
+          total_amount: number
+          enhancement_rule?: EnhancementRule
+        }>(cacheKey)
+
+        let response
+        if (cached) {
+          response = cached
+        } else {
+          response = await api.transactions.getAll(filters)
+          queryClient.setQueryData(cacheKey, response)
+        }
+
         setTransactions(response.transactions)
         setEnhancementRule(response.enhancement_rule || null)
 
-        // Calculate pagination from response
         const pageSize = filters?.page_size || 20
         const currentPage = filters?.page || 1
         const totalPages = Math.ceil(response.total / pageSize)
@@ -59,8 +85,103 @@ export const useTransactions = () => {
         setLoading(false)
       }
     },
-    [api.transactions]
+    [api.transactions, queryClient]
   )
+
+  const addMutation = useMutation({
+    mutationFn: async (transactionData: {
+      date: string
+      description: string
+      amount: number
+      account_id: string
+      category_id?: string
+      counterparty_account_id?: string
+    }) => {
+      return api.transactions.create(transactionData)
+    },
+    onSuccess: (newTransaction) => {
+      setTransactions((prev) => [newTransaction, ...prev])
+      queryClient.invalidateQueries({ queryKey: TRANSACTION_QUERY_KEYS.all })
+    },
+  })
+
+  const updateMutation = useMutation({
+    mutationFn: async ({
+      id,
+      data,
+    }: {
+      id: string
+      data: {
+        date: string
+        description: string
+        amount: number
+        account_id: string
+        category_id?: string
+        counterparty_account_id?: string
+      }
+    }) => {
+      return api.transactions.update(id, data)
+    },
+    onSuccess: (updatedTransaction) => {
+      setTransactions((prev) => prev.map((t) => (t.id === updatedTransaction.id ? updatedTransaction : t)))
+      queryClient.invalidateQueries({ queryKey: TRANSACTION_QUERY_KEYS.all })
+    },
+  })
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await api.transactions.delete(id)
+      return id
+    },
+    onSuccess: (deletedId) => {
+      setTransactions((prev) => prev.filter((t) => t.id !== deletedId))
+      queryClient.invalidateQueries({ queryKey: TRANSACTION_QUERY_KEYS.all })
+    },
+  })
+
+  const categorizeMutation = useMutation({
+    mutationFn: async ({ id, categoryId }: { id: string; categoryId?: string }) => {
+      return api.transactions.categorize(id, categoryId)
+    },
+    onSuccess: (updatedTransaction) => {
+      setTransactions((prev) => prev.map((t) => (t.id === updatedTransaction.id ? updatedTransaction : t)))
+      queryClient.invalidateQueries({ queryKey: TRANSACTION_QUERY_KEYS.all })
+      queryClient.invalidateQueries({ queryKey: CATEGORY_QUERY_KEYS.all })
+    },
+  })
+
+  const bulkUpdateCategoryMutation = useMutation({
+    mutationFn: async (params: {
+      normalized_description: string
+      category_id: string
+      account_id?: string
+      start_date?: string
+      end_date?: string
+      exclude_transfers?: boolean
+      enhancement_rule_id?: string
+    }) => {
+      return api.transactions.bulkUpdateCategory(params)
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: TRANSACTION_QUERY_KEYS.all })
+    },
+  })
+
+  const bulkReplaceCategoryMutation = useMutation({
+    mutationFn: async (params: {
+      from_category_id: string
+      to_category_id: string
+      account_id?: string
+      start_date?: string
+      end_date?: string
+      exclude_transfers?: boolean
+    }) => {
+      return api.transactions.bulkReplaceCategory(params)
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: TRANSACTION_QUERY_KEYS.all })
+    },
+  })
 
   const addTransaction = useCallback(
     async (transactionData: {
@@ -71,21 +192,14 @@ export const useTransactions = () => {
       category_id?: string
       counterparty_account_id?: string
     }) => {
-      setLoading(true)
-      setError(null)
       try {
-        const newTransaction = await api.transactions.create(transactionData)
-        setTransactions((prev) => [newTransaction, ...prev])
-        return newTransaction
-      } catch (err) {
-        console.error('Error creating transaction:', err)
+        return await addMutation.mutateAsync(transactionData)
+      } catch {
         setError('Failed to create transaction. Please try again later.')
         return null
-      } finally {
-        setLoading(false)
       }
     },
-    [api.transactions]
+    [addMutation]
   )
 
   const updateTransaction = useCallback(
@@ -100,61 +214,39 @@ export const useTransactions = () => {
         counterparty_account_id?: string
       }
     ) => {
-      setLoading(true)
-      setError(null)
       try {
-        const updatedTransaction = await api.transactions.update(id, transactionData)
-        setTransactions((prev) => prev.map((t) => (t.id === id ? updatedTransaction : t)))
-        return updatedTransaction
-      } catch (err) {
-        console.error('Error updating transaction:', err)
+        return await updateMutation.mutateAsync({ id, data: transactionData })
+      } catch {
         setError('Failed to update transaction. Please try again later.')
         return null
-      } finally {
-        setLoading(false)
       }
     },
-    [api.transactions]
+    [updateMutation]
   )
 
   const deleteTransaction = useCallback(
     async (id: string) => {
-      setLoading(true)
-      setError(null)
       try {
-        await api.transactions.delete(id)
-        setTransactions((prev) => prev.filter((t) => t.id !== id))
+        await deleteMutation.mutateAsync(id)
         return true
-      } catch (err) {
-        console.error('Error deleting transaction:', err)
+      } catch {
         setError('Failed to delete transaction. Please try again later.')
         return false
-      } finally {
-        setLoading(false)
       }
     },
-    [api.transactions]
+    [deleteMutation]
   )
 
   const categorizeTransaction = useCallback(
     async (id: string, categoryId?: string) => {
-      setLoading(true)
-      setError(null)
       try {
-        const updatedTransaction = await api.transactions.categorize(id, categoryId)
-
-        setTransactions((prev) => prev.map((t) => (t.id === id ? updatedTransaction : t)))
-
-        return updatedTransaction
-      } catch (err) {
-        console.error('Error categorizing transaction:', err)
+        return await categorizeMutation.mutateAsync({ id, categoryId })
+      } catch {
         setError('Failed to categorize transaction. Please try again later.')
         return null
-      } finally {
-        setLoading(false)
       }
     },
-    [api.transactions]
+    [categorizeMutation]
   )
 
   const bulkUpdateCategory = useCallback(
@@ -170,23 +262,17 @@ export const useTransactions = () => {
       }
     ) => {
       try {
-        const response = await api.transactions.bulkUpdateCategory({
+        return await bulkUpdateCategoryMutation.mutateAsync({
           normalized_description: normalizedDescription,
           category_id: categoryId,
-          account_id: filterOptions?.account_id,
-          start_date: filterOptions?.start_date,
-          end_date: filterOptions?.end_date,
-          exclude_transfers: filterOptions?.exclude_transfers,
-          enhancement_rule_id: filterOptions?.enhancement_rule_id,
+          ...filterOptions,
         })
-        return response
-      } catch (err) {
-        console.error('Error bulk updating category:', err)
+      } catch {
         setError('Failed to apply category to similar transactions.')
         return null
       }
     },
-    [api.transactions]
+    [bulkUpdateCategoryMutation]
   )
 
   const bulkReplaceCategory = useCallback(
@@ -201,26 +287,22 @@ export const useTransactions = () => {
       }
     ) => {
       try {
-        const response = await api.transactions.bulkReplaceCategory({
+        return await bulkReplaceCategoryMutation.mutateAsync({
           from_category_id: fromCategoryId,
           to_category_id: toCategoryId,
           ...filterOptions,
         })
-        return response
-      } catch (err) {
-        console.error('Error bulk replacing category:', err)
+      } catch {
         setError('Failed to replace category for transactions.')
         return null
       }
     },
-    [api.transactions]
+    [bulkReplaceCategoryMutation]
   )
 
   const getTransactionsByCategory = useCallback(
     (categoryId?: string) => {
-      if (!categoryId) {
-        return transactions
-      }
+      if (!categoryId) return transactions
       return transactions.filter((t) => t.category_id === categoryId)
     },
     [transactions]
@@ -233,9 +315,16 @@ export const useTransactions = () => {
     [transactions]
   )
 
+  const isLoading =
+    loading ||
+    addMutation.isPending ||
+    updateMutation.isPending ||
+    deleteMutation.isPending ||
+    categorizeMutation.isPending
+
   return {
     transactions,
-    loading,
+    loading: isLoading,
     error,
     enhancementRule,
     pagination,
@@ -253,6 +342,7 @@ export const useTransactions = () => {
 
 export const useCategoryTotals = () => {
   const api = useApi()
+  const queryClient = useQueryClient()
   const [categoryTotals, setCategoryTotals] = useState<CategoryTotalsResponse | null>(null)
   const [loading, setLoading] = useState<boolean>(false)
   const [error, setError] = useState<string | null>(null)
@@ -262,7 +352,17 @@ export const useCategoryTotals = () => {
       setLoading(true)
       setError(null)
       try {
-        const response = await api.transactions.getCategoryTotals(filters)
+        const cacheKey = TRANSACTION_QUERY_KEYS.categoryTotals(filters)
+        const cached = queryClient.getQueryData<CategoryTotalsResponse>(cacheKey)
+
+        let response
+        if (cached) {
+          response = cached
+        } else {
+          response = await api.transactions.getCategoryTotals(filters)
+          queryClient.setQueryData(cacheKey, response)
+        }
+
         setCategoryTotals(response)
         return response
       } catch (err) {
@@ -273,7 +373,7 @@ export const useCategoryTotals = () => {
         setLoading(false)
       }
     },
-    [api.transactions]
+    [api.transactions, queryClient]
   )
 
   return {
@@ -286,6 +386,7 @@ export const useCategoryTotals = () => {
 
 export const useCategoryTimeSeries = () => {
   const api = useApi()
+  const queryClient = useQueryClient()
   const [timeSeriesData, setTimeSeriesData] = useState<CategoryTimeSeriesDataPoint[] | null>(null)
   const [loading, setLoading] = useState<boolean>(false)
   const [error, setError] = useState<string | null>(null)
@@ -299,7 +400,17 @@ export const useCategoryTimeSeries = () => {
       setLoading(true)
       setError(null)
       try {
-        const response = await api.transactions.getCategoryTimeSeries(categoryId, period, filters)
+        const cacheKey = TRANSACTION_QUERY_KEYS.timeSeries(categoryId, period, filters)
+        const cached = queryClient.getQueryData<{ data_points: CategoryTimeSeriesDataPoint[] }>(cacheKey)
+
+        let response
+        if (cached) {
+          response = cached
+        } else {
+          response = await api.transactions.getCategoryTimeSeries(categoryId, period, filters)
+          queryClient.setQueryData(cacheKey, response)
+        }
+
         setTimeSeriesData(response.data_points)
         return response.data_points
       } catch (err) {
@@ -310,7 +421,7 @@ export const useCategoryTimeSeries = () => {
         setLoading(false)
       }
     },
-    [api.transactions]
+    [api.transactions, queryClient]
   )
 
   return {
@@ -323,6 +434,7 @@ export const useCategoryTimeSeries = () => {
 
 export const useRecurringPatterns = () => {
   const api = useApi()
+  const queryClient = useQueryClient()
   const [recurringPatterns, setRecurringPatterns] = useState<RecurringPatternsResponse | null>(null)
   const [loading, setLoading] = useState<boolean>(false)
   const [error, setError] = useState<string | null>(null)
@@ -332,7 +444,17 @@ export const useRecurringPatterns = () => {
       setLoading(true)
       setError(null)
       try {
-        const response = await api.transactions.getRecurringPatterns(activeOnly)
+        const cacheKey = TRANSACTION_QUERY_KEYS.recurringPatterns(activeOnly)
+        const cached = queryClient.getQueryData<RecurringPatternsResponse>(cacheKey)
+
+        let response
+        if (cached) {
+          response = cached
+        } else {
+          response = await api.transactions.getRecurringPatterns(activeOnly)
+          queryClient.setQueryData(cacheKey, response)
+        }
+
         setRecurringPatterns(response)
         return response
       } catch (err) {
@@ -343,7 +465,7 @@ export const useRecurringPatterns = () => {
         setLoading(false)
       }
     },
-    [api.transactions]
+    [api.transactions, queryClient]
   )
 
   return {

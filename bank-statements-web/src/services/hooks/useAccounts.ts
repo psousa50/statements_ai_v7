@@ -1,121 +1,166 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useCallback } from 'react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Account } from '../../types/Transaction'
 import { useApi } from '../../api/ApiContext'
 
+const sortByName = (accounts: Account[]) => [...accounts].sort((a, b) => a.name.localeCompare(b.name))
+
+export const ACCOUNT_QUERY_KEYS = {
+  all: ['accounts'] as const,
+}
+
 export const useAccounts = () => {
   const api = useApi()
-  const [accounts, setAccounts] = useState<Account[]>([])
-  const [loading, setLoading] = useState<boolean>(false)
-  const [error, setError] = useState<string | null>(null)
+  const queryClient = useQueryClient()
 
-  const fetchAccounts = useCallback(async () => {
-    setLoading(true)
-    setError(null)
-    try {
+  const accountsQuery = useQuery({
+    queryKey: ACCOUNT_QUERY_KEYS.all,
+    queryFn: async () => {
       const response = await api.accounts.getAll()
-      setAccounts(response)
-    } catch (err) {
-      console.error('Error fetching accounts:', err)
-      setError('Failed to fetch accounts. Please try again later.')
-    } finally {
-      setLoading(false)
-    }
-  }, [api.accounts])
+      return sortByName(response)
+    },
+  })
+
+  const addMutation = useMutation({
+    mutationFn: async ({ name, currency }: { name: string; currency: string }) => {
+      return api.accounts.createAccount(name, currency)
+    },
+    onSuccess: (newAccount) => {
+      queryClient.setQueryData<Account[]>(ACCOUNT_QUERY_KEYS.all, (old) => sortByName([...(old ?? []), newAccount]))
+    },
+  })
+
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, name, currency }: { id: string; name: string; currency: string }) => {
+      return api.accounts.updateAccount(id, name, currency)
+    },
+    onSuccess: (updatedAccount) => {
+      queryClient.setQueryData<Account[]>(ACCOUNT_QUERY_KEYS.all, (old) =>
+        sortByName((old ?? []).map((a) => (a.id === updatedAccount.id ? updatedAccount : a)))
+      )
+    },
+  })
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await api.accounts.deleteAccount(id)
+      return id
+    },
+    onSuccess: (deletedId) => {
+      queryClient.setQueryData<Account[]>(ACCOUNT_QUERY_KEYS.all, (old) =>
+        (old ?? []).filter((a) => a.id !== deletedId)
+      )
+    },
+  })
+
+  const setInitialBalanceMutation = useMutation({
+    mutationFn: async ({
+      id,
+      balanceDate,
+      balanceAmount,
+    }: {
+      id: string
+      balanceDate: string
+      balanceAmount: number
+    }) => {
+      return api.accounts.setInitialBalance(id, balanceDate, balanceAmount)
+    },
+    onSuccess: (updatedAccount) => {
+      queryClient.setQueryData<Account[]>(ACCOUNT_QUERY_KEYS.all, (old) =>
+        sortByName((old ?? []).map((a) => (a.id === updatedAccount.id ? updatedAccount : a)))
+      )
+    },
+  })
+
+  const deleteInitialBalanceMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await api.accounts.deleteInitialBalance(id)
+      return id
+    },
+    onSuccess: (accountId) => {
+      queryClient.setQueryData<Account[]>(ACCOUNT_QUERY_KEYS.all, (old) =>
+        (old ?? []).map((a) => (a.id === accountId ? { ...a, initial_balance: undefined } : a))
+      )
+    },
+  })
 
   const addAccount = useCallback(
     async (name: string, currency: string) => {
       try {
-        const newAccount = await api.accounts.createAccount(name, currency)
-        setAccounts((prev) => [...prev, newAccount].sort((a, b) => a.name.localeCompare(b.name)))
-        return newAccount
-      } catch (err) {
-        console.error('Error creating account:', err)
-        setError('Failed to create account. Please try again.')
+        return await addMutation.mutateAsync({ name, currency })
+      } catch {
         return null
       }
     },
-    [api.accounts]
+    [addMutation]
   )
 
   const updateAccount = useCallback(
     async (id: string, name: string, currency: string) => {
       try {
-        const updatedAccount = await api.accounts.updateAccount(id, name, currency)
-        setAccounts((prev) =>
-          prev
-            .map((account) => (account.id === id ? updatedAccount : account))
-            .sort((a, b) => a.name.localeCompare(b.name))
-        )
-        return updatedAccount
-      } catch (err) {
-        console.error('Error updating account:', err)
-        setError('Failed to update account. Please try again.')
+        return await updateMutation.mutateAsync({ id, name, currency })
+      } catch {
         return null
       }
     },
-    [api.accounts]
+    [updateMutation]
   )
 
   const deleteAccount = useCallback(
     async (id: string) => {
       try {
-        await api.accounts.deleteAccount(id)
-        setAccounts((prev) => prev.filter((account) => account.id !== id))
+        await deleteMutation.mutateAsync(id)
         return true
-      } catch (err) {
-        console.error('Error deleting account:', err)
-        setError('Failed to delete account. Please try again.')
+      } catch {
         return false
       }
     },
-    [api.accounts]
+    [deleteMutation]
   )
 
   const setInitialBalance = useCallback(
     async (id: string, balanceDate: string, balanceAmount: number) => {
       try {
-        const updatedAccount = await api.accounts.setInitialBalance(id, balanceDate, balanceAmount)
-        setAccounts((prev) =>
-          prev
-            .map((account) => (account.id === id ? updatedAccount : account))
-            .sort((a, b) => a.name.localeCompare(b.name))
-        )
-        return updatedAccount
-      } catch (err) {
-        console.error('Error setting initial balance:', err)
-        setError('Failed to set initial balance. Please try again.')
+        return await setInitialBalanceMutation.mutateAsync({ id, balanceDate, balanceAmount })
+      } catch {
         return null
       }
     },
-    [api.accounts]
+    [setInitialBalanceMutation]
   )
 
   const deleteInitialBalance = useCallback(
     async (id: string) => {
       try {
-        await api.accounts.deleteInitialBalance(id)
-        setAccounts((prev) =>
-          prev.map((account) => (account.id === id ? { ...account, initial_balance: undefined } : account))
-        )
+        await deleteInitialBalanceMutation.mutateAsync(id)
         return true
-      } catch (err) {
-        console.error('Error deleting initial balance:', err)
-        setError('Failed to delete initial balance. Please try again.')
+      } catch {
         return false
       }
     },
-    [api.accounts]
+    [deleteInitialBalanceMutation]
   )
 
-  useEffect(() => {
-    fetchAccounts()
-  }, [fetchAccounts])
+  const loading =
+    accountsQuery.isLoading ||
+    addMutation.isPending ||
+    updateMutation.isPending ||
+    deleteMutation.isPending ||
+    setInitialBalanceMutation.isPending ||
+    deleteInitialBalanceMutation.isPending
+
+  const error =
+    accountsQuery.error?.message ||
+    addMutation.error?.message ||
+    updateMutation.error?.message ||
+    deleteMutation.error?.message ||
+    null
 
   return {
-    accounts,
+    accounts: accountsQuery.data ?? [],
     loading,
     error,
-    fetchAccounts,
+    fetchAccounts: () => queryClient.invalidateQueries({ queryKey: ACCOUNT_QUERY_KEYS.all }),
     addAccount,
     updateAccount,
     deleteAccount,

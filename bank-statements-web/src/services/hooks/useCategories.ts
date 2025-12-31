@@ -1,194 +1,169 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useCallback } from 'react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Category } from '../../types/Transaction'
 import { useApi } from '../../api/ApiContext'
 
+const sortByName = (categories: Category[]) => [...categories].sort((a, b) => a.name.localeCompare(b.name))
+
+export const CATEGORY_QUERY_KEYS = {
+  all: ['categories'] as const,
+  root: ['categories', 'root'] as const,
+  subcategories: (parentId: string) => ['categories', 'subcategories', parentId] as const,
+}
+
 export const useCategories = () => {
   const api = useApi()
-  const [categories, setCategories] = useState<Category[]>([])
-  const [rootCategories, setRootCategories] = useState<Category[]>([])
-  const [loading, setLoading] = useState<boolean>(false)
-  const [error, setError] = useState<string | null>(null)
+  const queryClient = useQueryClient()
 
-  const fetchCategories = useCallback(async () => {
-    setLoading(true)
-    setError(null)
-    try {
+  const categoriesQuery = useQuery({
+    queryKey: CATEGORY_QUERY_KEYS.all,
+    queryFn: async () => {
       const response = await api.categories.getAll()
-      setCategories(response.categories.sort((a, b) => a.name.localeCompare(b.name)))
-    } catch (err) {
-      console.error('Error fetching categories:', err)
-      setError('Failed to fetch categories. Please try again later.')
-    } finally {
-      setLoading(false)
-    }
-  }, [api.categories])
+      return sortByName(response.categories)
+    },
+  })
 
-  const fetchRootCategories = useCallback(async () => {
-    setLoading(true)
-    setError(null)
-    try {
+  const rootCategoriesQuery = useQuery({
+    queryKey: CATEGORY_QUERY_KEYS.root,
+    queryFn: async () => {
       const response = await api.categories.getRootCategories()
-      setRootCategories(response.categories.sort((a, b) => a.name.localeCompare(b.name)))
-    } catch (err) {
-      console.error('Error fetching root categories:', err)
-      setError('Failed to fetch root categories. Please try again later.')
-    } finally {
-      setLoading(false)
-    }
-  }, [api.categories])
+      return sortByName(response.categories)
+    },
+  })
 
   const fetchSubcategories = useCallback(
     async (parentId: string) => {
-      setLoading(true)
-      setError(null)
-      try {
-        const response = await api.categories.getSubcategories(parentId)
-        return response.categories.sort((a, b) => a.name.localeCompare(b.name))
-      } catch (err) {
-        console.error('Error fetching subcategories:', err)
-        setError('Failed to fetch subcategories. Please try again later.')
-        return []
-      } finally {
-        setLoading(false)
-      }
+      const cached = queryClient.getQueryData<Category[]>(CATEGORY_QUERY_KEYS.subcategories(parentId))
+      if (cached) return cached
+
+      const response = await api.categories.getSubcategories(parentId)
+      const sorted = sortByName(response.categories)
+      queryClient.setQueryData(CATEGORY_QUERY_KEYS.subcategories(parentId), sorted)
+      return sorted
     },
-    [api.categories]
+    [api.categories, queryClient]
   )
+
+  const addMutation = useMutation({
+    mutationFn: async ({ name, parentId }: { name: string; parentId?: string }) => {
+      return api.categories.create({ name, parent_id: parentId })
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: CATEGORY_QUERY_KEYS.all })
+      queryClient.invalidateQueries({ queryKey: CATEGORY_QUERY_KEYS.root })
+    },
+  })
+
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, name, parentId }: { id: string; name: string; parentId?: string }) => {
+      return api.categories.update(id, { name, parent_id: parentId })
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: CATEGORY_QUERY_KEYS.all })
+      queryClient.invalidateQueries({ queryKey: CATEGORY_QUERY_KEYS.root })
+    },
+  })
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await api.categories.delete(id)
+      return id
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: CATEGORY_QUERY_KEYS.all })
+      queryClient.invalidateQueries({ queryKey: CATEGORY_QUERY_KEYS.root })
+    },
+  })
+
+  const exportMutation = useMutation({
+    mutationFn: async () => {
+      await api.categories.exportCategories()
+      return true
+    },
+  })
+
+  const uploadMutation = useMutation({
+    mutationFn: async (file: File) => {
+      return api.categories.uploadCategories(file)
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: CATEGORY_QUERY_KEYS.all })
+      queryClient.invalidateQueries({ queryKey: CATEGORY_QUERY_KEYS.root })
+    },
+  })
 
   const addCategory = useCallback(
     async (name: string, parentId?: string) => {
-      setLoading(true)
-      setError(null)
       try {
-        const newCategory = await api.categories.create({
-          name,
-          parent_id: parentId,
-        })
-        setCategories((prev) => [...prev, newCategory].sort((a, b) => a.name.localeCompare(b.name)))
-        if (!parentId) {
-          setRootCategories((prev) => [...prev, newCategory].sort((a, b) => a.name.localeCompare(b.name)))
-        }
-        return newCategory
-      } catch (err) {
-        console.error('Error adding category:', err)
-        setError('Failed to add category. Please try again later.')
+        return await addMutation.mutateAsync({ name, parentId })
+      } catch {
         return null
-      } finally {
-        setLoading(false)
       }
     },
-    [api.categories]
+    [addMutation]
   )
 
   const updateCategory = useCallback(
     async (id: string, name: string, parentId?: string) => {
-      setLoading(true)
-      setError(null)
       try {
-        const updatedCategory = await api.categories.update(id, {
-          name,
-          parent_id: parentId,
-        })
-        setCategories((prev) =>
-          prev
-            .map((category) => (category.id === id ? updatedCategory : category))
-            .sort((a, b) => a.name.localeCompare(b.name))
-        )
-        setRootCategories((prev) => {
-          let updated
-          // If the category was a root category and now has a parent, remove it from root categories
-          if (parentId && !prev.find((c) => c.id === id)?.parent_id) {
-            updated = prev.filter((category) => category.id !== id)
-          }
-          // If the category was not a root category and now has no parent, add it to root categories
-          else if (!parentId && prev.find((c) => c.id === id)?.parent_id) {
-            updated = [...prev, updatedCategory]
-          }
-          // Otherwise, just update it if it's in the root categories
-          else {
-            updated = prev.map((category) => (category.id === id ? updatedCategory : category))
-          }
-          return updated.sort((a, b) => a.name.localeCompare(b.name))
-        })
-        return updatedCategory
-      } catch (err) {
-        console.error('Error updating category:', err)
-        setError('Failed to update category. Please try again later.')
+        return await updateMutation.mutateAsync({ id, name, parentId })
+      } catch {
         return null
-      } finally {
-        setLoading(false)
       }
     },
-    [api.categories]
+    [updateMutation]
   )
 
   const deleteCategory = useCallback(
     async (id: string) => {
-      setLoading(true)
-      setError(null)
       try {
-        await api.categories.delete(id)
-        setCategories((prev) => prev.filter((category) => category.id !== id))
-        setRootCategories((prev) => prev.filter((category) => category.id !== id))
+        await deleteMutation.mutateAsync(id)
         return true
-      } catch (err) {
-        console.error('Error deleting category:', err)
-        setError('Failed to delete category. Please try again later.')
+      } catch {
         return false
-      } finally {
-        setLoading(false)
       }
     },
-    [api.categories]
+    [deleteMutation]
   )
 
   const exportCategories = useCallback(async () => {
-    setLoading(true)
-    setError(null)
     try {
-      await api.categories.exportCategories()
+      await exportMutation.mutateAsync()
       return true
-    } catch (err) {
-      console.error('Error exporting categories:', err)
-      setError('Failed to export categories. Please try again later.')
+    } catch {
       return false
-    } finally {
-      setLoading(false)
     }
-  }, [api.categories])
+  }, [exportMutation])
 
   const uploadCategories = useCallback(
     async (file: File) => {
-      setLoading(true)
-      setError(null)
       try {
-        const result = await api.categories.uploadCategories(file)
-        await fetchCategories()
-        await fetchRootCategories()
-        return result
-      } catch (err) {
-        console.error('Error uploading categories:', err)
-        setError('Failed to upload categories. Please try again later.')
+        return await uploadMutation.mutateAsync(file)
+      } catch {
         return null
-      } finally {
-        setLoading(false)
       }
     },
-    [api.categories, fetchCategories, fetchRootCategories]
+    [uploadMutation]
   )
 
-  useEffect(() => {
-    fetchCategories()
-    fetchRootCategories()
-  }, [fetchCategories, fetchRootCategories])
+  const loading =
+    categoriesQuery.isLoading ||
+    rootCategoriesQuery.isLoading ||
+    addMutation.isPending ||
+    updateMutation.isPending ||
+    deleteMutation.isPending ||
+    exportMutation.isPending ||
+    uploadMutation.isPending
+
+  const error = categoriesQuery.error?.message || rootCategoriesQuery.error?.message || null
 
   return {
-    categories,
-    rootCategories,
+    categories: categoriesQuery.data ?? [],
+    rootCategories: rootCategoriesQuery.data ?? [],
     loading,
     error,
-    fetchCategories,
-    fetchRootCategories,
+    fetchCategories: () => queryClient.invalidateQueries({ queryKey: CATEGORY_QUERY_KEYS.all }),
+    fetchRootCategories: () => queryClient.invalidateQueries({ queryKey: CATEGORY_QUERY_KEYS.root }),
     fetchSubcategories,
     addCategory,
     updateCategory,
