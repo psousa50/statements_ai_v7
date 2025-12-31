@@ -38,7 +38,7 @@
   box-shadow: 0 0 0 2px var(--accent-primary-20);
 }
 
-/* Category tags for multiple selection - Gradient colourful design */
+/* Category tags for selection - Gradient colourful design */
 .category-selector .category-tag {
   display: inline-flex !important;
   align-items: center;
@@ -55,6 +55,7 @@
   height: 24px;
   flex-shrink: 0;
   transition: all var(--transition-fast);
+  cursor: pointer;
 }
 
 .category-selector .category-tag.category-tag-gradient {
@@ -107,6 +108,16 @@
   padding: 0;
   line-height: 1.2;
   height: auto;
+}
+
+.category-input-hidden {
+  width: 0;
+  min-width: 0;
+  flex: 0;
+  padding: 0;
+  margin: 0;
+  opacity: 0;
+  position: absolute;
 }
 
 .category-input::placeholder {

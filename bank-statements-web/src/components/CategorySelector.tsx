@@ -248,10 +248,23 @@ export const CategorySelector = ({
   // Placeholder text
   const placeholderText = multiple && selectedCategories.length > 0 ? 'Add more categories...' : placeholder
 
+  const showSingleCategoryChip = !multiple && selectedCategory && !showSuggestions
+
   return (
     <div className={`category-selector ${multiple ? 'multiple' : 'single'} variant-${variant}`} ref={containerRef}>
       <div className="category-selector-input-container">
-        {/* Selected categories tags (multiple mode only) */}
+        {/* Selected category chip (single mode) */}
+        {showSingleCategoryChip && (
+          <span
+            className="category-tag category-tag-gradient"
+            style={{ background: getCategoryColorById(selectedCategory.id).gradient }}
+            onClick={() => inputRef.current?.focus()}
+          >
+            {getCategoryHierarchy(selectedCategory)}
+          </span>
+        )}
+
+        {/* Selected categories tags (multiple mode) */}
         {multiple &&
           selectedCategories.map((category) => {
             const colorConfig = getCategoryColorById(category.id)
@@ -277,12 +290,12 @@ export const CategorySelector = ({
         <input
           ref={inputRef}
           type="text"
-          value={inputDisplayValue}
+          value={showSingleCategoryChip ? categoryInput : inputDisplayValue}
           onChange={(e) => handleInputChange(e.target.value)}
           onFocus={handleInputFocus}
           onKeyDown={handleInputKeyDown}
-          placeholder={placeholderText}
-          className="category-input"
+          placeholder={showSingleCategoryChip ? '' : placeholderText}
+          className={`category-input ${showSingleCategoryChip ? 'category-input-hidden' : ''}`}
           autoFocus={autoFocus}
           style={{
             color: 'var(--text-primary)',
