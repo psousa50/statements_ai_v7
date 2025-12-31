@@ -24,6 +24,13 @@ export const getCategoryColorByName = (name: string): CategoryColorConfig => {
 }
 
 export const getCategoryColorById = (id: number | string): CategoryColorConfig => {
-  const numericId = typeof id === 'string' ? parseInt(id, 10) : id
-  return getCategoryColor(numericId)
+  if (typeof id === 'number') {
+    return getCategoryColor(id)
+  }
+  const numericId = parseInt(id, 10)
+  if (!isNaN(numericId)) {
+    return getCategoryColor(numericId)
+  }
+  const hash = id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)
+  return getCategoryColor(hash)
 }
