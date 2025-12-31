@@ -419,39 +419,39 @@ class TestRecurringExpenseAnalyzer:
         assert result.patterns[0].normalized_description == "active subscription"
 
     def test_active_only_with_mixed_patterns(self):
-        today = date.today()
-        old_date = today - timedelta(days=ACTIVE_PATTERNS_DAYS + 30)
+        cancelled_dates = [date(2024, 1, 15), date(2024, 2, 15), date(2024, 3, 15)]
+        active_dates = [date(2025, 10, 15), date(2025, 11, 15), date(2025, 12, 15)]
 
         transactions = [
             self.create_transaction(
                 normalized_description="cancelled subscription",
                 amount=Decimal("9.99"),
-                transaction_date=old_date - timedelta(days=62),
+                transaction_date=cancelled_dates[0],
             ),
             self.create_transaction(
                 normalized_description="cancelled subscription",
                 amount=Decimal("9.99"),
-                transaction_date=old_date - timedelta(days=31),
+                transaction_date=cancelled_dates[1],
             ),
             self.create_transaction(
                 normalized_description="cancelled subscription",
                 amount=Decimal("9.99"),
-                transaction_date=old_date,
+                transaction_date=cancelled_dates[2],
             ),
             self.create_transaction(
                 normalized_description="active subscription",
                 amount=Decimal("15.99"),
-                transaction_date=today - timedelta(days=62),
+                transaction_date=active_dates[0],
             ),
             self.create_transaction(
                 normalized_description="active subscription",
                 amount=Decimal("15.99"),
-                transaction_date=today - timedelta(days=31),
+                transaction_date=active_dates[1],
             ),
             self.create_transaction(
                 normalized_description="active subscription",
                 amount=Decimal("15.99"),
-                transaction_date=today,
+                transaction_date=active_dates[2],
             ),
         ]
 
