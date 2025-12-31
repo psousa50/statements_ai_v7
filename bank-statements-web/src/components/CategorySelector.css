@@ -7,19 +7,17 @@
 
 .category-selector-input-container {
   display: flex;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   align-items: center;
   gap: 3px;
+  row-gap: 6px;
   padding: 0.5rem 0.75rem;
   border: 1px solid var(--border-primary);
   border-radius: 8px;
   background: var(--bg-primary);
   min-height: 38px;
-  height: 38px;
   cursor: text;
   color: var(--text-primary);
-  overflow-x: auto;
-  overflow-y: hidden;
 }
 
 /* Fix double border when CategorySelector is inside a form-group */
@@ -214,12 +212,13 @@
   height: 32px !important;
   border-radius: 6px !important;
   align-items: center !important;
+  flex-wrap: nowrap !important;
 }
 
 .category-selector.variant-default .category-input,
 .category-selector.single .category-input {
   font-size: 0.75rem !important;
-  line-height: 1.2 !important;
+  line-height: 1 !important;
   align-self: center;
 }
 
@@ -288,13 +287,13 @@
   border-radius: 8px !important;
   padding: 0.5rem 0.75rem !important;
   min-height: 38px !important;
-  height: 38px !important;
+  height: auto !important;
+  box-sizing: border-box !important;
   background: var(--bg-primary) !important;
   transition: all 0.2s ease !important;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-  overflow-x: auto;
-  overflow-y: hidden;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
+  row-gap: 6px;
 }
 
 .category-selector.variant-filter .category-selector-input-container:hover {
@@ -313,6 +312,8 @@
 .category-selector.variant-filter .category-selector-input-container .category-input {
   font-size: 0.875rem !important;
   color: var(--text-primary) !important;
+  line-height: 1.25 !important;
+  height: 20px !important;
 }
 
 .category-selector.variant-filter .category-selector-input-container .category-input::placeholder {

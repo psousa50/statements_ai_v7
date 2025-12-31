@@ -261,12 +261,12 @@ export const CategorySelector = ({
                 className="category-tag category-tag-gradient"
                 style={{ background: colorConfig.gradient }}
               >
-                {category.name}
+                {getCategoryHierarchy(category)}
                 <button
                   onClick={() => handleCategoryRemove(category.id)}
                   className="category-tag-remove"
                   type="button"
-                  title={`Remove ${category.name}`}
+                  title={`Remove ${getCategoryHierarchy(category)}`}
                 >
                   ×
                 </button>
