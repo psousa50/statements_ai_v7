@@ -76,6 +76,14 @@ interface CategoryCellProps {
   onShowBulkModal: (state: BulkModalState) => void
 }
 
+const getCategoryDisplayName = (category: Category | undefined): string => {
+  if (!category) return 'Unknown'
+  if (category.parent) {
+    return `${category.parent.name} > ${category.name}`
+  }
+  return category.name
+}
+
 const CategoryCell = ({
   transaction,
   categories,
@@ -103,9 +111,10 @@ const CategoryCell = ({
         await onCategorize(transaction.id, categoryId)
 
         if (!categoryId && previousCategoryId) {
-          const categoryName = categories.find((c) => c.id === previousCategoryId)?.name || 'Category'
+          const removedCategory = categories.find((c) => c.id === previousCategoryId)
+          const removedCategoryName = getCategoryDisplayName(removedCategory)
           onShowToast({
-            message: `${categoryName} removed`,
+            message: `${removedCategoryName} removed`,
             type: 'info',
             onUndo: async () => {
               try {
@@ -120,7 +129,8 @@ const CategoryCell = ({
             },
           })
         } else if (categoryId && onBulkCategorize) {
-          const categoryName = categories.find((c) => c.id === categoryId)?.name || 'Category'
+          const category = categories.find((c) => c.id === categoryId)
+          const categoryName = getCategoryDisplayName(category)
 
           const countResult = await apiClient.transactions.countSimilar({
             normalized_description: transaction.normalized_description,
@@ -130,7 +140,8 @@ const CategoryCell = ({
 
           let replaceOption: { categoryName: string; count: number } | undefined
           if (previousCategoryId && onBulkReplaceCategory) {
-            const oldCategoryName = categories.find((c) => c.id === previousCategoryId)?.name || 'old category'
+            const oldCategory = categories.find((c) => c.id === previousCategoryId)
+            const oldCategoryName = getCategoryDisplayName(oldCategory)
             const replaceCountResult = await apiClient.transactions.countByCategory({
               category_id: previousCategoryId,
               ...similarCountFilters,
