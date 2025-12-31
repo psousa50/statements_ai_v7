@@ -1,6 +1,6 @@
 from datetime import date
 from decimal import Decimal
-from typing import List, Optional
+from typing import Dict, List, Optional
 from uuid import UUID
 
 from app.domain.models.initial_balance import InitialBalance
@@ -29,8 +29,10 @@ class InitialBalanceService:
         return self.initial_balance_repository.create(initial_balance)
 
     def get_latest_balance(self, account_id: UUID) -> Optional[InitialBalance]:
-        """Get the latest initial balance for a source"""
         return self.initial_balance_repository.get_latest_by_account_id(account_id)
+
+    def get_latest_balances_for_accounts(self, account_ids: List[UUID]) -> Dict[UUID, InitialBalance]:
+        return self.initial_balance_repository.get_latest_by_account_ids(account_ids)
 
     def get_all_balances(self, account_id: UUID) -> List[InitialBalance]:
         """Get all initial balances for a source"""

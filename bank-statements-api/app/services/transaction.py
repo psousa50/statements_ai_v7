@@ -228,50 +228,21 @@ class TransactionService:
         transactions: List[Transaction],
         account_id: UUID,
     ):
-        """Add running balance to transactions for a specific account"""
         if not transactions:
             return
 
-        # Get the latest date from the current page of transactions
-        latest_date = max(t.date for t in transactions)
+        latest_balance = self.initial_balance_repository.get_latest_by_account_id(account_id)
+        starting_balance = latest_balance.balance_amount if latest_balance else Decimal("0.00")
 
-        # Get all transactions up to the latest date for accurate running balance
-        all_transactions = self.transaction_repository.get_all_by_account_and_date_range(
-            account_id=account_id, end_date=latest_date
+        transaction_ids = [t.id for t in transactions]
+        balances = self.transaction_repository.get_running_balances(
+            account_id=account_id,
+            transaction_ids=transaction_ids,
+            initial_balance=starting_balance,
         )
 
-        # Get the earliest transaction date
-        earliest_date = min(t.date for t in all_transactions)
-
-        # Get the latest initial balance before the earliest transaction date
-        latest_balance = self.initial_balance_repository.get_latest_by_account_id_and_date(
-            account_id=account_id, before_date=earliest_date
-        )
-
-        # For the first transactions of an account, start from 0 if no initial balance exists
-        starting_balance = Decimal("0.00")
-        if latest_balance and latest_balance.balance_date <= earliest_date:
-            starting_balance = latest_balance.balance_amount
-
-        # Sort all transactions by date and then by created_at (for consistent ordering of same-date transactions)
-        sorted_transactions = sorted(
-            all_transactions,
-            key=lambda x: (x.date, x.created_at),
-        )
-
-        # Calculate running balance for all transactions
-        balances = {}  # Keep track of running balance for each transaction
-        current_balance = starting_balance
-        for transaction in sorted_transactions:
-            current_balance += transaction.amount
-            balances[transaction.id] = current_balance
-
-        # Update running balance only for transactions in the current page
         for transaction in transactions:
             transaction.running_balance = balances.get(transaction.id)
-
-        # Note: We don't re-sort here to preserve the user's sorting preferences
-        # The transactions are already sorted according to the user's sort_field and sort_direction
 
     def get_category_totals(
         self,

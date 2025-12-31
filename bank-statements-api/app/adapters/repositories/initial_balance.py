@@ -1,7 +1,8 @@
 from datetime import date
-from typing import List, Optional
+from typing import Dict, List, Optional
 from uuid import UUID
 
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.domain.models.initial_balance import InitialBalance
@@ -58,6 +59,32 @@ class SQLAlchemyInitialBalanceRepository(InitialBalanceRepository):
             .order_by(InitialBalance.balance_date.desc())
             .all()
         )
+
+    def get_latest_by_account_ids(self, account_ids: List[UUID]) -> Dict[UUID, InitialBalance]:
+        if not account_ids:
+            return {}
+
+        latest_dates_subquery = (
+            self.db_session.query(
+                InitialBalance.account_id,
+                func.max(InitialBalance.balance_date).label("max_date"),
+            )
+            .filter(InitialBalance.account_id.in_(account_ids))
+            .group_by(InitialBalance.account_id)
+            .subquery()
+        )
+
+        balances = (
+            self.db_session.query(InitialBalance)
+            .join(
+                latest_dates_subquery,
+                (InitialBalance.account_id == latest_dates_subquery.c.account_id)
+                & (InitialBalance.balance_date == latest_dates_subquery.c.max_date),
+            )
+            .all()
+        )
+
+        return {balance.account_id: balance for balance in balances}
 
     def update(self, initial_balance: InitialBalance) -> InitialBalance:
         self.db_session.commit()

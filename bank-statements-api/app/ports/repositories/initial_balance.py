@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from datetime import date
-from typing import List, Optional
+from typing import Dict, List, Optional
 from uuid import UUID
 
 from app.domain.models.initial_balance import InitialBalance
@@ -35,6 +35,11 @@ class InitialBalanceRepository(ABC):
     @abstractmethod
     def get_all_by_account_id(self, account_id: UUID) -> List[InitialBalance]:
         """Get all initial balances for a source"""
+        pass
+
+    @abstractmethod
+    def get_latest_by_account_ids(self, account_ids: List[UUID]) -> Dict[UUID, InitialBalance]:
+        """Get the latest initial balance for multiple accounts in a single query"""
         pass
 
     @abstractmethod

@@ -9,6 +9,7 @@
     "dev:api": "cd bank-statements-api && DATABASE_URL=postgresql+psycopg://postgres:postgres@localhost:54321/bank_statements uv run python run.py",
     "dev:web": "cd bank-statements-web && pnpm run dev",
     "start": "pnpm run db:start && pnpm run dev",
+    "stop": "(lsof -ti :8000 | xargs kill -9; lsof -ti :5173 | xargs kill -9) 2>/dev/null || true",
 
     "========== DATABASE ==========": "",
     "db:up": "docker-compose up db -d",
@@ -16,6 +17,7 @@
     "db:start": "pnpm db:up && sleep 3 && pnpm db:migrate",
     "db:destroy": "docker-compose down -v",
     "db:migrate": "cd bank-statements-api && DATABASE_URL=postgresql+psycopg://postgres:postgres@localhost:54321/bank_statements uv run alembic upgrade head",
+    "db:rollback": "cd bank-statements-api && DATABASE_URL=postgresql+psycopg://postgres:postgres@localhost:54321/bank_statements uv run alembic downgrade -1",
     "db:backup": "mkdir -p backups && docker exec bank-statements-db pg_dump -U postgres -d bank_statements -F c > backups/bank_statements_$(date +%Y%m%d_%H%M%S).dump && echo 'Backup created in backups/ directory'",
     "db:restore": "test -n \"$FILE\" || (echo 'Usage: FILE=backups/your_backup.dump pnpm db:restore' && exit 1) && docker exec -i bank-statements-db pg_restore -U postgres -d bank_statements -c < \"$FILE\"",
     "db:sync:from-neon": "./scripts/db-sync.sh neon-to-local",

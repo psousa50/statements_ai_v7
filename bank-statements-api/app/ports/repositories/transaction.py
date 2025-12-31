@@ -305,3 +305,23 @@ class TransactionRepository(ABC):
     @abstractmethod
     def get_latest_matching_dates_batch(self, rules: List) -> Dict[UUID, Optional[date]]:
         pass
+
+    @abstractmethod
+    def get_running_balances(
+        self,
+        account_id: UUID,
+        transaction_ids: List[UUID],
+        initial_balance: Optional[Decimal] = None,
+    ) -> Dict[UUID, Decimal]:
+        """
+        Calculate running balances for specified transactions using SQL window functions.
+
+        Args:
+            account_id: The account to calculate balances for
+            transaction_ids: List of transaction IDs to get balances for
+            initial_balance: Starting balance to add to cumulative sum
+
+        Returns:
+            Dict mapping transaction ID to running balance
+        """
+        pass

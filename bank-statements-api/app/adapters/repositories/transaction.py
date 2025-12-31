@@ -4,7 +4,7 @@ from typing import Dict, List, Optional, Tuple
 from uuid import UUID
 
 import pandas as pd
-from sqlalchemy import and_, func, or_
+from sqlalchemy import and_, func, or_, over
 from sqlalchemy.orm import Session
 
 from app.common.text_normalization import normalize_description
@@ -1133,3 +1133,44 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         results = self.db_session.execute(combined).fetchall()
 
         return {UUID(row[0]): row[1] for row in results}
+
+    def get_running_balances(
+        self,
+        account_id: UUID,
+        transaction_ids: List[UUID],
+        initial_balance: Optional[Decimal] = None,
+    ) -> Dict[UUID, Decimal]:
+        if not transaction_ids:
+            return {}
+
+        starting_balance = initial_balance or Decimal("0")
+
+        running_sum = over(
+            func.sum(Transaction.amount),
+            partition_by=Transaction.account_id,
+            order_by=[Transaction.date, Transaction.sort_index],
+            rows=(None, 0),
+        )
+
+        subquery = (
+            self.db_session.query(
+                Transaction.id,
+                running_sum.label("cumulative_sum"),
+            )
+            .filter(Transaction.account_id == account_id)
+            .subquery()
+        )
+
+        results = (
+            self.db_session.query(
+                subquery.c.id,
+                subquery.c.cumulative_sum,
+            )
+            .filter(subquery.c.id.in_(transaction_ids))
+            .all()
+        )
+
+        return {
+            row[0]: starting_balance + Decimal(str(row[1])) if row[1] else starting_balance
+            for row in results
+        }
