@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
 import { Category } from '../types/Transaction'
 import { CategoryTimeSeriesDataPoint } from '../api/TransactionClient'
+import { getCategoryColorById } from '../utils/categoryColors'
 
 interface CategoryTimeSeriesChartProps {
   dataPoints: CategoryTimeSeriesDataPoint[]
@@ -9,30 +10,7 @@ interface CategoryTimeSeriesChartProps {
   loading?: boolean
 }
 
-const COLORS = [
-  '#0088FE',
-  '#00C49F',
-  '#FFBB28',
-  '#FF8042',
-  '#8884D8',
-  '#82CA9D',
-  '#FFC658',
-  '#FF7C7C',
-  '#8DD1E1',
-  '#D084D0',
-  '#FFB347',
-  '#87CEEB',
-  '#DDA0DD',
-  '#98FB98',
-  '#F0E68C',
-]
-
 const UNCATEGORIZED_COLOR = '#EF4444'
-
-const getCategoryColor = (name: string, index: number): string => {
-  if (name === 'Uncategorized') return UNCATEGORIZED_COLOR
-  return COLORS[index % COLORS.length]
-}
 
 export const CategoryTimeSeriesChart = ({ dataPoints, categories, loading }: CategoryTimeSeriesChartProps) => {
   const chartData = useMemo(() => {
@@ -69,14 +47,25 @@ export const CategoryTimeSeriesChart = ({ dataPoints, categories, loading }: Cat
     })
   }, [dataPoints, categories])
 
-  const categoryNames = useMemo(() => {
+  const { categoryNames, nameToIdMap } = useMemo(() => {
     const names = new Set<string>()
+    const idMap = new Map<string, string | null>()
     dataPoints.forEach((dp) => {
       const category = dp.category_id ? categories.find((c) => c.id === dp.category_id) : null
-      names.add(category ? category.name : 'Uncategorized')
+      const name = category ? category.name : 'Uncategorized'
+      names.add(name)
+      if (!idMap.has(name)) {
+        idMap.set(name, dp.category_id || null)
+      }
     })
-    return Array.from(names).sort()
+    return { categoryNames: Array.from(names).sort(), nameToIdMap: idMap }
   }, [dataPoints, categories])
+
+  const getCategoryColor = (name: string): string => {
+    if (name === 'Uncategorized') return UNCATEGORIZED_COLOR
+    const id = nameToIdMap.get(name)
+    return id ? getCategoryColorById(id).solid : UNCATEGORIZED_COLOR
+  }
 
   if (loading) {
     return <div className="loading-indicator">Loading time series data...</div>
@@ -112,8 +101,8 @@ export const CategoryTimeSeriesChart = ({ dataPoints, categories, loading }: Cat
               color: 'var(--text-primary)',
             }}
           />
-          {categoryNames.map((name, index) => (
-            <Bar key={name} dataKey={name} stackId="1" fill={getCategoryColor(name, index)} animationDuration={300} />
+          {categoryNames.map((name) => (
+            <Bar key={name} dataKey={name} stackId="1" fill={getCategoryColor(name)} animationDuration={300} />
           ))}
         </BarChart>
       </ResponsiveContainer>

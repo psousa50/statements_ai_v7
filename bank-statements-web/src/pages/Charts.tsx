@@ -8,6 +8,7 @@ import { CategoryTimeSeriesChart } from '../components/CategoryTimeSeriesChart'
 import { CategoryTotalsBarChart } from '../components/CategoryTotalsBarChart'
 import { Category } from '../types/Transaction'
 import { TransactionFilters as FilterType } from '../api/TransactionClient'
+import { getCategoryColorById } from '../utils/categoryColors'
 import './ChartsPage.css'
 
 interface ChartData {
@@ -29,24 +30,6 @@ interface LabelProps {
   name: string
   value: number
 }
-
-const COLORS = [
-  '#a78bfa',
-  '#60a5fa',
-  '#34d399',
-  '#fbbf24',
-  '#f472b6',
-  '#22d3ee',
-  '#fb7185',
-  '#818cf8',
-  '#38bdf8',
-  '#4ade80',
-  '#facc15',
-  '#e879f9',
-  '#2dd4bf',
-  '#f97316',
-  '#a3e635',
-]
 
 const UNCATEGORIZED_COLOR = '#EF4444'
 
@@ -263,12 +246,12 @@ export const ChartsPage = () => {
       return Array.from(rootCategoryData.entries())
         .filter(([_, data]) => data.value > 0)
         .filter(([id, _]) => !(categorizationFilter === 'categorized' && id === 'uncategorized'))
-        .map(([id, data], index) => ({
+        .map(([id, data]) => ({
           id,
           name: id === 'uncategorized' ? 'Uncategorized' : categoryMap.get(id)?.name || 'Unknown',
           value: data.value,
           count: data.count,
-          color: id === 'uncategorized' ? UNCATEGORIZED_COLOR : COLORS[index % COLORS.length],
+          color: id === 'uncategorized' ? UNCATEGORIZED_COLOR : getCategoryColorById(id).solid,
         }))
     } else {
       // Show subcategories of selected root category
@@ -344,7 +327,7 @@ export const ChartsPage = () => {
       return Array.from(subcategoryData.entries())
         .filter(([_, data]) => data.value > 0)
         .filter(([id, _]) => !(categorizationFilter === 'categorized' && id === 'uncategorized'))
-        .map(([id, data], index) => ({
+        .map(([id, data]) => ({
           id,
           name:
             id === 'uncategorized'
@@ -354,7 +337,7 @@ export const ChartsPage = () => {
                 : categoryMap.get(id)?.name || 'Unknown',
           value: data.value,
           count: data.count,
-          color: id === 'uncategorized' ? UNCATEGORIZED_COLOR : COLORS[index % COLORS.length],
+          color: id === 'uncategorized' ? UNCATEGORIZED_COLOR : getCategoryColorById(id).solid,
         }))
     }
   }, [categoryTotals, categories, chartType, selectedRootCategory, categorizationFilter])

@@ -3,19 +3,7 @@ import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveCo
 import { RecurringPattern } from '../api/TransactionClient'
 import { Category } from '../types/Transaction'
 import { formatCurrency } from '../utils/format'
-
-const CHART_COLORS = [
-  '#0088FE',
-  '#00C49F',
-  '#FFBB28',
-  '#FF8042',
-  '#8884D8',
-  '#82CA9D',
-  '#FFC658',
-  '#FF7C7C',
-  '#8DD1E1',
-  '#D084D0',
-]
+import { getCategoryColorById } from '../utils/categoryColors'
 
 const UNCATEGORIZED_COLOR = '#EF4444'
 
@@ -35,26 +23,30 @@ export const RecurringExpensesCharts = ({
   const [chartType, setChartType] = useState<ChartType>('pie')
 
   const categoryChartData = useMemo(() => {
-    const categoryTotals = new Map<string, { name: string; value: number }>()
+    const categoryTotals = new Map<string, { name: string; value: number; categoryId: string | null }>()
 
     patterns.forEach((pattern) => {
-      const categoryName = pattern.category_id
-        ? categories.find((c) => c.id === pattern.category_id)?.name || 'Unknown'
-        : 'Uncategorised'
+      const category = pattern.category_id ? categories.find((c) => c.id === pattern.category_id) : null
+      const categoryName = category?.name || (pattern.category_id ? 'Unknown' : 'Uncategorised')
+      const key = pattern.category_id || 'uncategorised'
 
-      const existing = categoryTotals.get(categoryName)
+      const existing = categoryTotals.get(key)
       if (existing) {
         existing.value += pattern.average_amount
       } else {
-        categoryTotals.set(categoryName, { name: categoryName, value: pattern.average_amount })
+        categoryTotals.set(key, {
+          name: categoryName,
+          value: pattern.average_amount,
+          categoryId: pattern.category_id || null,
+        })
       }
     })
 
     return Array.from(categoryTotals.values())
       .sort((a, b) => b.value - a.value)
-      .map((item, index) => ({
+      .map((item) => ({
         ...item,
-        color: item.name === 'Uncategorised' ? UNCATEGORIZED_COLOR : CHART_COLORS[index % CHART_COLORS.length],
+        color: item.categoryId ? getCategoryColorById(item.categoryId).solid : UNCATEGORIZED_COLOR,
       }))
   }, [patterns, categories])
 
