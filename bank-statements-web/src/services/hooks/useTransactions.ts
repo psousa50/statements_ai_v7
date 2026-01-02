@@ -49,6 +49,7 @@ export const useTransactions = () => {
       setError(null)
       try {
         const cacheKey = TRANSACTION_QUERY_KEYS.list(filters)
+        const queryState = queryClient.getQueryState(cacheKey)
         const cached = queryClient.getQueryData<{
           transactions: Transaction[]
           total: number
@@ -57,7 +58,8 @@ export const useTransactions = () => {
         }>(cacheKey)
 
         let response
-        if (cached) {
+        const isStale = queryState?.isInvalidated || !queryState
+        if (cached && !isStale) {
           response = cached
         } else {
           response = await api.transactions.getAll(filters)
@@ -353,10 +355,12 @@ export const useCategoryTotals = () => {
       setError(null)
       try {
         const cacheKey = TRANSACTION_QUERY_KEYS.categoryTotals(filters)
+        const queryState = queryClient.getQueryState(cacheKey)
         const cached = queryClient.getQueryData<CategoryTotalsResponse>(cacheKey)
 
         let response
-        if (cached) {
+        const isStale = queryState?.isInvalidated || !queryState
+        if (cached && !isStale) {
           response = cached
         } else {
           response = await api.transactions.getCategoryTotals(filters)
@@ -401,10 +405,12 @@ export const useCategoryTimeSeries = () => {
       setError(null)
       try {
         const cacheKey = TRANSACTION_QUERY_KEYS.timeSeries(categoryId, period, filters)
+        const queryState = queryClient.getQueryState(cacheKey)
         const cached = queryClient.getQueryData<{ data_points: CategoryTimeSeriesDataPoint[] }>(cacheKey)
 
         let response
-        if (cached) {
+        const isStale = queryState?.isInvalidated || !queryState
+        if (cached && !isStale) {
           response = cached
         } else {
           response = await api.transactions.getCategoryTimeSeries(categoryId, period, filters)
@@ -445,10 +451,12 @@ export const useRecurringPatterns = () => {
       setError(null)
       try {
         const cacheKey = TRANSACTION_QUERY_KEYS.recurringPatterns(activeOnly)
+        const queryState = queryClient.getQueryState(cacheKey)
         const cached = queryClient.getQueryData<RecurringPatternsResponse>(cacheKey)
 
         let response
-        if (cached) {
+        const isStale = queryState?.isInvalidated || !queryState
+        if (cached && !isStale) {
           response = cached
         } else {
           response = await api.transactions.getRecurringPatterns(activeOnly)
