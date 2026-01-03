@@ -34,9 +34,7 @@ PALETTE = [
 
 def upgrade() -> None:
     connection = op.get_bind()
-    parents = connection.execute(
-        text("SELECT id FROM categories WHERE parent_id IS NULL ORDER BY name")
-    ).fetchall()
+    parents = connection.execute(text("SELECT id FROM categories WHERE parent_id IS NULL ORDER BY name")).fetchall()
 
     for i, (cat_id,) in enumerate(parents):
         color = PALETTE[i % len(PALETTE)]
