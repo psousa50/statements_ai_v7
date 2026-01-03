@@ -36,11 +36,11 @@ const UNCATEGORIZED_COLOR = '#EF4444'
 export const ChartsPage = () => {
   const [filters, setFilters] = useState<Omit<FilterType, 'page' | 'page_size'>>({
     exclude_transfers: true,
-    transaction_type: 'debit',
+    transaction_type: 'all',
   })
   const [chartType, setChartType] = useState<'root' | 'sub'>('root')
   const [selectedRootCategory, setSelectedRootCategory] = useState<string | null>(null)
-  const [transactionType, setTransactionType] = useState<'all' | 'debit' | 'credit'>('debit')
+  const [transactionType, setTransactionType] = useState<'all' | 'debit' | 'credit'>('all')
   const [categorizationFilter, setCategorizationFilter] = useState<CategorizationFilter>('categorized')
   const [viewMode, setViewMode] = useState<'pie' | 'bar' | 'timeseries'>('bar')
   const [timeSeriesPeriod, setTimeSeriesPeriod] = useState<'month' | 'week'>('month')
@@ -181,7 +181,7 @@ export const ChartsPage = () => {
   const handleClearFilters = useCallback(() => {
     const defaultFilters = {
       exclude_transfers: true,
-      transaction_type: 'debit' as const,
+      transaction_type: 'all' as const,
     }
     setFilters(defaultFilters)
     setLocalDescriptionSearch('')
@@ -189,7 +189,7 @@ export const ChartsPage = () => {
     setLocalMaxAmount(undefined)
     setLocalStartDate('')
     setLocalEndDate('')
-    setTransactionType('debit')
+    setTransactionType('all')
     setCategorizationFilter('categorized')
     fetchCategoryTotals(defaultFilters)
   }, [fetchCategoryTotals])
@@ -489,7 +489,7 @@ export const ChartsPage = () => {
   useEffect(() => {
     fetchCategoryTotals({
       exclude_transfers: true,
-      transaction_type: 'debit',
+      transaction_type: 'all',
     })
   }, [fetchCategoryTotals])
 
@@ -524,7 +524,8 @@ export const ChartsPage = () => {
             categorizationFilter={categorizationFilter}
             hideUncategorizedOnlyOption={true}
             transactionType={transactionType}
-            defaultTransactionType="debit"
+            transactionTypeDisabled={true}
+            defaultTransactionType="all"
             defaultCategorizationFilter="categorized"
             defaultExcludeTransfers={true}
             onCategoryChange={handleCategoryFilter}

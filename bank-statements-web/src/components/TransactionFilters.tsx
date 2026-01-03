@@ -19,6 +19,7 @@ interface TransactionFiltersProps {
   categorizationFilter?: CategorizationFilter
   hideUncategorizedOnlyOption?: boolean
   transactionType?: 'all' | 'debit' | 'credit'
+  transactionTypeDisabled?: boolean
   defaultTransactionType?: 'all' | 'debit' | 'credit'
   defaultCategorizationFilter?: CategorizationFilter
   defaultExcludeTransfers?: boolean
@@ -47,6 +48,7 @@ export const TransactionFilters = ({
   categorizationFilter = 'all',
   hideUncategorizedOnlyOption = false,
   transactionType = 'all',
+  transactionTypeDisabled = false,
   defaultTransactionType = 'all',
   defaultCategorizationFilter = 'all',
   defaultExcludeTransfers = true,
@@ -172,6 +174,7 @@ export const TransactionFilters = ({
                 value={transactionType}
                 onChange={(e) => onTransactionTypeChange(e.target.value as 'all' | 'debit' | 'credit')}
                 className="filter-input filter-select"
+                disabled={transactionTypeDisabled}
               >
                 <option value="all">All</option>
                 <option value="debit">Debits</option>
