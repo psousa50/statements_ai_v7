@@ -6,14 +6,18 @@ export interface CategoryColorConfig {
 }
 
 export const PRESET_COLORS = [
-  '#a78bfa',
-  '#60a5fa',
-  '#34d399',
-  '#fbbf24',
-  '#f472b6',
-  '#22d3ee',
-  '#fb7185',
-  '#818cf8',
+  '#ef4444',
+  '#f97316',
+  '#eab308',
+  '#22c55e',
+  '#14b8a6',
+  '#06b6d4',
+  '#3b82f6',
+  '#8b5cf6',
+  '#d946ef',
+  '#ec4899',
+  '#f43f5e',
+  '#84cc16',
 ]
 
 interface HSL {
@@ -113,10 +117,23 @@ export const CATEGORY_GRADIENT_COLORS: CategoryColorConfig[] = PRESET_COLORS.map
 
 export function deriveChildColor(parentColor: string, childIndex: number, totalChildren: number): string {
   const hsl = hexToHsl(parentColor)
-  const lightnessRange = 30
-  const offset = totalChildren > 1 ? ((childIndex / (totalChildren - 1)) - 0.5) * lightnessRange : 0
-  const newLightness = Math.min(Math.max(hsl.l + offset, 25), 75)
-  return hslToHex(hsl.h, hsl.s * 0.9, newLightness)
+
+  if (totalChildren <= 1) {
+    return hslToHex(hsl.h, hsl.s * 0.85, hsl.l)
+  }
+
+  const hueRange = 60
+  const lightnessRange = 40
+  const t = childIndex / (totalChildren - 1)
+
+  const hueOffset = (t - 0.5) * hueRange
+  const lightnessOffset = (t - 0.5) * lightnessRange
+
+  const newHue = (hsl.h + hueOffset + 360) % 360
+  const newLightness = Math.min(Math.max(hsl.l + lightnessOffset, 30), 70)
+  const newSaturation = hsl.s * (0.7 + t * 0.3)
+
+  return hslToHex(newHue, newSaturation, newLightness)
 }
 
 function getFallbackColor(id: string): string {

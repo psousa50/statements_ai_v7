@@ -61,6 +61,19 @@ export const CategoryModal = ({ isOpen, category, parentId, categories, onSave, 
     return categories.filter((c) => !excludedIds.includes(c.id))
   }, [categories, category, isEditing])
 
+  const usedColors = useMemo(() => {
+    const colorMap = new Map<string, string[]>()
+    const parentCategories = categories.filter((c) => !c.parent_id && c.id !== category?.id)
+    for (const cat of parentCategories) {
+      if (cat.color) {
+        const existing = colorMap.get(cat.color) || []
+        existing.push(cat.name)
+        colorMap.set(cat.color, existing)
+      }
+    }
+    return colorMap
+  }, [categories, category?.id])
+
   if (!isOpen) return null
 
   const handleSave = async () => {
@@ -148,7 +161,7 @@ export const CategoryModal = ({ isOpen, category, parentId, categories, onSave, 
           {isRootCategory && (
             <div className="form-group">
               <label>Colour</label>
-              <ColorSwatchPicker value={selectedColor} onChange={setSelectedColor} />
+              <ColorSwatchPicker value={selectedColor} onChange={setSelectedColor} usedColors={usedColors} />
             </div>
           )}
 

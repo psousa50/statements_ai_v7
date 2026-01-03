@@ -9,6 +9,10 @@
   pointer-events: none;
 }
 
+.color-swatch-container {
+  position: relative;
+}
+
 .color-swatch {
   width: 32px;
   height: 32px;
@@ -20,6 +24,7 @@
   justify-content: center;
   transition: transform 0.15s ease, border-color 0.15s ease;
   padding: 0;
+  position: relative;
 }
 
 .color-swatch:hover:not(:disabled) {
@@ -28,6 +33,10 @@
 
 .color-swatch.selected {
   border-color: var(--text-primary);
+}
+
+.color-swatch.used {
+  opacity: 0.6;
 }
 
 .color-swatch svg {
@@ -39,4 +48,21 @@
 
 .color-swatch:disabled {
   cursor: not-allowed;
+}
+
+.used-count {
+  position: absolute;
+  bottom: -4px;
+  right: -4px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-primary);
+  color: var(--text-secondary);
+  font-size: 10px;
+  font-weight: 600;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
