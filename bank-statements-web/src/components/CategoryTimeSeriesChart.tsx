@@ -23,6 +23,8 @@ export const CategoryTimeSeriesChart = ({ dataPoints, categories, loading }: Cat
     const periodMap = new Map<string, Record<string, number>>()
 
     dataPoints.forEach((dp) => {
+      if (dp.total_amount <= 0) return
+
       if (!periodMap.has(dp.period)) {
         periodMap.set(dp.period, {})
       }
@@ -51,6 +53,7 @@ export const CategoryTimeSeriesChart = ({ dataPoints, categories, loading }: Cat
     const names = new Set<string>()
     const idMap = new Map<string, string | null>()
     dataPoints.forEach((dp) => {
+      if (dp.total_amount <= 0) return
       const category = dp.category_id ? categories.find((c) => c.id === dp.category_id) : null
       const name = category ? category.name : 'Uncategorized'
       names.add(name)
