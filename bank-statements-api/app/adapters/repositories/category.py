@@ -49,3 +49,28 @@ class SQLAlchemyCategoryRepository(CategoryRepository):
         else:
             query = query.filter(Category.parent_id.is_(None))
         return query.first()
+
+    def get_all_descendant_ids(self, category_ids: List[UUID], user_id: UUID) -> List[UUID]:
+        if not category_ids:
+            return []
+
+        all_categories = self.get_all(user_id)
+        children_map: dict[UUID, List[UUID]] = {}
+        for cat in all_categories:
+            if cat.parent_id:
+                if cat.parent_id not in children_map:
+                    children_map[cat.parent_id] = []
+                children_map[cat.parent_id].append(cat.id)
+
+        result_ids = set(category_ids)
+
+        def collect_descendants(parent_id: UUID) -> None:
+            for child_id in children_map.get(parent_id, []):
+                if child_id not in result_ids:
+                    result_ids.add(child_id)
+                    collect_descendants(child_id)
+
+        for cat_id in category_ids:
+            collect_descendants(cat_id)
+
+        return list(result_ids)

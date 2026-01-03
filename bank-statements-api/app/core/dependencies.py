@@ -166,6 +166,7 @@ def build_internal_dependencies(
         initial_balance_repo,
         enhancement_rule_repo,
         transaction_enhancer,
+        category_repo,
     )
 
     background_job_service = BackgroundJobService(background_job_repo)

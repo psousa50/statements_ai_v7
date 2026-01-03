@@ -37,3 +37,7 @@ class CategoryRepository(ABC):
     @abstractmethod
     def get_by_name(self, name: str, user_id: UUID, parent_id: Optional[UUID] = None) -> Optional[Category]:
         pass
+
+    @abstractmethod
+    def get_all_descendant_ids(self, category_ids: List[UUID], user_id: UUID) -> List[UUID]:
+        pass

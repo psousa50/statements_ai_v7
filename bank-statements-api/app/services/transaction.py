@@ -8,6 +8,7 @@ from app.common.text_normalization import normalize_description
 from app.domain.dto.statement_processing import TransactionDTO
 from app.domain.models.enhancement_rule import EnhancementRule, EnhancementRuleSource, MatchType
 from app.domain.models.transaction import CategorizationStatus, SourceType, Transaction
+from app.ports.repositories.category import CategoryRepository
 from app.ports.repositories.enhancement_rule import EnhancementRuleRepository
 from app.ports.repositories.initial_balance import InitialBalanceRepository
 from app.ports.repositories.transaction import TransactionRepository
@@ -32,11 +33,18 @@ class TransactionService:
         initial_balance_repository: InitialBalanceRepository,
         enhancement_rule_repository: EnhancementRuleRepository,
         transaction_enhancer: TransactionEnhancer,
+        category_repository: Optional[CategoryRepository] = None,
     ):
         self.transaction_repository = transaction_repository
         self.initial_balance_repository = initial_balance_repository
         self.enhancement_rule_repository = enhancement_rule_repository
         self.transaction_enhancer = transaction_enhancer
+        self.category_repository = category_repository
+
+    def _expand_category_ids(self, category_ids: Optional[List[UUID]], user_id: UUID) -> Optional[List[UUID]]:
+        if not category_ids or not self.category_repository:
+            return category_ids
+        return self.category_repository.get_all_descendant_ids(category_ids, user_id)
 
     def create_transaction(
         self,
@@ -138,6 +146,7 @@ class TransactionService:
         transaction_type: Optional[str] = None,
         transaction_ids: Optional[List[UUID]] = None,
     ) -> TransactionListResponse:
+        expanded_category_ids = self._expand_category_ids(category_ids, user_id)
         (
             transactions,
             total,
@@ -146,7 +155,7 @@ class TransactionService:
             user_id=user_id,
             page=page,
             page_size=page_size,
-            category_ids=category_ids,
+            category_ids=expanded_category_ids,
             status=status,
             min_amount=min_amount,
             max_amount=max_amount,
@@ -259,9 +268,10 @@ class TransactionService:
         exclude_uncategorized: Optional[bool] = None,
         transaction_type: Optional[str] = None,
     ) -> Dict[Optional[UUID], Dict[str, Decimal]]:
+        expanded_category_ids = self._expand_category_ids(category_ids, user_id)
         return self.transaction_repository.get_category_totals(
             user_id=user_id,
-            category_ids=category_ids,
+            category_ids=expanded_category_ids,
             status=status,
             min_amount=min_amount,
             max_amount=max_amount,
@@ -291,11 +301,12 @@ class TransactionService:
         exclude_uncategorized: Optional[bool] = None,
         transaction_type: Optional[str] = None,
     ) -> List[Dict]:
+        expanded_category_ids = self._expand_category_ids(category_ids, user_id)
         return self.transaction_repository.get_category_time_series(
             user_id=user_id,
             category_id=category_id,
             period=period,
-            category_ids=category_ids,
+            category_ids=expanded_category_ids,
             status=status,
             min_amount=min_amount,
             max_amount=max_amount,
