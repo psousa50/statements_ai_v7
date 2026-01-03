@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { DayPicker, DateRange } from 'react-day-picker'
 import 'react-day-picker/style.css'
-import { startOfDay, endOfDay, subDays, subMonths, addMonths, addDays } from 'date-fns'
+import { startOfDay, endOfDay, subDays, subMonths, addMonths, addDays, startOfWeek, endOfWeek, subWeeks } from 'date-fns'
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft'
 import ChevronRightIcon from '@mui/icons-material/ChevronRight'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
@@ -51,6 +51,25 @@ const PRESET_RANGES: PresetRange[] = [
   {
     label: 'Last 30 days',
     getRange: () => ({ from: startOfDay(subDays(new Date(), 29)), to: endOfDay(new Date()) }),
+  },
+  {
+    label: 'Last week',
+    getRange: () => {
+      const lastWeek = subWeeks(new Date(), 1)
+      return {
+        from: startOfWeek(lastWeek, { weekStartsOn: 1 }),
+        to: endOfWeek(lastWeek, { weekStartsOn: 1 }),
+      }
+    },
+  },
+  {
+    label: 'Last month',
+    getRange: () => {
+      const lastMonth = subMonths(new Date(), 1)
+      const firstDay = new Date(lastMonth.getFullYear(), lastMonth.getMonth(), 1)
+      const lastDay = new Date(lastMonth.getFullYear(), lastMonth.getMonth() + 1, 0)
+      return { from: startOfDay(firstDay), to: endOfDay(lastDay) }
+    },
   },
   {
     label: 'Last 3 months',
