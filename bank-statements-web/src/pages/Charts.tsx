@@ -453,35 +453,25 @@ export const ChartsPage = () => {
     (mode: 'pie' | 'bar' | 'timeseries') => {
       setViewMode(mode)
       if (mode === 'timeseries') {
-        fetchCategoryTimeSeries(selectedRootCategory || undefined, timeSeriesPeriod, filters)
+        fetchCategoryTimeSeries(undefined, timeSeriesPeriod, filters)
       }
     },
-    [selectedRootCategory, timeSeriesPeriod, filters, fetchCategoryTimeSeries]
-  )
-
-  const handleCategorySelectionForTimeSeries = useCallback(
-    (categoryId: string | null) => {
-      setSelectedRootCategory(categoryId)
-      if (viewMode === 'timeseries') {
-        fetchCategoryTimeSeries(categoryId || undefined, timeSeriesPeriod, filters)
-      }
-    },
-    [viewMode, timeSeriesPeriod, filters, fetchCategoryTimeSeries]
+    [timeSeriesPeriod, filters, fetchCategoryTimeSeries]
   )
 
   const handlePeriodChange = useCallback(
     (period: 'month' | 'week') => {
       setTimeSeriesPeriod(period)
       if (viewMode === 'timeseries') {
-        fetchCategoryTimeSeries(selectedRootCategory || undefined, period, filters)
+        fetchCategoryTimeSeries(undefined, period, filters)
       }
     },
-    [viewMode, selectedRootCategory, filters, fetchCategoryTimeSeries]
+    [viewMode, filters, fetchCategoryTimeSeries]
   )
 
   useEffect(() => {
     if (viewMode === 'timeseries') {
-      fetchCategoryTimeSeries(selectedRootCategory || undefined, timeSeriesPeriod, filters)
+      fetchCategoryTimeSeries(undefined, timeSeriesPeriod, filters)
     }
   }, [viewMode, timeSeriesPeriod, filters, fetchCategoryTimeSeries])
 
@@ -578,38 +568,20 @@ export const ChartsPage = () => {
                 </button>
               </div>
               {viewMode === 'timeseries' && (
-                <>
-                  <div className="category-selector">
-                    <select
-                      value={selectedRootCategory || ''}
-                      onChange={(e) => handleCategorySelectionForTimeSeries(e.target.value || null)}
-                      className="transaction-type-select"
-                    >
-                      <option value="">All Categories</option>
-                      {categories
-                        ?.filter((cat) => !cat.parent_id)
-                        .map((cat) => (
-                          <option key={cat.id} value={cat.id}>
-                            {cat.name}
-                          </option>
-                        ))}
-                    </select>
-                  </div>
-                  <div className="period-toggle">
-                    <button
-                      onClick={() => handlePeriodChange('month')}
-                      className={timeSeriesPeriod === 'month' ? 'active' : ''}
-                    >
-                      Monthly
-                    </button>
-                    <button
-                      onClick={() => handlePeriodChange('week')}
-                      className={timeSeriesPeriod === 'week' ? 'active' : ''}
-                    >
-                      Weekly
-                    </button>
-                  </div>
-                </>
+                <div className="period-toggle">
+                  <button
+                    onClick={() => handlePeriodChange('month')}
+                    className={timeSeriesPeriod === 'month' ? 'active' : ''}
+                  >
+                    Monthly
+                  </button>
+                  <button
+                    onClick={() => handlePeriodChange('week')}
+                    className={timeSeriesPeriod === 'week' ? 'active' : ''}
+                  >
+                    Weekly
+                  </button>
+                </div>
               )}
               {chartType === 'sub' && (viewMode === 'pie' || viewMode === 'bar') && (
                 <button onClick={handleBackToRoot} className="back-button">
@@ -696,11 +668,7 @@ export const ChartsPage = () => {
                 <p>Click on any subcategory to view its transactions</p>
               )
             ) : (
-              <p>
-                {selectedRootCategory
-                  ? 'Showing time series for selected category and its subcategories. Use the dropdown above to change category.'
-                  : 'Showing time series for all categories. Use the dropdown above to filter by a specific category.'}
-              </p>
+              <p>Showing spending over time. Use the category filter to focus on specific categories.</p>
             )}
           </div>
         </div>
