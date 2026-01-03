@@ -1,3 +1,4 @@
+import re
 from datetime import date, datetime
 from decimal import Decimal
 from typing import Dict, List, Optional, Sequence, Tuple
@@ -11,9 +12,21 @@ from app.domain.models.enhancement_rule import EnhancementRuleSource, MatchType
 from app.domain.models.processing import BackgroundJobInfo
 from app.domain.models.transaction import CategorizationStatus
 
+HEX_COLOR_PATTERN = re.compile(r"^#[0-9A-Fa-f]{6}$")
+
 
 class CategoryBase(BaseModel):
     name: str
+    color: Optional[str] = None
+
+    @field_validator("color")
+    @classmethod
+    def validate_color(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return None
+        if not HEX_COLOR_PATTERN.match(v):
+            raise ValueError("Color must be a valid hex color (e.g., #a78bfa)")
+        return v.lower()
 
 
 class CategoryCreate(CategoryBase):
@@ -27,6 +40,7 @@ class CategoryUpdate(CategoryBase):
 class CategoryParentResponse(BaseModel):
     id: UUID
     name: str
+    color: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -34,6 +48,7 @@ class CategoryParentResponse(BaseModel):
 class CategoryResponse(BaseModel):
     id: UUID
     name: str
+    color: Optional[str] = None
     parent_id: Optional[UUID] = None
     parent: Optional[CategoryParentResponse] = None
 
@@ -388,11 +403,31 @@ class StatementUploadResult(BaseModel):
 class CategoryCreateRequest(BaseModel):
     name: str
     parent_id: Optional[UUID] = None
+    color: Optional[str] = None
+
+    @field_validator("color")
+    @classmethod
+    def validate_color(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return None
+        if not HEX_COLOR_PATTERN.match(v):
+            raise ValueError("Color must be a valid hex color (e.g., #a78bfa)")
+        return v.lower()
 
 
 class CategoryUpdateRequest(BaseModel):
     name: Optional[str] = None
     parent_id: Optional[UUID] = None
+    color: Optional[str] = None
+
+    @field_validator("color")
+    @classmethod
+    def validate_color(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return None
+        if not HEX_COLOR_PATTERN.match(v):
+            raise ValueError("Color must be a valid hex color (e.g., #a78bfa)")
+        return v.lower()
 
 
 class CategoryUploadResponse(BaseModel):

@@ -8,6 +8,7 @@ import ChevronRightIcon from '@mui/icons-material/ChevronRight'
 import ExpandLessIcon from '@mui/icons-material/ExpandLess'
 import { ActionIconButton } from './ActionIconButton'
 import { IconButton } from '@mui/material'
+import { getCategoryColor } from '../utils/categoryColors'
 
 interface CategoryTreeProps {
   categories: Category[]
@@ -81,6 +82,10 @@ const CategoryTreeNode = ({
               <span className="expand-spacer" style={{ width: '28px', display: 'inline-block' }}></span>
             )}
           </div>
+          <span
+            className="category-color-swatch"
+            style={{ backgroundColor: getCategoryColor(category, allCategories).solid }}
+          />
           <div className="category-name">{category.name}</div>
           <div className="category-stats">
             {hasSubcategories && <span className="subcategory-count">{subcategories.length} subcategories</span>}

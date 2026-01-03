@@ -44,6 +44,7 @@ def register_category_routes(
                 name=category_data.name,
                 user_id=current_user.id,
                 parent_id=category_data.parent_id,
+                color=category_data.color,
             )
             return category
         except ValueError as e:
@@ -148,6 +149,7 @@ def register_category_routes(
                 name=category_data.name,
                 user_id=current_user.id,
                 parent_id=category_data.parent_id,
+                color=category_data.color,
             )
             if not updated_category:
                 raise HTTPException(

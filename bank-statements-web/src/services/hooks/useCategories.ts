@@ -45,8 +45,8 @@ export const useCategories = () => {
   )
 
   const addMutation = useMutation({
-    mutationFn: async ({ name, parentId }: { name: string; parentId?: string }) => {
-      return api.categories.create({ name, parent_id: parentId })
+    mutationFn: async ({ name, parentId, color }: { name: string; parentId?: string; color?: string }) => {
+      return api.categories.create({ name, parent_id: parentId, color })
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: CATEGORY_QUERY_KEYS.all })
@@ -55,8 +55,8 @@ export const useCategories = () => {
   })
 
   const updateMutation = useMutation({
-    mutationFn: async ({ id, name, parentId }: { id: string; name: string; parentId?: string }) => {
-      return api.categories.update(id, { name, parent_id: parentId })
+    mutationFn: async ({ id, name, parentId, color }: { id: string; name: string; parentId?: string; color?: string }) => {
+      return api.categories.update(id, { name, parent_id: parentId, color })
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: CATEGORY_QUERY_KEYS.all })
@@ -93,9 +93,9 @@ export const useCategories = () => {
   })
 
   const addCategory = useCallback(
-    async (name: string, parentId?: string) => {
+    async (name: string, parentId?: string, color?: string) => {
       try {
-        return await addMutation.mutateAsync({ name, parentId })
+        return await addMutation.mutateAsync({ name, parentId, color })
       } catch {
         return null
       }
@@ -104,9 +104,9 @@ export const useCategories = () => {
   )
 
   const updateCategory = useCallback(
-    async (id: string, name: string, parentId?: string) => {
+    async (id: string, name: string, parentId?: string, color?: string) => {
       try {
-        return await updateMutation.mutateAsync({ id, name, parentId })
+        return await updateMutation.mutateAsync({ id, name, parentId, color })
       } catch {
         return null
       }

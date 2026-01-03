@@ -11,7 +11,9 @@ class CategoryService:
     def __init__(self, category_repository: CategoryRepository):
         self.category_repository = category_repository
 
-    def create_category(self, name: str, user_id: UUID, parent_id: Optional[UUID] = None) -> Category:
+    def create_category(
+        self, name: str, user_id: UUID, parent_id: Optional[UUID] = None, color: Optional[str] = None
+    ) -> Category:
         if parent_id:
             parent = self.category_repository.get_by_id(parent_id, user_id)
             if not parent:
@@ -20,7 +22,7 @@ class CategoryService:
             if parent.parent_id:
                 raise ValueError("Cannot create more than 2 levels of categories. Parent category already has a parent.")
 
-        category = Category(name=name, user_id=user_id, parent_id=parent_id)
+        category = Category(name=name, user_id=user_id, parent_id=parent_id, color=color)
         return self.category_repository.create(category)
 
     def get_category(self, category_id: UUID, user_id: UUID) -> Optional[Category]:
@@ -45,6 +47,7 @@ class CategoryService:
         name: str,
         user_id: UUID,
         parent_id: Optional[UUID] = None,
+        color: Optional[str] = None,
     ) -> Optional[Category]:
         category = self.category_repository.get_by_id(category_id, user_id)
         if not category:
@@ -63,6 +66,7 @@ class CategoryService:
 
         category.name = name
         category.parent_id = parent_id
+        category.color = color
 
         return self.category_repository.update(category)
 

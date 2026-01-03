@@ -3,7 +3,7 @@ import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveCo
 import { RecurringPattern } from '../api/TransactionClient'
 import { Category } from '../types/Transaction'
 import { formatCurrency } from '../utils/format'
-import { getCategoryColorById } from '../utils/categoryColors'
+import { getCategoryColor } from '../utils/categoryColors'
 
 const UNCATEGORIZED_COLOR = '#EF4444'
 
@@ -44,10 +44,13 @@ export const RecurringExpensesCharts = ({
 
     return Array.from(categoryTotals.values())
       .sort((a, b) => b.value - a.value)
-      .map((item) => ({
-        ...item,
-        color: item.categoryId ? getCategoryColorById(item.categoryId).solid : UNCATEGORIZED_COLOR,
-      }))
+      .map((item) => {
+        const category = item.categoryId ? categories.find((c) => c.id === item.categoryId) : null
+        return {
+          ...item,
+          color: category ? getCategoryColor(category, categories).solid : UNCATEGORIZED_COLOR,
+        }
+      })
   }, [patterns, categories])
 
   const categoryBarChartData = useMemo(() => {

@@ -31,6 +31,7 @@ def test_create_category():
         name="Test Category",
         user_id=TEST_USER_ID,
         parent_id=None,
+        color=None,
     )
 
 
@@ -107,6 +108,7 @@ def test_update_category():
         name="Updated Category",
         user_id=TEST_USER_ID,
         parent_id=None,
+        color=None,
     )
 
 

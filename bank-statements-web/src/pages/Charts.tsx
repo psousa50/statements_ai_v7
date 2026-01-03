@@ -8,7 +8,7 @@ import { CategoryTimeSeriesChart } from '../components/CategoryTimeSeriesChart'
 import { CategoryTotalsBarChart } from '../components/CategoryTotalsBarChart'
 import { Category } from '../types/Transaction'
 import { TransactionFilters as FilterType } from '../api/TransactionClient'
-import { getCategoryColorById } from '../utils/categoryColors'
+import { getCategoryColor } from '../utils/categoryColors'
 import './ChartsPage.css'
 
 interface ChartData {
@@ -251,10 +251,12 @@ export const ChartsPage = () => {
           name: id === 'uncategorized' ? 'Uncategorized' : categoryMap.get(id)?.name || 'Unknown',
           value: data.value,
           count: data.count,
-          color: id === 'uncategorized' ? UNCATEGORIZED_COLOR : getCategoryColorById(id).solid,
+          color:
+            id === 'uncategorized'
+              ? UNCATEGORIZED_COLOR
+              : getCategoryColor(categoryMap.get(id)!, categories).solid,
         }))
     } else {
-      // Show subcategories of selected root category
       if (!selectedRootCategory) return []
 
       const subcategories =
@@ -337,7 +339,10 @@ export const ChartsPage = () => {
                 : categoryMap.get(id)?.name || 'Unknown',
           value: data.value,
           count: data.count,
-          color: id === 'uncategorized' ? UNCATEGORIZED_COLOR : getCategoryColorById(id).solid,
+          color:
+            id === 'uncategorized' || id === 'other'
+              ? UNCATEGORIZED_COLOR
+              : getCategoryColor(categoryMap.get(id)!, categories).solid,
         }))
     }
   }, [categoryTotals, categories, chartType, selectedRootCategory, categorizationFilter])

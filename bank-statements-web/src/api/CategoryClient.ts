@@ -51,8 +51,8 @@ export interface CategoryClient {
   getRootCategories(): Promise<CategoryListResponse>
   getById(id: string): Promise<Category>
   getSubcategories(parentId: string): Promise<CategoryListResponse>
-  create(category: { name: string; parent_id?: string }): Promise<Category>
-  update(id: string, category: { name: string; parent_id?: string }): Promise<Category>
+  create(category: { name: string; parent_id?: string; color?: string }): Promise<Category>
+  update(id: string, category: { name: string; parent_id?: string; color?: string }): Promise<Category>
   delete(id: string): Promise<void>
   generateSuggestions(): Promise<GenerateCategoriesResponse>
   createSelectedCategories(request: CreateSelectedCategoriesRequest): Promise<CreateSelectedCategoriesResponse>
@@ -87,12 +87,12 @@ export const categoryClient: CategoryClient = {
     return response.data
   },
 
-  async create(category: { name: string; parent_id?: string }) {
+  async create(category: { name: string; parent_id?: string; color?: string }) {
     const response = await axios.post<Category>(API_URL, category)
     return response.data
   },
 
-  async update(id: string, category: { name: string; parent_id?: string }) {
+  async update(id: string, category: { name: string; parent_id?: string; color?: string }) {
     const response = await axios.put<Category>(`${API_URL}/${id}`, category)
     return response.data
   },

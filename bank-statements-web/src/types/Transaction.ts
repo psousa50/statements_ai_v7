@@ -3,11 +3,13 @@ export type CategorizationStatus = 'UNCATEGORIZED' | 'CATEGORIZED' | 'FAILURE'
 export interface CategoryParent {
   id: string
   name: string
+  color?: string
 }
 
 export interface Category {
   id: string
   name: string
+  color?: string
   parent_id?: string
   parent?: CategoryParent
 }

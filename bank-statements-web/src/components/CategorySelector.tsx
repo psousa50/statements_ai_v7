@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
 import { Category } from '../types/Transaction'
-import { getCategoryColorById } from '../utils/categoryColors'
+import { getCategoryColor } from '../utils/categoryColors'
 import './CategorySelector.css'
 
 interface CategorySelectorProps {
@@ -257,7 +257,7 @@ export const CategorySelector = ({
         {showSingleCategoryChip && (
           <span
             className="category-tag category-tag-gradient"
-            style={{ background: getCategoryColorById(selectedCategory.id).gradient }}
+            style={{ background: getCategoryColor(selectedCategory, categories).gradient }}
             onClick={() => inputRef.current?.focus()}
           >
             {getCategoryHierarchy(selectedCategory)}
@@ -267,7 +267,7 @@ export const CategorySelector = ({
         {/* Selected categories tags (multiple mode) */}
         {multiple &&
           selectedCategories.map((category) => {
-            const colorConfig = getCategoryColorById(category.id)
+            const colorConfig = getCategoryColor(category, categories)
             return (
               <span
                 key={category.id}

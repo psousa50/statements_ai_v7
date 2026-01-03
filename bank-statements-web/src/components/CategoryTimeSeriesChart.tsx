@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
 import { Category } from '../types/Transaction'
 import { CategoryTimeSeriesDataPoint } from '../api/TransactionClient'
-import { getCategoryColorById } from '../utils/categoryColors'
+import { getCategoryColor } from '../utils/categoryColors'
 
 interface CategoryTimeSeriesChartProps {
   dataPoints: CategoryTimeSeriesDataPoint[]
@@ -64,10 +64,12 @@ export const CategoryTimeSeriesChart = ({ dataPoints, categories, loading }: Cat
     return { categoryNames: Array.from(names).sort(), nameToIdMap: idMap }
   }, [dataPoints, categories])
 
-  const getCategoryColor = (name: string): string => {
+  const getColorForCategory = (name: string): string => {
     if (name === 'Uncategorized') return UNCATEGORIZED_COLOR
     const id = nameToIdMap.get(name)
-    return id ? getCategoryColorById(id).solid : UNCATEGORIZED_COLOR
+    if (!id) return UNCATEGORIZED_COLOR
+    const category = categories.find((c) => c.id === id)
+    return category ? getCategoryColor(category, categories).solid : UNCATEGORIZED_COLOR
   }
 
   if (loading) {
@@ -105,7 +107,7 @@ export const CategoryTimeSeriesChart = ({ dataPoints, categories, loading }: Cat
             }}
           />
           {categoryNames.map((name) => (
-            <Bar key={name} dataKey={name} stackId="1" fill={getCategoryColor(name)} animationDuration={300} />
+            <Bar key={name} dataKey={name} stackId="1" fill={getColorForCategory(name)} animationDuration={300} />
           ))}
         </BarChart>
       </ResponsiveContainer>

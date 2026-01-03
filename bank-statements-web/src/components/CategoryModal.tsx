@@ -1,39 +1,50 @@
 import { useState, useEffect, useMemo } from 'react'
 import { Category } from '../types/Transaction'
 import { CategorySelector } from './CategorySelector'
+import { ColorSwatchPicker } from './ColorSwatchPicker'
+import { PRESET_COLORS } from '../utils/categoryColors'
 
 interface CategoryModalProps {
   isOpen: boolean
-  category: Category | null // null for creating, Category object for editing
-  parentId?: string // When creating a subcategory
+  category: Category | null
+  parentId?: string
   categories: Category[]
-  onSave: (name: string, parentId?: string, categoryId?: string) => Promise<void>
+  onSave: (name: string, parentId?: string, categoryId?: string, color?: string) => Promise<void>
   onClose: () => void
 }
 
 export const CategoryModal = ({ isOpen, category, parentId, categories, onSave, onClose }: CategoryModalProps) => {
   const [name, setName] = useState('')
   const [selectedParentId, setSelectedParentId] = useState<string | undefined>(undefined)
+  const [selectedColor, setSelectedColor] = useState<string | undefined>(undefined)
   const [saving, setSaving] = useState(false)
 
   const isEditing = !!category
   const title = isEditing ? 'Edit Category' : 'Create Category'
+  const isRootCategory = !selectedParentId
 
   useEffect(() => {
     if (isOpen) {
       if (category) {
-        // Editing existing category
         setName(category.name)
         setSelectedParentId(category.parent_id)
+        setSelectedColor(category.color)
       } else {
-        // Creating new category
         setName('')
         setSelectedParentId(parentId)
+        setSelectedColor(parentId ? undefined : PRESET_COLORS[0])
       }
     }
   }, [isOpen, category, parentId])
 
-  // Filter out current category and its descendants to prevent circular references
+  useEffect(() => {
+    if (selectedParentId) {
+      setSelectedColor(undefined)
+    } else if (!selectedColor && !category?.parent_id) {
+      setSelectedColor(PRESET_COLORS[0])
+    }
+  }, [selectedParentId, selectedColor, category?.parent_id])
+
   const availableParentCategories = useMemo(() => {
     if (!isEditing || !category) return categories
 
@@ -75,7 +86,7 @@ export const CategoryModal = ({ isOpen, category, parentId, categories, onSave, 
 
     setSaving(true)
     try {
-      await onSave(trimmedName, selectedParentId, category?.id)
+      await onSave(trimmedName, selectedParentId, category?.id, isRootCategory ? selectedColor : undefined)
     } catch (error) {
       console.error('Failed to save category:', error)
     } finally {
@@ -133,6 +144,13 @@ export const CategoryModal = ({ isOpen, category, parentId, categories, onSave, 
               </div>
             )}
           </div>
+
+          {isRootCategory && (
+            <div className="form-group">
+              <label>Colour</label>
+              <ColorSwatchPicker value={selectedColor} onChange={setSelectedColor} />
+            </div>
+          )}
 
           {isEditing && category && (
             <div className="form-group">
