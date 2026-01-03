@@ -20,7 +20,12 @@ export const CategoryModal = ({ isOpen, category, parentId, categories, onSave, 
   const [saving, setSaving] = useState(false)
 
   const isEditing = !!category
-  const title = isEditing ? 'Edit Category' : 'Create Category'
+  const parentCategory = parentId ? categories.find((c) => c.id === parentId) : null
+  const title = isEditing
+    ? 'Edit Category'
+    : parentId
+      ? `Create Subcategory under ${parentCategory?.name || 'Unknown'}`
+      : 'Create Root Category'
   const isRootCategory = !selectedParentId
 
   useEffect(() => {
@@ -140,23 +145,25 @@ export const CategoryModal = ({ isOpen, category, parentId, categories, onSave, 
             />
           </div>
 
-          <div className="form-group">
-            <label htmlFor="parent-category">Parent Category (Optional)</label>
-            <CategorySelector
-              categories={availableParentCategories}
-              selectedCategoryId={selectedParentId}
-              onCategoryChange={(id) => setSelectedParentId(id)}
-              placeholder="Select a parent category (leave empty for root category)"
-              allowClear={true}
-              variant="form"
-              allowParentCategories={true}
-            />
-            {selectedParentId && (
-              <div className="form-help-text">
-                This category will be created as a subcategory of the selected parent.
-              </div>
-            )}
-          </div>
+          {isEditing && (
+            <div className="form-group">
+              <label htmlFor="parent-category">Parent Category</label>
+              <CategorySelector
+                categories={availableParentCategories}
+                selectedCategoryId={selectedParentId}
+                onCategoryChange={(id) => setSelectedParentId(id)}
+                placeholder="Select a parent category (leave empty for root category)"
+                allowClear={true}
+                variant="form"
+                allowParentCategories={true}
+              />
+              {selectedParentId && (
+                <div className="form-help-text">
+                  This category will be moved as a subcategory of the selected parent.
+                </div>
+              )}
+            </div>
+          )}
 
           {isRootCategory && (
             <div className="form-group">

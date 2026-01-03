@@ -252,9 +252,7 @@ export const ChartsPage = () => {
           value: data.value,
           count: data.count,
           color:
-            id === 'uncategorized'
-              ? UNCATEGORIZED_COLOR
-              : getCategoryColor(categoryMap.get(id)!, categories).solid,
+            id === 'uncategorized' ? UNCATEGORIZED_COLOR : getCategoryColor(categoryMap.get(id)!, categories).solid,
         }))
     } else {
       if (!selectedRootCategory) return []

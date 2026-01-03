@@ -55,7 +55,17 @@ export const useCategories = () => {
   })
 
   const updateMutation = useMutation({
-    mutationFn: async ({ id, name, parentId, color }: { id: string; name: string; parentId?: string; color?: string }) => {
+    mutationFn: async ({
+      id,
+      name,
+      parentId,
+      color,
+    }: {
+      id: string
+      name: string
+      parentId?: string
+      color?: string
+    }) => {
       return api.categories.update(id, { name, parent_id: parentId, color })
     },
     onSuccess: () => {
