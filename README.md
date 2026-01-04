@@ -141,6 +141,35 @@ FILE=backups/bank_statements_20251025_143022.dump pnpm db:restore
 
 **Important:** The restore command will drop existing tables before restoring, so make sure you have a current backup before running it.
 
+### User Data Export/Import
+
+Transfer user data between databases or create portable backups of individual user data.
+
+**Export user data to SQLite file:**
+
+```bash
+source bank-statements-api/.venv/bin/activate
+
+DATABASE_URL="postgresql://postgres:postgres@localhost:54321/bank_statements" \
+  python scripts/export_user_data.py \
+  --user "user@example.com" \
+  --output user_backup.db
+```
+
+**Import user data from SQLite file:**
+
+```bash
+DATABASE_URL="postgresql://postgres:postgres@localhost:54321/bank_statements" \
+  python scripts/import_user_data.py \
+  --input user_backup.db \
+  --user "target@example.com" \
+  --dry-run
+```
+
+Remove `--dry-run` to perform the actual import. Add `--force` if the target user already has data.
+
+The export includes: accounts, categories, statements (with file content), transactions, enhancement rules, description groups, and saved filters.
+
 ## Project Structure
 
 ```bash
