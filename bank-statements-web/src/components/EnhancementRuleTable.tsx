@@ -415,22 +415,21 @@ export const EnhancementRuleTable: React.FC<EnhancementRuleTableProps> = ({
               </TableCell>
               <TableCell>
                 <Box sx={{ display: 'flex !important', gap: '0 !important', width: 'fit-content' }}>
-                  {(rule.transaction_count ?? 0) > 0 && (
-                    <IconButton
-                      size="small"
-                      onClick={() => handleViewTransactions(rule)}
-                      title="View transactions"
-                      sx={{
-                        minWidth: '0 !important',
-                        padding: '4px !important',
-                        margin: '0 !important',
-                        width: '24px !important',
-                        height: '24px !important',
-                      }}
-                    >
-                      <VisibilityIcon fontSize="small" />
-                    </IconButton>
-                  )}
+                  <IconButton
+                    size="small"
+                    onClick={() => handleViewTransactions(rule)}
+                    title="View transactions"
+                    sx={{
+                      minWidth: '0 !important',
+                      padding: '4px !important',
+                      margin: '0 !important',
+                      width: '24px !important',
+                      height: '24px !important',
+                      visibility: (rule.transaction_count ?? 0) > 0 ? 'visible' : 'hidden',
+                    }}
+                  >
+                    <VisibilityIcon fontSize="small" />
+                  </IconButton>
                   <IconButton
                     size="small"
                     onClick={() => onEdit(rule)}
@@ -477,26 +476,28 @@ export const EnhancementRuleTable: React.FC<EnhancementRuleTableProps> = ({
                   >
                     <DeleteIcon fontSize="small" />
                   </IconButton>
-                  {onApply &&
-                    (rule.category_id || rule.counterparty_account_id) &&
-                    (rule.pending_transaction_count ?? 0) > 0 && (
-                      <IconButton
-                        size="small"
-                        onClick={() => onApply(rule)}
-                        disabled={loading}
-                        title="Apply rule to existing transactions"
-                        color="success"
-                        sx={{
-                          minWidth: '0 !important',
-                          padding: '4px !important',
-                          margin: '0 !important',
-                          width: '24px !important',
-                          height: '24px !important',
-                        }}
-                      >
-                        <PlayArrowIcon fontSize="small" />
-                      </IconButton>
-                    )}
+                  {onApply && (
+                    <IconButton
+                      size="small"
+                      onClick={() => onApply(rule)}
+                      disabled={
+                        loading ||
+                        !(rule.category_id || rule.counterparty_account_id) ||
+                        (rule.pending_transaction_count ?? 0) === 0
+                      }
+                      title="Apply rule to existing transactions"
+                      color="success"
+                      sx={{
+                        minWidth: '0 !important',
+                        padding: '4px !important',
+                        margin: '0 !important',
+                        width: '24px !important',
+                        height: '24px !important',
+                      }}
+                    >
+                      <PlayArrowIcon fontSize="small" />
+                    </IconButton>
+                  )}
                 </Box>
               </TableCell>
             </TableRow>
