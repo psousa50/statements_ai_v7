@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react'
 import axios, { AxiosError } from 'axios'
+import { useQueryClient } from '@tanstack/react-query'
 import { AuthState } from '../types/Auth'
 import { authClient, RegisterRequest, LoginRequest } from '../api/AuthClient'
 
@@ -16,6 +17,7 @@ const AuthContext = createContext<AuthContextValue | null>(null)
 const TOKEN_REFRESH_INTERVAL = 14 * 60 * 1000
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const queryClient = useQueryClient()
   const [state, setState] = useState<AuthState>({
     user: null,
     isLoading: true,
@@ -102,9 +104,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch {
       // Ignore logout errors
     }
+    queryClient.clear()
     setState({ user: null, isLoading: false, isAuthenticated: false })
     clearRefreshInterval()
-  }, [clearRefreshInterval])
+  }, [queryClient, clearRefreshInterval])
 
   const refreshUser = useCallback(async () => {
     await fetchUser()
