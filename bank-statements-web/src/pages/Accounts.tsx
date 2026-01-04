@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef } from 'react'
 import { useAccounts } from '../services/hooks/useAccounts'
 import { AccountModal } from '../components/AccountModal'
 import { InitialBalanceModal } from '../components/InitialBalanceModal'
@@ -10,6 +10,8 @@ import { formatCurrency } from '../utils/format'
 import EditIcon from '@mui/icons-material/Edit'
 import DeleteIcon from '@mui/icons-material/Delete'
 import AddIcon from '@mui/icons-material/Add'
+import DownloadIcon from '@mui/icons-material/Download'
+import UploadIcon from '@mui/icons-material/Upload'
 import { Button } from '@mui/material'
 import './AccountsPage.css'
 
@@ -20,6 +22,7 @@ export const AccountsPage = () => {
   const [searchTerm, setSearchTerm] = useState('')
   const [toast, setToast] = useState<Omit<ToastProps, 'onClose'> | null>(null)
   const [confirmDelete, setConfirmDelete] = useState<Account | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const {
     accounts,
@@ -30,6 +33,8 @@ export const AccountsPage = () => {
     deleteAccount,
     setInitialBalance,
     deleteInitialBalance,
+    exportAccounts,
+    uploadAccounts,
   } = useAccounts()
 
   // Filter and sort accounts based on search term
@@ -160,6 +165,41 @@ export const AccountsPage = () => {
     setEditingInitialBalance(null)
   }, [])
 
+  const handleExportAccounts = useCallback(async () => {
+    const success = await exportAccounts()
+    if (success) {
+      setToast({ message: 'Accounts exported successfully', type: 'success' })
+    } else {
+      setToast({ message: 'Failed to export accounts', type: 'error' })
+    }
+  }, [exportAccounts])
+
+  const handleUploadClick = useCallback(() => {
+    fileInputRef.current?.click()
+  }, [])
+
+  const handleFileChange = useCallback(
+    async (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0]
+      if (!file) return
+
+      const result = await uploadAccounts(file)
+      if (result) {
+        setToast({
+          message: `Uploaded ${result.total} accounts (${result.created} created, ${result.updated} existing)`,
+          type: 'success',
+        })
+      } else {
+        setToast({ message: 'Failed to upload accounts', type: 'error' })
+      }
+
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ''
+      }
+    },
+    [uploadAccounts]
+  )
+
   const formatInitialBalance = (account: Account): string => {
     if (!account.initial_balance) return '-'
     const amount = formatCurrency(account.initial_balance.balance_amount, account.currency)
@@ -192,6 +232,31 @@ export const AccountsPage = () => {
             />
           </div>
           <div className="action-buttons">
+            <Button
+              onClick={handleExportAccounts}
+              variant="outlined"
+              disabled={loading}
+              startIcon={<DownloadIcon />}
+              sx={{ textTransform: 'none' }}
+            >
+              Download
+            </Button>
+            <Button
+              onClick={handleUploadClick}
+              variant="outlined"
+              disabled={loading}
+              startIcon={<UploadIcon />}
+              sx={{ textTransform: 'none' }}
+            >
+              Upload
+            </Button>
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileChange}
+              accept=".csv"
+              style={{ display: 'none' }}
+            />
             <Button
               onClick={handleCreateAccount}
               variant="contained"

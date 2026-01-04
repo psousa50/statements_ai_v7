@@ -141,6 +141,28 @@ export const useAccounts = () => {
     [deleteInitialBalanceMutation]
   )
 
+  const exportAccounts = useCallback(async () => {
+    try {
+      await api.accounts.exportAccounts()
+      return true
+    } catch {
+      return false
+    }
+  }, [api.accounts])
+
+  const uploadAccounts = useCallback(
+    async (file: File) => {
+      try {
+        const result = await api.accounts.uploadAccounts(file)
+        await queryClient.invalidateQueries({ queryKey: ACCOUNT_QUERY_KEYS.all })
+        return result
+      } catch {
+        return null
+      }
+    },
+    [api.accounts, queryClient]
+  )
+
   const loading =
     accountsQuery.isLoading ||
     addMutation.isPending ||
@@ -166,5 +188,7 @@ export const useAccounts = () => {
     deleteAccount,
     setInitialBalance,
     deleteInitialBalance,
+    exportAccounts,
+    uploadAccounts,
   }
 }

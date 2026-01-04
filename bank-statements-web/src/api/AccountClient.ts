@@ -9,6 +9,13 @@ export interface AccountListResponse {
   total: number
 }
 
+export interface AccountUploadResponse {
+  accounts: Account[]
+  total: number
+  created: number
+  updated: number
+}
+
 export interface AccountClient {
   getAll: () => Promise<Account[]>
   getById: (id: string) => Promise<Account>
@@ -17,6 +24,8 @@ export interface AccountClient {
   deleteAccount: (id: string) => Promise<void>
   setInitialBalance: (id: string, balanceDate: string, balanceAmount: number) => Promise<Account>
   deleteInitialBalance: (id: string) => Promise<void>
+  exportAccounts: () => Promise<void>
+  uploadAccounts: (file: File) => Promise<AccountUploadResponse>
 }
 
 // Use the VITE_API_URL environment variable for the base URL, or default to '' for local development
@@ -58,5 +67,31 @@ export const accountClient: AccountClient = {
 
   deleteInitialBalance: async (id: string): Promise<void> => {
     await axios.delete(`${API_URL}/${id}/initial-balance`)
+  },
+
+  exportAccounts: async (): Promise<void> => {
+    const response = await axios.get(`${API_URL}/export`, { responseType: 'blob' })
+    const blob = new Blob([response.data], { type: 'text/csv' })
+    const url = window.URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    const contentDisposition = response.headers['content-disposition']
+    const filename = contentDisposition
+      ? contentDisposition.split('filename=')[1]?.replace(/"/g, '')
+      : `accounts-${new Date().toISOString().split('T')[0]}.csv`
+    link.download = filename
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    window.URL.revokeObjectURL(url)
+  },
+
+  uploadAccounts: async (file: File): Promise<AccountUploadResponse> => {
+    const formData = new FormData()
+    formData.append('file', file)
+    const response = await axios.post<AccountUploadResponse>(`${API_URL}/upload`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+    return response.data
   },
 }

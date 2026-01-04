@@ -1,7 +1,9 @@
+from datetime import date
 from typing import Callable, Iterator
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, FastAPI, File, HTTPException, UploadFile, status
+from starlette.responses import StreamingResponse
 
 from app.api.routes.auth import require_current_user
 from app.api.schemas import (
@@ -86,6 +88,30 @@ def register_account_routes(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"Error retrieving accounts: {str(e)}",
             )
+
+    @router.get("/export")
+    async def export_accounts(
+        internal: InternalDependencies = Depends(provide_dependencies),
+        current_user: User = Depends(require_current_user),
+    ):
+        accounts = internal.account_service.get_all_accounts(current_user.id)
+
+        def escape_csv(value: str) -> str:
+            escaped = value.replace('"', '""')
+            if "," in escaped or '"' in escaped or "\n" in escaped:
+                return f'"{escaped}"'
+            return escaped
+
+        rows = ["name,currency\n"]
+        for account in accounts:
+            rows.append(f"{escape_csv(account.name)},{escape_csv(account.currency)}\n")
+
+        filename = f"accounts-{date.today().isoformat()}.csv"
+        return StreamingResponse(
+            iter(rows),
+            media_type="text/csv",
+            headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+        )
 
     @router.get("/{account_id}", response_model=AccountResponse)
     async def get_account(

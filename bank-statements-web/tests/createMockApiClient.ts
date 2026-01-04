@@ -189,6 +189,8 @@ const defaultAccountClient: AccountClient = {
   deleteAccount: () => Promise.resolve(),
   setInitialBalance: () => Promise.resolve(defaultAccount),
   deleteInitialBalance: () => Promise.resolve(),
+  exportAccounts: () => Promise.resolve(),
+  uploadAccounts: () => Promise.resolve({ accounts: [], total: 0, created: 0, updated: 0 }),
 }
 
 // Default mock transaction categorization client implementation
