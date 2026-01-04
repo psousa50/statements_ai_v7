@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts'
 import { useCategoryTotals, useCategoryTimeSeries } from '../services/hooks/useTransactions'
 import { useCategories } from '../services/hooks/useCategories'
@@ -34,23 +35,57 @@ interface LabelProps {
 const UNCATEGORIZED_COLOR = '#EF4444'
 
 export const ChartsPage = () => {
-  const [filters, setFilters] = useState<Omit<FilterType, 'page' | 'page_size'>>({
-    exclude_transfers: true,
-    transaction_type: 'all',
-  })
+  const [searchParams, setSearchParams] = useSearchParams()
+
+  const getInitialFilters = (): Omit<FilterType, 'page' | 'page_size'> => {
+    const urlDescriptionSearch = searchParams.get('description_search')
+    const urlMinAmount = searchParams.get('min_amount')
+    const urlMaxAmount = searchParams.get('max_amount')
+    const urlStartDate = searchParams.get('start_date')
+    const urlEndDate = searchParams.get('end_date')
+    const urlAccountId = searchParams.get('account_id')
+    const urlCategoryIds = searchParams.get('category_ids')
+    const urlExcludeTransfers = searchParams.get('exclude_transfers')
+    const urlTransactionType = searchParams.get('transaction_type')
+
+    return {
+      description_search: urlDescriptionSearch || undefined,
+      min_amount: urlMinAmount ? parseFloat(urlMinAmount) : undefined,
+      max_amount: urlMaxAmount ? parseFloat(urlMaxAmount) : undefined,
+      start_date: urlStartDate || undefined,
+      end_date: urlEndDate || undefined,
+      account_id: urlAccountId || undefined,
+      category_ids: urlCategoryIds ? urlCategoryIds.split(',') : undefined,
+      exclude_transfers: urlExcludeTransfers === 'false' ? false : true,
+      transaction_type: (urlTransactionType as 'all' | 'debit' | 'credit') || 'all',
+    }
+  }
+
+  const [filters, setFilters] = useState<Omit<FilterType, 'page' | 'page_size'>>(getInitialFilters)
   const [chartType, setChartType] = useState<'root' | 'sub'>('root')
   const [selectedRootCategory, setSelectedRootCategory] = useState<string | null>(null)
-  const [transactionType, setTransactionType] = useState<'all' | 'debit' | 'credit'>('all')
+  const [transactionType, setTransactionType] = useState<'all' | 'debit' | 'credit'>(
+    () => (searchParams.get('transaction_type') as 'all' | 'debit' | 'credit') || 'all'
+  )
   const [categorizationFilter, setCategorizationFilter] = useState<CategorizationFilter>('categorized')
-  const [viewMode, setViewMode] = useState<'pie' | 'bar' | 'timeseries'>('bar')
-  const [timeSeriesPeriod, setTimeSeriesPeriod] = useState<'month' | 'week'>('month')
+  const [viewMode, setViewMode] = useState<'pie' | 'bar' | 'timeseries'>(
+    () => (searchParams.get('view') as 'pie' | 'bar' | 'timeseries') || 'bar'
+  )
+  const [timeSeriesPeriod, setTimeSeriesPeriod] = useState<'month' | 'week'>(
+    () => (searchParams.get('period') as 'month' | 'week') || 'month'
+  )
 
-  // Local state for debounced inputs
-  const [localDescriptionSearch, setLocalDescriptionSearch] = useState<string>('')
-  const [localMinAmount, setLocalMinAmount] = useState<number | undefined>(undefined)
-  const [localMaxAmount, setLocalMaxAmount] = useState<number | undefined>(undefined)
-  const [localStartDate, setLocalStartDate] = useState<string>('')
-  const [localEndDate, setLocalEndDate] = useState<string>('')
+  const [localDescriptionSearch, setLocalDescriptionSearch] = useState<string>(
+    searchParams.get('description_search') || ''
+  )
+  const [localMinAmount, setLocalMinAmount] = useState<number | undefined>(
+    searchParams.get('min_amount') ? parseFloat(searchParams.get('min_amount')!) : undefined
+  )
+  const [localMaxAmount, setLocalMaxAmount] = useState<number | undefined>(
+    searchParams.get('max_amount') ? parseFloat(searchParams.get('max_amount')!) : undefined
+  )
+  const [localStartDate, setLocalStartDate] = useState<string>(searchParams.get('start_date') || '')
+  const [localEndDate, setLocalEndDate] = useState<string>(searchParams.get('end_date') || '')
 
   const debounceTimeoutRef = useRef<NodeJS.Timeout>()
 
@@ -119,6 +154,24 @@ export const ChartsPage = () => {
     fetchCategoryTotals,
     transactionType,
   ])
+
+  useEffect(() => {
+    const params = new URLSearchParams()
+
+    if (filters.description_search) params.set('description_search', filters.description_search)
+    if (filters.category_ids?.length) params.set('category_ids', filters.category_ids.join(','))
+    if (filters.account_id) params.set('account_id', filters.account_id)
+    if (filters.min_amount !== undefined) params.set('min_amount', filters.min_amount.toString())
+    if (filters.max_amount !== undefined) params.set('max_amount', filters.max_amount.toString())
+    if (filters.start_date) params.set('start_date', filters.start_date)
+    if (filters.end_date) params.set('end_date', filters.end_date)
+    if (filters.exclude_transfers === false) params.set('exclude_transfers', 'false')
+    if (filters.transaction_type && filters.transaction_type !== 'all') params.set('transaction_type', filters.transaction_type)
+    if (viewMode !== 'bar') params.set('view', viewMode)
+    if (timeSeriesPeriod !== 'month') params.set('period', timeSeriesPeriod)
+
+    setSearchParams(params, { replace: true })
+  }, [filters, viewMode, timeSeriesPeriod, setSearchParams])
 
   const handleFilterChange = useCallback(
     (newFilters: Partial<Omit<FilterType, 'page' | 'page_size'>>) => {
@@ -478,13 +531,9 @@ export const ChartsPage = () => {
     }
   }, [viewMode, timeSeriesPeriod, filters, fetchCategoryTimeSeries])
 
-  // Initial load
   useEffect(() => {
-    fetchCategoryTotals({
-      exclude_transfers: true,
-      transaction_type: 'all',
-    })
-  }, [fetchCategoryTotals])
+    fetchCategoryTotals(filters)
+  }, [])
 
   return (
     <div className="charts-page transactions-page">

@@ -39,7 +39,7 @@ function convertAmountFiltersForApi(
 }
 
 export const TransactionsPage = () => {
-  const [searchParams] = useSearchParams()
+  const [searchParams, setSearchParams] = useSearchParams()
   const navigate = useNavigate()
 
   const getInitialFilters = (): FilterType => {
@@ -209,6 +209,32 @@ export const TransactionsPage = () => {
       }
     }
   }, [localDescriptionSearch, localMinAmount, localMaxAmount, localStartDate, localEndDate, filters, fetchTransactions])
+
+  useEffect(() => {
+    const params = new URLSearchParams()
+
+    if (filters.description_search) params.set('description_search', filters.description_search)
+    if (filters.category_ids?.length) params.set('category_ids', filters.category_ids.join(','))
+    if (filters.account_id) params.set('account_id', filters.account_id)
+    if (filters.min_amount !== undefined) params.set('min_amount', filters.min_amount.toString())
+    if (filters.max_amount !== undefined) params.set('max_amount', filters.max_amount.toString())
+    if (filters.start_date) params.set('start_date', filters.start_date)
+    if (filters.end_date) params.set('end_date', filters.end_date)
+    if (filters.status) params.set('status', filters.status)
+    if (filters.sort_field && filters.sort_field !== 'date') params.set('sort_field', filters.sort_field)
+    if (filters.sort_direction && filters.sort_direction !== 'desc') params.set('sort_direction', filters.sort_direction)
+    if (filters.enhancement_rule_id) params.set('enhancement_rule_id', filters.enhancement_rule_id)
+    if (filters.exclude_transfers === false) params.set('exclude_transfers', 'false')
+    if (filters.exclude_uncategorized) params.set('exclude_uncategorized', 'true')
+    if (filters.transaction_type && filters.transaction_type !== 'all') params.set('transaction_type', filters.transaction_type)
+    if (filters.transaction_ids?.length) params.set('transaction_ids', filters.transaction_ids.join(','))
+    if (filters.saved_filter_id) params.set('saved_filter_id', filters.saved_filter_id)
+
+    const patternLabelParam = searchParams.get('pattern_label')
+    if (patternLabelParam) params.set('pattern_label', patternLabelParam)
+
+    setSearchParams(params, { replace: true })
+  }, [filters, setSearchParams, searchParams])
 
   useEffect(() => {
     const element = bottomPaginationRef.current
