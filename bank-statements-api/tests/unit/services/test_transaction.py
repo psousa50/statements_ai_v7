@@ -465,3 +465,233 @@ class TestTransactionService:
         assert result.category_id == user_category_id
         mock_enhancement_rule_repository.get_all.assert_not_called()
         mock_transaction_enhancer.apply_rules.assert_not_called()
+
+
+class TestSaveTransactionsFromDtos:
+    @pytest.fixture
+    def user_id(self):
+        return uuid4()
+
+    @pytest.fixture
+    def account_id(self):
+        return uuid4()
+
+    @pytest.fixture
+    def mock_repository(self):
+        return MagicMock(spec=TransactionRepository)
+
+    @pytest.fixture
+    def mock_initial_balance_repository(self):
+        return MagicMock(spec=InitialBalanceRepository)
+
+    @pytest.fixture
+    def mock_enhancement_rule_repository(self):
+        return MagicMock(spec=EnhancementRuleRepository)
+
+    @pytest.fixture
+    def mock_transaction_enhancer(self):
+        return MagicMock(spec=TransactionEnhancer)
+
+    @pytest.fixture
+    def service(
+        self,
+        mock_repository,
+        mock_initial_balance_repository,
+        mock_enhancement_rule_repository,
+        mock_transaction_enhancer,
+    ):
+        return TransactionService(
+            mock_repository,
+            mock_initial_balance_repository,
+            mock_enhancement_rule_repository,
+            mock_transaction_enhancer,
+        )
+
+    def test_save_transactions_from_dtos_empty_list(self, service):
+        from app.services.transaction import TransactionPersistenceResult
+
+        result = service.save_transactions_from_dtos([])
+
+        assert isinstance(result, TransactionPersistenceResult)
+        assert result.transactions_saved == 0
+        assert result.duplicates_found == 0
+
+    def test_save_transactions_from_dtos_no_duplicates(
+        self, service, mock_repository, user_id, account_id
+    ):
+        from app.domain.dto.statement_processing import TransactionDTO
+
+        dtos = [
+            TransactionDTO(
+                date="2025-01-15",
+                amount=Decimal("-100.00"),
+                description="Transaction 1",
+                user_id=user_id,
+                account_id=str(account_id),
+                statement_id=str(uuid4()),
+                row_index=0,
+                sort_index=0,
+                source_type="UPLOAD",
+            ),
+            TransactionDTO(
+                date="2025-01-15",
+                amount=Decimal("-200.00"),
+                description="Transaction 2",
+                user_id=user_id,
+                account_id=str(account_id),
+                statement_id=str(uuid4()),
+                row_index=1,
+                sort_index=1,
+                source_type="UPLOAD",
+            ),
+        ]
+
+        mock_repository.count_by_date_and_amount.return_value = 0
+        mock_repository.create_many.return_value = []
+
+        result = service.save_transactions_from_dtos(dtos)
+
+        assert result.transactions_saved == 2
+        assert result.duplicates_found == 0
+        mock_repository.create_many.assert_called_once()
+        assert len(mock_repository.create_many.call_args[0][0]) == 2
+
+    def test_save_transactions_from_dtos_all_duplicates(
+        self, service, mock_repository, user_id, account_id
+    ):
+        from app.domain.dto.statement_processing import TransactionDTO
+
+        dtos = [
+            TransactionDTO(
+                date="2025-01-15",
+                amount=Decimal("-100.00"),
+                description="Transaction 1",
+                user_id=user_id,
+                account_id=str(account_id),
+                statement_id=str(uuid4()),
+                row_index=0,
+                sort_index=0,
+                source_type="UPLOAD",
+            ),
+        ]
+
+        mock_repository.count_by_date_and_amount.return_value = 1
+
+        result = service.save_transactions_from_dtos(dtos)
+
+        assert result.transactions_saved == 0
+        assert result.duplicates_found == 1
+        mock_repository.create_many.assert_not_called()
+
+    def test_save_transactions_from_dtos_legitimate_same_day_duplicates(
+        self, service, mock_repository, user_id, account_id
+    ):
+        from app.domain.dto.statement_processing import TransactionDTO
+
+        dtos = [
+            TransactionDTO(
+                date="2025-11-11",
+                amount=Decimal("-200.00"),
+                description="COMPRA Revolut Dublin",
+                user_id=user_id,
+                account_id=str(account_id),
+                statement_id=str(uuid4()),
+                row_index=0,
+                sort_index=0,
+                source_type="UPLOAD",
+            ),
+            TransactionDTO(
+                date="2025-11-11",
+                amount=Decimal("-200.00"),
+                description="COMPRA Revolut Dublin",
+                user_id=user_id,
+                account_id=str(account_id),
+                statement_id=str(uuid4()),
+                row_index=1,
+                sort_index=1,
+                source_type="UPLOAD",
+            ),
+        ]
+
+        mock_repository.count_by_date_and_amount.return_value = 0
+        mock_repository.create_many.return_value = []
+
+        result = service.save_transactions_from_dtos(dtos)
+
+        assert result.transactions_saved == 2
+        assert result.duplicates_found == 0
+        mock_repository.create_many.assert_called_once()
+        assert len(mock_repository.create_many.call_args[0][0]) == 2
+
+    def test_save_transactions_from_dtos_partial_duplicates(
+        self, service, mock_repository, user_id, account_id
+    ):
+        from app.domain.dto.statement_processing import TransactionDTO
+
+        dtos = [
+            TransactionDTO(
+                date="2025-11-11",
+                amount=Decimal("-200.00"),
+                description="COMPRA Revolut Dublin",
+                user_id=user_id,
+                account_id=str(account_id),
+                statement_id=str(uuid4()),
+                row_index=0,
+                sort_index=0,
+                source_type="UPLOAD",
+            ),
+            TransactionDTO(
+                date="2025-11-11",
+                amount=Decimal("-200.00"),
+                description="COMPRA Revolut Dublin",
+                user_id=user_id,
+                account_id=str(account_id),
+                statement_id=str(uuid4()),
+                row_index=1,
+                sort_index=1,
+                source_type="UPLOAD",
+            ),
+            TransactionDTO(
+                date="2025-11-11",
+                amount=Decimal("-200.00"),
+                description="COMPRA Revolut Dublin",
+                user_id=user_id,
+                account_id=str(account_id),
+                statement_id=str(uuid4()),
+                row_index=2,
+                sort_index=2,
+                source_type="UPLOAD",
+            ),
+        ]
+
+        mock_repository.count_by_date_and_amount.return_value = 2
+        mock_repository.create_many.return_value = []
+
+        result = service.save_transactions_from_dtos(dtos)
+
+        assert result.transactions_saved == 1
+        assert result.duplicates_found == 2
+        mock_repository.create_many.assert_called_once()
+        assert len(mock_repository.create_many.call_args[0][0]) == 1
+
+    def test_save_transactions_from_dtos_missing_account_id_raises_error(
+        self, service, user_id
+    ):
+        from app.domain.dto.statement_processing import TransactionDTO
+
+        dtos = [
+            TransactionDTO(
+                date="2025-01-15",
+                amount=Decimal("-100.00"),
+                description="Transaction without account",
+                user_id=user_id,
+                account_id=None,
+                statement_id=str(uuid4()),
+                row_index=0,
+                sort_index=0,
+                source_type="UPLOAD",
+            ),
+        ]
+
+        with pytest.raises(ValueError, match="account_id"):
+            service.save_transactions_from_dtos(dtos)

@@ -185,6 +185,19 @@ class TransactionRepository(ABC):
         pass
 
     @abstractmethod
+    def count_by_date_and_amount(
+        self,
+        date: str,
+        amount: float,
+        account_id: UUID,
+    ) -> int:
+        """
+        Count transactions matching date and amount (ignoring description).
+        Used for count-based deduplication that handles legitimate same-day duplicates.
+        """
+        pass
+
+    @abstractmethod
     def bulk_update_category_by_normalized_description(
         self,
         user_id: UUID,

@@ -130,3 +130,36 @@ class TestSQLAlchemyTransactionRepository:
 
         session.add.assert_not_called()
         session.commit.assert_called_once()
+
+    def test_count_by_date_and_amount(self):
+        session = MagicMock()
+        repo = SQLAlchemyTransactionRepository(session)
+
+        account_id = uuid.uuid4()
+
+        session.query.return_value.filter.return_value.scalar.return_value = 3
+
+        result = repo.count_by_date_and_amount(
+            date="2025-11-11",
+            amount=-200.00,
+            account_id=account_id,
+        )
+
+        assert result == 3
+        session.query.assert_called_once()
+
+    def test_count_by_date_and_amount_returns_zero_when_none(self):
+        session = MagicMock()
+        repo = SQLAlchemyTransactionRepository(session)
+
+        account_id = uuid.uuid4()
+
+        session.query.return_value.filter.return_value.scalar.return_value = None
+
+        result = repo.count_by_date_and_amount(
+            date="2025-11-11",
+            amount=-200.00,
+            account_id=account_id,
+        )
+
+        assert result == 0

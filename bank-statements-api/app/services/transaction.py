@@ -469,20 +469,33 @@ class TransactionService:
         transaction_dtos: List[TransactionDTO],
     ) -> TransactionPersistenceResult:
         """
-        Save multiple transactions from DTOs with duplicate detection.
-        Handles DTO→Entity conversion and duplicate detection logic.
+        Save multiple transactions from DTOs with count-based duplicate detection.
+
+        For each unique (date, amount, account_id) combination:
+        - Count how many exist in the import
+        - Count how many already exist in DB
+        - Only import the difference (import_count - db_count)
+
+        This correctly handles legitimate same-day/same-amount transactions.
         """
+        if not transaction_dtos:
+            return TransactionPersistenceResult(transactions_saved=0, duplicates_found=0)
+
+        groups = self._group_dtos_by_signature(transaction_dtos)
+        db_counts = self._get_db_counts_for_groups(groups)
+
         transactions_to_save = []
         duplicates_found = 0
-        processed_tx_ids = set()
 
-        for dto in transaction_dtos:
-            if self._is_duplicate_transaction(dto, processed_tx_ids):
-                duplicates_found += 1
-                continue
+        for key, dtos in groups.items():
+            import_count = len(dtos)
+            db_count = db_counts.get(key, 0)
+            to_import = max(0, import_count - db_count)
+            duplicates_found += import_count - to_import
 
-            transaction_entity = self._convert_dto_to_entity(dto)
-            transactions_to_save.append(transaction_entity)
+            for dto in dtos[:to_import]:
+                transaction_entity = self._convert_dto_to_entity(dto)
+                transactions_to_save.append(transaction_entity)
 
         if transactions_to_save:
             self.transaction_repository.create_many(transactions_to_save)
@@ -491,6 +504,37 @@ class TransactionService:
             transactions_saved=len(transactions_to_save),
             duplicates_found=duplicates_found,
         )
+
+    def _group_dtos_by_signature(
+        self,
+        dtos: List[TransactionDTO],
+    ) -> dict:
+        from collections import defaultdict
+
+        groups = defaultdict(list)
+        for dto in dtos:
+            if not dto.account_id:
+                raise ValueError("Transaction DTO must have an account_id for deduplication")
+            date_str = dto.date if isinstance(dto.date, str) else dto.date.strftime("%Y-%m-%d")
+            account_id = str(dto.account_id) if isinstance(dto.account_id, UUID) else dto.account_id
+            key = (date_str, float(dto.amount), account_id)
+            groups[key].append(dto)
+        return dict(groups)
+
+    def _get_db_counts_for_groups(
+        self,
+        groups: dict,
+    ) -> dict:
+        counts = {}
+        for key in groups.keys():
+            date_str, amount, account_id_str = key
+            count = self.transaction_repository.count_by_date_and_amount(
+                date=date_str,
+                amount=amount,
+                account_id=UUID(account_id_str),
+            )
+            counts[key] = count
+        return counts
 
     def _is_duplicate_transaction(
         self,

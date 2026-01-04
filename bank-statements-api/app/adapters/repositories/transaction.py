@@ -433,6 +433,26 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
 
         return query.all()
 
+    def count_by_date_and_amount(
+        self,
+        date: str,
+        amount: float,
+        account_id: UUID,
+    ) -> int:
+        date_val = datetime.strptime(date, "%Y-%m-%d").date()
+        amount_val = Decimal(str(amount))
+
+        return (
+            self.db_session.query(func.count(Transaction.id))
+            .filter(
+                Transaction.date == date_val,
+                Transaction.amount == amount_val,
+                Transaction.account_id == account_id,
+            )
+            .scalar()
+            or 0
+        )
+
     def save_batch(self, transactions: List[TransactionDTO]) -> Tuple[int, int]:
         """
         Save a batch of transactions to the database with deduplication.
