@@ -166,7 +166,8 @@ export const ChartsPage = () => {
     if (filters.start_date) params.set('start_date', filters.start_date)
     if (filters.end_date) params.set('end_date', filters.end_date)
     if (filters.exclude_transfers === false) params.set('exclude_transfers', 'false')
-    if (filters.transaction_type && filters.transaction_type !== 'all') params.set('transaction_type', filters.transaction_type)
+    if (filters.transaction_type && filters.transaction_type !== 'all')
+      params.set('transaction_type', filters.transaction_type)
     if (viewMode !== 'bar') params.set('view', viewMode)
     if (timeSeriesPeriod !== 'month') params.set('period', timeSeriesPeriod)
 
