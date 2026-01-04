@@ -178,8 +178,8 @@ def test_export_categories():
     parent_id = uuid4()
     subcategory_id = uuid4()
     mock_categories = [
-        Category(id=parent_id, name="Parent Category", parent_id=None),
-        Category(id=subcategory_id, name="Subcategory", parent_id=parent_id),
+        Category(id=parent_id, name="Parent Category", parent_id=None, color="#FF5733"),
+        Category(id=subcategory_id, name="Subcategory", parent_id=parent_id, color="#33FF57"),
     ]
     internal_dependencies.category_service.get_all_categories.return_value = mock_categories
 
@@ -192,8 +192,8 @@ def test_export_categories():
 
     content = response.text
     lines = content.strip().split("\n")
-    assert lines[0] == "parent_name,name"
-    assert lines[1] == ",Parent Category"
-    assert lines[2] == "Parent Category,Subcategory"
+    assert lines[0] == "parent_name,name,color"
+    assert lines[1] == ",Parent Category,#FF5733"
+    assert lines[2] == "Parent Category,Subcategory,#33FF57"
 
     internal_dependencies.category_service.get_all_categories.assert_called_once_with(TEST_USER_ID)

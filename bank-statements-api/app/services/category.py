@@ -77,7 +77,9 @@ class CategoryService:
 
         return self.category_repository.delete(category_id, user_id)
 
-    def upsert_category(self, name: str, user_id: UUID, parent_id: Optional[UUID] = None) -> Category:
+    def upsert_category(
+        self, name: str, user_id: UUID, parent_id: Optional[UUID] = None, color: Optional[str] = None
+    ) -> Category:
         if parent_id:
             parent = self.category_repository.get_by_id(parent_id, user_id)
             if not parent:
@@ -88,14 +90,18 @@ class CategoryService:
 
         existing_category = self.category_repository.get_by_name(name, user_id, parent_id)
         if existing_category:
+            if color and existing_category.color != color:
+                existing_category.color = color
+                return self.category_repository.update(existing_category)
             return existing_category
 
-        category = Category(name=name, user_id=user_id, parent_id=parent_id)
+        category = Category(name=name, user_id=user_id, parent_id=parent_id, color=color)
         return self.category_repository.create(category)
 
     def upsert_categories_from_csv(self, csv_content: str, user_id: UUID) -> List[Category]:
         categories = []
         parent_cache = {}
+        parent_colors = {}
 
         try:
             csv_file = StringIO(csv_content)
@@ -107,6 +113,7 @@ class CategoryService:
             for row in reader:
                 parent_name = row.get("parent_name", "").strip()
                 name = row.get("name", "").strip()
+                color = row.get("color", "").strip() or None
 
                 if not name:
                     continue
@@ -116,11 +123,14 @@ class CategoryService:
                     if parent_name in parent_cache:
                         parent_id = parent_cache[parent_name]
                     else:
-                        parent_category = self.upsert_category(parent_name, user_id, None)
+                        parent_color = parent_colors.get(parent_name)
+                        parent_category = self.upsert_category(parent_name, user_id, None, parent_color)
                         parent_id = parent_category.id
                         parent_cache[parent_name] = parent_id
+                else:
+                    parent_colors[name] = color
 
-                category = self.upsert_category(name, user_id, parent_id)
+                category = self.upsert_category(name, user_id, parent_id, color)
                 categories.append(category)
 
             return categories

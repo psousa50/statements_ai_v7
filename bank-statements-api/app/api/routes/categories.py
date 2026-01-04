@@ -89,10 +89,11 @@ def register_category_routes(
                 return f'"{escaped}"'
             return escaped
 
-        rows = ["parent_name,name\n"]
+        rows = ["parent_name,name,color\n"]
         for category in all_categories:
             parent_name = category_names.get(category.parent_id, "") if category.parent_id else ""
-            rows.append(f"{escape_csv(parent_name)},{escape_csv(category.name)}\n")
+            color = category.color or ""
+            rows.append(f"{escape_csv(parent_name)},{escape_csv(category.name)},{escape_csv(color)}\n")
 
         filename = f"categories-{date.today().isoformat()}.csv"
         return StreamingResponse(
