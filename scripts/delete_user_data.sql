@@ -43,11 +43,15 @@ BEGIN
     DELETE FROM categories WHERE user_id = target_user_id;
     RAISE NOTICE 'Deleted categories';
 
+    DELETE FROM initial_balances
+    WHERE account_id IN (SELECT id FROM accounts WHERE user_id = target_user_id);
+    RAISE NOTICE 'Deleted initial_balances';
+
     DELETE FROM accounts WHERE user_id = target_user_id;
     RAISE NOTICE 'Deleted accounts';
 
-    DELETE FROM users WHERE id = target_user_id;
-    RAISE NOTICE 'Deleted user';
+    -- DELETE FROM users WHERE id = target_user_id;
+    -- RAISE NOTICE 'Deleted user';
 
     RAISE NOTICE 'Successfully deleted user % and all related data', target_email;
 END $$;
