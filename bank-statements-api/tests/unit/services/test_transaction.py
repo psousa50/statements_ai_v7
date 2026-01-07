@@ -516,9 +516,7 @@ class TestSaveTransactionsFromDtos:
         assert result.transactions_saved == 0
         assert result.duplicates_found == 0
 
-    def test_save_transactions_from_dtos_no_duplicates(
-        self, service, mock_repository, user_id, account_id
-    ):
+    def test_save_transactions_from_dtos_no_duplicates(self, service, mock_repository, user_id, account_id):
         from app.domain.dto.statement_processing import TransactionDTO
 
         dtos = [
@@ -556,9 +554,7 @@ class TestSaveTransactionsFromDtos:
         mock_repository.create_many.assert_called_once()
         assert len(mock_repository.create_many.call_args[0][0]) == 2
 
-    def test_save_transactions_from_dtos_all_duplicates(
-        self, service, mock_repository, user_id, account_id
-    ):
+    def test_save_transactions_from_dtos_all_duplicates(self, service, mock_repository, user_id, account_id):
         from app.domain.dto.statement_processing import TransactionDTO
 
         dtos = [
@@ -583,9 +579,7 @@ class TestSaveTransactionsFromDtos:
         assert result.duplicates_found == 1
         mock_repository.create_many.assert_not_called()
 
-    def test_save_transactions_from_dtos_legitimate_same_day_duplicates(
-        self, service, mock_repository, user_id, account_id
-    ):
+    def test_save_transactions_from_dtos_legitimate_same_day_duplicates(self, service, mock_repository, user_id, account_id):
         from app.domain.dto.statement_processing import TransactionDTO
 
         dtos = [
@@ -623,9 +617,7 @@ class TestSaveTransactionsFromDtos:
         mock_repository.create_many.assert_called_once()
         assert len(mock_repository.create_many.call_args[0][0]) == 2
 
-    def test_save_transactions_from_dtos_partial_duplicates(
-        self, service, mock_repository, user_id, account_id
-    ):
+    def test_save_transactions_from_dtos_partial_duplicates(self, service, mock_repository, user_id, account_id):
         from app.domain.dto.statement_processing import TransactionDTO
 
         dtos = [
@@ -674,9 +666,7 @@ class TestSaveTransactionsFromDtos:
         mock_repository.create_many.assert_called_once()
         assert len(mock_repository.create_many.call_args[0][0]) == 1
 
-    def test_save_transactions_from_dtos_missing_account_id_raises_error(
-        self, service, user_id
-    ):
+    def test_save_transactions_from_dtos_missing_account_id_raises_error(self, service, user_id):
         from app.domain.dto.statement_processing import TransactionDTO
 
         dtos = [
