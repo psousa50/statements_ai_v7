@@ -1,11 +1,12 @@
-from typing import List, Optional
+from typing import Any, List, Optional, Tuple
 from uuid import UUID
 
-from sqlalchemy import and_, func, or_
+from sqlalchemy import and_, func, or_, text
 from sqlalchemy.orm import Session, joinedload
 
 from app.domain.models.category import Category
 from app.domain.models.enhancement_rule import EnhancementRule, EnhancementRuleSource, MatchType
+from app.domain.models.transaction import Transaction
 from app.ports.repositories.enhancement_rule import EnhancementRuleRepository
 
 
@@ -155,7 +156,30 @@ class SQLAlchemyEnhancementRuleRepository(EnhancementRuleRepository):
         secondary_sort_field: Optional[str] = None,
         secondary_sort_direction: Optional[str] = None,
     ) -> List[EnhancementRule]:
-        query = (
+        is_unconfigured_filter = rule_status_filter == "unconfigured"
+
+        rule_counts = self._get_rule_counts_with_sql(
+            user_id=user_id,
+            limit=limit,
+            offset=offset,
+            description_search=description_search,
+            category_ids=category_ids,
+            counterparty_account_ids=counterparty_account_ids,
+            match_type=match_type,
+            source=source,
+            rule_status_filter=rule_status_filter,
+            sort_direction=sort_direction,
+            count_uncategorized_only=is_unconfigured_filter,
+        )
+
+        if not rule_counts:
+            return []
+
+        rule_ids = [rc[0] for rc in rule_counts]
+        count_map = {rc[0]: rc[1] for rc in rule_counts}
+        date_map = {rc[0]: rc[2] for rc in rule_counts}
+
+        rules = (
             self.db.query(EnhancementRule)
             .options(
                 joinedload(EnhancementRule.category).joinedload(Category.parent),
@@ -163,11 +187,76 @@ class SQLAlchemyEnhancementRuleRepository(EnhancementRuleRepository):
                 joinedload(EnhancementRule.ai_suggested_category).joinedload(Category.parent),
                 joinedload(EnhancementRule.ai_suggested_counterparty),
             )
+            .filter(EnhancementRule.id.in_(rule_ids))
+            .all()
+        )
+
+        rule_by_id = {r.id: r for r in rules}
+        ordered_rules = []
+        for rule_id in rule_ids:
+            if rule_id in rule_by_id:
+                rule = rule_by_id[rule_id]
+                rule.transaction_count = count_map.get(rule_id, 0)
+                rule.latest_match_date = date_map.get(rule_id)
+                ordered_rules.append(rule)
+
+        return ordered_rules
+
+    def _get_rule_counts_with_sql(
+        self,
+        user_id: UUID,
+        limit: int,
+        offset: int,
+        description_search: Optional[str] = None,
+        category_ids: Optional[List[UUID]] = None,
+        counterparty_account_ids: Optional[List[UUID]] = None,
+        match_type: Optional[MatchType] = None,
+        source: Optional[EnhancementRuleSource] = None,
+        rule_status_filter: Optional[str] = None,
+        sort_direction: str = "desc",
+        count_uncategorized_only: bool = False,
+    ) -> List[Tuple[UUID, int, Optional[Any]]]:
+        match_condition = or_(
+            and_(
+                EnhancementRule.match_type == MatchType.EXACT,
+                Transaction.normalized_description == EnhancementRule.normalized_description_pattern,
+            ),
+            and_(
+                EnhancementRule.match_type == MatchType.PREFIX,
+                Transaction.normalized_description.like(
+                    func.concat(EnhancementRule.normalized_description_pattern, "%")
+                ),
+            ),
+            and_(
+                EnhancementRule.match_type == MatchType.INFIX,
+                Transaction.normalized_description.like(
+                    func.concat("%", EnhancementRule.normalized_description_pattern, "%")
+                ),
+            ),
+        )
+
+        join_conditions = [
+            Transaction.user_id == EnhancementRule.user_id,
+            match_condition,
+        ]
+        if count_uncategorized_only:
+            join_conditions.append(Transaction.category_id.is_(None))
+
+        query = (
+            self.db.query(
+                EnhancementRule.id,
+                func.count(Transaction.id).label("transaction_count"),
+                func.max(Transaction.date).label("latest_match_date"),
+            )
+            .outerjoin(Transaction, and_(*join_conditions))
             .filter(EnhancementRule.user_id == user_id)
+            .group_by(EnhancementRule.id)
         )
 
         if description_search:
-            query = query.filter(EnhancementRule.normalized_description_pattern.ilike(f"%{description_search}%"))
+            query = query.filter(
+                EnhancementRule.normalized_description_pattern.ilike(f"%{description_search}%")
+            )
 
         if category_ids:
             query = query.filter(EnhancementRule.category_id.in_(category_ids))
@@ -182,7 +271,12 @@ class SQLAlchemyEnhancementRuleRepository(EnhancementRuleRepository):
             query = query.filter(EnhancementRule.source == source)
 
         if rule_status_filter == "unconfigured":
-            query = query.filter(and_(EnhancementRule.category_id.is_(None), EnhancementRule.counterparty_account_id.is_(None)))
+            query = query.filter(
+                and_(
+                    EnhancementRule.category_id.is_(None),
+                    EnhancementRule.counterparty_account_id.is_(None),
+                )
+            )
         elif rule_status_filter == "pending":
             query = query.filter(
                 or_(
@@ -197,7 +291,8 @@ class SQLAlchemyEnhancementRuleRepository(EnhancementRuleRepository):
                         EnhancementRule.ai_suggested_counterparty_id.isnot(None),
                         or_(
                             EnhancementRule.counterparty_account_id.is_(None),
-                            EnhancementRule.counterparty_account_id != EnhancementRule.ai_suggested_counterparty_id,
+                            EnhancementRule.counterparty_account_id
+                            != EnhancementRule.ai_suggested_counterparty_id,
                         ),
                     ),
                 )
@@ -211,101 +306,20 @@ class SQLAlchemyEnhancementRuleRepository(EnhancementRuleRepository):
                     ),
                     and_(
                         EnhancementRule.ai_suggested_counterparty_id.isnot(None),
-                        EnhancementRule.counterparty_account_id == EnhancementRule.ai_suggested_counterparty_id,
+                        EnhancementRule.counterparty_account_id
+                        == EnhancementRule.ai_suggested_counterparty_id,
                     ),
                 )
             )
 
-        all_rules = query.all()
-
-        from app.adapters.repositories.transaction import SQLAlchemyTransactionRepository
-
-        transaction_repo = SQLAlchemyTransactionRepository(self.db)
-
-        unconfigured_rules = [r for r in all_rules if not r.category_id and not r.counterparty_account_id]
-        configured_rules = [r for r in all_rules if r.category_id or r.counterparty_account_id]
-
-        counts = {}
-        if unconfigured_rules:
-            counts.update(transaction_repo.count_matching_rules_batch(unconfigured_rules, uncategorized_only=True))
-        if configured_rules:
-            counts.update(transaction_repo.count_matching_rules_batch(configured_rules, uncategorized_only=False))
-
-        dates = transaction_repo.get_latest_matching_dates_batch(all_rules)
-
-        rules_with_data = []
-        for rule in all_rules:
-            count = counts.get(rule.id, 0)
-            latest_date = dates.get(rule.id)
-            rules_with_data.append((rule, count, latest_date))
-
-        def get_secondary_value(item):
-            rule, count, latest_date = item
-            if secondary_sort_field == "usage":
-                return count
-            elif secondary_sort_field == "latest_match":
-                from datetime import date as date_type
-
-                return latest_date or date_type(1900, 1, 1)
-            elif secondary_sort_field == "created_at":
-                return rule.created_at
-            elif secondary_sort_field == "normalized_description_pattern":
-                return rule.normalized_description_pattern.lower()
-            return rule.created_at
-
-        secondary_reverse = secondary_sort_direction != "asc" if secondary_sort_direction else True
-
-        def sort_key(item):
-            primary = item[1]
-            if secondary_sort_field:
-                secondary = get_secondary_value(item)
-                return (primary, secondary)
-            return (primary,)
-
         if sort_direction == "asc":
-            if secondary_sort_field:
-                rules_with_data.sort(key=lambda x: (x[1], get_secondary_value(x)), reverse=False)
-                if secondary_reverse:
-                    rules_with_data.sort(key=lambda x: x[1], reverse=False)
-                    groups = {}
-                    for item in rules_with_data:
-                        key = item[1]
-                        if key not in groups:
-                            groups[key] = []
-                        groups[key].append(item)
-                    rules_with_data = []
-                    for key in sorted(groups.keys()):
-                        group = groups[key]
-                        group.sort(key=get_secondary_value, reverse=True)
-                        rules_with_data.extend(group)
-            else:
-                rules_with_data.sort(key=lambda x: x[1])
+            query = query.order_by(text("transaction_count ASC"))
         else:
-            if secondary_sort_field:
-                rules_with_data.sort(key=lambda x: x[1], reverse=True)
-                groups = {}
-                for item in rules_with_data:
-                    key = item[1]
-                    if key not in groups:
-                        groups[key] = []
-                    groups[key].append(item)
-                rules_with_data = []
-                for key in sorted(groups.keys(), reverse=True):
-                    group = groups[key]
-                    group.sort(key=get_secondary_value, reverse=secondary_reverse)
-                    rules_with_data.extend(group)
-            else:
-                rules_with_data.sort(key=lambda x: x[1], reverse=True)
+            query = query.order_by(text("transaction_count DESC"))
 
-        start_idx = offset
-        end_idx = offset + limit
-        paginated_rules = rules_with_data[start_idx:end_idx]
+        query = query.offset(offset).limit(limit)
 
-        for rule, count, latest_date in paginated_rules:
-            rule.transaction_count = count
-            rule.latest_match_date = latest_date
-
-        return [rule for rule, count, latest_date in paginated_rules]
+        return query.all()
 
     def _get_all_with_latest_match_sorting(
         self,
