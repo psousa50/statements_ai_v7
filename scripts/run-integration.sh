@@ -13,7 +13,6 @@ trap cleanup EXIT
 
 cd "$ROOT_DIR"
 pnpm run test:db:up
-sleep 3
 pnpm run test:db:migrate
 
 cd "$ROOT_DIR/bank-statements-api"

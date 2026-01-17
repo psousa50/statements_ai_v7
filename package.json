@@ -24,7 +24,7 @@
     "db:sync:to-neon": "./scripts/db-sync.sh local-to-neon",
 
     "========== TESTING ==========": "",
-    "test:db:up": "docker-compose --profile test up test-db -d",
+    "test:db:up": "docker-compose --profile test up test-db -d --wait",
     "test:db:down": "docker-compose stop test-db && docker-compose rm -f test-db",
     "test:db:migrate": "cd bank-statements-api && DATABASE_URL=postgresql+psycopg://postgres:postgres@localhost:15432/bank_statements_test uv run alembic upgrade head",
     "test": "pnpm run test:unit && pnpm run test:integration && pnpm run test:web",
