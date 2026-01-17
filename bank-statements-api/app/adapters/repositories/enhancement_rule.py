@@ -301,6 +301,10 @@ class SQLAlchemyEnhancementRuleRepository(EnhancementRuleRepository):
         end_idx = offset + limit
         paginated_rules = rules_with_data[start_idx:end_idx]
 
+        for rule, count, latest_date in paginated_rules:
+            rule.transaction_count = count
+            rule.latest_match_date = latest_date
+
         return [rule for rule, count, latest_date in paginated_rules]
 
     def _get_all_with_latest_match_sorting(
@@ -448,8 +452,9 @@ class SQLAlchemyEnhancementRuleRepository(EnhancementRuleRepository):
         end_idx = offset + limit
         paginated_rules = rules_with_data[start_idx:end_idx]
 
-        for rule, _, latest_date, _ in paginated_rules:
+        for rule, _, latest_date, count in paginated_rules:
             rule.latest_match_date = latest_date
+            rule.transaction_count = count
 
         return [rule for rule, _, _, _ in paginated_rules]
 

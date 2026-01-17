@@ -291,14 +291,21 @@ class EnhancementRuleManagementService:
         if not rules:
             return
 
-        unconfigured_rules = [r for r in rules if not r.category_id and not r.counterparty_account_id]
-        configured_rules = [r for r in rules if r.category_id or r.counterparty_account_id]
+        rules_needing_counts = [r for r in rules if not hasattr(r, "transaction_count") or r.transaction_count is None]
 
         counts = {}
-        if unconfigured_rules:
-            counts.update(self.transaction_repository.count_matching_rules_batch(unconfigured_rules, uncategorized_only=True))
-        if configured_rules:
-            counts.update(self.transaction_repository.count_matching_rules_batch(configured_rules, uncategorized_only=False))
+        if rules_needing_counts:
+            unconfigured_rules = [r for r in rules_needing_counts if not r.category_id and not r.counterparty_account_id]
+            configured_rules = [r for r in rules_needing_counts if r.category_id or r.counterparty_account_id]
+
+            if unconfigured_rules:
+                counts.update(
+                    self.transaction_repository.count_matching_rules_batch(unconfigured_rules, uncategorized_only=True)
+                )
+            if configured_rules:
+                counts.update(
+                    self.transaction_repository.count_matching_rules_batch(configured_rules, uncategorized_only=False)
+                )
 
         pending_counts = self.transaction_repository.count_pending_for_rules_batch(rules)
 
@@ -306,7 +313,10 @@ class EnhancementRuleManagementService:
         dates = self.transaction_repository.get_latest_matching_dates_batch(rules_needing_dates)
 
         for rule in rules:
-            rule.transaction_count = counts.get(rule.id, 0)
+            if rule.id in counts:
+                rule.transaction_count = counts[rule.id]
+            elif not hasattr(rule, "transaction_count") or rule.transaction_count is None:
+                rule.transaction_count = 0
             rule.pending_transaction_count = pending_counts.get(rule.id, 0)
             if rule.id in dates:
                 rule.latest_match_date = dates[rule.id]
