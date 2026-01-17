@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
+import subprocess
 import sys
 from pathlib import Path
 
 import yaml
 
-project_root = Path(__file__).parent.parent
+project_root = Path(subprocess.check_output(["git", "rev-parse", "--show-toplevel"], text=True).strip())
 
 
 def load_config():

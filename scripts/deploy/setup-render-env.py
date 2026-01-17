@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
+import subprocess
 import sys
 from pathlib import Path
 
 import requests
 import yaml
 
-PROJECT_ROOT = Path(__file__).parent.parent
+PROJECT_ROOT = Path(subprocess.check_output(["git", "rev-parse", "--show-toplevel"], text=True).strip())
 CONFIG_FILE = PROJECT_ROOT / "config" / "settings.prod.yaml"
 
 RENDER_ENV_VARS = [

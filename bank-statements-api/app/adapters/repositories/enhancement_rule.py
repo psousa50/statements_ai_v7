@@ -223,15 +223,11 @@ class SQLAlchemyEnhancementRuleRepository(EnhancementRuleRepository):
             ),
             and_(
                 EnhancementRule.match_type == MatchType.PREFIX,
-                Transaction.normalized_description.like(
-                    func.concat(EnhancementRule.normalized_description_pattern, "%")
-                ),
+                Transaction.normalized_description.like(func.concat(EnhancementRule.normalized_description_pattern, "%")),
             ),
             and_(
                 EnhancementRule.match_type == MatchType.INFIX,
-                Transaction.normalized_description.like(
-                    func.concat("%", EnhancementRule.normalized_description_pattern, "%")
-                ),
+                Transaction.normalized_description.like(func.concat("%", EnhancementRule.normalized_description_pattern, "%")),
             ),
         )
 
@@ -254,9 +250,7 @@ class SQLAlchemyEnhancementRuleRepository(EnhancementRuleRepository):
         )
 
         if description_search:
-            query = query.filter(
-                EnhancementRule.normalized_description_pattern.ilike(f"%{description_search}%")
-            )
+            query = query.filter(EnhancementRule.normalized_description_pattern.ilike(f"%{description_search}%"))
 
         if category_ids:
             query = query.filter(EnhancementRule.category_id.in_(category_ids))
@@ -291,8 +285,7 @@ class SQLAlchemyEnhancementRuleRepository(EnhancementRuleRepository):
                         EnhancementRule.ai_suggested_counterparty_id.isnot(None),
                         or_(
                             EnhancementRule.counterparty_account_id.is_(None),
-                            EnhancementRule.counterparty_account_id
-                            != EnhancementRule.ai_suggested_counterparty_id,
+                            EnhancementRule.counterparty_account_id != EnhancementRule.ai_suggested_counterparty_id,
                         ),
                     ),
                 )
@@ -306,8 +299,7 @@ class SQLAlchemyEnhancementRuleRepository(EnhancementRuleRepository):
                     ),
                     and_(
                         EnhancementRule.ai_suggested_counterparty_id.isnot(None),
-                        EnhancementRule.counterparty_account_id
-                        == EnhancementRule.ai_suggested_counterparty_id,
+                        EnhancementRule.counterparty_account_id == EnhancementRule.ai_suggested_counterparty_id,
                     ),
                 )
             )
