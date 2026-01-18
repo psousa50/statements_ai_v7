@@ -110,6 +110,21 @@
   min-width: 13rem;
   text-align: center;
   white-space: nowrap;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  transition: all 0.15s ease;
+}
+
+.period-label:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.period-label:focus-visible {
+  outline: 2px solid var(--button-primary);
+  outline-offset: 2px;
 }
 
 .custom-picker-container {

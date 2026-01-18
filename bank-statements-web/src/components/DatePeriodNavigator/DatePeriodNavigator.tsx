@@ -359,9 +359,9 @@ export function DatePeriodNavigator({
           <ChevronLeftIcon fontSize="small" />
         </button>
 
-        <span className="period-label" aria-live="polite">
+        <button type="button" className="period-label" onClick={handleToggleCustomPicker} aria-live="polite">
           {displayLabel}
-        </span>
+        </button>
 
         <button
           type="button"
