@@ -1,4 +1,4 @@
-export type PeriodType = 'all' | 'week' | 'month' | 'year'
+export type PeriodType = 'all' | 'day' | 'week' | 'month' | 'year'
 
 export interface PeriodRange {
   startDate: Date
@@ -41,6 +41,21 @@ function formatShortMonth(date: Date): string {
 
 function formatFullMonth(date: Date): string {
   return date.toLocaleDateString('en-GB', { month: 'long' })
+}
+
+export function getDayRange(date: Date): PeriodRange {
+  const startDate = new Date(date)
+  startDate.setHours(0, 0, 0, 0)
+
+  const endDate = new Date(date)
+  endDate.setHours(23, 59, 59, 999)
+
+  const day = date.getDate()
+  const month = formatShortMonth(date)
+  const year = date.getFullYear()
+  const displayLabel = `${day} ${month} ${year}`
+
+  return { startDate, endDate, displayLabel }
 }
 
 export function getWeekRange(date: Date): PeriodRange {
@@ -95,6 +110,8 @@ export function getPeriodRange(periodType: PeriodType, date: Date): PeriodRange 
   switch (periodType) {
     case 'all':
       return { startDate: date, endDate: date, displayLabel: 'All dates' }
+    case 'day':
+      return getDayRange(date)
     case 'week':
       return getWeekRange(date)
     case 'month':
@@ -110,6 +127,9 @@ export function navigatePeriod(periodType: PeriodType, currentDate: Date, direct
 
   switch (periodType) {
     case 'all':
+      break
+    case 'day':
+      result.setDate(result.getDate() + delta)
       break
     case 'week':
       result.setDate(result.getDate() + delta * 7)
@@ -140,6 +160,10 @@ function isSameDay(date1: Date, date2: Date): boolean {
 export function detectPeriodType(startDateStr: string, endDateStr: string): PeriodType | null {
   const startDate = parseDateString(startDateStr)
   const endDate = parseDateString(endDateStr)
+
+  if (isSameDay(startDate, endDate)) {
+    return 'day'
+  }
 
   const weekRange = getWeekRange(startDate)
   if (isSameDay(weekRange.startDate, startDate) && isSameDay(weekRange.endDate, endDate)) {

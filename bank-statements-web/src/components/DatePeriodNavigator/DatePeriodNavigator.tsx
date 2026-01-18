@@ -40,7 +40,7 @@ interface PresetRange {
   getRange: () => { from: Date; to: Date }
 }
 
-const PERIOD_TYPES: PeriodType[] = ['week', 'month', 'year', 'all']
+const PERIOD_TYPES: PeriodType[] = ['day', 'week', 'month', 'year', 'all']
 
 const PRESET_RANGES: PresetRange[] = [
   {
