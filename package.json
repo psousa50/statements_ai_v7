@@ -10,7 +10,6 @@
     "dev:web": "./bin/web-run.sh run dev",
     "start": "pnpm run db:start && pnpm run dev",
     "stop": "./bin/dev-stop.sh",
-
     "========== DATABASE ==========": "",
     "db:up": "docker-compose up db -d",
     "db:down": "docker-compose down",
@@ -22,7 +21,6 @@
     "db:restore": "./bin/db-restore.sh",
     "db:sync:from-neon": "./bin/db-sync.sh neon-to-local",
     "db:sync:to-neon": "./bin/db-sync.sh local-to-neon",
-
     "========== TESTING ==========": "",
     "test:db:up": "docker-compose --profile test up test-db -d --wait",
     "test:db:down": "docker-compose stop test-db && docker-compose rm -f test-db",
@@ -40,7 +38,6 @@
     "test:e2e": "./bin/test-e2e.sh",
     "test:e2e:ui": "./bin/test-e2e.sh --ui",
     "test:e2e:docker": "./bin/test-e2e-docker.sh",
-
     "========== LINTING & FORMATTING ==========": "",
     "lint": "pnpm run lint:api && pnpm run lint:web",
     "lint:fix": "pnpm run lint:api:fix && pnpm run lint:web:fix",
@@ -57,22 +54,18 @@
     "verify": "pnpm run verify:api && pnpm run verify:web",
     "verify:api": "pnpm run format:api && pnpm run lint:api && pnpm run test:api",
     "verify:web": "pnpm run format:web && pnpm run lint:web && pnpm run check:web && pnpm run test:web",
-
     "========== BUILD ==========": "",
     "build": "pnpm run build:web",
     "build:web": "./bin/web-run.sh run build",
-
     "========== DOCKER ==========": "",
     "docker:up": "docker-compose up",
     "docker:down": "docker-compose down",
     "docker:build": "docker-compose build",
-
     "========== INSTALL ==========": "",
     "install": "pnpm install:web && pnpm install:e2e && pnpm install:api",
     "install:web": "./bin/web-run.sh install",
     "install:e2e": "./bin/install-e2e.sh",
     "install:api": "./bin/install-api.sh",
-
     "========== DEPLOY ==========": "",
     "deploy:api:build": "./bin/deploy-api-build.sh",
     "deploy:api:start": "./bin/deploy-api-start.sh",
@@ -80,7 +73,6 @@
     "deploy:setup": "pnpm deploy:setup:github && pnpm deploy:setup:render",
     "deploy:setup:github": "./bin/api-run.sh python ../bin/deploy-github-secrets.py",
     "deploy:setup:render": "./bin/api-run.sh python ../bin/deploy-render-env.py",
-
     "========== UTILITY ==========": "",
     "config:generate": "uvx --from pyyaml python bin/generate-env-files.py",
     "clean": "pnpm run clean:web && pnpm run clean:api",
@@ -90,10 +82,22 @@
     "prepare": "husky"
   },
   "devDependencies": {
-    "husky": "^9.1.7"
+    "husky": "^9.1.7",
+    "lint-staged": "^16.2.7"
   },
   "engines": {
     "node": ">=18.0.0",
     "pnpm": ">=8.0.0"
+  },
+  "lint-staged": {
+    "bank-statements-api/**/*.py": [
+      "./bin/api-run.sh ruff check",
+      "./bin/api-run.sh black --check",
+      "./bin/api-run.sh isort --check-only"
+    ],
+    "bank-statements-web/**/*.{ts,tsx}": [
+      "./bin/web-run.sh exec eslint",
+      "./bin/web-run.sh exec prettier --check"
+    ]
   }
 }

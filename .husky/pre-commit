@@ -1,1 +1,10 @@
-pnpm check && pnpm test:unit
+#!/bin/bash
+pnpm lint-staged
+
+if git diff --cached --name-only | grep -qE '\.(ts|tsx)$'; then
+  pnpm test:web:unit
+fi
+
+if git diff --cached --name-only | grep -qE '\.py$'; then
+  pnpm test:api:unit
+fi
