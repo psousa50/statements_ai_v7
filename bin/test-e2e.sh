@@ -2,6 +2,8 @@
 set -e
 
 ROOT_DIR="$(git rev-parse --show-toplevel)"
+source "$ROOT_DIR/bin/env.sh"
+
 API_PORT=${API_PORT:-8010}
 
 cleanup() {
@@ -21,7 +23,7 @@ sleep 2
 pnpm run test:db:migrate
 
 cd "$ROOT_DIR/bank-statements-api"
-E2E_TEST_MODE=true API_PORT=$API_PORT DATABASE_URL=postgresql+psycopg://postgres:postgres@localhost:15432/bank_statements_test uv run python run.py &
+E2E_TEST_MODE=true API_PORT=$API_PORT DATABASE_URL="$TEST_DATABASE_URL" uv run python run.py &
 sleep 3
 
 cd "$ROOT_DIR/e2e/bank-statements-web"

@@ -2,6 +2,7 @@
 set -e
 
 ROOT_DIR="$(git rev-parse --show-toplevel)"
+source "$ROOT_DIR/bin/env.sh"
 
 cleanup() {
     echo "Cleaning up..."
@@ -15,6 +16,4 @@ pnpm run test:db:up
 pnpm run test:db:migrate
 
 cd "$ROOT_DIR/bank-statements-api"
-TEST_DATABASE_URL=postgresql+psycopg://postgres:postgres@localhost:15432/bank_statements_test \
-DATABASE_URL=postgresql+psycopg://postgres:postgres@localhost:15432/bank_statements_test \
-uv run pytest tests/integration -v "$@"
+DATABASE_URL="$TEST_DATABASE_URL" uv run pytest tests/integration -v "$@"
