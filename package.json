@@ -10,7 +10,6 @@
     "dev:web": "cd bank-statements-web && pnpm run dev",
     "start": "pnpm run db:start && pnpm run dev",
     "stop": "(lsof -ti :8000 | xargs kill -9; lsof -ti :5173 | xargs kill -9) 2>/dev/null || true",
-
     "========== DATABASE ==========": "",
     "db:up": "docker-compose up db -d",
     "db:down": "docker-compose down",
@@ -22,23 +21,23 @@
     "db:restore": "test -n \"$FILE\" || (echo 'Usage: FILE=backups/your_backup.dump pnpm db:restore' && exit 1) && docker exec -i bank-statements-db pg_restore -U postgres -d bank_statements -c < \"$FILE\"",
     "db:sync:from-neon": "./scripts/db/sync.sh neon-to-local",
     "db:sync:to-neon": "./scripts/db/sync.sh local-to-neon",
-
     "========== TESTING ==========": "",
     "test:db:up": "docker-compose --profile test up test-db -d --wait",
     "test:db:down": "docker-compose stop test-db && docker-compose rm -f test-db",
     "test:db:migrate": "cd bank-statements-api && DATABASE_URL=postgresql+psycopg://postgres:postgres@localhost:15432/bank_statements_test uv run alembic upgrade head",
-    "test": "pnpm run test:unit && pnpm run test:integration && pnpm run test:web",
-    "test:unit": "cd bank-statements-api && uv run pytest tests/unit tests/api tests/services -v",
-    "test:integration": "./scripts/test/integration.sh",
-    "test:api": "cd bank-statements-api && uv run pytest tests/unit tests/api tests/services && pnpm run test:integration",
-    "test:api:cov": "cd bank-statements-api && uv run pytest tests/unit tests/api tests/services --cov",
-    "test:web": "cd bank-statements-web && pnpm vitest run",
-    "test:web:watch": "cd bank-statements-web && pnpm run test",
-    "test:web:ui": "cd bank-statements-web && pnpm vitest --ui",
+    "test": "pnpm run test:api && pnpm run test:web",
+    "test:unit": "pnpm run test:api:unit && pnpm run test:web:unit",
+    "test:api": "pnpm run test:api:unit && pnpm run test:api:integration",
+    "test:api:unit": "cd bank-statements-api && uv run pytest tests/unit tests/api tests/services -v",
+    "test:api:unit:cov": "cd bank-statements-api && uv run pytest tests/unit tests/api tests/services --cov",
+    "test:api:integration": "./scripts/test/integration.sh",
+    "test:web": "pnpm run test:web:unit",
+    "test:web:unit": "cd bank-statements-web && pnpm vitest run",
+    "test:web:unit:watch": "cd bank-statements-web && pnpm run test",
+    "test:web:unit:ui": "cd bank-statements-web && pnpm vitest --ui",
     "test:e2e": "./scripts/test/e2e.sh",
     "test:e2e:ui": "./scripts/test/e2e.sh --ui",
     "test:e2e:docker": "./scripts/test/e2e-docker.sh",
-
     "========== LINTING & FORMATTING ==========": "",
     "lint": "pnpm run lint:api && pnpm run lint:web",
     "lint:fix": "pnpm run lint:api:fix && pnpm run lint:web:fix",
@@ -51,26 +50,22 @@
     "format:web": "cd bank-statements-web && pnpm run format",
     "check": "pnpm run check:api && pnpm run check:web",
     "check:api": "cd bank-statements-api && uv run isort . --check-only && uv run black . --check && uv run ruff check .",
-    "check:web": "cd bank-statements-web && pnpm exec tsc --noEmit",
+    "check:web": "cd bank-statements-web && pnpm exec tsc --noEmit && pnpm run lint && pnpm run format:check",
     "verify": "pnpm run verify:api && pnpm run verify:web",
     "verify:api": "pnpm run format:api && pnpm run lint:api && pnpm run test:api",
     "verify:web": "pnpm run format:web && pnpm run lint:web && pnpm run check:web && pnpm run test:web",
-
     "========== BUILD ==========": "",
     "build": "pnpm run build:web",
     "build:web": "cd bank-statements-web && pnpm run build",
-
     "========== DOCKER ==========": "",
     "docker:up": "docker-compose up",
     "docker:down": "docker-compose down",
     "docker:build": "docker-compose build",
-
     "========== INSTALL ==========": "",
     "install": "pnpm install:web && pnpm install:e2e && pnpm install:api",
     "install:web": "cd bank-statements-web && pnpm install",
     "install:e2e": "cd e2e/bank-statements-web && pnpm install",
     "install:api": "cd bank-statements-api && uv sync",
-
     "========== DEPLOY ==========": "",
     "deploy:api:build": "cd bank-statements-api && pip install uv && uv sync",
     "deploy:api:start": "cd bank-statements-api && uv run alembic upgrade head && uv run uvicorn app.main:app --host 0.0.0.0 --port $PORT",
@@ -78,15 +73,17 @@
     "deploy:setup": "pnpm deploy:setup:github && pnpm deploy:setup:render",
     "deploy:setup:github": "cd bank-statements-api && uv run python ../scripts/deploy/setup-github-secrets.py",
     "deploy:setup:render": "cd bank-statements-api && uv run python ../scripts/deploy/setup-render-env.py",
-
     "========== UTILITY ==========": "",
     "config:generate": "uvx --from pyyaml python scripts/dev/generate_env_files.py",
     "clean": "pnpm run clean:web && pnpm run clean:api",
     "clean:web": "cd bank-statements-web && rm -rf node_modules dist",
     "clean:api": "cd bank-statements-api && rm -rf __pycache__ .pytest_cache .coverage",
-    "reset": "pnpm run clean && pnpm run install"
+    "reset": "pnpm run clean && pnpm run install",
+    "prepare": "husky"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "husky": "^9.1.7"
+  },
   "engines": {
     "node": ">=18.0.0",
     "pnpm": ">=8.0.0"
