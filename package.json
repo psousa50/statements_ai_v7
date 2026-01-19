@@ -9,6 +9,7 @@
     "dev:api": "./bin/dev-api.sh",
     "dev:web": "./bin/web-run.sh run dev",
     "start": "pnpm run db:start && pnpm run dev",
+    "start:e2e": "E2E_TEST_MODE=true pnpm run start",
     "stop": "./bin/dev-stop.sh",
     "========== DATABASE ==========": "",
     "db:up": "docker-compose up db -d",

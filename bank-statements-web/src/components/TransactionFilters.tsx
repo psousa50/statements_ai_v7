@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react'
 import { Category, Account } from '../types/Transaction'
 import { CategorySelector } from './CategorySelector'
 import { DatePeriodNavigator } from './DatePeriodNavigator'
+import { FilterPreset } from '../api/FilterPresetClient'
 
 export type CategorizationFilter = 'all' | 'categorized' | 'uncategorized'
 
@@ -32,6 +33,12 @@ interface TransactionFiltersProps {
   onCategorizationFilterChange: (filter: CategorizationFilter) => void
   onTransactionTypeChange: (type: 'all' | 'debit' | 'credit') => void
   onClearFilters: () => void
+  filterPresets?: FilterPreset[]
+  filterPresetsLoading?: boolean
+  currentPresetName?: string
+  onSavePreset?: (name: string) => Promise<void>
+  onLoadPreset?: (preset: FilterPreset) => void
+  onDeletePreset?: (presetId: string) => Promise<void>
 }
 
 export const TransactionFilters = ({
@@ -61,11 +68,27 @@ export const TransactionFilters = ({
   onCategorizationFilterChange,
   onTransactionTypeChange,
   onClearFilters,
+  filterPresets = [],
+  filterPresetsLoading = false,
+  currentPresetName,
+  onSavePreset,
+  onLoadPreset,
+  onDeletePreset,
 }: TransactionFiltersProps) => {
   const [isCollapsed, setIsCollapsed] = useState(false)
+  const [showSaveModal, setShowSaveModal] = useState(false)
+  const [presetName, setPresetName] = useState('')
+  const [isSaving, setIsSaving] = useState(false)
+
+  const handleOpenSaveModal = useCallback(() => {
+    setPresetName(currentPresetName || '')
+    setShowSaveModal(true)
+  }, [currentPresetName])
+
+  const categoryIds = selectedCategoryIds ?? []
 
   const hasActiveFilters =
-    selectedCategoryIds.length > 0 ||
+    categoryIds.length > 0 ||
     minAmount !== undefined ||
     maxAmount !== undefined ||
     descriptionSearch ||
@@ -86,6 +109,31 @@ export const TransactionFilters = ({
     [minAmount, maxAmount, onAmountRangeChange]
   )
 
+  const handleSavePreset = useCallback(async () => {
+    if (!onSavePreset || !presetName.trim()) return
+    setIsSaving(true)
+    try {
+      await onSavePreset(presetName.trim())
+      setPresetName('')
+      setShowSaveModal(false)
+    } finally {
+      setIsSaving(false)
+    }
+  }, [onSavePreset, presetName])
+
+  const handleLoadPreset = useCallback(
+    (e: React.ChangeEvent<HTMLSelectElement>) => {
+      const presetId = e.target.value
+      if (!presetId || !onLoadPreset) return
+      const preset = filterPresets.find((p) => p.id === presetId)
+      if (preset) {
+        onLoadPreset(preset)
+      }
+      e.target.value = ''
+    },
+    [filterPresets, onLoadPreset]
+  )
+
   const handleHeaderClick = (e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest('.filter-header-actions')) {
       return
@@ -98,6 +146,42 @@ export const TransactionFilters = ({
       <div className="filter-header" onClick={handleHeaderClick}>
         <h3>Filters</h3>
         <div className="filter-header-actions">
+          {onLoadPreset && (
+            <div className="preset-dropdown-container">
+              <select
+                className="preset-dropdown"
+                onChange={handleLoadPreset}
+                disabled={filterPresetsLoading || filterPresets.length === 0}
+                value={filterPresets.find((p) => p.name === currentPresetName)?.id ?? ''}
+              >
+                <option value="" disabled>
+                  {filterPresetsLoading ? 'Loading...' : 'Load preset...'}
+                </option>
+                {filterPresets.map((preset) => (
+                  <option key={preset.id} value={preset.id}>
+                    {preset.name}
+                  </option>
+                ))}
+              </select>
+              {onDeletePreset && currentPresetName && (
+                <button
+                  className="preset-delete-button"
+                  onClick={() => {
+                    const preset = filterPresets.find((p) => p.name === currentPresetName)
+                    if (preset) onDeletePreset(preset.id)
+                  }}
+                  title="Delete current preset"
+                >
+                  🗑
+                </button>
+              )}
+            </div>
+          )}
+          {onSavePreset && hasActiveFilters && (
+            <button onClick={handleOpenSaveModal} className="save-preset-button">
+              Save
+            </button>
+          )}
           {hasActiveFilters && (
             <button onClick={onClearFilters} className="clear-all-button">
               Clear All
@@ -134,7 +218,7 @@ export const TransactionFilters = ({
               <label className="filter-label">Categories</label>
               <CategorySelector
                 categories={categories}
-                selectedCategoryIds={selectedCategoryIds}
+                selectedCategoryIds={categoryIds}
                 onCategoryChange={() => {}}
                 onCategoryIdsChange={onCategoryChange}
                 placeholder="Type to add categories..."
@@ -248,6 +332,37 @@ export const TransactionFilters = ({
             onChange={onDateRangeChange}
             defaultPeriodType="all"
           />
+        </div>
+      )}
+
+      {showSaveModal && (
+        <div className="save-preset-modal-overlay" onClick={() => setShowSaveModal(false)}>
+          <div className="save-preset-modal" onClick={(e) => e.stopPropagation()}>
+            <h4>Save Filter Preset</h4>
+            <input
+              type="text"
+              value={presetName}
+              onChange={(e) => setPresetName(e.target.value)}
+              placeholder="Preset name..."
+              className="preset-name-input"
+              autoFocus
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && presetName.trim()) {
+                  handleSavePreset()
+                } else if (e.key === 'Escape') {
+                  setShowSaveModal(false)
+                }
+              }}
+            />
+            <div className="save-preset-modal-actions">
+              <button onClick={() => setShowSaveModal(false)} className="cancel-button" disabled={isSaving}>
+                Cancel
+              </button>
+              <button onClick={handleSavePreset} className="save-button" disabled={!presetName.trim() || isSaving}>
+                {isSaving ? 'Saving...' : 'Save'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

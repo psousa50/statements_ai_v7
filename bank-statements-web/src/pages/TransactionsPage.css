@@ -244,6 +244,8 @@
   white-space: nowrap;
   min-width: auto;
   width: auto;
+  margin: 0;
+  height: 28px;
 }
 
 .transactions-page .clear-all-button:hover {
@@ -262,6 +264,7 @@
   justify-content: center;
   width: 28px;
   height: 28px;
+  margin: 0;
 }
 
 .transactions-page .collapse-toggle-button:hover {
@@ -1829,4 +1832,166 @@
     transform: translateX(0);
     opacity: 1;
   }
+}
+
+/* Filter Presets */
+.transactions-page .preset-dropdown-container {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.transactions-page .preset-dropdown {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-primary);
+  border-radius: 6px;
+  padding: 0.375rem 0.625rem;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+  min-width: 160px;
+  height: 28px;
+}
+
+.transactions-page .preset-dropdown:hover {
+  border-color: var(--border-secondary);
+}
+
+.transactions-page .preset-dropdown:focus {
+  outline: none;
+  border-color: #3b82f6;
+}
+
+.transactions-page .preset-dropdown:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.transactions-page .preset-delete-button {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-primary);
+  border-radius: 6px;
+  padding: 0;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+}
+
+.transactions-page .preset-delete-button:hover {
+  border-color: #ef4444;
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.transactions-page .save-preset-button {
+  background: #3b82f6;
+  color: #ffffff;
+  border: none;
+  padding: 0.375rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  white-space: nowrap;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  margin: 0;
+}
+
+.transactions-page .save-preset-button:hover {
+  background: #2563eb;
+}
+
+.transactions-page .save-preset-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.transactions-page .save-preset-modal {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-primary);
+  border-radius: 12px;
+  padding: 1.5rem;
+  width: 100%;
+  max-width: 400px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+
+.transactions-page .save-preset-modal h4 {
+  margin: 0 0 1rem 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.transactions-page .preset-name-input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid var(--border-primary);
+  border-radius: 8px;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  margin-bottom: 1rem;
+}
+
+.transactions-page .preset-name-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.transactions-page .save-preset-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.transactions-page .save-preset-modal-actions .cancel-button {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-primary);
+  color: var(--text-secondary);
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.transactions-page .save-preset-modal-actions .cancel-button:hover {
+  background: var(--bg-secondary);
+}
+
+.transactions-page .save-preset-modal-actions .save-button {
+  background: #3b82f6;
+  border: none;
+  color: #ffffff;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.transactions-page .save-preset-modal-actions .save-button:hover:not(:disabled) {
+  background: #2563eb;
+}
+
+.transactions-page .save-preset-modal-actions .save-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }

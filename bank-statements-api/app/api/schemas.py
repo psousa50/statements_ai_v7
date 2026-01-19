@@ -720,6 +720,43 @@ class SavedFilterResponse(BaseModel):
         )
 
 
+class FilterPresetData(BaseModel):
+    category_ids: Optional[List[UUID]] = None
+    account_id: Optional[UUID] = None
+    min_amount: Optional[Decimal] = None
+    max_amount: Optional[Decimal] = None
+    description_search: Optional[str] = None
+    start_date: Optional[str] = None
+    end_date: Optional[str] = None
+    exclude_transfers: Optional[bool] = None
+    categorization_filter: Optional[str] = None
+    transaction_type: Optional[str] = None
+    sort_field: Optional[str] = None
+    sort_direction: Optional[str] = None
+
+
+class FilterPresetCreate(BaseModel):
+    name: str = Field(..., min_length=1, max_length=100)
+    filter_data: FilterPresetData
+
+
+class FilterPresetResponse(BaseModel):
+    id: UUID
+    name: str
+    filter_data: FilterPresetData
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class FilterPresetListResponse(BaseModel):
+    presets: List[FilterPresetResponse]
+    total: int
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class AISuggestCategoriesRequest(BaseModel):
     rule_ids: Optional[List[UUID]] = None
     confidence_threshold: float = Field(default=0.8, ge=0.0, le=1.0)

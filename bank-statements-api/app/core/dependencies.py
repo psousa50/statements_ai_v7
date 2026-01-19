@@ -9,6 +9,7 @@ from app.adapters.repositories.background_job import SQLAlchemyBackgroundJobRepo
 from app.adapters.repositories.category import SQLAlchemyCategoryRepository
 from app.adapters.repositories.description_group import SQLAlchemyDescriptionGroupRepository
 from app.adapters.repositories.enhancement_rule import SQLAlchemyEnhancementRuleRepository
+from app.adapters.repositories.filter_preset import SQLAlchemyFilterPresetRepository
 from app.adapters.repositories.initial_balance import SQLAlchemyInitialBalanceRepository
 from app.adapters.repositories.saved_filter import SQLAlchemySavedFilterRepository
 from app.adapters.repositories.statement import SqlAlchemyStatementRepository
@@ -103,6 +104,7 @@ class InternalDependencies:
         recurring_expense_analyzer: RecurringExpenseAnalyzer,
         description_group_service: DescriptionGroupService,
         saved_filter_repository: SQLAlchemySavedFilterRepository,
+        filter_preset_repository: SQLAlchemyFilterPresetRepository,
         llm_rule_categorizer: LLMRuleCategorizer,
         llm_rule_counterparty: LLMRuleCounterparty,
         llm_category_generator: LLMCategoryGenerator,
@@ -126,6 +128,7 @@ class InternalDependencies:
         self.recurring_expense_analyzer = recurring_expense_analyzer
         self.description_group_service = description_group_service
         self.saved_filter_repository = saved_filter_repository
+        self.filter_preset_repository = filter_preset_repository
         self.llm_rule_categorizer = llm_rule_categorizer
         self.llm_rule_counterparty = llm_rule_counterparty
         self.llm_category_generator = llm_category_generator
@@ -149,6 +152,7 @@ def build_internal_dependencies(
     background_job_repo = SQLAlchemyBackgroundJobRepository(external.db)
     description_group_repo = SQLAlchemyDescriptionGroupRepository(external.db)
     saved_filter_repo = SQLAlchemySavedFilterRepository(external.db)
+    filter_preset_repo = SQLAlchemyFilterPresetRepository(external.db)
 
     file_type_detector = StatementFileTypeDetector()
     statement_parser = StatementParser()
@@ -246,6 +250,7 @@ def build_internal_dependencies(
         recurring_expense_analyzer=recurring_expense_analyzer,
         description_group_service=description_group_service,
         saved_filter_repository=saved_filter_repo,
+        filter_preset_repository=filter_preset_repo,
         llm_rule_categorizer=llm_rule_categorizer,
         llm_rule_counterparty=llm_rule_counterparty,
         llm_category_generator=llm_category_generator,

@@ -14,6 +14,7 @@ import { TransactionModal } from '../components/TransactionModal'
 import { Pagination } from '../components/Pagination'
 import { CategorizationStatus, TransactionCreate, Transaction } from '../types/Transaction'
 import { TransactionFilters as FilterType, transactionClient } from '../api/TransactionClient'
+import { filterPresetClient, FilterPreset, FilterPresetData } from '../api/FilterPresetClient'
 import { formatCurrency } from '../utils/format'
 import './TransactionsPage.css'
 
@@ -135,6 +136,9 @@ export const TransactionsPage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingTransaction, setEditingTransaction] = useState<Transaction | undefined>(undefined)
   const [isExporting, setIsExporting] = useState(false)
+  const [filterPresets, setFilterPresets] = useState<FilterPreset[]>([])
+  const [filterPresetsLoading, setFilterPresetsLoading] = useState(false)
+  const [currentPresetName, setCurrentPresetName] = useState<string | undefined>(undefined)
 
   const isRuleFiltering = !!filters.enhancement_rule_id
 
@@ -164,6 +168,21 @@ export const TransactionsPage = () => {
       include_running_balance: !!filters.account_id,
     })
   }, [fetchTransactions, filters])
+
+  useEffect(() => {
+    const fetchPresets = async () => {
+      setFilterPresetsLoading(true)
+      try {
+        const presets = await filterPresetClient.getAll()
+        setFilterPresets(presets)
+      } catch {
+        console.error('Failed to fetch filter presets')
+      } finally {
+        setFilterPresetsLoading(false)
+      }
+    }
+    fetchPresets()
+  }, [])
 
   // Debounced filter update for search, amount, and date inputs
   useEffect(() => {
@@ -216,8 +235,8 @@ export const TransactionsPage = () => {
     if (filters.description_search) params.set('description_search', filters.description_search)
     if (filters.category_ids?.length) params.set('category_ids', filters.category_ids.join(','))
     if (filters.account_id) params.set('account_id', filters.account_id)
-    if (filters.min_amount !== undefined) params.set('min_amount', filters.min_amount.toString())
-    if (filters.max_amount !== undefined) params.set('max_amount', filters.max_amount.toString())
+    if (filters.min_amount != null) params.set('min_amount', filters.min_amount.toString())
+    if (filters.max_amount != null) params.set('max_amount', filters.max_amount.toString())
     if (filters.start_date) params.set('start_date', filters.start_date)
     if (filters.end_date) params.set('end_date', filters.end_date)
     if (filters.status) params.set('status', filters.status)
@@ -413,8 +432,107 @@ export const TransactionsPage = () => {
     setLocalStartDate('')
     setLocalEndDate('')
     setCategorizationFilter('all')
+    setCurrentPresetName(undefined)
     fetchTransactions(clearedFilters)
   }, [filters.page_size, fetchTransactions])
+
+  const handleSavePreset = useCallback(
+    async (name: string) => {
+      const existingPreset = filterPresets.find((p) => p.name === name)
+      if (existingPreset) {
+        await filterPresetClient.delete(existingPreset.id)
+      }
+
+      const filterData: FilterPresetData = {}
+      if (filters.category_ids?.length) filterData.category_ids = filters.category_ids
+      if (filters.account_id) filterData.account_id = filters.account_id
+      if (localMinAmount !== undefined) filterData.min_amount = localMinAmount
+      if (localMaxAmount !== undefined) filterData.max_amount = localMaxAmount
+      if (localDescriptionSearch) filterData.description_search = localDescriptionSearch
+      if (localStartDate) filterData.start_date = localStartDate
+      if (localEndDate) filterData.end_date = localEndDate
+      if (filters.exclude_transfers !== undefined) filterData.exclude_transfers = filters.exclude_transfers
+      if (categorizationFilter !== 'all') filterData.categorization_filter = categorizationFilter
+      if (filters.transaction_type && filters.transaction_type !== 'all')
+        filterData.transaction_type = filters.transaction_type
+      if (filters.sort_field && filters.sort_field !== 'date')
+        filterData.sort_field = filters.sort_field as FilterPresetData['sort_field']
+      if (filters.sort_direction && filters.sort_direction !== 'desc')
+        filterData.sort_direction = filters.sort_direction
+
+      const preset = await filterPresetClient.create(name, filterData)
+      setFilterPresets((prev) => {
+        const filtered = prev.filter((p) => p.id !== existingPreset?.id)
+        return [...filtered, preset].sort((a, b) => a.name.localeCompare(b.name))
+      })
+      setCurrentPresetName(name)
+    },
+    [
+      filters.category_ids,
+      filters.account_id,
+      filters.exclude_transfers,
+      filters.transaction_type,
+      filters.sort_field,
+      filters.sort_direction,
+      localMinAmount,
+      localMaxAmount,
+      localDescriptionSearch,
+      localStartDate,
+      localEndDate,
+      categorizationFilter,
+      filterPresets,
+    ]
+  )
+
+  const handleLoadPreset = useCallback(
+    (preset: FilterPreset) => {
+      const data = preset.filter_data
+
+      setLocalDescriptionSearch(data.description_search || '')
+      setLocalMinAmount(data.min_amount ?? undefined)
+      setLocalMaxAmount(data.max_amount ?? undefined)
+      setLocalStartDate(data.start_date || '')
+      setLocalEndDate(data.end_date || '')
+      setCategorizationFilter(data.categorization_filter || 'all')
+      setCurrentPresetName(preset.name)
+
+      const newFilters: FilterType = {
+        page: 1,
+        page_size: filters.page_size,
+        category_ids: data.category_ids ?? undefined,
+        account_id: data.account_id ?? undefined,
+        min_amount: data.min_amount ?? undefined,
+        max_amount: data.max_amount ?? undefined,
+        description_search: data.description_search ?? undefined,
+        start_date: data.start_date ?? undefined,
+        end_date: data.end_date ?? undefined,
+        exclude_transfers: data.exclude_transfers ?? undefined,
+        status: data.categorization_filter === 'uncategorized' ? 'UNCATEGORIZED' : undefined,
+        exclude_uncategorized: data.categorization_filter === 'categorized' ? true : undefined,
+        transaction_type: data.transaction_type ?? undefined,
+        sort_field: data.sort_field ?? 'date',
+        sort_direction: data.sort_direction ?? 'desc',
+      }
+
+      setFilters(newFilters)
+      const convertedAmounts = convertAmountFiltersForApi(
+        data.min_amount ?? undefined,
+        data.max_amount ?? undefined,
+        data.transaction_type || 'all'
+      )
+      fetchTransactions({
+        ...newFilters,
+        ...convertedAmounts,
+        include_running_balance: !!data.account_id,
+      })
+    },
+    [filters.page_size, fetchTransactions]
+  )
+
+  const handleDeletePreset = useCallback(async (presetId: string) => {
+    await filterPresetClient.delete(presetId)
+    setFilterPresets((prev) => prev.filter((p) => p.id !== presetId))
+  }, [])
 
   const handleClearRuleFilter = useCallback(() => {
     const clearedFilters = {
@@ -606,7 +724,7 @@ export const TransactionsPage = () => {
             <TransactionFilters
               categories={categories || []}
               accounts={accounts || []}
-              selectedCategoryIds={filters.category_ids}
+              selectedCategoryIds={filters.category_ids ?? []}
               selectedAccountId={filters.account_id}
               minAmount={localMinAmount}
               maxAmount={localMaxAmount}
@@ -625,6 +743,12 @@ export const TransactionsPage = () => {
               onCategorizationFilterChange={handleCategorizationFilterChange}
               onTransactionTypeChange={handleTransactionTypeFilter}
               onClearFilters={handleClearFilters}
+              filterPresets={filterPresets}
+              filterPresetsLoading={filterPresetsLoading}
+              currentPresetName={currentPresetName}
+              onSavePreset={handleSavePreset}
+              onLoadPreset={handleLoadPreset}
+              onDeletePreset={handleDeletePreset}
             />
           </div>
         )}
