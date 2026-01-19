@@ -1,5 +1,3 @@
-/* Category Selector Styles - Enhanced for single and multiple selection */
-
 .category-selector {
   position: relative;
   width: 100%;
@@ -13,41 +11,47 @@
   row-gap: 6px;
   padding: 0.5rem 0.75rem;
   border: 1px solid var(--border-primary);
-  border-radius: 8px;
-  background: var(--bg-primary);
+  border-radius: var(--radius-md);
+  background: var(--bg-secondary);
   min-height: 38px;
   cursor: text;
   color: var(--text-primary);
+  transition: all var(--transition-base);
 }
 
-/* Fix double border when CategorySelector is inside a form-group */
+.category-selector-input-container:hover {
+  border-color: var(--border-secondary);
+  background: var(--bg-primary);
+}
+
 .form-group .category-selector-input-container {
-  border: 1px solid var(--border-secondary) !important;
-  border-radius: 6px !important;
-  padding: 10px 12px !important;
+  border: 1px solid var(--border-primary) !important;
+  border-radius: var(--radius-md) !important;
+  padding: 0.625rem 0.875rem !important;
   min-height: auto !important;
 }
 
 .form-group .category-selector-input-container:focus-within {
-  border-color: var(--text-accent) !important;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1) !important;
+  border-color: var(--accent-amber) !important;
+  box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.15) !important;
 }
 
 .category-selector-input-container:focus-within {
-  border-color: var(--accent-primary);
-  box-shadow: 0 0 0 2px var(--accent-primary-20);
+  border-color: var(--accent-amber);
+  box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.15);
+  background: var(--bg-primary);
 }
 
-/* Category tags for selection - Gradient colourful design */
 .category-selector .category-tag {
   display: inline-flex !important;
   align-items: center;
   gap: 4px;
   padding: 4px 10px !important;
-  background: #eff6ff;
-  color: #1e40af;
+  background: var(--bg-accent);
+  color: var(--text-accent);
   border-radius: var(--radius-full) !important;
-  font-size: 0.75rem !important;
+  font-family: var(--font-display);
+  font-size: 0.6875rem !important;
   font-weight: 600;
   white-space: nowrap;
   border: none !important;
@@ -56,6 +60,8 @@
   flex-shrink: 0;
   transition: all var(--transition-fast);
   cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
 }
 
 .category-selector .category-tag.category-tag-gradient {
@@ -96,13 +102,13 @@
   color: white !important;
 }
 
-/* Input field */
 .category-input {
   border: none;
   outline: none;
   background: transparent;
   flex: 1;
   min-width: 120px;
+  font-family: var(--font-body);
   font-size: 0.875rem;
   color: var(--text-primary) !important;
   padding: 0;
@@ -124,16 +130,15 @@
   color: var(--text-muted) !important;
 }
 
-/* Clear button */
 .category-clear-button {
   background: none;
   border: none;
-  color: var(--text-secondary);
+  color: var(--text-muted);
   font-size: 16px;
   cursor: pointer;
   padding: 0;
   margin: 0;
-  border-radius: 2px;
+  border-radius: var(--radius-sm);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -142,14 +147,14 @@
   flex-shrink: 0;
   line-height: 1;
   align-self: center;
+  transition: all var(--transition-fast);
 }
 
 .category-clear-button:hover {
   color: var(--text-primary);
-  background: var(--bg-secondary);
+  background: var(--bg-hover);
 }
 
-/* Suggestions dropdown */
 .category-suggestions {
   position: absolute;
   top: 100%;
@@ -157,11 +162,11 @@
   right: 0;
   z-index: 9999;
   background: var(--bg-primary);
-  border: 1px solid var(--border-primary);
+  border: 1px solid var(--glass-border);
   border-top: none;
-  border-bottom-left-radius: 4px;
-  border-bottom-right-radius: 4px;
-  box-shadow: 0 4px 6px var(--shadow-light);
+  border-bottom-left-radius: var(--radius-md);
+  border-bottom-right-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
   max-height: 200px;
   overflow-y: auto;
 }
@@ -169,14 +174,16 @@
 .category-suggestion {
   display: block;
   width: 100%;
-  padding: 0.5rem 0.75rem;
+  padding: 0.625rem 0.875rem;
   border: none;
   background: none;
   text-align: left;
+  font-family: var(--font-body);
   font-size: 0.875rem;
   color: var(--text-primary);
   cursor: pointer;
-  border-bottom: 1px solid var(--border-light);
+  border-bottom: 1px solid var(--glass-border);
+  transition: all var(--transition-fast);
 }
 
 .category-suggestion:hover {
@@ -188,40 +195,39 @@
 }
 
 .category-suggestion.category-create {
-  background: rgba(37, 99, 235, 0.05);
-  color: #2563eb;
-  font-weight: 500;
-  border-bottom: 1px solid rgba(37, 99, 235, 0.2);
+  background: rgba(251, 191, 36, 0.05);
+  color: var(--text-accent);
+  font-family: var(--font-display);
+  font-weight: 600;
+  border-bottom: 1px solid rgba(251, 191, 36, 0.2);
 }
 
 .category-suggestion.category-create:hover:not(:disabled) {
-  background: rgba(37, 99, 235, 0.1);
+  background: rgba(251, 191, 36, 0.1);
 }
 
 .category-suggestion.category-create:disabled {
-  opacity: 0.6;
+  opacity: 0.5;
   cursor: not-allowed;
 }
 
 .no-suggestions {
-  padding: 0.5rem 0.75rem;
-  color: var(--text-secondary);
+  padding: 0.625rem 0.875rem;
+  color: var(--text-muted);
   font-size: 0.875rem;
   text-align: center;
 }
 
-/* Multiple mode specific styles */
 .category-selector.multiple .category-input {
   min-width: 80px;
 }
 
-/* Default variant - compact styling for tables */
 .category-selector.variant-default .category-selector-input-container,
 .category-selector.single .category-selector-input-container {
   padding: 0.5rem !important;
   min-height: 32px !important;
   height: 32px !important;
-  border-radius: 6px !important;
+  border-radius: var(--radius-md) !important;
   align-items: center !important;
   flex-wrap: nowrap !important;
 }
@@ -238,32 +244,31 @@
   margin-left: auto;
 }
 
-/* Form variant - matches MUI styling with dark mode support */
 .category-selector.variant-form .category-selector-input-container {
-  border: 1px solid rgba(255, 255, 255, 0.23) !important;
-  border-radius: 4px !important;
-  padding: 4px 14px !important;
+  border: 1px solid var(--border-secondary) !important;
+  border-radius: var(--radius-md) !important;
+  padding: 0.5rem 0.875rem !important;
   min-height: 40px !important;
   height: 40px !important;
-  font-size: 14px !important;
-  background: transparent !important;
+  font-size: 0.875rem !important;
+  background: var(--bg-secondary) !important;
   color: var(--text-primary) !important;
-  transition: border-color 200ms cubic-bezier(0, 0, 0.2, 1) 0ms !important;
+  transition: all var(--transition-base) !important;
   box-sizing: border-box !important;
 }
 
 .category-selector.variant-form .category-selector-input-container:hover {
-  border-color: rgba(255, 255, 255, 1) !important;
+  border-color: var(--border-primary) !important;
+  background: var(--bg-primary) !important;
 }
 
 .category-selector.variant-form .category-selector-input-container:focus-within {
-  border-color: #90caf9 !important;
-  border-width: 2px !important;
-  box-shadow: none !important;
+  border-color: var(--accent-amber) !important;
+  box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.15) !important;
 }
 
 .category-selector.variant-form .category-selector-input-container .category-input {
-  font-size: 16px !important;
+  font-size: 0.9375rem !important;
   line-height: 1.5 !important;
   color: var(--text-primary) !important;
   background: transparent !important;
@@ -274,13 +279,10 @@
 }
 
 .category-selector.variant-form .category-suggestions {
-  border: 1px solid var(--border-secondary) !important;
+  border: 1px solid var(--glass-border) !important;
   border-top: none !important;
   background: var(--bg-primary) !important;
-  box-shadow:
-    0px 5px 5px -3px var(--shadow-light),
-    0px 8px 10px 1px var(--shadow-light),
-    0px 3px 14px 2px var(--shadow-light) !important;
+  box-shadow: var(--shadow-lg) !important;
 }
 
 .category-selector.variant-form .category-suggestion {
@@ -289,19 +291,18 @@
 }
 
 .category-selector.variant-form .category-suggestion:hover {
-  background: var(--bg-tertiary) !important;
+  background: var(--bg-hover) !important;
 }
 
-/* Filter variant - matches TransactionFilters styling */
 .category-selector.variant-filter .category-selector-input-container {
   border: 1px solid var(--border-primary) !important;
-  border-radius: 8px !important;
+  border-radius: var(--radius-md) !important;
   padding: 0.5rem 0.75rem !important;
   min-height: 38px !important;
   height: auto !important;
   box-sizing: border-box !important;
-  background: var(--bg-primary) !important;
-  transition: all 0.2s ease !important;
+  background: var(--bg-secondary) !important;
+  transition: all var(--transition-base) !important;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
   flex-wrap: wrap;
   row-gap: 6px;
@@ -309,13 +310,14 @@
 
 .category-selector.variant-filter .category-selector-input-container:hover {
   border-color: var(--border-secondary) !important;
+  background: var(--bg-primary) !important;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 .category-selector.variant-filter .category-selector-input-container:focus-within {
-  border-color: #3b82f6 !important;
+  border-color: var(--accent-amber) !important;
   box-shadow:
-    0 0 0 3px rgba(59, 130, 246, 0.1),
+    0 0 0 3px rgba(251, 191, 36, 0.15),
     0 1px 3px rgba(0, 0, 0, 0.1) !important;
   transform: translateY(-1px);
 }
@@ -332,13 +334,12 @@
 }
 
 .category-selector.variant-filter .category-suggestions {
-  border: 1px solid var(--border-secondary) !important;
+  border: 1px solid var(--glass-border) !important;
   border-top: none !important;
-  border-radius: 0 0 4px 4px !important;
-  box-shadow: 0 4px 6px var(--shadow-light) !important;
+  border-radius: 0 0 var(--radius-md) var(--radius-md) !important;
+  box-shadow: var(--shadow-lg) !important;
 }
 
-/* Force CSS variables to take precedence over page-specific styles */
 input.category-input,
 .category-selector .category-input,
 .category-selector-input-container .category-input,
@@ -355,7 +356,6 @@ input[class*='category-input']::placeholder,
   color: var(--text-muted) !important;
 }
 
-/* Additional dark mode specific overrides */
 [data-theme='dark'] .category-input,
 body.rs-theme-dark .category-input,
 .rs-theme-dark .category-input {
@@ -368,7 +368,6 @@ body.rs-theme-dark .category-input::placeholder,
   color: rgba(255, 255, 255, 0.6) !important;
 }
 
-/* Ultimate nuclear option - direct element targeting */
 .category-selector input {
   color: var(--text-primary) !important;
 }
@@ -377,7 +376,6 @@ body.rs-theme-dark .category-input::placeholder,
   color: var(--text-muted) !important;
 }
 
-/* MUI dialog specific overrides */
 .MuiDialog-root .category-input,
 .MuiDialogContent-root .category-input,
 [role='dialog'] .category-input,
@@ -395,7 +393,6 @@ body.rs-theme-dark .category-input::placeholder,
   color: var(--text-muted) !important;
 }
 
-/* Form variant specific - ensure CSS variables work */
 .category-selector.variant-form input.category-input,
 .category-selector.variant-form .category-selector-input-container .category-input {
   color: var(--text-primary) !important;
@@ -406,7 +403,6 @@ body.rs-theme-dark .category-input::placeholder,
   color: var(--text-muted) !important;
 }
 
-/* Filter variant specific - ensure CSS variables work */
 .category-selector.variant-filter input.category-input,
 .category-selector.variant-filter .category-selector-input-container .category-input {
   color: var(--text-primary) !important;
@@ -417,7 +413,6 @@ body.rs-theme-dark .category-input::placeholder,
   color: var(--text-muted) !important;
 }
 
-/* Maximum specificity fallback - use CSS variables */
 .modal-content .category-selector .category-input,
 .form-group .category-selector .category-input,
 div.category-selector div.category-selector-input-container input.category-input {
@@ -430,7 +425,6 @@ div.category-selector div.category-selector-input-container input.category-input
   color: var(--text-muted) !important;
 }
 
-/* Absolute final override for MUI dialogs - Maximum specificity */
 .MuiDialog-root
   .MuiDialogContent-root
   .category-selector.variant-form
@@ -448,7 +442,6 @@ div.category-selector div.category-selector-input-container input.category-input
   color: var(--text-muted) !important;
 }
 
-/* Dark mode specific override with maximum specificity */
 [data-theme='dark'] .MuiDialog-root .category-input,
 body.rs-theme-dark .MuiDialog-root .category-input,
 .rs-theme-dark .MuiDialog-root .category-input {

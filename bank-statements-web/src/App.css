@@ -2,31 +2,41 @@
   max-width: 1400px;
   margin: 0 auto;
   padding: 1.5rem;
-  font-family: inherit;
+  font-family: var(--font-body);
 }
 
 .transactions-page h1 {
+  font-family: var(--font-display);
   text-align: center;
   margin-bottom: 2rem;
   color: var(--text-primary);
-  background: linear-gradient(135deg, var(--text-primary) 0%, var(--text-secondary) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
 }
 
 .error-message {
-  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
-  color: #991b1b;
+  background: var(--negative-amount-bg);
+  color: var(--negative-amount);
   padding: 1rem 1.25rem;
   margin-bottom: 1rem;
-  border-radius: var(--radius-lg);
-  border: 1px solid #fca5a5;
-  box-shadow: var(--shadow-sm);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--negative-amount);
+  border-left: 3px solid var(--negative-amount);
   display: flex;
   align-items: center;
   gap: 0.75rem;
   font-weight: 500;
+  font-size: 0.875rem;
+  animation: fadeSlideIn 0.3s ease-out;
+}
+
+@keyframes fadeSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .transactions-container {
@@ -42,25 +52,42 @@
 }
 
 .transaction-form {
-  background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-tertiary) 100%);
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   padding: 1.75rem;
-  border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-md);
-  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--glass-border);
   transition: all var(--transition-base);
+  position: relative;
+}
+
+.transaction-form::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--accent-amber), transparent);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  opacity: 0.5;
 }
 
 .transaction-form:hover {
-  box-shadow: var(--shadow-lg);
-  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--border-secondary);
 }
 
 .transaction-form h2 {
+  font-family: var(--font-display);
   margin-top: 0;
   margin-bottom: 1.5rem;
   color: var(--text-primary);
   font-weight: 600;
-  font-size: 1.25rem;
+  font-size: 1.125rem;
+  letter-spacing: -0.01em;
 }
 
 .form-group {
@@ -70,10 +97,12 @@
 .form-group label {
   display: block;
   margin-bottom: 0.5rem;
+  font-family: var(--font-display);
   font-weight: 600;
-  color: var(--text-secondary);
-  font-size: 0.875rem;
-  letter-spacing: 0.025em;
+  color: var(--text-muted);
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
 }
 
 .form-group input {
@@ -81,62 +110,87 @@
   padding: 0.625rem 0.875rem;
   border: 1px solid var(--border-primary);
   border-radius: var(--radius-md);
+  font-family: var(--font-body);
   font-size: 0.875rem;
-  background-color: var(--bg-primary);
+  background-color: var(--bg-secondary);
   color: var(--text-primary);
   transition: all var(--transition-base);
 }
 
 .form-group input:focus {
-  border-color: var(--border-accent);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  border-color: var(--accent-amber);
+  box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.15);
   outline: none;
+  background-color: var(--bg-primary);
 }
 
 button {
+  font-family: var(--font-body);
   background-color: var(--button-primary);
-  color: var(--bg-primary);
+  color: var(--text-on-accent);
   border: none;
   padding: 0.75rem 1rem;
-  border-radius: 4px;
+  border-radius: var(--radius-md);
   cursor: pointer;
-  font-size: 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
   width: 100%;
   margin-top: 1rem;
-  transition: background-color 0.2s;
+  transition: all var(--transition-base);
 }
 
 button:hover {
   background-color: var(--button-primary-hover);
+  transform: translateY(-1px);
 }
 
 button:disabled {
   background-color: var(--button-secondary);
   cursor: not-allowed;
+  opacity: 0.5;
+  transform: none;
 }
 
 .transaction-table {
-  background-color: var(--bg-primary);
-  border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-md);
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
   padding: 0;
-  border: 1px solid var(--border-primary);
+  border: 1px solid var(--glass-border);
   overflow: visible;
   transition: all var(--transition-base);
+  position: relative;
+}
+
+.transaction-table::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--accent-amber), transparent);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  opacity: 0.4;
 }
 
 .transaction-table:hover {
-  box-shadow: var(--shadow-lg);
+  box-shadow: var(--shadow-md);
 }
 
 .transaction-table h2 {
+  font-family: var(--font-display);
   margin: 0;
   padding: 1.25rem 1.5rem;
-  color: var(--text-primary);
+  color: var(--text-secondary);
   font-weight: 600;
-  font-size: 1.25rem;
-  background: linear-gradient(135deg, var(--bg-tertiary) 0%, var(--bg-secondary) 100%);
-  border-bottom: 1px solid var(--border-primary);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  background: var(--gradient-surface, transparent);
+  border-bottom: 1px solid var(--glass-border);
 }
 
 table {
@@ -148,19 +202,20 @@ th,
 td {
   padding: 1rem 1.25rem;
   text-align: left;
-  border-bottom: 1px solid var(--border-primary);
+  border-bottom: 1px solid var(--glass-border);
   color: var(--text-primary);
   transition: background-color var(--transition-fast);
 }
 
 th {
-  background: linear-gradient(180deg, var(--bg-tertiary) 0%, var(--bg-secondary) 100%);
+  font-family: var(--font-display);
+  background: rgba(255, 255, 255, 0.02);
   font-weight: 600;
-  font-size: 0.75rem;
+  font-size: 0.6875rem;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--text-secondary);
-  border-bottom: 2px solid var(--border-secondary);
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--glass-border);
 }
 
 tr {
@@ -186,18 +241,23 @@ td.amount-column {
 }
 
 .positive {
+  font-family: var(--font-mono);
   color: var(--positive-amount);
-  font-weight: 600;
+  font-weight: 500;
+  letter-spacing: -0.02em;
 }
 
 .negative {
+  font-family: var(--font-mono);
   color: var(--negative-amount);
-  font-weight: 600;
+  font-weight: 500;
+  letter-spacing: -0.02em;
 }
 
 .loading,
 .no-data {
   text-align: center;
-  padding: 2rem;
+  padding: 3rem 2rem;
   color: var(--text-muted);
+  font-size: 0.9375rem;
 }

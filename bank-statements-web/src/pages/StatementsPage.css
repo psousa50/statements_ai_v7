@@ -1,7 +1,26 @@
 .statements-page {
-  padding: 2rem;
+  padding: 1.5rem 2rem;
   max-width: 1200px;
   margin: 0 auto;
+  min-height: 100vh;
+  position: relative;
+}
+
+.statements-page::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 300px;
+  background: radial-gradient(ellipse 80% 50% at 50% -20%, rgba(251, 191, 36, 0.08) 0%, transparent 100%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.statements-page > * {
+  position: relative;
+  z-index: 1;
 }
 
 .statements-header {
@@ -9,52 +28,105 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 2rem;
+  animation: fadeSlideIn 0.5s ease-out;
+}
+
+@keyframes fadeSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .statements-header h1 {
+  font-family: var(--font-display);
   margin: 0;
   font-size: 2rem;
+  font-weight: 700;
   color: var(--text-primary);
+  letter-spacing: -0.03em;
 }
 
 .statements-count {
+  font-family: var(--font-mono);
   color: var(--text-muted);
-  font-size: 0.9rem;
+  font-size: 0.8125rem;
   margin: 0;
+  letter-spacing: -0.01em;
 }
 
 .loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   text-align: center;
-  padding: 3rem;
+  padding: 4rem;
   color: var(--text-muted);
-  font-size: 1.1rem;
+  font-size: 0.9375rem;
+}
+
+.loading::after {
+  content: '';
+  width: 24px;
+  height: 24px;
+  margin-top: 1rem;
+  border: 2px solid var(--border-secondary);
+  border-top-color: var(--accent-amber);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
 .error-message {
   text-align: center;
-  padding: 3rem;
-  color: #d32f2f;
-  font-size: 1.1rem;
-  background-color: #ffebee;
-  border-radius: 8px;
-  border: 1px solid #ffcdd2;
+  padding: 2rem;
+  color: var(--negative-amount);
+  font-size: 0.9375rem;
+  background: var(--negative-amount-bg);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--negative-amount);
+  border-left: 3px solid var(--negative-amount);
 }
 
 .empty-state {
   text-align: center;
   padding: 4rem 2rem;
-  color: #666;
-  font-size: 1.1rem;
-  background-color: #f8f9fa;
-  border-radius: 8px;
-  border: 1px solid #e9ecef;
+  color: var(--text-muted);
+  font-size: 0.9375rem;
+  background: var(--glass-bg);
+  border-radius: var(--radius-lg);
+  border: 2px dashed var(--border-secondary);
 }
 
 .statements-table-container {
-  background: var(--bg-primary);
-  border-radius: 8px;
-  box-shadow: 0 2px 4px var(--shadow-light);
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
   overflow: hidden;
+  border: 1px solid var(--glass-border);
+  position: relative;
+  animation: fadeSlideIn 0.5s ease-out 0.1s both;
+}
+
+.statements-table-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--accent-amber), transparent);
+  opacity: 0.5;
 }
 
 .statements-table {
@@ -65,6 +137,18 @@
 .statements-table th,
 .statements-table td {
   text-align: left;
+  padding: 1rem;
+  border-bottom: 1px solid var(--glass-border);
+}
+
+.statements-table th {
+  font-family: var(--font-display);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+  background: rgba(255, 255, 255, 0.02);
 }
 
 .statements-table td:nth-child(4) {
@@ -74,11 +158,12 @@
 .statements-table th.sortable-header {
   cursor: pointer;
   user-select: none;
-  transition: background-color var(--transition-fast);
+  transition: all var(--transition-fast);
 }
 
 .statements-table th.sortable-header:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(251, 191, 36, 0.05);
+  color: var(--text-primary);
 }
 
 .statements-table th.sortable-header .header-content {
@@ -100,8 +185,31 @@
   color: var(--text-accent);
 }
 
+.statements-table tbody tr {
+  transition: background var(--transition-fast);
+  animation: tableRowSlideIn 0.4s ease-out backwards;
+}
+
+@keyframes tableRowSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.statements-table tbody tr:nth-child(1) { animation-delay: 0.05s; }
+.statements-table tbody tr:nth-child(2) { animation-delay: 0.08s; }
+.statements-table tbody tr:nth-child(3) { animation-delay: 0.11s; }
+.statements-table tbody tr:nth-child(4) { animation-delay: 0.14s; }
+.statements-table tbody tr:nth-child(5) { animation-delay: 0.17s; }
+.statements-table tbody tr:nth-child(n+6) { animation-delay: 0.2s; }
+
 .statements-table tbody tr:hover {
-  background-color: var(--bg-secondary);
+  background-color: var(--bg-hover);
 }
 
 .statements-table tbody tr:last-child td {
@@ -127,28 +235,33 @@
 
 .file-type-badge {
   display: inline-block;
-  padding: 0.25rem 0.5rem;
-  background-color: #e3f2fd;
-  color: #1976d2;
-  border-radius: 4px;
-  font-size: 0.75rem;
+  padding: 0.25rem 0.625rem;
+  background: var(--bg-accent);
+  color: var(--text-accent);
+  border-radius: var(--radius-full);
+  font-family: var(--font-display);
+  font-size: 0.625rem;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.05em;
 }
 
 .transaction-count {
+  font-family: var(--font-mono);
   font-weight: 600;
-  color: #2e7d32;
+  color: var(--positive-amount);
   text-align: right;
+  letter-spacing: -0.02em;
 }
 
 .date-range {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  font-size: 0.9rem;
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
   color: var(--text-muted);
+  letter-spacing: -0.01em;
 }
 
 .date-separator {
@@ -157,8 +270,10 @@
 }
 
 .upload-date {
-  font-size: 0.9rem;
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
   color: var(--text-muted);
+  letter-spacing: -0.01em;
 }
 
 .actions {
@@ -167,7 +282,6 @@
   align-items: center;
 }
 
-/* Responsive design */
 @media (max-width: 768px) {
   .statements-page {
     padding: 1rem;

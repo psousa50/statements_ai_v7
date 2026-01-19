@@ -3,61 +3,127 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-primary) 100%);
+  background: var(--bg-primary);
   padding: 1rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.login-page::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(ellipse at center, rgba(251, 191, 36, 0.08) 0%, transparent 50%);
+  animation: loginGlow 15s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes loginGlow {
+  0%, 100% {
+    transform: translate(0, 0);
+  }
+  50% {
+    transform: translate(5%, 5%);
+  }
 }
 
 .login-card {
-  background: var(--bg-primary);
-  border: 1px solid var(--border-primary);
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-xl);
-  padding: 3rem;
-  max-width: 400px;
+  padding: 3.5rem;
+  max-width: 420px;
   width: 100%;
   text-align: center;
+  position: relative;
+  animation: loginCardSlideUp 0.6s ease-out;
+}
+
+@keyframes loginCardSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.login-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--accent-amber), var(--accent-gold), var(--accent-amber), transparent);
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
 }
 
 .login-icon {
-  width: 100px;
-  height: 100px;
-  margin: 0 auto 1.5rem;
+  width: 88px;
+  height: 88px;
+  margin: 0 auto 2rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 100%);
-  border-radius: var(--radius-xl);
-  color: white;
+  background: var(--gradient-accent, linear-gradient(135deg, #fbbf24 0%, #f59e0b 50%, #d97706 100%));
+  border-radius: var(--radius-lg);
+  color: var(--bg-primary);
+  box-shadow: 0 8px 32px rgba(251, 191, 36, 0.3);
+  animation: loginIconPulse 3s ease-in-out infinite;
+}
+
+@keyframes loginIconPulse {
+  0%, 100% {
+    box-shadow: 0 8px 32px rgba(251, 191, 36, 0.3);
+  }
+  50% {
+    box-shadow: 0 8px 40px rgba(251, 191, 36, 0.5);
+  }
 }
 
 .login-title {
+  font-family: var(--font-display);
   color: var(--text-primary);
   font-weight: 700;
+  font-size: 1.75rem;
   margin-bottom: 0.5rem;
+  letter-spacing: -0.03em;
 }
 
 .login-subtitle {
   color: var(--text-muted);
   margin-bottom: 0;
+  font-size: 0.9375rem;
 }
 
 .google-button {
-  background: var(--bg-primary) !important;
+  background: var(--bg-secondary) !important;
   color: var(--text-primary) !important;
   border: 1px solid var(--border-secondary) !important;
   text-transform: none !important;
-  font-size: 1rem !important;
+  font-family: var(--font-body) !important;
+  font-size: 0.9375rem !important;
   font-weight: 500 !important;
   padding: 0.875rem 1.5rem !important;
   border-radius: var(--radius-md) !important;
   transition: all var(--transition-base) !important;
-  margin-top: 2rem !important;
+  margin-top: 2.5rem !important;
 }
 
 .google-button:hover {
   background: var(--bg-hover) !important;
-  border-color: var(--border-accent) !important;
+  border-color: var(--accent-amber) !important;
   box-shadow: var(--shadow-md) !important;
+  transform: translateY(-2px) !important;
 }
 
 .google-button .MuiButton-startIcon {
@@ -66,15 +132,19 @@
 
 @media (max-width: 480px) {
   .login-card {
-    padding: 2rem 1.5rem;
+    padding: 2.5rem 2rem;
   }
 
   .login-icon {
-    width: 64px;
-    height: 64px;
+    width: 72px;
+    height: 72px;
   }
 
   .login-icon svg {
     font-size: 36px !important;
+  }
+
+  .login-title {
+    font-size: 1.5rem;
   }
 }

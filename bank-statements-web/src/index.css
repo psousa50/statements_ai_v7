@@ -1,28 +1,29 @@
 :root {
-  font-family:
-    -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', 'SF Pro Display', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell',
-    sans-serif;
+  --font-display: 'Sora', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-body: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;
+
+  font-family: var(--font-body);
   line-height: 1.6;
   font-weight: 400;
   color-scheme: light dark;
 
-  /* Enhanced Light theme variables */
   --bg-primary: #ffffff;
   --bg-secondary: #f8fafc;
   --bg-tertiary: #f1f5f9;
-  --bg-accent: #eff6ff;
+  --bg-accent: #fef3c7;
   --bg-hover: #f9fafb;
   --bg-elevated: #ffffff;
 
   --text-primary: #0f172a;
   --text-secondary: #475569;
   --text-muted: #64748b;
-  --text-accent: #2563eb;
+  --text-accent: #b45309;
   --text-on-accent: #ffffff;
 
   --border-primary: #e2e8f0;
   --border-secondary: #cbd5e1;
-  --border-accent: #3b82f6;
+  --border-accent: #d97706;
 
   --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
@@ -30,37 +31,39 @@
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
   --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
 
-  --button-primary: #3b82f6;
-  --button-primary-hover: #2563eb;
-  --button-primary-active: #1d4ed8;
+  --button-primary: #b45309;
+  --button-primary-hover: #92400e;
+  --button-primary-active: #78350f;
   --button-secondary: #64748b;
   --button-secondary-hover: #475569;
-  --button-danger: #ef4444;
-  --button-danger-hover: #dc2626;
-  --button-success: #10b981;
-  --button-success-hover: #059669;
+  --button-danger: #be123c;
+  --button-danger-hover: #9f1239;
+  --button-success: #047857;
+  --button-success-hover: #065f46;
 
-  --positive-amount: #059669;
+  --positive-amount: #047857;
   --positive-amount-bg: #d1fae5;
-  --negative-amount: #dc2626;
-  --negative-amount-bg: #fee2e2;
+  --negative-amount: #be123c;
+  --negative-amount-bg: #ffe4e6;
 
-  --accent-blue: #3b82f6;
-  --accent-purple: #8b5cf6;
-  --accent-green: #10b981;
-  --accent-orange: #f59e0b;
-  --accent-pink: #ec4899;
-  --accent-cyan: #06b6d4;
-  --accent-rose: #f43f5e;
+  --accent-amber: #d97706;
+  --accent-gold: #b45309;
+  --accent-blue: #0369a1;
+  --accent-purple: #7c3aed;
+  --accent-green: #047857;
+  --accent-orange: #ea580c;
+  --accent-pink: #be185d;
+  --accent-cyan: #0891b2;
+  --accent-rose: #be123c;
 
   --glass-bg: var(--bg-primary);
   --glass-bg-light: var(--bg-tertiary);
   --glass-border: var(--border-primary);
   --glass-shadow: var(--shadow-md);
 
-  --icon-primary: #3b82f6;
-  --icon-success: #10b981;
-  --icon-error: #dc2626;
+  --icon-primary: #b45309;
+  --icon-success: #047857;
+  --icon-error: #be123c;
   --icon-muted: #64748b;
 
   --radius-sm: 6px;
@@ -72,6 +75,7 @@
   --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
   --transition-base: 200ms cubic-bezier(0.4, 0, 0.2, 1);
   --transition-slow: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-spring: 500ms cubic-bezier(0.34, 1.56, 0.64, 1);
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -80,65 +84,71 @@
   -webkit-text-size-adjust: 100%;
 }
 
-/* Enhanced Dark theme variables - Glassmorphism */
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg-primary: #0f172a;
-    --bg-secondary: #1e293b;
-    --bg-tertiary: #334155;
-    --bg-accent: rgba(59, 130, 246, 0.15);
-    --bg-hover: rgba(255, 255, 255, 0.05);
-    --bg-elevated: rgba(30, 41, 59, 0.8);
+    --bg-primary: #0c0f14;
+    --bg-secondary: #151921;
+    --bg-tertiary: #1e242e;
+    --bg-accent: rgba(251, 191, 36, 0.12);
+    --bg-hover: rgba(255, 255, 255, 0.04);
+    --bg-elevated: rgba(21, 25, 33, 0.95);
 
-    --glass-bg: rgba(30, 41, 59, 0.6);
-    --glass-bg-light: rgba(51, 65, 85, 0.4);
-    --glass-border: rgba(255, 255, 255, 0.1);
-    --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    --glass-bg: rgba(21, 25, 33, 0.7);
+    --glass-bg-light: rgba(30, 36, 46, 0.5);
+    --glass-border: rgba(255, 255, 255, 0.06);
+    --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
 
-    --text-primary: #f1f5f9;
-    --text-secondary: #cbd5e1;
-    --text-muted: #94a3b8;
-    --text-accent: #60a5fa;
-    --text-on-accent: #ffffff;
+    --text-primary: #f8fafc;
+    --text-secondary: #94a3b8;
+    --text-muted: #64748b;
+    --text-accent: #fbbf24;
+    --text-on-accent: #0c0f14;
 
-    --border-primary: rgba(255, 255, 255, 0.08);
-    --border-secondary: rgba(255, 255, 255, 0.12);
-    --border-accent: #3b82f6;
+    --border-primary: rgba(255, 255, 255, 0.06);
+    --border-secondary: rgba(255, 255, 255, 0.1);
+    --border-accent: #fbbf24;
 
-    --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.3);
-    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
-    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4);
-    --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.5);
-    --shadow-xl: 0 20px 40px rgba(0, 0, 0, 0.6);
-    --shadow-glow: 0 0 20px rgba(59, 130, 246, 0.2);
+    --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.4);
+    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.5);
+    --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.6);
+    --shadow-xl: 0 20px 40px rgba(0, 0, 0, 0.7);
+    --shadow-glow: 0 0 24px rgba(251, 191, 36, 0.15);
+    --shadow-glow-positive: 0 0 16px rgba(52, 211, 153, 0.2);
+    --shadow-glow-negative: 0 0 16px rgba(251, 113, 133, 0.2);
 
-    --button-primary: #3b82f6;
-    --button-primary-hover: #60a5fa;
-    --button-primary-active: #2563eb;
-    --button-secondary: #64748b;
-    --button-secondary-hover: #94a3b8;
-    --button-danger: #ef4444;
-    --button-danger-hover: #f87171;
-    --button-success: #10b981;
-    --button-success-hover: #34d399;
+    --button-primary: #fbbf24;
+    --button-primary-hover: #fcd34d;
+    --button-primary-active: #f59e0b;
+    --button-secondary: #475569;
+    --button-secondary-hover: #64748b;
+    --button-danger: #fb7185;
+    --button-danger-hover: #fda4af;
+    --button-success: #34d399;
+    --button-success-hover: #6ee7b7;
 
     --positive-amount: #34d399;
-    --positive-amount-bg: rgba(16, 185, 129, 0.15);
-    --negative-amount: #f87171;
-    --negative-amount-bg: rgba(239, 68, 68, 0.15);
+    --positive-amount-bg: rgba(52, 211, 153, 0.12);
+    --negative-amount: #fb7185;
+    --negative-amount-bg: rgba(251, 113, 133, 0.12);
 
-    --accent-blue: #60a5fa;
+    --accent-amber: #fbbf24;
+    --accent-gold: #f59e0b;
+    --accent-blue: #38bdf8;
     --accent-purple: #a78bfa;
     --accent-green: #34d399;
-    --accent-orange: #fbbf24;
+    --accent-orange: #fb923c;
     --accent-pink: #f472b6;
     --accent-cyan: #22d3ee;
     --accent-rose: #fb7185;
 
-    --icon-primary: #60a5fa;
+    --icon-primary: #fbbf24;
     --icon-success: #34d399;
-    --icon-error: #f87171;
-    --icon-muted: #94a3b8;
+    --icon-error: #fb7185;
+    --icon-muted: #64748b;
+
+    --gradient-accent: linear-gradient(135deg, #fbbf24 0%, #f59e0b 50%, #d97706 100%);
+    --gradient-surface: linear-gradient(180deg, rgba(255, 255, 255, 0.03) 0%, transparent 100%);
   }
 }
 
@@ -201,13 +211,17 @@ button:focus-visible {
 }
 
 .positive {
+  font-family: var(--font-mono);
   color: var(--positive-amount);
-  font-weight: 600;
+  font-weight: 500;
+  letter-spacing: -0.02em;
 }
 
 .negative {
+  font-family: var(--font-mono);
   color: var(--negative-amount);
-  font-weight: 600;
+  font-weight: 500;
+  letter-spacing: -0.02em;
 }
 
 th,
@@ -237,25 +251,29 @@ tr:hover {
 }
 
 h1 {
+  font-family: var(--font-display);
   font-size: 2rem;
   line-height: 1.2;
   font-weight: 700;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.03em;
   color: var(--text-primary);
 }
 
 h2 {
+  font-family: var(--font-display);
   font-size: 1.5rem;
   line-height: 1.3;
   font-weight: 600;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.02em;
   color: var(--text-primary);
 }
 
 h3 {
+  font-family: var(--font-display);
   font-size: 1.25rem;
   line-height: 1.4;
   font-weight: 600;
+  letter-spacing: -0.01em;
   color: var(--text-primary);
 }
 
@@ -641,4 +659,176 @@ select:disabled {
 .glass-input:focus {
   background: rgba(255, 255, 255, 0.08) !important;
   border-color: var(--border-accent) !important;
+}
+
+/* Global MUI Button Overrides - Amber Theme */
+.MuiButton-root {
+  font-family: var(--font-display) !important;
+  font-weight: 600 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.03em !important;
+  border-radius: var(--radius-md) !important;
+  transition: all var(--transition-base) !important;
+}
+
+.MuiButton-contained {
+  background: var(--gradient-accent, var(--button-primary)) !important;
+  color: var(--text-on-accent) !important;
+  box-shadow: none !important;
+}
+
+.MuiButton-contained:hover {
+  background: var(--gradient-accent, var(--button-primary-hover)) !important;
+  box-shadow: 0 4px 16px rgba(251, 191, 36, 0.3) !important;
+  transform: translateY(-1px);
+}
+
+.MuiButton-contained.Mui-disabled {
+  background: var(--button-secondary) !important;
+  color: var(--text-muted) !important;
+  opacity: 0.6 !important;
+}
+
+.MuiButton-outlined {
+  border-color: var(--border-primary) !important;
+  color: var(--text-secondary) !important;
+  background: transparent !important;
+}
+
+.MuiButton-outlined:hover {
+  border-color: var(--accent-amber) !important;
+  color: var(--text-accent) !important;
+  background: var(--bg-hover) !important;
+}
+
+.MuiButton-outlined .MuiSvgIcon-root {
+  color: var(--text-muted) !important;
+  transition: color var(--transition-base) !important;
+}
+
+.MuiButton-outlined:hover .MuiSvgIcon-root {
+  color: var(--text-accent) !important;
+}
+
+.MuiButton-text {
+  color: var(--text-secondary) !important;
+}
+
+.MuiButton-text:hover {
+  color: var(--text-accent) !important;
+  background: var(--bg-hover) !important;
+}
+
+/* MUI ToggleButton Overrides */
+.MuiToggleButton-root {
+  border-color: var(--border-primary) !important;
+  color: var(--text-secondary) !important;
+  font-family: var(--font-display) !important;
+  font-weight: 600 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.03em !important;
+  transition: all var(--transition-base) !important;
+}
+
+.MuiToggleButton-root:hover {
+  background: var(--bg-hover) !important;
+  border-color: var(--border-secondary) !important;
+}
+
+.MuiToggleButton-root.Mui-selected {
+  background: var(--gradient-accent, var(--button-primary)) !important;
+  color: var(--text-on-accent) !important;
+  border-color: var(--accent-amber) !important;
+}
+
+.MuiToggleButton-root.Mui-selected:hover {
+  background: var(--gradient-accent, var(--button-primary-hover)) !important;
+}
+
+/* MUI Checkbox Overrides */
+.MuiCheckbox-root {
+  color: var(--text-muted) !important;
+}
+
+.MuiCheckbox-root.Mui-checked {
+  color: var(--accent-amber) !important;
+}
+
+/* MUI Select Overrides */
+.MuiSelect-select {
+  font-family: var(--font-body) !important;
+}
+
+.MuiOutlinedInput-notchedOutline {
+  border-color: var(--border-primary) !important;
+}
+
+.MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline {
+  border-color: var(--border-secondary) !important;
+}
+
+.MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
+  border-color: var(--accent-amber) !important;
+  border-width: 2px !important;
+}
+
+/* MUI Chip Overrides */
+.MuiChip-root {
+  font-family: var(--font-display) !important;
+  font-weight: 600 !important;
+}
+
+.MuiChip-colorPrimary {
+  background: var(--bg-accent) !important;
+  color: var(--text-accent) !important;
+}
+
+/* MUI Pagination Overrides */
+.MuiPaginationItem-root {
+  font-family: var(--font-mono) !important;
+  color: var(--text-secondary) !important;
+  border-color: var(--border-primary) !important;
+}
+
+.MuiPaginationItem-root:hover {
+  background: var(--bg-hover) !important;
+  border-color: var(--accent-amber) !important;
+  color: var(--text-accent) !important;
+}
+
+.MuiPaginationItem-root.Mui-selected {
+  background: var(--gradient-accent, var(--button-primary)) !important;
+  color: var(--text-on-accent) !important;
+  border-color: var(--accent-amber) !important;
+}
+
+/* MUI Dialog Overrides */
+.MuiDialog-paper {
+  background: var(--bg-primary) !important;
+  border: 1px solid var(--glass-border) !important;
+  border-radius: var(--radius-lg) !important;
+}
+
+.MuiDialogTitle-root {
+  font-family: var(--font-display) !important;
+  color: var(--text-primary) !important;
+}
+
+.MuiDialogContent-root {
+  color: var(--text-secondary) !important;
+}
+
+/* MUI TextField Overrides */
+.MuiTextField-root .MuiInputLabel-root {
+  font-family: var(--font-display) !important;
+  color: var(--text-muted) !important;
+}
+
+.MuiTextField-root .MuiInputLabel-root.Mui-focused {
+  color: var(--accent-amber) !important;
+}
+
+.MuiTextField-root .MuiInputBase-input {
+  font-family: var(--font-body) !important;
+  color: var(--text-primary) !important;
 }

@@ -30,7 +30,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       root.style.setProperty('--bg-primary', '#0f172a')
       root.style.setProperty('--bg-secondary', '#1e293b')
       root.style.setProperty('--bg-tertiary', '#334155')
-      root.style.setProperty('--bg-accent', 'rgba(59, 130, 246, 0.15)')
+      root.style.setProperty('--bg-accent', 'rgba(251, 191, 36, 0.15)')
       root.style.setProperty('--bg-hover', 'rgba(255, 255, 255, 0.05)')
       root.style.setProperty('--bg-elevated', 'rgba(30, 41, 59, 0.8)')
 
@@ -42,13 +42,13 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       root.style.setProperty('--text-primary', '#f1f5f9')
       root.style.setProperty('--text-secondary', '#cbd5e1')
       root.style.setProperty('--text-muted', '#94a3b8')
-      root.style.setProperty('--text-accent', '#60a5fa')
+      root.style.setProperty('--text-accent', '#fbbf24')
 
       root.style.setProperty('--border-primary', 'rgba(255, 255, 255, 0.08)')
       root.style.setProperty('--border-secondary', 'rgba(255, 255, 255, 0.12)')
 
-      root.style.setProperty('--button-primary', '#3b82f6')
-      root.style.setProperty('--button-primary-hover', '#60a5fa')
+      root.style.setProperty('--button-primary', '#fbbf24')
+      root.style.setProperty('--button-primary-hover', '#fcd34d')
       root.style.setProperty('--button-secondary', '#64748b')
 
       root.style.setProperty('--positive-amount', '#34d399')
@@ -62,7 +62,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       root.style.setProperty('--bg-primary', '#ffffff')
       root.style.setProperty('--bg-secondary', '#f8fafc')
       root.style.setProperty('--bg-tertiary', '#f1f5f9')
-      root.style.setProperty('--bg-accent', '#eff6ff')
+      root.style.setProperty('--bg-accent', 'rgba(251, 191, 36, 0.1)')
       root.style.setProperty('--bg-hover', '#f9fafb')
       root.style.setProperty('--bg-elevated', '#ffffff')
 
@@ -74,13 +74,13 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       root.style.setProperty('--text-primary', '#0f172a')
       root.style.setProperty('--text-secondary', '#475569')
       root.style.setProperty('--text-muted', '#64748b')
-      root.style.setProperty('--text-accent', '#2563eb')
+      root.style.setProperty('--text-accent', '#b45309')
 
       root.style.setProperty('--border-primary', '#e2e8f0')
       root.style.setProperty('--border-secondary', '#cbd5e1')
 
-      root.style.setProperty('--button-primary', '#3b82f6')
-      root.style.setProperty('--button-primary-hover', '#2563eb')
+      root.style.setProperty('--button-primary', '#b45309')
+      root.style.setProperty('--button-primary-hover', '#92400e')
       root.style.setProperty('--button-secondary', '#64748b')
 
       root.style.setProperty('--positive-amount', '#059669')
@@ -96,7 +96,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         palette: {
           mode: resolvedMode,
           primary: {
-            main: '#3b82f6',
+            main: resolvedMode === 'dark' ? '#fbbf24' : '#b45309',
           },
           background: {
             default: resolvedMode === 'dark' ? '#0f172a' : '#f8fafc',
@@ -129,9 +129,9 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                 borderRadius: 8,
                 margin: '2px 8px',
                 '&.Mui-selected': {
-                  backgroundColor: resolvedMode === 'dark' ? 'rgba(59, 130, 246, 0.15)' : 'rgba(59, 130, 246, 0.1)',
+                  backgroundColor: resolvedMode === 'dark' ? 'rgba(251, 191, 36, 0.15)' : 'rgba(251, 191, 36, 0.1)',
                   '&:hover': {
-                    backgroundColor: resolvedMode === 'dark' ? 'rgba(59, 130, 246, 0.2)' : 'rgba(59, 130, 246, 0.15)',
+                    backgroundColor: resolvedMode === 'dark' ? 'rgba(251, 191, 36, 0.2)' : 'rgba(251, 191, 36, 0.15)',
                   },
                 },
                 '&:hover': {
