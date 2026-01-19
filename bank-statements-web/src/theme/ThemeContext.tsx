@@ -13,9 +13,25 @@ interface ThemeContextValue {
 
 const ThemeContext = createContext<ThemeContextValue | null>(null)
 
+const THEME_STORAGE_KEY = 'theme-mode'
+
+const getStoredTheme = (): ThemeMode => {
+  if (typeof window === 'undefined') return 'system'
+  const stored = localStorage.getItem(THEME_STORAGE_KEY)
+  if (stored === 'light' || stored === 'dark' || stored === 'system') {
+    return stored
+  }
+  return 'system'
+}
+
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const systemPrefersDarkMode = useMediaQuery('(prefers-color-scheme: dark)')
-  const [mode, setMode] = useState<ThemeMode>('system')
+  const [mode, setModeState] = useState<ThemeMode>(getStoredTheme)
+
+  const setMode = (newMode: ThemeMode) => {
+    setModeState(newMode)
+    localStorage.setItem(THEME_STORAGE_KEY, newMode)
+  }
 
   const resolvedMode = mode === 'system' ? (systemPrefersDarkMode ? 'dark' : 'light') : mode
 
@@ -23,70 +39,14 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const root = document.documentElement
     const body = document.body
 
+    root.setAttribute('data-theme', resolvedMode)
+
     if (resolvedMode === 'dark') {
       body.classList.add('rs-theme-dark')
       body.classList.remove('rs-theme-light')
-
-      root.style.setProperty('--bg-primary', '#0f172a')
-      root.style.setProperty('--bg-secondary', '#1e293b')
-      root.style.setProperty('--bg-tertiary', '#334155')
-      root.style.setProperty('--bg-accent', 'rgba(251, 191, 36, 0.15)')
-      root.style.setProperty('--bg-hover', 'rgba(255, 255, 255, 0.05)')
-      root.style.setProperty('--bg-elevated', 'rgba(30, 41, 59, 0.8)')
-
-      root.style.setProperty('--glass-bg', 'rgba(30, 41, 59, 0.6)')
-      root.style.setProperty('--glass-bg-light', 'rgba(51, 65, 85, 0.4)')
-      root.style.setProperty('--glass-border', 'rgba(255, 255, 255, 0.1)')
-      root.style.setProperty('--glass-shadow', '0 8px 32px rgba(0, 0, 0, 0.3)')
-
-      root.style.setProperty('--text-primary', '#f1f5f9')
-      root.style.setProperty('--text-secondary', '#cbd5e1')
-      root.style.setProperty('--text-muted', '#94a3b8')
-      root.style.setProperty('--text-accent', '#fbbf24')
-
-      root.style.setProperty('--border-primary', 'rgba(255, 255, 255, 0.08)')
-      root.style.setProperty('--border-secondary', 'rgba(255, 255, 255, 0.12)')
-
-      root.style.setProperty('--button-primary', '#fbbf24')
-      root.style.setProperty('--button-primary-hover', '#fcd34d')
-      root.style.setProperty('--button-secondary', '#64748b')
-
-      root.style.setProperty('--positive-amount', '#34d399')
-      root.style.setProperty('--negative-amount', '#f87171')
-      root.style.setProperty('--positive-amount-bg', 'rgba(16, 185, 129, 0.15)')
-      root.style.setProperty('--negative-amount-bg', 'rgba(239, 68, 68, 0.15)')
     } else {
       body.classList.add('rs-theme-light')
       body.classList.remove('rs-theme-dark')
-
-      root.style.setProperty('--bg-primary', '#ffffff')
-      root.style.setProperty('--bg-secondary', '#f8fafc')
-      root.style.setProperty('--bg-tertiary', '#f1f5f9')
-      root.style.setProperty('--bg-accent', 'rgba(251, 191, 36, 0.1)')
-      root.style.setProperty('--bg-hover', '#f9fafb')
-      root.style.setProperty('--bg-elevated', '#ffffff')
-
-      root.style.setProperty('--glass-bg', '#ffffff')
-      root.style.setProperty('--glass-bg-light', '#f1f5f9')
-      root.style.setProperty('--glass-border', '#e2e8f0')
-      root.style.setProperty('--glass-shadow', '0 4px 6px -1px rgba(0, 0, 0, 0.1)')
-
-      root.style.setProperty('--text-primary', '#0f172a')
-      root.style.setProperty('--text-secondary', '#475569')
-      root.style.setProperty('--text-muted', '#64748b')
-      root.style.setProperty('--text-accent', '#b45309')
-
-      root.style.setProperty('--border-primary', '#e2e8f0')
-      root.style.setProperty('--border-secondary', '#cbd5e1')
-
-      root.style.setProperty('--button-primary', '#b45309')
-      root.style.setProperty('--button-primary-hover', '#92400e')
-      root.style.setProperty('--button-secondary', '#64748b')
-
-      root.style.setProperty('--positive-amount', '#059669')
-      root.style.setProperty('--negative-amount', '#dc2626')
-      root.style.setProperty('--positive-amount-bg', '#d1fae5')
-      root.style.setProperty('--negative-amount-bg', '#fee2e2')
     }
   }, [resolvedMode])
 

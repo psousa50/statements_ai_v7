@@ -230,7 +230,9 @@
   overflow: visible;
   width: 100%;
   z-index: 10;
-  transition: box-shadow var(--transition-base), border-color var(--transition-base);
+  transition:
+    box-shadow var(--transition-base),
+    border-color var(--transition-base);
 }
 
 .transactions-page .filters-sidebar:hover {
@@ -245,7 +247,14 @@
   left: 0;
   right: 0;
   height: 1px;
-  background: linear-gradient(90deg, transparent, var(--accent-amber), var(--accent-gold), var(--accent-amber), transparent);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--accent-amber),
+    var(--accent-gold),
+    var(--accent-amber),
+    transparent
+  );
   border-radius: var(--radius-lg) var(--radius-lg) 0 0;
   opacity: 0.6;
 }
@@ -1265,7 +1274,9 @@
 }
 
 .transactions-page .transaction-table tbody tr {
-  transition: background var(--transition-fast), transform var(--transition-fast);
+  transition:
+    background var(--transition-fast),
+    transform var(--transition-fast);
   animation: tableRowSlideIn 0.4s ease-out backwards;
 }
 
@@ -1280,17 +1291,39 @@
   }
 }
 
-.transactions-page .transaction-table tbody tr:nth-child(1) { animation-delay: 0.05s; }
-.transactions-page .transaction-table tbody tr:nth-child(2) { animation-delay: 0.08s; }
-.transactions-page .transaction-table tbody tr:nth-child(3) { animation-delay: 0.11s; }
-.transactions-page .transaction-table tbody tr:nth-child(4) { animation-delay: 0.14s; }
-.transactions-page .transaction-table tbody tr:nth-child(5) { animation-delay: 0.17s; }
-.transactions-page .transaction-table tbody tr:nth-child(6) { animation-delay: 0.20s; }
-.transactions-page .transaction-table tbody tr:nth-child(7) { animation-delay: 0.23s; }
-.transactions-page .transaction-table tbody tr:nth-child(8) { animation-delay: 0.26s; }
-.transactions-page .transaction-table tbody tr:nth-child(9) { animation-delay: 0.29s; }
-.transactions-page .transaction-table tbody tr:nth-child(10) { animation-delay: 0.32s; }
-.transactions-page .transaction-table tbody tr:nth-child(n+11) { animation-delay: 0.35s; }
+.transactions-page .transaction-table tbody tr:nth-child(1) {
+  animation-delay: 0.05s;
+}
+.transactions-page .transaction-table tbody tr:nth-child(2) {
+  animation-delay: 0.08s;
+}
+.transactions-page .transaction-table tbody tr:nth-child(3) {
+  animation-delay: 0.11s;
+}
+.transactions-page .transaction-table tbody tr:nth-child(4) {
+  animation-delay: 0.14s;
+}
+.transactions-page .transaction-table tbody tr:nth-child(5) {
+  animation-delay: 0.17s;
+}
+.transactions-page .transaction-table tbody tr:nth-child(6) {
+  animation-delay: 0.2s;
+}
+.transactions-page .transaction-table tbody tr:nth-child(7) {
+  animation-delay: 0.23s;
+}
+.transactions-page .transaction-table tbody tr:nth-child(8) {
+  animation-delay: 0.26s;
+}
+.transactions-page .transaction-table tbody tr:nth-child(9) {
+  animation-delay: 0.29s;
+}
+.transactions-page .transaction-table tbody tr:nth-child(10) {
+  animation-delay: 0.32s;
+}
+.transactions-page .transaction-table tbody tr:nth-child(n + 11) {
+  animation-delay: 0.35s;
+}
 
 .transactions-page .transaction-table tbody tr:hover {
   background: var(--bg-hover);
@@ -1357,7 +1390,9 @@
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .transactions-page .no-data {
@@ -2143,8 +2178,12 @@
 }
 
 @keyframes modalOverlayFadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .transactions-page .save-preset-modal {

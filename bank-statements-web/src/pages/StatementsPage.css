@@ -82,7 +82,9 @@
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .error-message {
@@ -201,12 +203,24 @@
   }
 }
 
-.statements-table tbody tr:nth-child(1) { animation-delay: 0.05s; }
-.statements-table tbody tr:nth-child(2) { animation-delay: 0.08s; }
-.statements-table tbody tr:nth-child(3) { animation-delay: 0.11s; }
-.statements-table tbody tr:nth-child(4) { animation-delay: 0.14s; }
-.statements-table tbody tr:nth-child(5) { animation-delay: 0.17s; }
-.statements-table tbody tr:nth-child(n+6) { animation-delay: 0.2s; }
+.statements-table tbody tr:nth-child(1) {
+  animation-delay: 0.05s;
+}
+.statements-table tbody tr:nth-child(2) {
+  animation-delay: 0.08s;
+}
+.statements-table tbody tr:nth-child(3) {
+  animation-delay: 0.11s;
+}
+.statements-table tbody tr:nth-child(4) {
+  animation-delay: 0.14s;
+}
+.statements-table tbody tr:nth-child(5) {
+  animation-delay: 0.17s;
+}
+.statements-table tbody tr:nth-child(n + 6) {
+  animation-delay: 0.2s;
+}
 
 .statements-table tbody tr:hover {
   background-color: var(--bg-hover);

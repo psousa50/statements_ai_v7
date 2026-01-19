@@ -22,7 +22,8 @@
 }
 
 @keyframes loginGlow {
-  0%, 100% {
+  0%,
+  100% {
     transform: translate(0, 0);
   }
   50% {
@@ -63,7 +64,14 @@
   left: 0;
   right: 0;
   height: 2px;
-  background: linear-gradient(90deg, transparent, var(--accent-amber), var(--accent-gold), var(--accent-amber), transparent);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--accent-amber),
+    var(--accent-gold),
+    var(--accent-amber),
+    transparent
+  );
   border-radius: var(--radius-xl) var(--radius-xl) 0 0;
 }
 
@@ -82,7 +90,8 @@
 }
 
 @keyframes loginIconPulse {
-  0%, 100% {
+  0%,
+  100% {
     box-shadow: 0 8px 32px rgba(251, 191, 36, 0.3);
   }
   50% {
