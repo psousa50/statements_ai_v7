@@ -116,6 +116,7 @@
   padding: 0.25rem 0.5rem;
   border-radius: 6px;
   transition: all 0.15s ease;
+  margin: 0;
 }
 
 .period-label:hover {
