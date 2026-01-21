@@ -327,6 +327,7 @@ export const TransactionFilters = ({
       {onDateRangeChange && (
         <div className="date-range-row">
           <DatePeriodNavigator
+            key={`${startDate}-${endDate}`}
             startDate={startDate}
             endDate={endDate}
             onChange={onDateRangeChange}
