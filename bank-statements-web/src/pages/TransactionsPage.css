@@ -2194,13 +2194,13 @@
   width: 100%;
   max-width: 380px;
   box-shadow: var(--shadow-xl);
-  animation: modalSlideUp 0.3s var(--transition-spring, ease-out);
+  animation: modalSlideUp 0.15s ease-out backwards;
 }
 
 @keyframes modalSlideUp {
   from {
     opacity: 0;
-    transform: translateY(20px) scale(0.95);
+    transform: translateY(8px) scale(0.98);
   }
   to {
     opacity: 1;
