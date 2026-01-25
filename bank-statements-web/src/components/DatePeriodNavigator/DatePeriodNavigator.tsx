@@ -101,49 +101,52 @@ export function DatePeriodNavigator({
   onChange,
   defaultPeriodType = 'month',
 }: DatePeriodNavigatorProps) {
-  const [periodType, setPeriodType] = useState<PeriodType>(defaultPeriodType)
-  const [currentPeriod, setCurrentPeriod] = useState<Date>(() => new Date())
-  const [isCustomMode, setIsCustomMode] = useState(false)
-  const [rollingWindow, setRollingWindow] = useState<RollingWindow | null>(null)
+  const [periodType, setPeriodType] = useState<PeriodType>(() => {
+    if (startDate && endDate) {
+      return detectPeriodType(startDate, endDate) || defaultPeriodType
+    }
+    return defaultPeriodType
+  })
+  const [currentPeriod, setCurrentPeriod] = useState<Date>(() => {
+    if (startDate) {
+      return parseDateString(startDate)
+    }
+    return new Date()
+  })
+  const [isCustomMode, setIsCustomMode] = useState(() => {
+    if (startDate && endDate) {
+      return detectPeriodType(startDate, endDate) === null
+    }
+    return false
+  })
+  const [rollingWindow, setRollingWindow] = useState<RollingWindow | null>(() => {
+    if (startDate && endDate && detectPeriodType(startDate, endDate) === null) {
+      return detectRollingWindow(startDate, endDate)
+    }
+    return null
+  })
   const [showCustomPicker, setShowCustomPicker] = useState(false)
-  const [selectedRange, setSelectedRange] = useState<DateRange | undefined>(undefined)
+  const [selectedRange, setSelectedRange] = useState<DateRange | undefined>(() => {
+    if (startDate && endDate) {
+      return { from: parseDateString(startDate), to: parseDateString(endDate) }
+    }
+    return undefined
+  })
   const firstSelectedDateRef = useRef<Date | null>(null)
   const customPickerRef = useRef<HTMLDivElement>(null)
   const hasInitialised = useRef(false)
 
   useEffect(() => {
     if (hasInitialised.current) return
-
-    if (startDate && endDate) {
-      const detected = detectPeriodType(startDate, endDate)
-      if (detected) {
-        setPeriodType(detected)
-        setCurrentPeriod(parseDateString(startDate))
-        setIsCustomMode(false)
-        setRollingWindow(null)
-      } else {
-        setIsCustomMode(true)
-        setCurrentPeriod(parseDateString(startDate))
-        setRollingWindow(detectRollingWindow(startDate, endDate))
-      }
-      setSelectedRange({
-        from: parseDateString(startDate),
-        to: parseDateString(endDate),
-      })
-    } else {
-      setPeriodType(defaultPeriodType)
-      setIsCustomMode(false)
-      setRollingWindow(null)
-      if (defaultPeriodType !== 'all') {
-        const now = new Date()
-        const range = getPeriodRange(defaultPeriodType, now)
-        onChange(formatDateToString(range.startDate), formatDateToString(range.endDate))
-        setSelectedRange({ from: range.startDate, to: range.endDate })
-      }
-    }
-
     hasInitialised.current = true
-  }, [startDate, endDate])
+
+    if (!startDate && !endDate && defaultPeriodType !== 'all') {
+      const now = new Date()
+      const range = getPeriodRange(defaultPeriodType, now)
+      onChange(formatDateToString(range.startDate), formatDateToString(range.endDate))
+      setSelectedRange({ from: range.startDate, to: range.endDate })
+    }
+  }, [])
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
