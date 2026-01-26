@@ -143,17 +143,7 @@ export const CategoryTree = ({
   onDelete,
   onCreateSubcategory,
 }: CategoryTreeProps) => {
-  // Track expanded categories - start with all categories that have subcategories expanded
-  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(() => {
-    const initialExpanded = new Set<string>()
-    categories.forEach((category) => {
-      const hasSubcategories = categories.some((c) => c.parent_id === category.id)
-      if (hasSubcategories) {
-        initialExpanded.add(category.id)
-      }
-    })
-    return initialExpanded
-  })
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set())
 
   const handleToggleExpand = useCallback((categoryId: string) => {
     setExpandedCategories((prev) => {
