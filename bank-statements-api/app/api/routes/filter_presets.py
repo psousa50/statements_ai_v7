@@ -29,7 +29,7 @@ def register_filter_preset_routes(
         preset = internal.filter_preset_repository.create(
             user_id=current_user.id,
             name=preset_data.name,
-            filter_data=preset_data.filter_data.model_dump(exclude_none=True),
+            filter_data=preset_data.filter_data.model_dump(mode="json", exclude_none=True),
         )
         return FilterPresetResponse.model_validate(preset)
 
