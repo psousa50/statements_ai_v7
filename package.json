@@ -21,7 +21,6 @@
     "db:backup": "./bin/db-backup.sh",
     "db:restore": "./bin/db-restore.sh",
     "db:sync:from-neon": "./bin/db-sync.sh neon-to-local",
-    "db:sync:to-neon": "./bin/db-sync.sh local-to-neon",
     "========== TESTING ==========": "",
     "test:db:up": "docker-compose --profile test up test-db -d --wait",
     "test:db:down": "docker-compose stop test-db && docker-compose rm -f test-db",
