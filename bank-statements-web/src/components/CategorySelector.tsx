@@ -254,25 +254,37 @@ export const CategorySelector = ({
     <div className={`category-selector ${multiple ? 'multiple' : 'single'} variant-${variant}`} ref={containerRef}>
       <div className="category-selector-input-container">
         {/* Selected category chip (single mode) */}
-        {showSingleCategoryChip && (
-          <span
-            className="category-tag category-tag-gradient"
-            style={{ background: getCategoryColor(selectedCategory, categories).gradient }}
-            onClick={() => inputRef.current?.focus()}
-          >
-            {getCategoryHierarchy(selectedCategory)}
-          </span>
-        )}
+        {showSingleCategoryChip &&
+          (() => {
+            const { gradient, textColor } = getCategoryColor(selectedCategory, categories)
+            return (
+              <span
+                className="category-tag category-tag-gradient"
+                style={{
+                  background: gradient,
+                  color: textColor,
+                  textShadow: textColor === '#ffffff' ? '0 1px 2px rgba(0,0,0,0.2)' : '0 1px 2px rgba(255,255,255,0.3)',
+                }}
+                onClick={() => inputRef.current?.focus()}
+              >
+                {getCategoryHierarchy(selectedCategory)}
+              </span>
+            )
+          })()}
 
         {/* Selected categories tags (multiple mode) */}
         {multiple &&
           selectedCategories.map((category) => {
-            const colorConfig = getCategoryColor(category, categories)
+            const { gradient, textColor } = getCategoryColor(category, categories)
             return (
               <span
                 key={category.id}
                 className="category-tag category-tag-gradient"
-                style={{ background: colorConfig.gradient }}
+                style={{
+                  background: gradient,
+                  color: textColor,
+                  textShadow: textColor === '#ffffff' ? '0 1px 2px rgba(0,0,0,0.2)' : '0 1px 2px rgba(255,255,255,0.3)',
+                }}
               >
                 {getCategoryHierarchy(category)}
                 <button
@@ -280,6 +292,10 @@ export const CategorySelector = ({
                   className="category-tag-remove"
                   type="button"
                   title={`Remove ${getCategoryHierarchy(category)}`}
+                  style={{
+                    color: textColor,
+                    background: textColor === '#ffffff' ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.15)',
+                  }}
                 >
                   ×
                 </button>

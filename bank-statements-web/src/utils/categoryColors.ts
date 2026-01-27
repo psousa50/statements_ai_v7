@@ -3,6 +3,7 @@ import { Category } from '../types/Transaction'
 export interface CategoryColorConfig {
   gradient: string
   solid: string
+  textColor: string
 }
 
 export const PRESET_COLORS = [
@@ -24,6 +25,14 @@ interface HSL {
   h: number
   s: number
   l: number
+}
+
+export function getContrastTextColor(hex: string): string {
+  const r = parseInt(hex.slice(1, 3), 16)
+  const g = parseInt(hex.slice(3, 5), 16)
+  const b = parseInt(hex.slice(5, 7), 16)
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
+  return luminance > 0.55 ? '#1a1a1a' : '#ffffff'
 }
 
 export function hexToHsl(hex: string): HSL {
@@ -110,10 +119,15 @@ export function generateGradient(solidColor: string): string {
   return `linear-gradient(135deg, ${solidColor}, ${darkerColor})`
 }
 
-export const CATEGORY_GRADIENT_COLORS: CategoryColorConfig[] = PRESET_COLORS.map((solid) => ({
-  gradient: generateGradient(solid),
-  solid,
-}))
+function createColorConfig(solid: string): CategoryColorConfig {
+  return {
+    solid,
+    gradient: generateGradient(solid),
+    textColor: getContrastTextColor(solid),
+  }
+}
+
+export const CATEGORY_GRADIENT_COLORS: CategoryColorConfig[] = PRESET_COLORS.map(createColorConfig)
 
 export function deriveChildColor(parentColor: string, childIndex: number, totalChildren: number): string {
   const hsl = hexToHsl(parentColor)
@@ -159,10 +173,7 @@ export function getCategoryColor(category: Category, allCategories: Category[]):
     solidColor = getFallbackColor(category.id)
   }
 
-  return {
-    solid: solidColor,
-    gradient: generateGradient(solidColor),
-  }
+  return createColorConfig(solidColor)
 }
 
 export const getCategoryColorByIndex = (index: number): CategoryColorConfig => {
