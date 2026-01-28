@@ -655,15 +655,26 @@ class RecurringPatternResponse(BaseModel):
     first_transaction_date: date
     last_transaction_date: date
     total_annual_cost: Decimal
+    pattern_type: str = "monthly"
 
     @field_serializer("average_amount", "total_annual_cost")
     def serialize_decimal(self, value: Decimal) -> float:
         return float(value)
 
 
+class RecurringPatternsSummary(BaseModel):
+    total_monthly_recurring: float
+    total_quarterly_recurring: float
+    total_yearly_recurring: float
+    monthly_pattern_count: int
+    quarterly_pattern_count: int
+    yearly_pattern_count: int
+    pattern_count: int
+
+
 class RecurringPatternsResponse(BaseModel):
     patterns: List[RecurringPatternResponse]
-    summary: Dict[str, float]
+    summary: RecurringPatternsSummary
 
 
 class DescriptionGroupMemberResponse(BaseModel):

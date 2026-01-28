@@ -479,7 +479,7 @@ def register_transaction_routes(
     ):
         from dateutil.relativedelta import relativedelta
 
-        lookback_start = date.today() - relativedelta(months=12)
+        lookback_start = date.today() - relativedelta(months=36)
 
         transactions_response = internal.transaction_service.get_transactions_paginated(
             user_id=current_user.id,

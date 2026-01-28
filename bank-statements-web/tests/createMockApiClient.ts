@@ -100,6 +100,11 @@ const defaultTransactionClient: TransactionClient = {
       patterns: [],
       summary: {
         total_monthly_recurring: 0,
+        total_quarterly_recurring: 0,
+        total_yearly_recurring: 0,
+        monthly_pattern_count: 0,
+        quarterly_pattern_count: 0,
+        yearly_pattern_count: 0,
         pattern_count: 0,
       },
     }),

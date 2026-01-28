@@ -73,6 +73,20 @@
   animation: fadeSlideIn 0.5s ease-out 0.1s both;
 }
 
+.recurring-expenses-page .pattern-type-tabs {
+  margin-bottom: 0.75rem;
+}
+
+.recurring-expenses-page .view-tabs {
+  margin-bottom: 1.5rem;
+}
+
+.recurring-expenses-page .view-tabs .tab-button {
+  padding: 0.5rem 1rem;
+  font-size: 0.75rem;
+  text-transform: none;
+}
+
 .recurring-expenses-page .tab-button {
   padding: 0.75rem 1.5rem;
   border: 1px solid var(--border-primary);

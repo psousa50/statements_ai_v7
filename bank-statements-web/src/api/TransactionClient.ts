@@ -135,12 +135,18 @@ export interface RecurringPattern {
   first_transaction_date: string
   last_transaction_date: string
   total_annual_cost: number
+  pattern_type: 'monthly' | 'quarterly' | 'yearly'
 }
 
 export interface RecurringPatternsResponse {
   patterns: RecurringPattern[]
   summary: {
     total_monthly_recurring: number
+    total_quarterly_recurring: number
+    total_yearly_recurring: number
+    monthly_pattern_count: number
+    quarterly_pattern_count: number
+    yearly_pattern_count: number
     pattern_count: number
   }
 }

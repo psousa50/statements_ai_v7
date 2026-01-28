@@ -16,6 +16,7 @@ interface RecurringPatternsTableProps {
   patterns: RecurringPattern[]
   categories: Category[]
   totalMonthlyRecurring: number
+  patternType?: 'monthly' | 'quarterly' | 'yearly'
   onRefresh?: () => void
 }
 
@@ -23,6 +24,7 @@ export const RecurringPatternsTable = ({
   patterns,
   categories,
   totalMonthlyRecurring,
+  patternType = 'monthly',
   onRefresh,
 }: RecurringPatternsTableProps) => {
   const api = useApi()
@@ -186,13 +188,17 @@ export const RecurringPatternsTable = ({
     )
   }
 
+  const periodLabel = patternType === 'monthly' ? 'Monthly' : patternType === 'quarterly' ? 'Quarterly' : 'Yearly'
+  const annualMultiplier = patternType === 'monthly' ? 12 : patternType === 'quarterly' ? 4 : 1
+  const annualCost = totalMonthlyRecurring * annualMultiplier
+
   return (
     <div className="recurring-patterns-container">
       <div className="recurring-patterns-summary">
         <h3>Summary</h3>
         <div className="summary-stats">
           <div className="stat-card">
-            <span className="stat-label">Total Monthly Recurring</span>
+            <span className="stat-label">Total {periodLabel} Recurring</span>
             <span className="stat-value">{formatCurrency(totalMonthlyRecurring)}</span>
           </div>
           <div className="stat-card">
@@ -201,7 +207,7 @@ export const RecurringPatternsTable = ({
           </div>
           <div className="stat-card">
             <span className="stat-label">Annual Cost</span>
-            <span className="stat-value">{formatCurrency(totalMonthlyRecurring * 12)}</span>
+            <span className="stat-value">{formatCurrency(annualCost)}</span>
           </div>
         </div>
       </div>
@@ -213,7 +219,7 @@ export const RecurringPatternsTable = ({
               <SortableHeader field="description">Description</SortableHeader>
               <SortableHeader field="category">Category</SortableHeader>
               <SortableHeader field="average_amount" align="right">
-                Monthly Amount
+                {periodLabel} Amount
               </SortableHeader>
               <SortableHeader field="total_annual_cost" align="right">
                 Annual Cost

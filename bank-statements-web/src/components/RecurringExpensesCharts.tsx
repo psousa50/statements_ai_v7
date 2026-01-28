@@ -11,6 +11,7 @@ interface RecurringExpensesChartsProps {
   patterns: RecurringPattern[]
   categories: Category[]
   totalMonthlyRecurring: number
+  patternType?: 'monthly' | 'quarterly' | 'yearly'
 }
 
 type ChartType = 'pie' | 'bar'
@@ -19,6 +20,7 @@ export const RecurringExpensesCharts = ({
   patterns,
   categories,
   totalMonthlyRecurring,
+  patternType = 'monthly',
 }: RecurringExpensesChartsProps) => {
   const [chartType, setChartType] = useState<ChartType>('pie')
 
@@ -64,13 +66,17 @@ export const RecurringExpensesCharts = ({
       }))
   }, [categoryChartData])
 
+  const periodLabel = patternType === 'monthly' ? 'Monthly' : patternType === 'quarterly' ? 'Quarterly' : 'Yearly'
+  const annualMultiplier = patternType === 'monthly' ? 12 : patternType === 'quarterly' ? 4 : 1
+  const annualCost = totalMonthlyRecurring * annualMultiplier
+
   return (
     <div className="recurring-charts-container">
       <div className="recurring-patterns-summary">
         <h3>Summary</h3>
         <div className="summary-stats">
           <div className="stat-card">
-            <span className="stat-label">Total Monthly Recurring</span>
+            <span className="stat-label">Total {periodLabel} Recurring</span>
             <span className="stat-value">{formatCurrency(totalMonthlyRecurring)}</span>
           </div>
           <div className="stat-card">
@@ -79,7 +85,7 @@ export const RecurringExpensesCharts = ({
           </div>
           <div className="stat-card">
             <span className="stat-label">Annual Cost</span>
-            <span className="stat-value">{formatCurrency(totalMonthlyRecurring * 12)}</span>
+            <span className="stat-value">{formatCurrency(annualCost)}</span>
           </div>
         </div>
       </div>

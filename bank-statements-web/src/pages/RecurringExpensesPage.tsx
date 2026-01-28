@@ -1,15 +1,23 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useRecurringPatterns } from '../services/hooks/useTransactions'
 import { useCategories } from '../services/hooks/useCategories'
 import { RecurringPatternsTable } from '../components/RecurringPatternsTable'
 import { RecurringExpensesCharts } from '../components/RecurringExpensesCharts'
 import './RecurringExpensesPage.css'
 
-type TabType = 'transactions' | 'charts'
+type ViewTab = 'transactions' | 'charts'
+type PatternType = 'monthly' | 'quarterly' | 'yearly'
+
+const PATTERN_LABELS: Record<PatternType, string> = {
+  monthly: 'Monthly',
+  quarterly: 'Quarterly',
+  yearly: 'Yearly',
+}
 
 export const RecurringExpensesPage = () => {
   const [activeOnly, setActiveOnly] = useState(true)
-  const [activeTab, setActiveTab] = useState<TabType>('transactions')
+  const [viewTab, setViewTab] = useState<ViewTab>('transactions')
+  const [patternType, setPatternType] = useState<PatternType>('monthly')
 
   const { recurringPatterns, loading, error, fetchRecurringPatterns } = useRecurringPatterns()
   const { categories } = useCategories()
@@ -18,13 +26,36 @@ export const RecurringExpensesPage = () => {
     fetchRecurringPatterns(activeOnly)
   }, [activeOnly, fetchRecurringPatterns])
 
+  const filteredPatterns = useMemo(() => {
+    if (!recurringPatterns) return []
+    return recurringPatterns.patterns.filter((p) => p.pattern_type === patternType)
+  }, [recurringPatterns, patternType])
+
+  const currentTotal = useMemo(() => {
+    if (!recurringPatterns) return 0
+    switch (patternType) {
+      case 'monthly':
+        return recurringPatterns.summary.total_monthly_recurring
+      case 'quarterly':
+        return recurringPatterns.summary.total_quarterly_recurring
+      case 'yearly':
+        return recurringPatterns.summary.total_yearly_recurring
+    }
+  }, [recurringPatterns, patternType])
+
+  const monthlyCount = recurringPatterns?.summary.monthly_pattern_count ?? 0
+  const quarterlyCount = recurringPatterns?.summary.quarterly_pattern_count ?? 0
+  const yearlyCount = recurringPatterns?.summary.yearly_pattern_count ?? 0
+
   return (
     <div className="recurring-expenses-page">
       <header className="page-header">
         <div className="header-content">
           <div>
             <h1>Recurring Expenses</h1>
-            <p className="page-description">Monthly recurring expenses detected from the last 12 months</p>
+            <p className="page-description">
+              {PATTERN_LABELS[patternType]} recurring expenses detected from your transaction history
+            </p>
           </div>
           <div className="header-controls">
             <label className="toggle-label">
@@ -35,17 +66,35 @@ export const RecurringExpensesPage = () => {
         </div>
       </header>
 
-      <div className="tabs-container">
+      <div className="tabs-container pattern-type-tabs">
         <button
-          className={`tab-button ${activeTab === 'transactions' ? 'active' : ''}`}
-          onClick={() => setActiveTab('transactions')}
+          className={`tab-button ${patternType === 'monthly' ? 'active' : ''}`}
+          onClick={() => setPatternType('monthly')}
+        >
+          Monthly ({monthlyCount})
+        </button>
+        <button
+          className={`tab-button ${patternType === 'quarterly' ? 'active' : ''}`}
+          onClick={() => setPatternType('quarterly')}
+        >
+          Quarterly ({quarterlyCount})
+        </button>
+        <button
+          className={`tab-button ${patternType === 'yearly' ? 'active' : ''}`}
+          onClick={() => setPatternType('yearly')}
+        >
+          Yearly ({yearlyCount})
+        </button>
+      </div>
+
+      <div className="tabs-container view-tabs">
+        <button
+          className={`tab-button ${viewTab === 'transactions' ? 'active' : ''}`}
+          onClick={() => setViewTab('transactions')}
         >
           Transactions
         </button>
-        <button
-          className={`tab-button ${activeTab === 'charts' ? 'active' : ''}`}
-          onClick={() => setActiveTab('charts')}
-        >
+        <button className={`tab-button ${viewTab === 'charts' ? 'active' : ''}`} onClick={() => setViewTab('charts')}>
           Charts
         </button>
       </div>
@@ -55,23 +104,25 @@ export const RecurringExpensesPage = () => {
 
         {loading ? (
           <div className="loading-indicator">Loading recurring patterns...</div>
-        ) : recurringPatterns && recurringPatterns.patterns.length > 0 ? (
-          activeTab === 'transactions' ? (
+        ) : filteredPatterns.length > 0 ? (
+          viewTab === 'transactions' ? (
             <RecurringPatternsTable
-              patterns={recurringPatterns.patterns}
+              patterns={filteredPatterns}
               categories={categories || []}
-              totalMonthlyRecurring={recurringPatterns.summary.total_monthly_recurring}
+              totalMonthlyRecurring={currentTotal}
+              patternType={patternType}
               onRefresh={() => fetchRecurringPatterns(activeOnly)}
             />
           ) : (
             <RecurringExpensesCharts
-              patterns={recurringPatterns.patterns}
+              patterns={filteredPatterns}
               categories={categories || []}
-              totalMonthlyRecurring={recurringPatterns.summary.total_monthly_recurring}
+              totalMonthlyRecurring={currentTotal}
+              patternType={patternType}
             />
           )
         ) : (
-          <div className="no-data-message">No recurring expense patterns found.</div>
+          <div className="no-data-message">No {patternType} recurring expense patterns found.</div>
         )}
       </main>
     </div>
