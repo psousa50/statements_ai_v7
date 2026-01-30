@@ -44,6 +44,6 @@
   },
   "enableAllProjectMcpServers": true,
   "enabledMcpjsonServers": [
-    "postgres"
+    "chrome-devtools"
   ]
 }
