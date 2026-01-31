@@ -8,6 +8,7 @@ from fastapi.responses import StreamingResponse
 from starlette import status as http_status
 
 from app.api.routes.auth import require_current_user
+from app.api.routes.feature_gate import require_feature
 from app.api.schemas import (
     BulkReplaceCategoryRequest,
     BulkReplaceCategoryResponse,
@@ -32,6 +33,7 @@ from app.core.config import settings
 from app.core.dependencies import InternalDependencies
 from app.domain.models.transaction import CategorizationStatus, SourceType, Transaction
 from app.domain.models.user import User
+from app.services.subscription import Feature
 
 
 def register_transaction_routes(
@@ -477,6 +479,8 @@ def register_transaction_routes(
         internal: InternalDependencies = Depends(provide_dependencies),
         current_user: User = Depends(require_current_user),
     ):
+        require_feature(internal.subscription_service, current_user.id, Feature.AI_PATTERNS)
+
         from dateutil.relativedelta import relativedelta
 
         lookback_start = date.today() - relativedelta(months=36)

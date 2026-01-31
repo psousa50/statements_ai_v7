@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, FastAPI, File, HTTPException, UploadFile
 from starlette.responses import StreamingResponse
 
 from app.api.routes.auth import require_current_user
+from app.api.routes.feature_gate import require_feature
 from app.api.schemas import (
     CategoryCreate,
     CategoryListResponse,
@@ -21,6 +22,7 @@ from app.api.schemas import (
 from app.core.config import settings
 from app.core.dependencies import InternalDependencies
 from app.domain.models.user import User
+from app.services.subscription import Feature
 
 
 def register_category_routes(
@@ -248,6 +250,8 @@ def register_category_routes(
         internal: InternalDependencies = Depends(provide_dependencies),
         current_user: User = Depends(require_current_user),
     ):
+        require_feature(internal.subscription_service, current_user.id, Feature.AI_CATEGORISATION)
+
         result = internal.llm_category_generator.generate_suggestions(
             user_id=current_user.id,
         )

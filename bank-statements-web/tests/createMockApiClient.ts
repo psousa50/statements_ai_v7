@@ -1,5 +1,6 @@
 import { ApiClient } from '@/api/ApiClient'
 import { Account, AccountClient } from '@/api/AccountClient'
+import { SubscriptionClient, SubscriptionResponse } from '@/api/SubscriptionClient'
 import { CategoryClient, CategoryListResponse } from '@/api/CategoryClient'
 import { DescriptionGroupClient, DescriptionGroupListResponse } from '@/api/DescriptionGroupClient'
 import { EnhancementRuleClient } from '@/api/EnhancementRuleClient'
@@ -323,6 +324,34 @@ const defaultDescriptionGroupClient: DescriptionGroupClient = {
   delete: () => Promise.resolve(),
 }
 
+const defaultSubscriptionClient: SubscriptionClient = {
+  getSubscription: () =>
+    Promise.resolve({
+      tier: 'free',
+      status: 'active',
+      is_active: true,
+      limits: {
+        statements_per_month: 3,
+        statements_total: 10,
+        ai_categorisation: false,
+        ai_rules: false,
+        ai_patterns: false,
+        ai_insights: false,
+      },
+      usage: {
+        statements_this_month: 0,
+        statements_total: 0,
+        ai_calls_this_month: 0,
+        ai_calls_total: 0,
+      },
+      current_period_end: null,
+      cancel_at_period_end: false,
+    } as SubscriptionResponse),
+  checkFeatureAccess: () => Promise.resolve({ allowed: true, reason: null, limit: null, used: null }),
+  createCheckoutSession: () => Promise.resolve({ checkout_url: 'https://checkout.stripe.com/test' }),
+  createPortalSession: () => Promise.resolve({ portal_url: 'https://billing.stripe.com/test' }),
+}
+
 type TransactionClientOverrides = Partial<{
   [K in keyof TransactionClient]: TransactionClient[K]
 }>
@@ -373,5 +402,6 @@ export const createMockApiClient = (overrides: ApiClientOverrides = {}): ApiClie
     },
     enhancementRules: defaultEnhancementRuleClient,
     descriptionGroups: defaultDescriptionGroupClient,
+    subscription: defaultSubscriptionClient,
   }
 }

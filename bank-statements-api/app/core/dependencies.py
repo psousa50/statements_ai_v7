@@ -13,8 +13,11 @@ from app.adapters.repositories.filter_preset import SQLAlchemyFilterPresetReposi
 from app.adapters.repositories.initial_balance import SQLAlchemyInitialBalanceRepository
 from app.adapters.repositories.saved_filter import SQLAlchemySavedFilterRepository
 from app.adapters.repositories.statement import SqlAlchemyStatementRepository
+from app.adapters.repositories.subscription import SQLAlchemySubscriptionRepository, SQLAlchemySubscriptionUsageRepository
 from app.adapters.repositories.transaction import SQLAlchemyTransactionRepository
 from app.adapters.repositories.uploaded_file import SQLAlchemyFileAnalysisMetadataRepository, SQLAlchemyUploadedFileRepository
+from app.adapters.repositories.user import SQLAlchemyUserRepository
+from app.adapters.stripe import StripeSDKClient
 from app.ai.llm_client import LLMClient
 from app.ai.noop_llm import NoopLLMClient
 from app.core.config import settings
@@ -36,6 +39,7 @@ from app.services.statement_processing.statement_analyzer import StatementAnalyz
 from app.services.statement_processing.statement_parser import StatementParser
 from app.services.statement_processing.statement_upload import StatementUploadService
 from app.services.statement_processing.transaction_normalizer import TransactionNormalizer
+from app.services.subscription import SubscriptionService
 from app.services.transaction import TransactionService
 from app.services.transaction_enhancement import TransactionEnhancer
 from app.services.transaction_rule_enhancement import TransactionRuleEnhancementService
@@ -108,6 +112,7 @@ class InternalDependencies:
         llm_rule_categorizer: LLMRuleCategorizer,
         llm_rule_counterparty: LLMRuleCounterparty,
         llm_category_generator: LLMCategoryGenerator,
+        subscription_service: SubscriptionService,
     ):
         self.transaction_service = transaction_service
         self.category_service = category_service
@@ -132,6 +137,7 @@ class InternalDependencies:
         self.llm_rule_categorizer = llm_rule_categorizer
         self.llm_rule_counterparty = llm_rule_counterparty
         self.llm_category_generator = llm_category_generator
+        self.subscription_service = subscription_service
 
 
 def build_external_dependencies() -> ExternalDependencies:
@@ -153,6 +159,9 @@ def build_internal_dependencies(
     description_group_repo = SQLAlchemyDescriptionGroupRepository(external.db)
     saved_filter_repo = SQLAlchemySavedFilterRepository(external.db)
     filter_preset_repo = SQLAlchemyFilterPresetRepository(external.db)
+    subscription_repo = SQLAlchemySubscriptionRepository(external.db)
+    subscription_usage_repo = SQLAlchemySubscriptionUsageRepository(external.db)
+    user_repo = SQLAlchemyUserRepository(external.db)
 
     file_type_detector = StatementFileTypeDetector()
     statement_parser = StatementParser()
@@ -229,6 +238,20 @@ def build_internal_dependencies(
         transaction_repository=transaction_repo,
         llm_client=external.llm_client,
     )
+    stripe_client = StripeSDKClient(
+        api_key=settings.STRIPE_SECRET_KEY,
+        webhook_secret=settings.STRIPE_WEBHOOK_SECRET,
+        web_base_url=settings.WEB_BASE_URL,
+        price_id_basic=settings.STRIPE_PRICE_ID_BASIC,
+        price_id_pro=settings.STRIPE_PRICE_ID_PRO,
+    )
+
+    subscription_service = SubscriptionService(
+        subscription_repository=subscription_repo,
+        subscription_usage_repository=subscription_usage_repo,
+        user_repository=user_repo,
+        stripe_client=stripe_client,
+    )
 
     return InternalDependencies(
         transaction_service=transaction_service,
@@ -254,6 +277,7 @@ def build_internal_dependencies(
         llm_rule_categorizer=llm_rule_categorizer,
         llm_rule_counterparty=llm_rule_counterparty,
         llm_category_generator=llm_category_generator,
+        subscription_service=subscription_service,
     )
 
 

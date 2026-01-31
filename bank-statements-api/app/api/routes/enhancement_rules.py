@@ -5,6 +5,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, Query, status
 
 from app.api.routes.auth import require_current_user
+from app.api.routes.feature_gate import require_feature
 from app.api.schemas import (
     AIApplySuggestionRequest,
     AIApplySuggestionResponse,
@@ -24,6 +25,7 @@ from app.core.dependencies import InternalDependencies
 from app.domain.models.enhancement_rule import EnhancementRuleSource, MatchType
 from app.domain.models.user import User
 from app.services.enhancement_rule_management import EnhancementRuleManagementService
+from app.services.subscription import Feature
 
 
 def register_enhancement_rule_routes(
@@ -329,6 +331,8 @@ def register_enhancement_rule_routes(
         internal: InternalDependencies = Depends(provide_dependencies),
         current_user: User = Depends(require_current_user),
     ) -> AISuggestCategoriesResponse:
+        require_feature(internal.subscription_service, current_user.id, Feature.AI_CATEGORISATION)
+
         service = internal.enhancement_rule_management_service
         categorizer = internal.llm_rule_categorizer
 

@@ -1,6 +1,8 @@
 import React, { useState, useCallback, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useQueryClient } from '@tanstack/react-query'
 import { Box, Container, Paper, Snackbar, Typography, Alert } from '@mui/material'
+import { SUBSCRIPTION_QUERY_KEYS } from '../services/hooks/useSubscription'
 import { defaultApiClient } from '../api/createApiClient'
 import { StatementAnalysisResponse, StatisticsPreviewResponse } from '../api/StatementClient'
 import { FileUploadZone } from '../components/upload/FileUploadZone'
@@ -16,6 +18,7 @@ import type { RowFilter } from '../components/upload/RowFilterPanel'
 
 export const Upload: React.FC = () => {
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
 
   // State for file upload and analysis
   const [file, setFile] = useState<File | null>(null)
@@ -211,6 +214,8 @@ export const Upload: React.FC = () => {
         severity: result.dropped_rows_count > 0 ? 'warning' : 'success',
       })
 
+      queryClient.invalidateQueries({ queryKey: SUBSCRIPTION_QUERY_KEYS.all })
+
       setTimeout(() => {
         const params = new URLSearchParams()
         if (selectedAccount) {
@@ -225,9 +230,24 @@ export const Upload: React.FC = () => {
       }, 2000)
     } catch (error) {
       console.error('Error uploading file:', error)
+      const axiosError = error as { response?: { status?: number; data?: { detail?: string | { message?: string } } } }
+      let errorMessage = 'Error uploading file. Please try again.'
+
+      if (axiosError.response?.status === 402) {
+        const detail = axiosError.response.data?.detail
+        if (typeof detail === 'object' && detail?.message) {
+          errorMessage = `${detail.message} Upgrade your plan to continue.`
+        } else {
+          errorMessage = 'Upload limit reached. Upgrade your plan to continue.'
+        }
+      } else if (axiosError.response?.data?.detail) {
+        const detail = axiosError.response.data.detail
+        errorMessage = typeof detail === 'string' ? detail : 'Error uploading file. Please try again.'
+      }
+
       setNotification({
         open: true,
-        message: 'Error uploading file. Please try again.',
+        message: errorMessage,
         severity: 'error',
       })
       setIsUploading(false)

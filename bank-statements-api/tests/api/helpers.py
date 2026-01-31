@@ -29,6 +29,7 @@ from app.services.recurring_expense_analyzer import RecurringExpenseAnalyzer
 from app.services.statement import StatementService
 from app.services.statement_processing.statement_analyzer import StatementAnalyzerService
 from app.services.statement_processing.statement_upload import StatementUploadService
+from app.services.subscription import SubscriptionService
 from app.services.transaction import TransactionService
 from app.services.transaction_enhancement import TransactionEnhancer
 
@@ -69,6 +70,7 @@ def mocked_dependencies(
     llm_rule_categorizer: LLMRuleCategorizer = None,
     llm_rule_counterparty: LLMRuleCounterparty = None,
     llm_category_generator: LLMCategoryGenerator = None,
+    subscription_service: SubscriptionService = None,
 ) -> InternalDependencies:
     if transaction_service is None:
         transaction_service = MagicMock(spec=TransactionService)
@@ -101,6 +103,7 @@ def mocked_dependencies(
         llm_rule_categorizer=llm_rule_categorizer or MagicMock(spec=LLMRuleCategorizer),
         llm_rule_counterparty=llm_rule_counterparty or MagicMock(spec=LLMRuleCounterparty),
         llm_category_generator=llm_category_generator or MagicMock(spec=LLMCategoryGenerator),
+        subscription_service=subscription_service or MagicMock(spec=SubscriptionService),
     )
 
 

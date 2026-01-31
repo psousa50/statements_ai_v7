@@ -5,6 +5,7 @@ from uuid import UUID
 from fastapi import APIRouter, BackgroundTasks, Depends, FastAPI, File, HTTPException, UploadFile, status
 
 from app.api.routes.auth import require_current_user
+from app.api.routes.feature_gate import require_feature
 from app.api.schemas import (
     BackgroundJobInfoResponse,
     DroppedRowResponse,
@@ -28,6 +29,7 @@ from app.domain.dto.statement_processing import (
 )
 from app.domain.models.user import User
 from app.logging.utils import log_exception
+from app.services.subscription import Feature
 
 logger = logging.getLogger("app")
 
@@ -188,6 +190,8 @@ def register_statement_routes(
         current_user: User = Depends(require_current_user),
     ):
         try:
+            require_feature(internal.subscription_service, current_user.id, Feature.STATEMENT_UPLOAD)
+
             account = internal.account_service.get_account(UUID(upload_data.account_id), current_user.id)
             if not account:
                 raise HTTPException(
@@ -244,6 +248,9 @@ def register_statement_routes(
                     estimated_completion_seconds=result.background_job_info.estimated_completion_seconds,
                     status_url=result.background_job_info.status_url,
                 )
+
+            if result.transactions_saved > 0:
+                internal.subscription_service.increment_statement_usage(current_user.id)
 
             return response
 

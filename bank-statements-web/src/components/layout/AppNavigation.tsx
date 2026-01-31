@@ -11,6 +11,7 @@ import DescriptionIcon from '@mui/icons-material/Description'
 import RepeatIcon from '@mui/icons-material/Repeat'
 import QueryStatsIcon from '@mui/icons-material/QueryStats'
 import SettingsIcon from '@mui/icons-material/Settings'
+import PaymentIcon from '@mui/icons-material/Payment'
 import CloudUploadIcon from '@mui/icons-material/CloudUpload'
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome'
 
@@ -53,6 +54,7 @@ const navSections: NavSection[] = [
       { path: '/categories', label: 'Categories', icon: <AccountTreeIcon /> },
       { path: '/enhancement-rules', label: 'Enhancement Rules', icon: <AutoFixHighIcon /> },
       { path: '/accounts', label: 'Accounts', icon: <AccountBalanceIcon /> },
+      { path: '/settings/billing', label: 'Billing', icon: <PaymentIcon /> },
     ],
   },
   {

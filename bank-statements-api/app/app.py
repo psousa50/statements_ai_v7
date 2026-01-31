@@ -10,6 +10,7 @@ from app.api.routes.enhancement_rules import register_enhancement_rule_routes
 from app.api.routes.filter_presets import register_filter_preset_routes
 from app.api.routes.saved_filters import register_saved_filter_routes
 from app.api.routes.statements import register_statement_routes, register_transaction_job_routes
+from app.api.routes.subscription import register_subscription_routes
 from app.api.routes.transactions import register_transaction_routes
 from app.core.dependencies import InternalDependencies
 
@@ -39,3 +40,4 @@ def register_app_routes(
     register_description_group_routes(app, provide_dependencies)
     register_saved_filter_routes(app, provide_dependencies)
     register_filter_preset_routes(app, provide_dependencies)
+    register_subscription_routes(app, provide_dependencies)

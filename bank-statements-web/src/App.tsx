@@ -9,6 +9,7 @@ import { RecurringExpensesPage } from './pages/RecurringExpensesPage'
 import { Statements } from './pages/Statements'
 import { Upload } from './pages/Upload'
 import { SettingsPage } from './pages/Settings'
+import { BillingPage } from './pages/BillingPage'
 import { Login } from './pages/Login'
 import { Register } from './pages/Register'
 import { AuthCallback } from './pages/AuthCallback'
@@ -50,6 +51,7 @@ const router = createBrowserRouter(
         { path: 'statements', element: <Statements /> },
         { path: 'upload', element: <Upload /> },
         { path: 'settings', element: <SettingsPage /> },
+        { path: 'settings/billing', element: <BillingPage /> },
       ],
     },
   ],

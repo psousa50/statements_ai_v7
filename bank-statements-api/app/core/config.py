@@ -57,6 +57,13 @@ class Settings(BaseSettings):
     # E2E Testing
     E2E_TEST_MODE: bool = os.getenv("E2E_TEST_MODE", "").lower() == "true"
 
+    # Stripe settings
+    STRIPE_SECRET_KEY: str = os.getenv("STRIPE_SECRET_KEY", "")
+    STRIPE_PUBLISHABLE_KEY: str = os.getenv("STRIPE_PUBLISHABLE_KEY", "")
+    STRIPE_WEBHOOK_SECRET: str = os.getenv("STRIPE_WEBHOOK_SECRET", "")
+    STRIPE_PRICE_ID_BASIC: str = os.getenv("STRIPE_PRICE_ID_BASIC", "")
+    STRIPE_PRICE_ID_PRO: str = os.getenv("STRIPE_PRICE_ID_PRO", "")
+
     model_config = {
         "env_file": ".env",
         "env_file_encoding": "utf-8",

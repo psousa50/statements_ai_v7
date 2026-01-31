@@ -10,6 +10,7 @@ from app.domain.dto.statement_processing import FilterOperator, LogicalOperator
 from app.domain.models.background_job import JobStatus
 from app.domain.models.enhancement_rule import EnhancementRuleSource, MatchType
 from app.domain.models.processing import BackgroundJobInfo
+from app.domain.models.subscription import SubscriptionStatus, SubscriptionTier
 from app.domain.models.transaction import CategorizationStatus
 
 HEX_COLOR_PATTERN = re.compile(r"^#[0-9A-Fa-f]{6}$")
@@ -828,3 +829,50 @@ class CreateSelectedCategoriesRequest(BaseModel):
 class CreateSelectedCategoriesResponse(BaseModel):
     categories_created: int
     categories: List[CategoryResponse]
+
+
+class SubscriptionUsageResponse(BaseModel):
+    statements_this_month: int
+    statements_total: int
+    ai_calls_this_month: int
+    ai_calls_total: int
+
+
+class SubscriptionLimitsResponse(BaseModel):
+    statements_per_month: Optional[int] = None
+    statements_total: Optional[int] = None
+    ai_categorisation: bool
+    ai_rules: bool
+    ai_patterns: bool
+    ai_insights: bool
+
+
+class SubscriptionResponse(BaseModel):
+    tier: SubscriptionTier
+    status: SubscriptionStatus
+    is_active: bool
+    limits: SubscriptionLimitsResponse
+    usage: SubscriptionUsageResponse
+    current_period_end: Optional[datetime] = None
+    cancel_at_period_end: bool
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class CheckoutRequest(BaseModel):
+    tier: SubscriptionTier
+
+
+class CheckoutResponse(BaseModel):
+    checkout_url: str
+
+
+class PortalResponse(BaseModel):
+    portal_url: str
+
+
+class FeatureAccessResponse(BaseModel):
+    allowed: bool
+    reason: Optional[str] = None
+    limit: Optional[int] = None
+    used: Optional[int] = None

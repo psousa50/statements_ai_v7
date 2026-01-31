@@ -22,6 +22,7 @@ class User(Base):
     oauth_provider = Column(String(50), nullable=True)
     oauth_id = Column(String(255), nullable=True)
     password_hash = Column(String(255), nullable=True)
+    tier_override = Column(String(50), nullable=True)
     created_at = Column(DateTime(timezone=True), default=_utc_now)
     updated_at = Column(DateTime(timezone=True), default=_utc_now, onupdate=_utc_now)
 
@@ -30,6 +31,7 @@ class User(Base):
     accounts = relationship("Account", back_populates="user")
     categories = relationship("Category", back_populates="user")
     refresh_tokens = relationship("RefreshToken", back_populates="user", cascade="all, delete-orphan")
+    subscription = relationship("Subscription", back_populates="user", uselist=False, cascade="all, delete-orphan")
 
     def __repr__(self):
         return f"<User(id={self.id}, email={self.email})>"

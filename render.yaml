@@ -25,3 +25,13 @@ services:
         sync: false
       - key: API_BASE_URL
         sync: false
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_PUBLISHABLE_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: STRIPE_PRICE_ID_BASIC
+        sync: false
+      - key: STRIPE_PRICE_ID_PRO
+        sync: false
