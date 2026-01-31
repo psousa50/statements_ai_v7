@@ -129,6 +129,18 @@ export const BillingPage = () => {
                 </div>
               )}
             </div>
+
+            {subscription?.cancel_at_period_end && subscription.current_period_end && (
+              <div className="cancellation-notice">
+                Your subscription is cancelled. You'll have access until{' '}
+                {new Date(subscription.current_period_end).toLocaleDateString('en-GB', {
+                  day: 'numeric',
+                  month: 'long',
+                  year: 'numeric',
+                })}
+                .
+              </div>
+            )}
           </section>
 
           {subscription && (

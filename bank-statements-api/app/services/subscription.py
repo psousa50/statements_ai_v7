@@ -1,3 +1,4 @@
+import logging
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from enum import Enum
@@ -15,6 +16,8 @@ from app.domain.models.user import User
 from app.ports.repositories.subscription import SubscriptionRepository, SubscriptionUsageRepository
 from app.ports.repositories.user import UserRepository
 from app.ports.stripe import StripeClient
+
+logger = logging.getLogger(__name__)
 
 
 class Feature(str, Enum):
@@ -255,13 +258,25 @@ class SubscriptionService:
             pass
 
         try:
-            period_start = stripe_sub.get("current_period_start")
-            period_end = stripe_sub.get("current_period_end")
-            if period_start:
-                subscription.current_period_start = datetime.fromtimestamp(period_start, tz=timezone.utc)
-            if period_end:
-                subscription.current_period_end = datetime.fromtimestamp(period_end, tz=timezone.utc)
-        except (KeyError, TypeError):
+            items = stripe_sub.get("items", {})
+            items_data = items.get("data", []) if isinstance(items, dict) else getattr(items, "data", [])
+            if items_data:
+                first_item = items_data[0]
+                period_start = (
+                    first_item.get("current_period_start")
+                    if hasattr(first_item, "get")
+                    else getattr(first_item, "current_period_start", None)
+                )
+                period_end = (
+                    first_item.get("current_period_end")
+                    if hasattr(first_item, "get")
+                    else getattr(first_item, "current_period_end", None)
+                )
+                if period_start:
+                    subscription.current_period_start = datetime.fromtimestamp(period_start, tz=timezone.utc)
+                if period_end:
+                    subscription.current_period_end = datetime.fromtimestamp(period_end, tz=timezone.utc)
+        except (KeyError, TypeError, IndexError):
             pass
 
         self.subscription_repository.update(subscription)
@@ -273,24 +288,37 @@ class SubscriptionService:
 
         subscription = self.subscription_repository.get_by_stripe_subscription_id(sub_id)
         if not subscription:
+            logger.warning("No subscription found for stripe ID %s", sub_id)
             return
 
+        full_stripe_sub = self.stripe_client.retrieve_subscription(sub_id)
+
         try:
-            if isinstance(stripe_sub, dict):
-                period_start = stripe_sub.get("current_period_start")
-                period_end = stripe_sub.get("current_period_end")
-                status = stripe_sub.get("status")
-                cancel_at_period_end = stripe_sub.get("cancel_at_period_end", False)
-            else:
-                period_start = getattr(stripe_sub, "current_period_start", None)
-                period_end = getattr(stripe_sub, "current_period_end", None)
-                status = getattr(stripe_sub, "status", None)
-                cancel_at_period_end = getattr(stripe_sub, "cancel_at_period_end", False)
+            items = full_stripe_sub.get("items", {})
+            items_data = items.get("data", []) if isinstance(items, dict) else getattr(items, "data", [])
+            first_item = items_data[0] if items_data else {}
+
+            period_start = (
+                first_item.get("current_period_start")
+                if hasattr(first_item, "get")
+                else getattr(first_item, "current_period_start", None)
+            )
+            period_end = (
+                first_item.get("current_period_end")
+                if hasattr(first_item, "get")
+                else getattr(first_item, "current_period_end", None)
+            )
+            status = full_stripe_sub.get("status")
+            cancel_at_period_end = full_stripe_sub.get("cancel_at_period_end") or False
+            cancel_at = full_stripe_sub.get("cancel_at")
+
+            is_cancelling = cancel_at_period_end or cancel_at is not None
+            effective_period_end = period_end or cancel_at
 
             if period_start:
                 subscription.current_period_start = datetime.fromtimestamp(period_start, tz=timezone.utc)
-            if period_end:
-                subscription.current_period_end = datetime.fromtimestamp(period_end, tz=timezone.utc)
+            if effective_period_end:
+                subscription.current_period_end = datetime.fromtimestamp(effective_period_end, tz=timezone.utc)
 
             if status == "active":
                 subscription.status = SubscriptionStatus.ACTIVE
@@ -299,29 +327,26 @@ class SubscriptionService:
             elif status in ("canceled", "unpaid"):
                 subscription.status = SubscriptionStatus.CANCELLED
 
-            if cancel_at_period_end:
+            if is_cancelling:
                 subscription.cancelled_at = datetime.now(timezone.utc)
             else:
                 subscription.cancelled_at = None
 
-            if isinstance(stripe_sub, dict):
-                items = stripe_sub.get("items", {})
-                data = items.get("data", []) if isinstance(items, dict) else []
-            else:
-                items = getattr(stripe_sub, "items", None)
-                data = getattr(items, "data", []) if items else []
+            items = full_stripe_sub.get("items", {})
+            data = items.get("data", []) if isinstance(items, dict) else getattr(items, "data", [])
 
             if data:
                 price_info = data[0]
-                if isinstance(price_info, dict):
-                    new_price_id = price_info.get("price", {}).get("id")
-                else:
-                    new_price_id = getattr(getattr(price_info, "price", None), "id", None)
+                new_price_id = (
+                    price_info.get("price", {}).get("id")
+                    if isinstance(price_info, dict)
+                    else getattr(getattr(price_info, "price", None), "id", None)
+                )
                 if new_price_id:
                     subscription.stripe_price_id = new_price_id
                     subscription.tier = self._get_tier_for_price_id(new_price_id)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.exception("Error processing subscription update: %s", e)
 
         self.subscription_repository.update(subscription)
 
