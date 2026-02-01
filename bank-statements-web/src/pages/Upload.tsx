@@ -4,6 +4,8 @@ import { useQueryClient } from '@tanstack/react-query'
 import { Box, Container, Paper, Snackbar, Typography, Alert } from '@mui/material'
 import { SUBSCRIPTION_QUERY_KEYS } from '../services/hooks/useSubscription'
 import { defaultApiClient } from '../api/createApiClient'
+import { isApiError } from '../types/ApiError'
+import { useError } from '../context/ErrorContext'
 import { StatementAnalysisResponse, StatisticsPreviewResponse } from '../api/StatementClient'
 import { FileUploadZone } from '../components/upload/FileUploadZone'
 import { AnalysisSummary } from '../components/upload/AnalysisSummary'
@@ -19,6 +21,7 @@ import type { RowFilter } from '../components/upload/RowFilterPanel'
 export const Upload: React.FC = () => {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
+  const { showError } = useError()
 
   // State for file upload and analysis
   const [file, setFile] = useState<File | null>(null)
@@ -230,20 +233,14 @@ export const Upload: React.FC = () => {
       }, 2000)
     } catch (error) {
       console.error('Error uploading file:', error)
-      const axiosError = error as { response?: { status?: number; data?: { detail?: string | { message?: string } } } }
-      let errorMessage = 'Error uploading file. Please try again.'
 
-      if (axiosError.response?.status === 402) {
-        const detail = axiosError.response.data?.detail
-        if (typeof detail === 'object' && detail?.message) {
-          errorMessage = `${detail.message} Upgrade your plan to continue.`
-        } else {
-          errorMessage = 'Upload limit reached. Upgrade your plan to continue.'
-        }
-      } else if (axiosError.response?.data?.detail) {
-        const detail = axiosError.response.data.detail
-        errorMessage = typeof detail === 'string' ? detail : 'Error uploading file. Please try again.'
+      if (isApiError(error) && error.type === 'payment') {
+        showError(error)
+        setIsUploading(false)
+        return
       }
+
+      const errorMessage = isApiError(error) ? error.message : 'Error uploading file. Please try again.'
 
       setNotification({
         open: true,

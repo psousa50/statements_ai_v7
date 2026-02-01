@@ -11,12 +11,16 @@ import {
   DialogActions,
   CircularProgress,
   Snackbar,
+  Chip,
 } from '@mui/material'
 import AddIcon from '@mui/icons-material/Add'
 import CleanupIcon from '@mui/icons-material/CleaningServices'
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome'
 import { useEnhancementRules } from '../services/hooks/useEnhancementRules'
+import { useSubscription } from '../services/hooks/useSubscription'
 import { useApi } from '../api/ApiContext'
+import { useError } from '../context/ErrorContext'
+import { isApiError } from '../types/ApiError'
 import { EnhancementRuleFilters, EnhancementRule, SortField } from '../types/EnhancementRule'
 import { EnhancementRuleTable } from '../components/EnhancementRuleTable'
 import { EnhancementRuleFiltersComponent } from '../components/EnhancementRuleFilters'
@@ -26,6 +30,8 @@ import './EnhancementRules.css'
 
 export const EnhancementRules: React.FC = () => {
   const apiClient = useApi()
+  const { showError } = useError()
+  const { hasAIAccess } = useSubscription()
   const {
     loading,
     error,
@@ -37,6 +43,8 @@ export const EnhancementRules: React.FC = () => {
     applySuggestion,
     rejectSuggestion,
   } = useEnhancementRules()
+
+  const hasAICategorisation = hasAIAccess('categorisation')
 
   const [rules, setRules] = useState<EnhancementRule[]>([])
   const [total, setTotal] = useState(0)
@@ -220,11 +228,16 @@ export const EnhancementRules: React.FC = () => {
       })
     } catch (err) {
       console.error('Failed to suggest categories:', err)
-      setSnackbar({
-        open: true,
-        message: 'Failed to generate AI suggestions',
-        severity: 'error',
-      })
+      if (isApiError(err) && err.type === 'payment') {
+        setAiDialogOpen(false)
+        showError(err)
+      } else {
+        setSnackbar({
+          open: true,
+          message: 'Failed to generate AI suggestions',
+          severity: 'error',
+        })
+      }
     } finally {
       setAiLoading(false)
     }
@@ -329,7 +342,24 @@ export const EnhancementRules: React.FC = () => {
             variant="outlined"
             color="secondary"
             startIcon={<AutoAwesomeIcon />}
-            onClick={() => setAiDialogOpen(true)}
+            onClick={() => {
+              if (hasAICategorisation) {
+                setAiDialogOpen(true)
+              } else {
+                showError({
+                  code: 'PAYMENT_REQUIRED',
+                  message: 'AI category suggestions require a paid subscription.',
+                  details: { feature: 'ai_categorisation' },
+                  status: 402,
+                  type: 'payment',
+                })
+              }
+            }}
+            endIcon={
+              !hasAICategorisation ? (
+                <Chip label="PRO" size="small" color="warning" sx={{ height: 20, fontSize: '0.7rem' }} />
+              ) : undefined
+            }
           >
             AI Suggest
           </Button>
@@ -440,7 +470,8 @@ export const EnhancementRules: React.FC = () => {
         <DialogTitle>AI Category Suggestions</DialogTitle>
         <DialogContent>
           <Typography>
-            AI will analyse unconfigured rules and suggest categories based on the transaction description patterns.
+            AI will analyse unconfigured rules and suggest which category to assign to each one based on the description
+            pattern.
           </Typography>
           <Typography sx={{ mt: 2, color: 'text.secondary', fontSize: '0.875rem' }}>
             Rules with high confidence (80%+) will be auto-applied. Lower confidence suggestions will need your review.

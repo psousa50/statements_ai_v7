@@ -3,6 +3,7 @@ from uuid import uuid4
 
 import pytest
 
+from app.api.errors import NotFoundError
 from app.domain.models.statement import Statement
 from app.services.statement import StatementService
 
@@ -68,7 +69,7 @@ class TestStatementService:
         statement_id = uuid4()
         self.statement_repo.find_by_id.return_value = None
 
-        with pytest.raises(ValueError, match=f"Statement with ID {statement_id} not found"):
+        with pytest.raises(NotFoundError, match="Statement not found"):
             self.statement_service.delete_statement_with_transactions(statement_id, self.user_id)
 
         self.statement_repo.find_by_id.assert_called_once_with(statement_id, self.user_id)

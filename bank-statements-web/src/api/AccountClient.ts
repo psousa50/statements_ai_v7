@@ -1,4 +1,4 @@
-import axios from 'axios'
+import { axiosInstance } from './ApiClient'
 import { Account } from '../types/Transaction'
 
 // Re-export Account type for convenience
@@ -34,31 +34,31 @@ const API_URL = `${BASE_URL}/api/v1/accounts`
 
 export const accountClient: AccountClient = {
   getAll: async (): Promise<Account[]> => {
-    const response = await axios.get<{ accounts: Account[]; total: number }>(API_URL)
+    const response = await axiosInstance.get<{ accounts: Account[]; total: number }>(API_URL)
     return response.data.accounts
   },
 
   getById: async (id: string): Promise<Account> => {
-    const response = await axios.get<Account>(`${API_URL}/${id}`)
+    const response = await axiosInstance.get<Account>(`${API_URL}/${id}`)
     return response.data
   },
 
   createAccount: async (name: string, currency: string): Promise<Account> => {
-    const response = await axios.post<Account>(API_URL, { name, currency })
+    const response = await axiosInstance.post<Account>(API_URL, { name, currency })
     return response.data
   },
 
   updateAccount: async (id: string, name: string, currency: string): Promise<Account> => {
-    const response = await axios.put<Account>(`${API_URL}/${id}`, { name, currency })
+    const response = await axiosInstance.put<Account>(`${API_URL}/${id}`, { name, currency })
     return response.data
   },
 
   deleteAccount: async (id: string): Promise<void> => {
-    await axios.delete(`${API_URL}/${id}`)
+    await axiosInstance.delete(`${API_URL}/${id}`)
   },
 
   setInitialBalance: async (id: string, balanceDate: string, balanceAmount: number): Promise<Account> => {
-    const response = await axios.put<Account>(`${API_URL}/${id}/initial-balance`, {
+    const response = await axiosInstance.put<Account>(`${API_URL}/${id}/initial-balance`, {
       balance_date: balanceDate,
       balance_amount: balanceAmount,
     })
@@ -66,11 +66,11 @@ export const accountClient: AccountClient = {
   },
 
   deleteInitialBalance: async (id: string): Promise<void> => {
-    await axios.delete(`${API_URL}/${id}/initial-balance`)
+    await axiosInstance.delete(`${API_URL}/${id}/initial-balance`)
   },
 
   exportAccounts: async (): Promise<void> => {
-    const response = await axios.get(`${API_URL}/export`, { responseType: 'blob' })
+    const response = await axiosInstance.get(`${API_URL}/export`, { responseType: 'blob' })
     const blob = new Blob([response.data], { type: 'text/csv' })
     const url = window.URL.createObjectURL(blob)
     const link = document.createElement('a')
@@ -89,7 +89,7 @@ export const accountClient: AccountClient = {
   uploadAccounts: async (file: File): Promise<AccountUploadResponse> => {
     const formData = new FormData()
     formData.append('file', file)
-    const response = await axios.post<AccountUploadResponse>(`${API_URL}/upload`, formData, {
+    const response = await axiosInstance.post<AccountUploadResponse>(`${API_URL}/upload`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     })
     return response.data

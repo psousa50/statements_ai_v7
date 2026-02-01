@@ -3,6 +3,7 @@ from uuid import uuid4
 
 import pytest
 
+from app.api.errors import ValidationError
 from app.domain.models.category import Category
 from app.ports.repositories.category import CategoryRepository
 from app.services.category import CategoryService
@@ -45,8 +46,8 @@ class TestCategoryService:
         mock_repository.get_by_id.return_value = child_category
 
         with pytest.raises(
-            ValueError,
-            match="Cannot create more than 2 levels of categories. Parent category already has a parent.",
+            ValidationError,
+            match="Cannot create more than 2 levels of categories",
         ):
             service.create_category(name="Grandchild Category", user_id=user_id, parent_id=child_category.id)
 
@@ -94,8 +95,8 @@ class TestCategoryService:
         mock_repository.get_by_id.side_effect = [grandchild, child_category]
 
         with pytest.raises(
-            ValueError,
-            match="Cannot create more than 2 levels of categories. Parent category already has a parent.",
+            ValidationError,
+            match="Cannot create more than 2 levels of categories",
         ):
             service.update_category(
                 category_id=grandchild_id,
@@ -137,8 +138,8 @@ class TestCategoryService:
         mock_repository.get_by_id.return_value = child_category
 
         with pytest.raises(
-            ValueError,
-            match="Cannot create more than 2 levels of categories. Parent category already has a parent.",
+            ValidationError,
+            match="Cannot create more than 2 levels of categories",
         ):
             service.upsert_category(name="Grandchild Category", user_id=user_id, parent_id=child_category.id)
 

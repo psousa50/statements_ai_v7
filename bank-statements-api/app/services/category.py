@@ -3,6 +3,7 @@ from io import StringIO
 from typing import List, Optional
 from uuid import UUID
 
+from app.api.errors import ConflictError, NotFoundError, ValidationError
 from app.domain.models.category import Category
 from app.ports.repositories.category import CategoryRepository
 
@@ -17,10 +18,10 @@ class CategoryService:
         if parent_id:
             parent = self.category_repository.get_by_id(parent_id, user_id)
             if not parent:
-                raise ValueError(f"Parent category with ID {parent_id} not found")
+                raise NotFoundError("Parent category not found", {"parent_id": str(parent_id)})
 
             if parent.parent_id:
-                raise ValueError("Cannot create more than 2 levels of categories. Parent category already has a parent.")
+                raise ValidationError("Cannot create more than 2 levels of categories")
 
         category = Category(name=name, user_id=user_id, parent_id=parent_id, color=color)
         return self.category_repository.create(category)
@@ -37,7 +38,7 @@ class CategoryService:
     def get_subcategories(self, parent_id: UUID, user_id: UUID) -> List[Category]:
         parent = self.category_repository.get_by_id(parent_id, user_id)
         if not parent:
-            raise ValueError(f"Parent category with ID {parent_id} not found")
+            raise NotFoundError("Parent category not found", {"parent_id": str(parent_id)})
 
         return self.category_repository.get_subcategories(parent_id, user_id)
 
@@ -54,15 +55,15 @@ class CategoryService:
             return None
 
         if parent_id == category_id:
-            raise ValueError("A category cannot be its own parent")
+            raise ValidationError("A category cannot be its own parent")
 
         if parent_id:
             parent = self.category_repository.get_by_id(parent_id, user_id)
             if not parent:
-                raise ValueError(f"Parent category with ID {parent_id} not found")
+                raise NotFoundError("Parent category not found", {"parent_id": str(parent_id)})
 
             if parent.parent_id:
-                raise ValueError("Cannot create more than 2 levels of categories. Parent category already has a parent.")
+                raise ValidationError("Cannot create more than 2 levels of categories")
 
         category.name = name
         category.parent_id = parent_id
@@ -73,7 +74,7 @@ class CategoryService:
     def delete_category(self, category_id: UUID, user_id: UUID) -> bool:
         subcategories = self.category_repository.get_subcategories(category_id, user_id)
         if subcategories:
-            raise ValueError("Cannot delete a category that has subcategories")
+            raise ConflictError("Cannot delete a category that has subcategories")
 
         return self.category_repository.delete(category_id, user_id)
 
@@ -83,10 +84,10 @@ class CategoryService:
         if parent_id:
             parent = self.category_repository.get_by_id(parent_id, user_id)
             if not parent:
-                raise ValueError(f"Parent category with ID {parent_id} not found")
+                raise NotFoundError("Parent category not found", {"parent_id": str(parent_id)})
 
             if parent.parent_id:
-                raise ValueError("Cannot create more than 2 levels of categories. Parent category already has a parent.")
+                raise ValidationError("Cannot create more than 2 levels of categories")
 
         existing_category = self.category_repository.get_by_name(name, user_id, parent_id)
         if existing_category:
@@ -107,8 +108,8 @@ class CategoryService:
             csv_file = StringIO(csv_content)
             reader = csv.DictReader(csv_file)
 
-            if "parent_name" not in reader.fieldnames or "name" not in reader.fieldnames:
-                raise ValueError("CSV must contain 'parent_name' and 'name' columns")
+            if not reader.fieldnames or "parent_name" not in reader.fieldnames or "name" not in reader.fieldnames:
+                raise ValidationError("CSV must contain 'parent_name' and 'name' columns")
 
             for row in reader:
                 parent_name = row.get("parent_name", "").strip()
@@ -135,5 +136,7 @@ class CategoryService:
 
             return categories
 
+        except (NotFoundError, ValidationError):
+            raise
         except Exception as e:
-            raise ValueError(f"Error processing CSV: {str(e)}")
+            raise ValidationError(f"Error processing CSV: {str(e)}")

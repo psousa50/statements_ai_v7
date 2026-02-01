@@ -1,4 +1,4 @@
-import axios from 'axios'
+import { axiosInstance } from './ApiClient'
 
 export interface DescriptionGroupMember {
   id: string
@@ -36,26 +36,26 @@ const API_URL = `${BASE_URL}/api/v1/description-groups`
 
 export const descriptionGroupClient: DescriptionGroupClient = {
   async getAll() {
-    const response = await axios.get<DescriptionGroupListResponse>(API_URL)
+    const response = await axiosInstance.get<DescriptionGroupListResponse>(API_URL)
     return response.data
   },
 
   async getById(id: string) {
-    const response = await axios.get<DescriptionGroup>(`${API_URL}/${id}`)
+    const response = await axiosInstance.get<DescriptionGroup>(`${API_URL}/${id}`)
     return response.data
   },
 
   async create(group: DescriptionGroupCreate) {
-    const response = await axios.post<DescriptionGroup>(API_URL, group)
+    const response = await axiosInstance.post<DescriptionGroup>(API_URL, group)
     return response.data
   },
 
   async update(id: string, group: DescriptionGroupCreate) {
-    const response = await axios.put<DescriptionGroup>(`${API_URL}/${id}`, group)
+    const response = await axiosInstance.put<DescriptionGroup>(`${API_URL}/${id}`, group)
     return response.data
   },
 
   async delete(id: string) {
-    await axios.delete(`${API_URL}/${id}`)
+    await axiosInstance.delete(`${API_URL}/${id}`)
   },
 }

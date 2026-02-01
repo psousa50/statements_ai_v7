@@ -1,4 +1,4 @@
-import axios from 'axios'
+import { axiosInstance } from './ApiClient'
 
 export type SubscriptionTier = 'free' | 'basic' | 'pro'
 export type SubscriptionStatus = 'active' | 'cancelled' | 'past_due' | 'expired'
@@ -60,22 +60,22 @@ const API_URL = `${BASE_URL}/api/v1/subscription`
 
 export const subscriptionClient: SubscriptionClient = {
   async getSubscription() {
-    const response = await axios.get<SubscriptionResponse>(API_URL)
+    const response = await axiosInstance.get<SubscriptionResponse>(API_URL)
     return response.data
   },
 
   async checkFeatureAccess(feature: string) {
-    const response = await axios.get<FeatureAccessResponse>(`${API_URL}/check/${feature}`)
+    const response = await axiosInstance.get<FeatureAccessResponse>(`${API_URL}/check/${feature}`)
     return response.data
   },
 
   async createCheckoutSession(tier: SubscriptionTier) {
-    const response = await axios.post<CheckoutResponse>(`${API_URL}/checkout`, { tier })
+    const response = await axiosInstance.post<CheckoutResponse>(`${API_URL}/checkout`, { tier })
     return response.data
   },
 
   async createPortalSession() {
-    const response = await axios.post<PortalResponse>(`${API_URL}/portal`)
+    const response = await axiosInstance.post<PortalResponse>(`${API_URL}/portal`)
     return response.data
   },
 }

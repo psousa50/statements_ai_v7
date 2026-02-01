@@ -1,4 +1,4 @@
-import axios from 'axios'
+import { axiosInstance } from './ApiClient'
 
 const BASE_URL = import.meta.env.VITE_API_URL || ''
 
@@ -158,16 +158,20 @@ export const statementClient: StatementClient = {
     const formData = new FormData()
     formData.append('file', file)
 
-    const response = await axios.post<StatementAnalysisResponse>(`${BASE_URL}/api/v1/statements/analyze`, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    })
+    const response = await axiosInstance.post<StatementAnalysisResponse>(
+      `${BASE_URL}/api/v1/statements/analyze`,
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      }
+    )
     return response.data
   },
 
   uploadStatement: async (data: StatementUploadRequest): Promise<StatementUploadResponse> => {
-    const response = await axios.post<StatementUploadResponse>(`${BASE_URL}/api/v1/statements/upload`, data)
+    const response = await axiosInstance.post<StatementUploadResponse>(`${BASE_URL}/api/v1/statements/upload`, data)
     return response.data
   },
 
@@ -175,7 +179,7 @@ export const statementClient: StatementClient = {
     uploadedFileId: string,
     data: StatisticsPreviewRequest
   ): Promise<StatisticsPreviewResponse> => {
-    const response = await axios.post<StatisticsPreviewResponse>(
+    const response = await axiosInstance.post<StatisticsPreviewResponse>(
       `${BASE_URL}/api/v1/statements/${uploadedFileId}/preview-statistics`,
       data
     )
@@ -183,12 +187,12 @@ export const statementClient: StatementClient = {
   },
 
   listStatements: async (): Promise<StatementResponse[]> => {
-    const response = await axios.get<StatementResponse[]>(`${BASE_URL}/api/v1/statements`)
+    const response = await axiosInstance.get<StatementResponse[]>(`${BASE_URL}/api/v1/statements`)
     return response.data
   },
 
   deleteStatement: async (statementId: string): Promise<{ message: string }> => {
-    const response = await axios.delete<{ message: string }>(`${BASE_URL}/api/v1/statements/${statementId}`)
+    const response = await axiosInstance.delete<{ message: string }>(`${BASE_URL}/api/v1/statements/${statementId}`)
     return response.data
   },
 }

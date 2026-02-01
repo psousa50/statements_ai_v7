@@ -2,6 +2,7 @@ import { useCallback } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Account } from '../../types/Transaction'
 import { useApi } from '../../api/ApiContext'
+import { getErrorMessage } from '../../types/ApiError'
 
 const sortByName = (accounts: Account[]) => [...accounts].sort((a, b) => a.name.localeCompare(b.name))
 
@@ -85,7 +86,7 @@ export const useAccounts = () => {
   })
 
   const addAccount = useCallback(
-    async (name: string, currency: string) => {
+    async (name: string, currency: string): Promise<Account | null> => {
       try {
         return await addMutation.mutateAsync({ name, currency })
       } catch {
@@ -96,7 +97,7 @@ export const useAccounts = () => {
   )
 
   const updateAccount = useCallback(
-    async (id: string, name: string, currency: string) => {
+    async (id: string, name: string, currency: string): Promise<Account | null> => {
       try {
         return await updateMutation.mutateAsync({ id, name, currency })
       } catch {
@@ -107,7 +108,7 @@ export const useAccounts = () => {
   )
 
   const deleteAccount = useCallback(
-    async (id: string) => {
+    async (id: string): Promise<boolean> => {
       try {
         await deleteMutation.mutateAsync(id)
         return true
@@ -119,7 +120,7 @@ export const useAccounts = () => {
   )
 
   const setInitialBalance = useCallback(
-    async (id: string, balanceDate: string, balanceAmount: number) => {
+    async (id: string, balanceDate: string, balanceAmount: number): Promise<Account | null> => {
       try {
         return await setInitialBalanceMutation.mutateAsync({ id, balanceDate, balanceAmount })
       } catch {
@@ -130,7 +131,7 @@ export const useAccounts = () => {
   )
 
   const deleteInitialBalance = useCallback(
-    async (id: string) => {
+    async (id: string): Promise<boolean> => {
       try {
         await deleteInitialBalanceMutation.mutateAsync(id)
         return true
@@ -141,7 +142,7 @@ export const useAccounts = () => {
     [deleteInitialBalanceMutation]
   )
 
-  const exportAccounts = useCallback(async () => {
+  const exportAccounts = useCallback(async (): Promise<boolean> => {
     try {
       await api.accounts.exportAccounts()
       return true
@@ -172,11 +173,9 @@ export const useAccounts = () => {
     deleteInitialBalanceMutation.isPending
 
   const error =
-    accountsQuery.error?.message ||
-    addMutation.error?.message ||
-    updateMutation.error?.message ||
-    deleteMutation.error?.message ||
-    null
+    accountsQuery.error || addMutation.error || updateMutation.error || deleteMutation.error
+      ? getErrorMessage(accountsQuery.error || addMutation.error || updateMutation.error || deleteMutation.error)
+      : null
 
   return {
     accounts: accountsQuery.data ?? [],

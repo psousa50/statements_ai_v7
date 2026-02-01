@@ -1,9 +1,12 @@
 import { useState, useCallback } from 'react'
 import { useApi } from '../../api/ApiContext'
 import { CategorySuggestion, CategorySelectionItem } from '../../api/CategoryClient'
+import { isApiError } from '../../types/ApiError'
+import { useError } from '../../context/ErrorContext'
 
 export const useCategorySuggestions = () => {
   const api = useApi()
+  const { showError } = useError()
   const [suggestions, setSuggestions] = useState<CategorySuggestion[]>([])
   const [selectedItems, setSelectedItems] = useState<Map<string, Set<string>>>(new Map())
   const [loading, setLoading] = useState(false)
@@ -11,7 +14,7 @@ export const useCategorySuggestions = () => {
   const [error, setError] = useState<string | null>(null)
   const [totalDescriptionsAnalysed, setTotalDescriptionsAnalysed] = useState(0)
 
-  const generateSuggestions = useCallback(async () => {
+  const generateSuggestions = useCallback(async (): Promise<boolean> => {
     setLoading(true)
     setError(null)
     try {
@@ -27,13 +30,19 @@ export const useCategorySuggestions = () => {
         }
       })
       setSelectedItems(initialSelection)
+      return true
     } catch (err) {
       console.error('Error generating category suggestions:', err)
+      if (isApiError(err) && err.type === 'payment') {
+        showError(err)
+        return false
+      }
       setError('Failed to generate category suggestions. Please try again later.')
+      return true
     } finally {
       setLoading(false)
     }
-  }, [api.categories])
+  }, [api.categories, showError])
 
   const toggleParent = useCallback((parentName: string, suggestion: CategorySuggestion) => {
     setSelectedItems((prev) => {

@@ -3,6 +3,7 @@ from uuid import uuid4
 
 import pytest
 
+from app.api.errors import ValidationError
 from app.domain.models.account import Account
 from app.ports.repositories.account import AccountRepository
 from app.services.account import AccountService
@@ -195,7 +196,7 @@ class TestAccountService:
         csv_content = "invalid_column\nValue 1"
 
         with pytest.raises(
-            ValueError,
+            ValidationError,
             match="CSV must contain 'name' column",
         ):
             service.upsert_accounts_from_csv(csv_content, user_id)

@@ -184,7 +184,7 @@ const API_URL = `${BASE_URL}/api/v1/transactions`
 const SOURCES_API_URL = `${BASE_URL}/api/v1/sources`
 const SAVED_FILTERS_API_URL = `${BASE_URL}/api/v1/saved-filters`
 
-import axios from 'axios'
+import { axiosInstance } from './ApiClient'
 
 export const transactionClient: TransactionClient = {
   async getAll(filters?: TransactionFilters) {
@@ -249,7 +249,7 @@ export const transactionClient: TransactionClient = {
     }
 
     const url = params.toString() ? `${API_URL}?${params.toString()}` : API_URL
-    const response = await axios.get<TransactionListResponse>(url)
+    const response = await axiosInstance.get<TransactionListResponse>(url)
     return response.data
   },
 
@@ -297,7 +297,7 @@ export const transactionClient: TransactionClient = {
     }
 
     const url = params.toString() ? `${API_URL}/export?${params.toString()}` : `${API_URL}/export`
-    const response = await axios.get(url, { responseType: 'blob' })
+    const response = await axiosInstance.get(url, { responseType: 'blob' })
 
     const contentDisposition = response.headers['content-disposition']
     let filename = 'transactions.csv'
@@ -357,7 +357,7 @@ export const transactionClient: TransactionClient = {
     }
 
     const url = params.toString() ? `${API_URL}/category-totals?${params.toString()}` : `${API_URL}/category-totals`
-    const response = await axios.get<CategoryTotalsResponse>(url)
+    const response = await axiosInstance.get<CategoryTotalsResponse>(url)
     return response.data
   },
 
@@ -410,7 +410,7 @@ export const transactionClient: TransactionClient = {
     const url = params.toString()
       ? `${API_URL}/category-time-series?${params.toString()}`
       : `${API_URL}/category-time-series`
-    const response = await axios.get<CategoryTimeSeriesResponse>(url)
+    const response = await axiosInstance.get<CategoryTimeSeriesResponse>(url)
     return response.data
   },
 
@@ -418,22 +418,24 @@ export const transactionClient: TransactionClient = {
     const params = new URLSearchParams()
     params.append('active_only', activeOnly.toString())
 
-    const response = await axios.get<RecurringPatternsResponse>(`${API_URL}/recurring-patterns?${params.toString()}`)
+    const response = await axiosInstance.get<RecurringPatternsResponse>(
+      `${API_URL}/recurring-patterns?${params.toString()}`
+    )
     return response.data
   },
 
   async getById(id: string) {
-    const response = await axios.get<Transaction>(`${API_URL}/${id}`)
+    const response = await axiosInstance.get<Transaction>(`${API_URL}/${id}`)
     return response.data
   },
 
   async create(transaction: TransactionCreate) {
-    const response = await axios.post<Transaction>(API_URL, transaction)
+    const response = await axiosInstance.post<Transaction>(API_URL, transaction)
     return response.data
   },
 
   async update(id: string, transaction: TransactionCreate) {
-    const response = await axios.put<Transaction>(`${API_URL}/${id}`, transaction)
+    const response = await axiosInstance.put<Transaction>(`${API_URL}/${id}`, transaction)
     return response.data
   },
 
@@ -443,16 +445,16 @@ export const transactionClient: TransactionClient = {
       params.append('category_id', categoryId)
     }
     const url = params.toString() ? `${API_URL}/${id}/categorize?${params.toString()}` : `${API_URL}/${id}/categorize`
-    const response = await axios.put<Transaction>(url)
+    const response = await axiosInstance.put<Transaction>(url)
     return response.data
   },
 
   async delete(id: string) {
-    await axios.delete(`${API_URL}/${id}`)
+    await axiosInstance.delete(`${API_URL}/${id}`)
   },
 
   async bulkUpdateCategory(request: BulkUpdateTransactionsRequest) {
-    const response = await axios.put<BulkUpdateTransactionsResponse>(`${API_URL}/bulk-update-category`, request)
+    const response = await axiosInstance.put<BulkUpdateTransactionsResponse>(`${API_URL}/bulk-update-category`, request)
     return response.data
   },
 
@@ -474,7 +476,7 @@ export const transactionClient: TransactionClient = {
     if (filters.enhancement_rule_id) {
       params.append('enhancement_rule_id', filters.enhancement_rule_id)
     }
-    const response = await axios.get<CountSimilarResponse>(`${API_URL}/count-similar?${params.toString()}`)
+    const response = await axiosInstance.get<CountSimilarResponse>(`${API_URL}/count-similar?${params.toString()}`)
     return response.data
   },
 
@@ -493,22 +495,22 @@ export const transactionClient: TransactionClient = {
     if (filters.exclude_transfers !== undefined) {
       params.append('exclude_transfers', filters.exclude_transfers.toString())
     }
-    const response = await axios.get<CountSimilarResponse>(`${API_URL}/count-by-category?${params.toString()}`)
+    const response = await axiosInstance.get<CountSimilarResponse>(`${API_URL}/count-by-category?${params.toString()}`)
     return response.data
   },
 
   async bulkReplaceCategory(request: BulkReplaceCategoryRequest) {
-    const response = await axios.put<BulkReplaceCategoryResponse>(`${API_URL}/bulk-replace-category`, request)
+    const response = await axiosInstance.put<BulkReplaceCategoryResponse>(`${API_URL}/bulk-replace-category`, request)
     return response.data
   },
 
   async previewEnhancement(request: EnhancementPreviewRequest) {
-    const response = await axios.post<EnhancementPreviewResponse>(`${API_URL}/preview-enhancement`, request)
+    const response = await axiosInstance.post<EnhancementPreviewResponse>(`${API_URL}/preview-enhancement`, request)
     return response.data
   },
 
   async createSavedFilter(transactionIds: string[]) {
-    const response = await axios.post<SavedFilterResponse>(SAVED_FILTERS_API_URL, {
+    const response = await axiosInstance.post<SavedFilterResponse>(SAVED_FILTERS_API_URL, {
       transaction_ids: transactionIds,
     })
     return response.data
@@ -517,7 +519,7 @@ export const transactionClient: TransactionClient = {
 
 export const sourceClient: SourceClient = {
   async getAll() {
-    const response = await axios.get<Source[]>(SOURCES_API_URL)
+    const response = await axiosInstance.get<Source[]>(SOURCES_API_URL)
     return response.data
   },
 }

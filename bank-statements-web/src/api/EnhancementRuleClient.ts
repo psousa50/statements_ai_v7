@@ -1,4 +1,4 @@
-import axios from 'axios'
+import { axiosInstance } from './ApiClient'
 import {
   AIApplySuggestionRequest,
   AIApplySuggestionResponse,
@@ -74,27 +74,29 @@ export const enhancementRuleClient: EnhancementRuleClient = {
     }
 
     const url = params.toString() ? `${API_URL}?${params.toString()}` : API_URL
-    const response = await axios.get<EnhancementRuleListResponse>(url)
+    const response = await axiosInstance.get<EnhancementRuleListResponse>(url)
     return response.data
   },
 
   async getStats() {
-    const response = await axios.get<EnhancementRuleStats>(`${API_URL}/stats`)
+    const response = await axiosInstance.get<EnhancementRuleStats>(`${API_URL}/stats`)
     return response.data
   },
 
   async getById(id: string) {
-    const response = await axios.get<EnhancementRule>(`${API_URL}/${id}`)
+    const response = await axiosInstance.get<EnhancementRule>(`${API_URL}/${id}`)
     return response.data
   },
 
   async getMatchingTransactionsCount(id: string) {
-    const response = await axios.get<MatchingTransactionsCountResponse>(`${API_URL}/${id}/matching-transactions/count`)
+    const response = await axiosInstance.get<MatchingTransactionsCountResponse>(
+      `${API_URL}/${id}/matching-transactions/count`
+    )
     return response.data
   },
 
   async previewMatchingTransactionsCount(data: EnhancementRuleCreate) {
-    const response = await axios.post<MatchingTransactionsCountResponse>(
+    const response = await axiosInstance.post<MatchingTransactionsCountResponse>(
       `${API_URL}/preview/matching-transactions/count`,
       data
     )
@@ -102,41 +104,47 @@ export const enhancementRuleClient: EnhancementRuleClient = {
   },
 
   async create(data: EnhancementRuleCreate) {
-    const response = await axios.post<EnhancementRule>(API_URL, data)
+    const response = await axiosInstance.post<EnhancementRule>(API_URL, data)
     return response.data
   },
 
   async update(id: string, data: EnhancementRuleUpdate) {
-    const response = await axios.put<EnhancementRule>(`${API_URL}/${id}`, data)
+    const response = await axiosInstance.put<EnhancementRule>(`${API_URL}/${id}`, data)
     return response.data
   },
 
   async delete(id: string) {
-    await axios.delete(`${API_URL}/${id}`)
+    await axiosInstance.delete(`${API_URL}/${id}`)
   },
 
   async cleanupUnused() {
-    const response = await axios.post<{ deleted_count: number; message: string }>(`${API_URL}/cleanup-unused`)
+    const response = await axiosInstance.post<{ deleted_count: number; message: string }>(`${API_URL}/cleanup-unused`)
     return response.data
   },
 
   async suggestCategories(request: AISuggestCategoriesRequest) {
-    const response = await axios.post<AISuggestCategoriesResponse>(`${API_URL}/ai/suggest-categories`, request)
+    const response = await axiosInstance.post<AISuggestCategoriesResponse>(`${API_URL}/ai/suggest-categories`, request)
     return response.data
   },
 
   async suggestCounterparties(request: AISuggestCategoriesRequest) {
-    const response = await axios.post<AISuggestCategoriesResponse>(`${API_URL}/ai/suggest-counterparties`, request)
+    const response = await axiosInstance.post<AISuggestCategoriesResponse>(
+      `${API_URL}/ai/suggest-counterparties`,
+      request
+    )
     return response.data
   },
 
   async applySuggestion(ruleId: string, request: AIApplySuggestionRequest) {
-    const response = await axios.post<AIApplySuggestionResponse>(`${API_URL}/${ruleId}/ai-suggestion/apply`, request)
+    const response = await axiosInstance.post<AIApplySuggestionResponse>(
+      `${API_URL}/${ruleId}/ai-suggestion/apply`,
+      request
+    )
     return response.data
   },
 
   async rejectSuggestion(ruleId: string) {
-    const response = await axios.post<AIApplySuggestionResponse>(`${API_URL}/${ruleId}/ai-suggestion/reject`)
+    const response = await axiosInstance.post<AIApplySuggestionResponse>(`${API_URL}/${ruleId}/ai-suggestion/reject`)
     return response.data
   },
 }

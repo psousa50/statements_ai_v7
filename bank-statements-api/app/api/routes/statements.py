@@ -4,6 +4,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, BackgroundTasks, Depends, FastAPI, File, HTTPException, UploadFile, status
 
+from app.api.errors import AppException
 from app.api.routes.auth import require_current_user
 from app.api.routes.feature_gate import require_feature
 from app.api.schemas import (
@@ -254,7 +255,7 @@ def register_statement_routes(
 
             return response
 
-        except HTTPException:
+        except (HTTPException, AppException):
             raise
         except Exception as e:
             log_exception("Error processing statement: %s", str(e))
@@ -297,20 +298,7 @@ def register_statement_routes(
         internal: InternalDependencies = Depends(provide_dependencies),
         current_user: User = Depends(require_current_user),
     ):
-        try:
-            result = internal.statement_service.delete_statement_with_transactions(statement_id, current_user.id)
-            return result
-        except ValueError as e:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=str(e),
-            )
-        except Exception as e:
-            log_exception("Error deleting statement: %s", str(e))
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Error deleting statement: {str(e)}",
-            )
+        return internal.statement_service.delete_statement_with_transactions(statement_id, current_user.id)
 
     app.include_router(router, prefix=settings.API_V1_STR)
 

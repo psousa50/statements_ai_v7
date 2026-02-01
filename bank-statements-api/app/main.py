@@ -3,8 +3,10 @@ import time
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from starlette.middleware.sessions import SessionMiddleware
 
+from app.api.errors import AppException, ErrorResponse
 from app.app import register_app_routes
 from app.core.config import settings
 from app.core.dependencies import provide_dependencies
@@ -33,6 +35,42 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.exception_handler(AppException)
+async def app_exception_handler(_request: Request, exc: AppException):
+    return JSONResponse(
+        status_code=exc.status_code,
+        content=ErrorResponse(
+            code=exc.code,
+            message=exc.message,
+            details=exc.details,
+        ).model_dump(),
+    )
+
+
+@app.exception_handler(ValueError)
+async def value_error_handler(_request: Request, exc: ValueError):
+    return JSONResponse(
+        status_code=400,
+        content=ErrorResponse(
+            code="VALIDATION_ERROR",
+            message=str(exc),
+        ).model_dump(),
+    )
+
+
+@app.exception_handler(Exception)
+async def generic_exception_handler(_request: Request, _exc: Exception):
+    logger.exception("Unhandled exception")
+    return JSONResponse(
+        status_code=500,
+        content=ErrorResponse(
+            code="INTERNAL_ERROR",
+            message="An unexpected error occurred",
+        ).model_dump(),
+    )
+
 
 register_app_routes(app, provide_dependencies)
 

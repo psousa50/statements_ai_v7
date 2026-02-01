@@ -1,6 +1,7 @@
 from typing import List, Optional
 from uuid import UUID
 
+from app.api.errors import NotFoundError
 from app.domain.models.statement import Statement
 from app.ports.repositories.statement import StatementRepository
 from app.ports.repositories.transaction import TransactionRepository
@@ -24,7 +25,7 @@ class StatementService:
     def delete_statement_with_transactions(self, statement_id: UUID, user_id: UUID) -> dict:
         statement = self.statement_repository.find_by_id(statement_id, user_id)
         if not statement:
-            raise ValueError(f"Statement with ID {statement_id} not found")
+            raise NotFoundError("Statement not found", {"statement_id": str(statement_id)})
 
         transaction_count = self.transaction_repository.delete_by_statement_id(statement_id)
         self.statement_repository.delete(statement_id, user_id)

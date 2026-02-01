@@ -1,12 +1,14 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { IconButton, Menu, MenuItem, Avatar, Typography, Box, Divider } from '@mui/material'
+import { IconButton, Menu, MenuItem, Avatar, Typography, Box, Divider, Chip } from '@mui/material'
 import SettingsIcon from '@mui/icons-material/Settings'
 import LogoutIcon from '@mui/icons-material/Logout'
 import { useAuth } from '../../auth/AuthContext'
+import { useSubscription } from '../../services/hooks/useSubscription'
 
 export const UserMenu: React.FC = () => {
   const { user, logout } = useAuth()
+  const { subscription } = useSubscription()
   const navigate = useNavigate()
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
   const open = Boolean(anchorEl)
@@ -52,9 +54,19 @@ export const UserMenu: React.FC = () => {
         PaperProps={{ sx: { minWidth: 200 } }}
       >
         <Box sx={{ px: 2, py: 1 }}>
-          <Typography variant="subtitle2" noWrap>
-            {user.name || 'User'}
-          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Typography variant="subtitle2" noWrap>
+              {user.name || 'User'}
+            </Typography>
+            {subscription && (
+              <Chip
+                label={subscription.tier.toUpperCase()}
+                size="small"
+                color={subscription.tier === 'free' ? 'default' : 'warning'}
+                sx={{ height: 18, fontSize: '0.65rem' }}
+              />
+            )}
+          </Box>
           <Typography variant="body2" color="text.secondary" noWrap>
             {user.email}
           </Typography>

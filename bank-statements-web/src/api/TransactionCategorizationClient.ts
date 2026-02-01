@@ -1,4 +1,4 @@
-import axios from 'axios'
+import { axiosInstance } from './ApiClient'
 import {
   TransactionCategorization,
   TransactionCategorizationCreate,
@@ -48,36 +48,36 @@ export const transactionCategorizationClient: TransactionCategorizationClient = 
     }
 
     const url = params.toString() ? `${API_URL}?${params.toString()}` : API_URL
-    const response = await axios.get<TransactionCategorizationListResponse>(url)
+    const response = await axiosInstance.get<TransactionCategorizationListResponse>(url)
     return response.data
   },
 
   async getStats() {
-    const response = await axios.get<TransactionCategorizationStats>(`${API_URL}/stats`)
+    const response = await axiosInstance.get<TransactionCategorizationStats>(`${API_URL}/stats`)
     return response.data
   },
 
   async getById(id: string) {
-    const response = await axios.get<TransactionCategorization>(`${API_URL}/${id}`)
+    const response = await axiosInstance.get<TransactionCategorization>(`${API_URL}/${id}`)
     return response.data
   },
 
   async create(data: TransactionCategorizationCreate) {
-    const response = await axios.post<TransactionCategorization>(API_URL, data)
+    const response = await axiosInstance.post<TransactionCategorization>(API_URL, data)
     return response.data
   },
 
   async update(id: string, data: TransactionCategorizationUpdate) {
-    const response = await axios.put<TransactionCategorization>(`${API_URL}/${id}`, data)
+    const response = await axiosInstance.put<TransactionCategorization>(`${API_URL}/${id}`, data)
     return response.data
   },
 
   async delete(id: string) {
-    await axios.delete(`${API_URL}/${id}`)
+    await axiosInstance.delete(`${API_URL}/${id}`)
   },
 
   async cleanupUnused() {
-    const response = await axios.post<{ deleted_count: number; message: string }>(`${API_URL}/cleanup-unused`)
+    const response = await axiosInstance.post<{ deleted_count: number; message: string }>(`${API_URL}/cleanup-unused`)
     return response.data
   },
 }

@@ -41,19 +41,12 @@ def register_category_routes(
         internal: InternalDependencies = Depends(provide_dependencies),
         current_user: User = Depends(require_current_user),
     ):
-        try:
-            category = internal.category_service.create_category(
-                name=category_data.name,
-                user_id=current_user.id,
-                parent_id=category_data.parent_id,
-                color=category_data.color,
-            )
-            return category
-        except ValueError as e:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=str(e),
-            )
+        return internal.category_service.create_category(
+            name=category_data.name,
+            user_id=current_user.id,
+            parent_id=category_data.parent_id,
+            color=category_data.color,
+        )
 
     @router.get("", response_model=CategoryListResponse)
     def get_categories(
@@ -127,17 +120,11 @@ def register_category_routes(
         internal: InternalDependencies = Depends(provide_dependencies),
         current_user: User = Depends(require_current_user),
     ):
-        try:
-            subcategories = internal.category_service.get_subcategories(category_id, current_user.id)
-            return CategoryListResponse(
-                categories=subcategories,
-                total=len(subcategories),
-            )
-        except ValueError as e:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=str(e),
-            )
+        subcategories = internal.category_service.get_subcategories(category_id, current_user.id)
+        return CategoryListResponse(
+            categories=subcategories,
+            total=len(subcategories),
+        )
 
     @router.put("/{category_id}", response_model=CategoryResponse)
     def update_category(
@@ -146,25 +133,19 @@ def register_category_routes(
         internal: InternalDependencies = Depends(provide_dependencies),
         current_user: User = Depends(require_current_user),
     ):
-        try:
-            updated_category = internal.category_service.update_category(
-                category_id=category_id,
-                name=category_data.name,
-                user_id=current_user.id,
-                parent_id=category_data.parent_id,
-                color=category_data.color,
-            )
-            if not updated_category:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail=f"Category with ID {category_id} not found",
-                )
-            return updated_category
-        except ValueError as e:
+        updated_category = internal.category_service.update_category(
+            category_id=category_id,
+            name=category_data.name,
+            user_id=current_user.id,
+            parent_id=category_data.parent_id,
+            color=category_data.color,
+        )
+        if not updated_category:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=str(e),
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Category with ID {category_id} not found",
             )
+        return updated_category
 
     @router.delete(
         "/{category_id}",
@@ -175,17 +156,11 @@ def register_category_routes(
         internal: InternalDependencies = Depends(provide_dependencies),
         current_user: User = Depends(require_current_user),
     ):
-        try:
-            deleted = internal.category_service.delete_category(category_id, current_user.id)
-            if not deleted:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail=f"Category with ID {category_id} not found",
-                )
-        except ValueError as e:
+        deleted = internal.category_service.delete_category(category_id, current_user.id)
+        if not deleted:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=str(e),
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Category with ID {category_id} not found",
             )
 
     @router.post(
@@ -198,48 +173,36 @@ def register_category_routes(
         internal: InternalDependencies = Depends(provide_dependencies),
         current_user: User = Depends(require_current_user),
     ):
-        try:
-            if not file.content_type or not file.content_type.startswith(("text/csv", "application/csv")):
-                if not file.filename or not file.filename.lower().endswith(".csv"):
-                    raise HTTPException(
-                        status_code=status.HTTP_400_BAD_REQUEST,
-                        detail="File must be a CSV file",
-                    )
+        if not file.content_type or not file.content_type.startswith(("text/csv", "application/csv")):
+            if not file.filename or not file.filename.lower().endswith(".csv"):
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="File must be a CSV file",
+                )
 
-            content = await file.read()
-            csv_content = content.decode("utf-8")
+        content = await file.read()
+        csv_content = content.decode("utf-8")
 
-            existing_categories = {
-                (cat.name, cat.parent_id): cat for cat in internal.category_service.get_all_categories(current_user.id)
-            }
+        existing_categories = {
+            (cat.name, cat.parent_id): cat for cat in internal.category_service.get_all_categories(current_user.id)
+        }
 
-            categories = internal.category_service.upsert_categories_from_csv(csv_content, current_user.id)
+        categories = internal.category_service.upsert_categories_from_csv(csv_content, current_user.id)
 
-            categories_created = 0
-            categories_found = 0
-            for category in categories:
-                if (category.name, category.parent_id) in existing_categories:
-                    categories_found += 1
-                else:
-                    categories_created += 1
+        categories_created = 0
+        categories_found = 0
+        for category in categories:
+            if (category.name, category.parent_id) in existing_categories:
+                categories_found += 1
+            else:
+                categories_created += 1
 
-            return CategoryUploadResponse(
-                categories_created=categories_created,
-                categories_found=categories_found,
-                total_processed=len(categories),
-                categories=categories,
-            )
-
-        except ValueError as e:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=str(e),
-            )
-        except Exception as e:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Error uploading categories: {str(e)}",
-            )
+        return CategoryUploadResponse(
+            categories_created=categories_created,
+            categories_found=categories_found,
+            total_processed=len(categories),
+            categories=categories,
+        )
 
     @router.post(
         "/ai/generate-suggestions",

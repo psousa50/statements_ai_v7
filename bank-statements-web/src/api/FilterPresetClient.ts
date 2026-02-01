@@ -1,4 +1,4 @@
-import axios from 'axios'
+import { axiosInstance } from './ApiClient'
 
 export interface FilterPresetData {
   category_ids?: string[]
@@ -34,12 +34,12 @@ const API_URL = `${BASE_URL}/api/v1/filter-presets`
 
 export const filterPresetClient: FilterPresetClient = {
   getAll: async (): Promise<FilterPreset[]> => {
-    const response = await axios.get<{ presets: FilterPreset[]; total: number }>(API_URL)
+    const response = await axiosInstance.get<{ presets: FilterPreset[]; total: number }>(API_URL)
     return response.data.presets
   },
 
   create: async (name: string, filterData: FilterPresetData): Promise<FilterPreset> => {
-    const response = await axios.post<FilterPreset>(API_URL, {
+    const response = await axiosInstance.post<FilterPreset>(API_URL, {
       name,
       filter_data: filterData,
     })
@@ -47,6 +47,6 @@ export const filterPresetClient: FilterPresetClient = {
   },
 
   delete: async (id: string): Promise<void> => {
-    await axios.delete(`${API_URL}/${id}`)
+    await axiosInstance.delete(`${API_URL}/${id}`)
   },
 }

@@ -285,43 +285,33 @@ def register_account_routes(
         internal: InternalDependencies = Depends(provide_dependencies),
         current_user: User = Depends(require_current_user),
     ):
-        try:
-            if not file.content_type or not file.content_type.startswith(("text/csv", "application/csv")):
-                if not file.filename or not file.filename.lower().endswith(".csv"):
-                    raise HTTPException(
-                        status_code=status.HTTP_400_BAD_REQUEST,
-                        detail="File must be a CSV file",
-                    )
+        if not file.content_type or not file.content_type.startswith(("text/csv", "application/csv")):
+            if not file.filename or not file.filename.lower().endswith(".csv"):
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="File must be a CSV file",
+                )
 
-            content = await file.read()
-            csv_content = content.decode("utf-8")
+        content = await file.read()
+        csv_content = content.decode("utf-8")
 
-            existing_accounts = {acc.name: acc for acc in internal.account_service.get_all_accounts(current_user.id)}
-            accounts = internal.account_service.upsert_accounts_from_csv(csv_content, current_user.id)
+        existing_accounts = {acc.name: acc for acc in internal.account_service.get_all_accounts(current_user.id)}
+        accounts = internal.account_service.upsert_accounts_from_csv(csv_content, current_user.id)
 
-            created_count = 0
-            updated_count = 0
+        created_count = 0
+        updated_count = 0
 
-            for account in accounts:
-                if account.name in existing_accounts:
-                    updated_count += 1
-                else:
-                    created_count += 1
+        for account in accounts:
+            if account.name in existing_accounts:
+                updated_count += 1
+            else:
+                created_count += 1
 
-            return AccountUploadResponse(
-                accounts=accounts,
-                total=len(accounts),
-                created=created_count,
-                updated=updated_count,
-            )
-
-        except HTTPException:
-            raise
-        except Exception as e:
-            log_exception("Error uploading accounts: %s", str(e))
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Error uploading accounts: {str(e)}",
-            )
+        return AccountUploadResponse(
+            accounts=accounts,
+            total=len(accounts),
+            created=created_count,
+            updated=updated_count,
+        )
 
     app.include_router(router, prefix=settings.API_V1_STR)

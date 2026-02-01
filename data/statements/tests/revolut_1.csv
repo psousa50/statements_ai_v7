@@ -1,0 +1,5 @@
+Type,Product,Started Date,Completed Date,Description,Amount,Fee,Currency,State,Balance
+CARD_PAYMENT,Current,2019-09-11 13:19:32,,Rest Bufalo Grill,-13,0,EUR,REVERTED,
+CARD_PAYMENT,Current,2019-09-21 15:36:26,,Ericeira Surf & Skate,-49.99,0,EUR,REVERTED,
+TOPUP,Current,2019-09-21 15:36:55,2019-09-21 15:36:57,Top-Up by *2133,50,0,EUR,COMPLETED,143.56
+CARD_PAYMENT,Current,2019-09-21 15:37:15,2019-09-24 00:12:26,Ericeira Surf & Skate,-49.99,0,EUR,COMPLETED,93.57

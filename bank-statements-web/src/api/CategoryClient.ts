@@ -64,55 +64,58 @@ export interface CategoryClient {
 const BASE_URL = import.meta.env.VITE_API_URL || ''
 const API_URL = `${BASE_URL}/api/v1/categories`
 
-import axios from 'axios'
+import { axiosInstance } from './ApiClient'
 
 export const categoryClient: CategoryClient = {
   async getAll() {
-    const response = await axios.get<CategoryListResponse>(API_URL)
+    const response = await axiosInstance.get<CategoryListResponse>(API_URL)
     return response.data
   },
 
   async getRootCategories() {
-    const response = await axios.get<CategoryListResponse>(`${API_URL}/root`)
+    const response = await axiosInstance.get<CategoryListResponse>(`${API_URL}/root`)
     return response.data
   },
 
   async getById(id: string) {
-    const response = await axios.get<Category>(`${API_URL}/${id}`)
+    const response = await axiosInstance.get<Category>(`${API_URL}/${id}`)
     return response.data
   },
 
   async getSubcategories(parentId: string) {
-    const response = await axios.get<CategoryListResponse>(`${API_URL}/${parentId}/subcategories`)
+    const response = await axiosInstance.get<CategoryListResponse>(`${API_URL}/${parentId}/subcategories`)
     return response.data
   },
 
   async create(category: { name: string; parent_id?: string; color?: string }) {
-    const response = await axios.post<Category>(API_URL, category)
+    const response = await axiosInstance.post<Category>(API_URL, category)
     return response.data
   },
 
   async update(id: string, category: { name: string; parent_id?: string; color?: string }) {
-    const response = await axios.put<Category>(`${API_URL}/${id}`, category)
+    const response = await axiosInstance.put<Category>(`${API_URL}/${id}`, category)
     return response.data
   },
 
   async delete(id: string) {
-    await axios.delete(`${API_URL}/${id}`)
+    await axiosInstance.delete(`${API_URL}/${id}`)
   },
 
   async generateSuggestions() {
-    const response = await axios.post<GenerateCategoriesResponse>(`${API_URL}/ai/generate-suggestions`)
+    const response = await axiosInstance.post<GenerateCategoriesResponse>(`${API_URL}/ai/generate-suggestions`)
     return response.data
   },
 
   async createSelectedCategories(request: CreateSelectedCategoriesRequest) {
-    const response = await axios.post<CreateSelectedCategoriesResponse>(`${API_URL}/ai/create-selected`, request)
+    const response = await axiosInstance.post<CreateSelectedCategoriesResponse>(
+      `${API_URL}/ai/create-selected`,
+      request
+    )
     return response.data
   },
 
   async exportCategories() {
-    const response = await axios.get(`${API_URL}/export`, { responseType: 'blob' })
+    const response = await axiosInstance.get(`${API_URL}/export`, { responseType: 'blob' })
     const blob = new Blob([response.data], { type: 'text/csv' })
     const url = window.URL.createObjectURL(blob)
     const link = document.createElement('a')
@@ -131,7 +134,7 @@ export const categoryClient: CategoryClient = {
   async uploadCategories(file: File) {
     const formData = new FormData()
     formData.append('file', file)
-    const response = await axios.post<CategoryUploadResponse>(`${API_URL}/upload`, formData, {
+    const response = await axiosInstance.post<CategoryUploadResponse>(`${API_URL}/upload`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     })
     return response.data

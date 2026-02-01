@@ -1,13 +1,15 @@
 import { useState, useCallback, useRef } from 'react'
 import { useCategories } from '../services/hooks/useCategories'
 import { useCategorySuggestions } from '../services/hooks/useCategorySuggestions'
+import { useSubscription } from '../services/hooks/useSubscription'
+import { useError } from '../context/ErrorContext'
 import { CategoryTree } from '../components/CategoryTree'
 import { CategoryModal } from '../components/CategoryModal'
 import { CategorySuggestionPanel } from '../components/CategorySuggestionPanel'
 import { ConfirmationModal } from '../components/ConfirmationModal'
 import { Toast, ToastProps } from '../components/Toast'
 import { Category } from '../types/Transaction'
-import { Button, Dialog, DialogTitle, DialogContent } from '@mui/material'
+import { Button, Dialog, DialogTitle, DialogContent, Chip } from '@mui/material'
 import AddIcon from '@mui/icons-material/Add'
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome'
 import DownloadIcon from '@mui/icons-material/Download'
@@ -23,6 +25,10 @@ export const CategoriesPage = () => {
   const [confirmDelete, setConfirmDelete] = useState<Category | null>(null)
   const [suggestionModalOpen, setSuggestionModalOpen] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const { hasAIAccess } = useSubscription()
+  const { showError } = useError()
+  const hasAICategorisation = hasAIAccess('categorisation')
 
   const {
     categories,
@@ -182,9 +188,22 @@ export const CategoriesPage = () => {
   }, [])
 
   const handleOpenSuggestionModal = useCallback(async () => {
+    if (!hasAICategorisation) {
+      showError({
+        code: 'PAYMENT_REQUIRED',
+        message: 'AI category generation requires a paid subscription.',
+        details: { feature: 'ai_categorisation' },
+        status: 402,
+        type: 'payment',
+      })
+      return
+    }
     setSuggestionModalOpen(true)
-    await generateSuggestions()
-  }, [generateSuggestions])
+    const success = await generateSuggestions()
+    if (!success) {
+      setSuggestionModalOpen(false)
+    }
+  }, [generateSuggestions, hasAICategorisation, showError])
 
   const handleCloseSuggestionModal = useCallback(() => {
     setSuggestionModalOpen(false)
@@ -320,6 +339,11 @@ export const CategoriesPage = () => {
               variant="outlined"
               disabled={loading}
               startIcon={<AutoAwesomeIcon />}
+              endIcon={
+                !hasAICategorisation ? (
+                  <Chip label="PRO" size="small" color="warning" sx={{ height: 20, fontSize: '0.7rem' }} />
+                ) : undefined
+              }
               sx={{ textTransform: 'none', mr: 1 }}
             >
               Generate from Transactions

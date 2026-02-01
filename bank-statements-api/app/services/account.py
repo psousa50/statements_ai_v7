@@ -3,6 +3,7 @@ import io
 from typing import List, Optional
 from uuid import UUID
 
+from app.api.errors import ValidationError
 from app.domain.models.account import Account
 from app.ports.repositories.account import AccountRepository
 
@@ -45,7 +46,7 @@ class AccountService:
 
         for row in csv_reader:
             if "name" not in row:
-                raise ValueError("CSV must contain 'name' column")
+                raise ValidationError("CSV must contain 'name' column")
 
             name = row["name"].strip()
             if not name:
