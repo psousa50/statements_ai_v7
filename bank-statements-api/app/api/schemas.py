@@ -876,3 +876,13 @@ class FeatureAccessResponse(BaseModel):
     reason: Optional[str] = None
     limit: Optional[int] = None
     used: Optional[int] = None
+
+
+class ChatMessage(BaseModel):
+    role: str
+    content: str
+
+
+class ChatMessageRequest(BaseModel):
+    message: str
+    history: List[ChatMessage] = Field(default_factory=list)

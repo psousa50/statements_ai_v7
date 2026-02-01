@@ -27,6 +27,7 @@ from app.services.ai import LLMRuleCategorizer, LLMRuleCounterparty
 from app.services.ai.llm_category_generator import LLMCategoryGenerator
 from app.services.background.background_job_service import BackgroundJobService
 from app.services.category import CategoryService
+from app.services.chat import ChatService
 from app.services.description_group import DescriptionGroupService
 from app.services.enhancement_rule_management import EnhancementRuleManagementService
 from app.services.initial_balance_service import InitialBalanceService
@@ -113,6 +114,7 @@ class InternalDependencies:
         llm_rule_counterparty: LLMRuleCounterparty,
         llm_category_generator: LLMCategoryGenerator,
         subscription_service: SubscriptionService,
+        chat_service: ChatService,
     ):
         self.transaction_service = transaction_service
         self.category_service = category_service
@@ -138,6 +140,7 @@ class InternalDependencies:
         self.llm_rule_counterparty = llm_rule_counterparty
         self.llm_category_generator = llm_category_generator
         self.subscription_service = subscription_service
+        self.chat_service = chat_service
 
 
 def build_external_dependencies() -> ExternalDependencies:
@@ -253,6 +256,14 @@ def build_internal_dependencies(
         stripe_client=stripe_client,
     )
 
+    chat_service = ChatService(
+        llm_client=external.llm_client,
+        transaction_service=transaction_service,
+        category_service=category_service,
+        account_service=account_service,
+        recurring_analyzer=recurring_expense_analyzer,
+    )
+
     return InternalDependencies(
         transaction_service=transaction_service,
         category_service=category_service,
@@ -278,6 +289,7 @@ def build_internal_dependencies(
         llm_rule_counterparty=llm_rule_counterparty,
         llm_category_generator=llm_category_generator,
         subscription_service=subscription_service,
+        chat_service=chat_service,
     )
 
 

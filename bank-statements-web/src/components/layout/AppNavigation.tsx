@@ -14,6 +14,7 @@ import SettingsIcon from '@mui/icons-material/Settings'
 import PaymentIcon from '@mui/icons-material/Payment'
 import CloudUploadIcon from '@mui/icons-material/CloudUpload'
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome'
+import ChatIcon from '@mui/icons-material/Chat'
 
 interface AppNavigationProps {
   onNavigate?: () => void
@@ -68,7 +69,7 @@ const navSections: NavSection[] = [
   {
     title: 'AI',
     icon: <AutoAwesomeIcon fontSize="small" />,
-    items: [],
+    items: [{ path: '/chat', label: 'Chat', icon: <ChatIcon /> }],
   },
 ]
 

@@ -1,3 +1,4 @@
+import { vi } from 'vitest'
 import { ApiClient } from '@/api/ApiClient'
 import { Account, AccountClient } from '@/api/AccountClient'
 import { SubscriptionClient, SubscriptionResponse } from '@/api/SubscriptionClient'
@@ -403,5 +404,8 @@ export const createMockApiClient = (overrides: ApiClientOverrides = {}): ApiClie
     enhancementRules: defaultEnhancementRuleClient,
     descriptionGroups: defaultDescriptionGroupClient,
     subscription: defaultSubscriptionClient,
+    chatClient: {
+      sendMessage: vi.fn().mockResolvedValue(undefined),
+    },
   }
 }

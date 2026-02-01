@@ -22,6 +22,7 @@ from app.services.ai import LLMRuleCategorizer, LLMRuleCounterparty
 from app.services.ai.llm_category_generator import LLMCategoryGenerator
 from app.services.background.background_job_service import BackgroundJobService
 from app.services.category import CategoryService
+from app.services.chat import ChatService
 from app.services.description_group import DescriptionGroupService
 from app.services.enhancement_rule_management import EnhancementRuleManagementService
 from app.services.initial_balance_service import InitialBalanceService
@@ -71,6 +72,7 @@ def mocked_dependencies(
     llm_rule_counterparty: LLMRuleCounterparty = None,
     llm_category_generator: LLMCategoryGenerator = None,
     subscription_service: SubscriptionService = None,
+    chat_service: ChatService = None,
 ) -> InternalDependencies:
     if transaction_service is None:
         transaction_service = MagicMock(spec=TransactionService)
@@ -104,6 +106,7 @@ def mocked_dependencies(
         llm_rule_counterparty=llm_rule_counterparty or MagicMock(spec=LLMRuleCounterparty),
         llm_category_generator=llm_category_generator or MagicMock(spec=LLMCategoryGenerator),
         subscription_service=subscription_service or MagicMock(spec=SubscriptionService),
+        chat_service=chat_service or MagicMock(spec=ChatService),
     )
 
 

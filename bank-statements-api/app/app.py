@@ -5,6 +5,7 @@ from fastapi import FastAPI
 from app.api.routes.accounts import register_account_routes
 from app.api.routes.auth import register_auth_routes
 from app.api.routes.categories import register_category_routes
+from app.api.routes.chat import register_chat_routes
 from app.api.routes.description_groups import register_description_group_routes
 from app.api.routes.enhancement_rules import register_enhancement_rule_routes
 from app.api.routes.filter_presets import register_filter_preset_routes
@@ -41,3 +42,4 @@ def register_app_routes(
     register_saved_filter_routes(app, provide_dependencies)
     register_filter_preset_routes(app, provide_dependencies)
     register_subscription_routes(app, provide_dependencies)
+    register_chat_routes(app, provide_dependencies)

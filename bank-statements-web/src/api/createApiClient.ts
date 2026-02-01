@@ -7,6 +7,9 @@ import { transactionCategorizationClient } from './TransactionCategorizationClie
 import { enhancementRuleClient } from './EnhancementRuleClient'
 import { descriptionGroupClient } from './DescriptionGroupClient'
 import { subscriptionClient } from './SubscriptionClient'
+import { createChatClient } from './ChatClient'
+
+const BASE_URL = import.meta.env.VITE_API_URL || ''
 
 export const createApiClient = (): ApiClient => {
   return {
@@ -18,6 +21,7 @@ export const createApiClient = (): ApiClient => {
     accounts: accountClient,
     descriptionGroups: descriptionGroupClient,
     subscription: subscriptionClient,
+    chatClient: createChatClient(BASE_URL),
   }
 }
 

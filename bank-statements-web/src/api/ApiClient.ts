@@ -108,4 +108,7 @@ export interface ApiClient {
   accounts: AccountClient
   descriptionGroups: DescriptionGroupClient
   subscription: SubscriptionClient
+  chatClient: ChatClient
 }
+
+import { ChatClient } from './ChatClient'
