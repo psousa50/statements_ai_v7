@@ -356,6 +356,18 @@
   margin: 0 auto;
 }
 
+.charts-page .no-data-message strong {
+  display: block;
+  color: var(--text-primary);
+  font-size: 1.125rem;
+  margin-bottom: 0.5rem;
+}
+
+.charts-page .no-data-message p {
+  margin: 0;
+  line-height: 1.5;
+}
+
 .charts-page .chart-help {
   background: linear-gradient(135deg, var(--bg-accent) 0%, rgba(251, 191, 36, 0.05) 100%);
   border: 1px solid rgba(251, 191, 36, 0.2);

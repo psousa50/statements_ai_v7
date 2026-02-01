@@ -399,6 +399,44 @@ export const ChartsPage = () => {
     }
   }, [categoryTotals, categories, chartType, selectedRootCategory, categorizationFilter])
 
+  const noDataMessage = useMemo(() => {
+    if (!categoryTotals) {
+      return { title: 'Loading...', description: 'Fetching transaction data.' }
+    }
+
+    if (categoryTotals.totals.length === 0) {
+      return {
+        title: 'No transactions found',
+        description: 'Upload a bank statement or add transactions manually to see spending charts.',
+      }
+    }
+
+    const totalSpending = categoryTotals.totals.reduce((sum, t) => sum + t.total_amount, 0)
+    const totalCount = categoryTotals.totals.reduce((sum, t) => sum + t.transaction_count, 0)
+
+    if (totalSpending <= 0) {
+      return {
+        title: 'No spending to display',
+        description: `You have ${totalCount} transaction${totalCount !== 1 ? 's' : ''}, but they are all income or transfers. This chart shows spending (debits) only.`,
+      }
+    }
+
+    if (categorizationFilter === 'categorized') {
+      const uncategorizedTotal = categoryTotals.totals.find((t) => !t.category_id)
+      if (uncategorizedTotal && uncategorizedTotal.total_amount === totalSpending) {
+        return {
+          title: 'All transactions are uncategorised',
+          description: 'Categorise your transactions or change the Status filter to "All" to see them here.',
+        }
+      }
+    }
+
+    return {
+      title: 'No data for selected filters',
+      description: 'Try adjusting your filters or date range to see more transactions.',
+    }
+  }, [categoryTotals, categorizationFilter])
+
   const openTransactionsWindow = useCallback(
     (categoryId: string) => {
       const params = new URLSearchParams()
@@ -649,7 +687,10 @@ export const ChartsPage = () => {
               loading ? (
                 <div className="loading-indicator">Loading chart data...</div>
               ) : chartData.length === 0 ? (
-                <div className="no-data-message">No transaction data available for the selected filters.</div>
+                <div className="no-data-message">
+                  <strong>{noDataMessage.title}</strong>
+                  <p>{noDataMessage.description}</p>
+                </div>
               ) : (
                 <ResponsiveContainer width="100%" height={500}>
                   <PieChart>
@@ -703,7 +744,12 @@ export const ChartsPage = () => {
                 </ResponsiveContainer>
               )
             ) : viewMode === 'bar' ? (
-              <CategoryTotalsBarChart data={chartData} loading={loading} onBarClick={handleChartClick} />
+              <CategoryTotalsBarChart
+                data={chartData}
+                loading={loading}
+                onBarClick={handleChartClick}
+                noDataMessage={noDataMessage}
+              />
             ) : (
               <CategoryTimeSeriesChart
                 dataPoints={timeSeriesData || []}

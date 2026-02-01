@@ -8,19 +8,30 @@ interface ChartData {
   color: string
 }
 
+interface NoDataMessage {
+  title: string
+  description: string
+}
+
 interface CategoryTotalsBarChartProps {
   data: ChartData[]
   loading?: boolean
   onBarClick?: (data: ChartData) => void
+  noDataMessage?: NoDataMessage
 }
 
-export const CategoryTotalsBarChart = ({ data, loading, onBarClick }: CategoryTotalsBarChartProps) => {
+export const CategoryTotalsBarChart = ({ data, loading, onBarClick, noDataMessage }: CategoryTotalsBarChartProps) => {
   if (loading) {
     return <div className="loading-indicator">Loading chart data...</div>
   }
 
   if (data.length === 0) {
-    return <div className="no-data-message">No transaction data available for the selected filters.</div>
+    return (
+      <div className="no-data-message">
+        <strong>{noDataMessage?.title || 'No data available'}</strong>
+        <p>{noDataMessage?.description || 'No transaction data available for the selected filters.'}</p>
+      </div>
+    )
   }
 
   const sortedData = [...data].sort((a, b) => b.value - a.value)
