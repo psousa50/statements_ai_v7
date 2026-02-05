@@ -4,7 +4,7 @@ from decimal import Decimal
 from typing import Dict, List, Optional, Sequence, Tuple
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, field_serializer, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_serializer, field_validator, model_validator
 
 from app.domain.dto.statement_processing import FilterOperator, LogicalOperator
 from app.domain.models.background_job import JobStatus
@@ -745,6 +745,21 @@ class FilterPresetData(BaseModel):
     transaction_type: Optional[str] = None
     sort_field: Optional[str] = None
     sort_direction: Optional[str] = None
+    is_relative: Optional[bool] = None
+    anchor_date: Optional[str] = None
+
+    @model_validator(mode="after")
+    def validate_relative_preset(self) -> "FilterPresetData":
+        if self.is_relative:
+            if not self.anchor_date:
+                raise ValueError("anchor_date is required when is_relative is true")
+            try:
+                datetime.strptime(self.anchor_date, "%Y-%m-%d")
+            except ValueError:
+                raise ValueError("anchor_date must be in YYYY-MM-DD format")
+            if not self.start_date or not self.end_date:
+                raise ValueError("start_date and end_date are required for relative presets")
+        return self
 
 
 class FilterPresetCreate(BaseModel):

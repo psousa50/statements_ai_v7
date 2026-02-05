@@ -36,7 +36,7 @@ interface TransactionFiltersProps {
   filterPresets?: FilterPreset[]
   filterPresetsLoading?: boolean
   currentPresetName?: string
-  onSavePreset?: (name: string) => Promise<void>
+  onSavePreset?: (name: string, isRelative: boolean) => Promise<void>
   onLoadPreset?: (preset: FilterPreset) => void
   onDeletePreset?: (presetId: string) => Promise<void>
 }
@@ -79,6 +79,9 @@ export const TransactionFilters = ({
   const [showSaveModal, setShowSaveModal] = useState(false)
   const [presetName, setPresetName] = useState('')
   const [isSaving, setIsSaving] = useState(false)
+  const [isRelative, setIsRelative] = useState(true)
+
+  const hasDateFilter = Boolean(startDate || endDate)
 
   const handleOpenSaveModal = useCallback(() => {
     setPresetName(currentPresetName || '')
@@ -113,13 +116,14 @@ export const TransactionFilters = ({
     if (!onSavePreset || !presetName.trim()) return
     setIsSaving(true)
     try {
-      await onSavePreset(presetName.trim())
+      await onSavePreset(presetName.trim(), hasDateFilter && isRelative)
       setPresetName('')
       setShowSaveModal(false)
+      setIsRelative(true)
     } finally {
       setIsSaving(false)
     }
-  }, [onSavePreset, presetName])
+  }, [onSavePreset, presetName, hasDateFilter, isRelative])
 
   const handleLoadPreset = useCallback(
     (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -355,6 +359,25 @@ export const TransactionFilters = ({
                 }
               }}
             />
+            {hasDateFilter && (
+              <div className="date-type-selection">
+                <p className="date-type-label">Date range type:</p>
+                <label className="date-type-option">
+                  <input type="radio" name="dateType" checked={isRelative} onChange={() => setIsRelative(true)} />
+                  <span className="date-type-text">
+                    <strong>Rolling window</strong>
+                    <small>Dates shift forward automatically over time</small>
+                  </span>
+                </label>
+                <label className="date-type-option">
+                  <input type="radio" name="dateType" checked={!isRelative} onChange={() => setIsRelative(false)} />
+                  <span className="date-type-text">
+                    <strong>Fixed dates</strong>
+                    <small>Dates stay exactly as selected</small>
+                  </span>
+                </label>
+              </div>
+            )}
             <div className="save-preset-modal-actions">
               <button onClick={() => setShowSaveModal(false)} className="cancel-button" disabled={isSaving}>
                 Cancel

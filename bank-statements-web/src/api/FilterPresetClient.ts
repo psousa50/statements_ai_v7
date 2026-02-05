@@ -13,6 +13,8 @@ export interface FilterPresetData {
   transaction_type?: 'all' | 'debit' | 'credit'
   sort_field?: 'date' | 'amount' | 'description' | 'created_at'
   sort_direction?: 'asc' | 'desc'
+  is_relative?: boolean
+  anchor_date?: string
 }
 
 export interface FilterPreset {

@@ -437,7 +437,7 @@ export const TransactionsPage = () => {
   }, [filters.page_size, fetchTransactions])
 
   const handleSavePreset = useCallback(
-    async (name: string) => {
+    async (name: string, isRelative: boolean) => {
       const existingPreset = filterPresets.find((p) => p.name === name)
       if (existingPreset) {
         await filterPresetClient.delete(existingPreset.id)
@@ -459,6 +459,11 @@ export const TransactionsPage = () => {
         filterData.sort_field = filters.sort_field as FilterPresetData['sort_field']
       if (filters.sort_direction && filters.sort_direction !== 'desc')
         filterData.sort_direction = filters.sort_direction
+
+      if (isRelative && (localStartDate || localEndDate)) {
+        filterData.is_relative = true
+        filterData.anchor_date = new Date().toISOString().split('T')[0]
+      }
 
       const preset = await filterPresetClient.create(name, filterData)
       setFilterPresets((prev) => {
