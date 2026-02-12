@@ -787,7 +787,6 @@ export const TransactionsPage = () => {
                 pageSize={pagination.page_size}
                 onPageChange={handlePageChange}
                 onPageSizeChange={handlePageSizeChange}
-                itemName="transactions"
               />
             </div>
           )}
@@ -827,7 +826,6 @@ export const TransactionsPage = () => {
                   pageSize={pagination.page_size}
                   onPageChange={handlePageChange}
                   onPageSizeChange={handlePageSizeChange}
-                  itemName="transactions"
                 />
               </div>
             )}

@@ -1,6 +1,6 @@
 .transactions-page {
   margin: 0 auto;
-  padding: 1.5rem 2rem;
+  padding: 0.75rem 2rem;
   font-family: var(--font-body);
   background-color: var(--bg-primary);
   min-height: 100vh;
@@ -1418,7 +1418,7 @@
 }
 
 .transactions-page .transactions-pagination {
-  padding: 0.75rem 1rem;
+  padding: 0.25rem 1rem;
   border-top: 1px solid var(--glass-border);
   background: var(--gradient-surface, transparent);
 }

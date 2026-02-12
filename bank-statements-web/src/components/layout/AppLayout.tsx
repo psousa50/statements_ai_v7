@@ -69,7 +69,7 @@ export const AppLayout = () => {
           width: usePermanentDrawer ? `calc(100% - ${drawerWidth}px)` : '100%',
         }}
       >
-        <Toolbar>
+        <Toolbar variant="dense">
           {!usePermanentDrawer && (
             <IconButton
               color="inherit"
@@ -117,8 +117,9 @@ export const AppLayout = () => {
         sx={{
           flexGrow: 1,
           bgcolor: 'background.default',
-          p: { xs: 2, sm: 3 },
-          mt: 8,
+          px: { xs: 2, sm: 3 },
+          py: { xs: 1.5, sm: 2 },
+          mt: '48px',
           maxWidth: '1600px',
           mx: 'auto',
           width: '100%',

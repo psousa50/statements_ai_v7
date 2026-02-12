@@ -392,7 +392,6 @@ export const EnhancementRules: React.FC = () => {
               pageSize={filters.page_size || 50}
               onPageChange={handlePageChange}
               onPageSizeChange={handlePageSizeChange}
-              itemName="rules"
             />
           </div>
         </Paper>
@@ -424,7 +423,6 @@ export const EnhancementRules: React.FC = () => {
                 pageSize={filters.page_size || 50}
                 onPageChange={handlePageChange}
                 onPageSizeChange={handlePageSizeChange}
-                itemName="rules"
               />
             </div>
           </Paper>

@@ -284,7 +284,7 @@ describe('TransactionsPage', () => {
       })
 
       await screen.findByText('Test Transaction')
-      expect(screen.getByText(/showing 1-20 of 50/i)).toBeInTheDocument()
+      expect(screen.getByText(/1-20 of 50/i)).toBeInTheDocument()
       expect(screen.getByRole('button', { name: '2' })).toBeInTheDocument()
     })
 
