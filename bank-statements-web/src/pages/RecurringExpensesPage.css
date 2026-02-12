@@ -66,53 +66,64 @@
   gap: 1rem;
 }
 
-.recurring-expenses-page .tabs-container {
+.recurring-expenses-page .tabs-row {
   display: flex;
-  gap: 0.5rem;
+  gap: 1rem;
+  align-items: center;
   margin-bottom: 1.5rem;
   animation: fadeSlideIn 0.5s ease-out 0.1s both;
 }
 
+.recurring-expenses-page .tabs-container {
+  display: inline-flex;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-md);
+  padding: 4px;
+  flex-shrink: 0;
+}
+
 .recurring-expenses-page .pattern-type-tabs {
-  margin-bottom: 0.75rem;
+  margin-bottom: 0;
 }
 
 .recurring-expenses-page .view-tabs {
-  margin-bottom: 1.5rem;
-}
-
-.recurring-expenses-page .view-tabs .tab-button {
-  padding: 0.5rem 1rem;
-  font-size: 0.75rem;
-  text-transform: none;
+  margin-bottom: 0;
 }
 
 .recurring-expenses-page .tab-button {
-  padding: 0.75rem 1.5rem;
-  border: 1px solid var(--border-primary);
-  background: var(--bg-secondary);
-  color: var(--text-secondary);
+  padding: 0.5rem 1.25rem;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
   font-family: var(--font-display);
   font-size: 0.8125rem;
   font-weight: 600;
   cursor: pointer;
-  border-radius: var(--radius-md);
+  border-radius: calc(var(--radius-md) - 4px);
   transition: all var(--transition-base);
   text-transform: uppercase;
   letter-spacing: 0.03em;
+  white-space: nowrap;
+  text-align: center;
+}
+
+.recurring-expenses-page .view-tabs .tab-button {
+  font-size: 0.8125rem;
+  text-transform: none;
+  letter-spacing: 0;
+  min-width: 6rem;
 }
 
 .recurring-expenses-page .tab-button:hover {
   color: var(--text-primary);
-  border-color: var(--accent-amber);
   background: var(--bg-hover);
 }
 
 .recurring-expenses-page .tab-button.active {
-  background: var(--gradient-accent, var(--button-primary));
+  background: var(--accent-amber);
   color: var(--text-on-accent);
-  border-color: var(--accent-amber);
-  box-shadow: 0 2px 8px rgba(251, 191, 36, 0.3);
+  box-shadow: 0 1px 4px rgba(251, 191, 36, 0.3);
 }
 
 .recurring-expenses-page .toggle-label {
@@ -213,12 +224,7 @@
   }
 
   .recurring-expenses-page .tabs-container {
-    flex-wrap: wrap;
-  }
-
-  .recurring-expenses-page .tab-button {
-    flex: 1;
-    min-width: 120px;
-    text-align: center;
+    display: inline-flex;
+    width: auto;
   }
 }

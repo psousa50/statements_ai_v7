@@ -66,37 +66,39 @@ export const RecurringExpensesPage = () => {
         </div>
       </header>
 
-      <div className="tabs-container pattern-type-tabs">
-        <button
-          className={`tab-button ${patternType === 'monthly' ? 'active' : ''}`}
-          onClick={() => setPatternType('monthly')}
-        >
-          Monthly ({monthlyCount})
-        </button>
-        <button
-          className={`tab-button ${patternType === 'quarterly' ? 'active' : ''}`}
-          onClick={() => setPatternType('quarterly')}
-        >
-          Quarterly ({quarterlyCount})
-        </button>
-        <button
-          className={`tab-button ${patternType === 'yearly' ? 'active' : ''}`}
-          onClick={() => setPatternType('yearly')}
-        >
-          Yearly ({yearlyCount})
-        </button>
-      </div>
+      <div className="tabs-row">
+        <div className="tabs-container pattern-type-tabs">
+          <button
+            className={`tab-button ${patternType === 'monthly' ? 'active' : ''}`}
+            onClick={() => setPatternType('monthly')}
+          >
+            Monthly ({monthlyCount})
+          </button>
+          <button
+            className={`tab-button ${patternType === 'quarterly' ? 'active' : ''}`}
+            onClick={() => setPatternType('quarterly')}
+          >
+            Quarterly ({quarterlyCount})
+          </button>
+          <button
+            className={`tab-button ${patternType === 'yearly' ? 'active' : ''}`}
+            onClick={() => setPatternType('yearly')}
+          >
+            Yearly ({yearlyCount})
+          </button>
+        </div>
 
-      <div className="tabs-container view-tabs">
-        <button
-          className={`tab-button ${viewTab === 'transactions' ? 'active' : ''}`}
-          onClick={() => setViewTab('transactions')}
-        >
-          Transactions
-        </button>
-        <button className={`tab-button ${viewTab === 'charts' ? 'active' : ''}`} onClick={() => setViewTab('charts')}>
-          Charts
-        </button>
+        <div className="tabs-container view-tabs">
+          <button
+            className={`tab-button ${viewTab === 'transactions' ? 'active' : ''}`}
+            onClick={() => setViewTab('transactions')}
+          >
+            Transactions
+          </button>
+          <button className={`tab-button ${viewTab === 'charts' ? 'active' : ''}`} onClick={() => setViewTab('charts')}>
+            Charts
+          </button>
+        </div>
       </div>
 
       <main className="page-content">

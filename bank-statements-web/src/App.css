@@ -124,31 +124,9 @@
   background-color: var(--bg-primary);
 }
 
-button {
-  font-family: var(--font-body);
-  background-color: var(--button-primary);
-  color: var(--text-on-accent);
-  border: none;
-  padding: 0.75rem 1rem;
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  font-size: 0.875rem;
-  font-weight: 500;
+.transaction-form .button-primary {
   width: 100%;
   margin-top: 1rem;
-  transition: all var(--transition-base);
-}
-
-button:hover {
-  background-color: var(--button-primary-hover);
-  transform: translateY(-1px);
-}
-
-button:disabled {
-  background-color: var(--button-secondary);
-  cursor: not-allowed;
-  opacity: 0.5;
-  transform: none;
 }
 
 .transaction-table {

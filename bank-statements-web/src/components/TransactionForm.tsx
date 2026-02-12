@@ -176,7 +176,7 @@ export const TransactionForm = ({
           />
         </div>
 
-        <button type="submit" disabled={isLoading}>
+        <button type="submit" className="button-primary" disabled={isLoading}>
           {isLoading ? (isEditing ? 'Updating...' : 'Adding...') : isEditing ? 'Update Transaction' : 'Add Transaction'}
         </button>
       </form>
