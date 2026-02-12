@@ -151,7 +151,6 @@ export const TransactionForm = ({
             selectedAccountId={accountId}
             onAccountChange={setAccountId}
             placeholder="Select an account"
-            required={true}
           />
         </div>
 
@@ -162,7 +161,6 @@ export const TransactionForm = ({
             selectedAccountId={counterpartyAccountId}
             onAccountChange={setCounterpartyAccountId}
             placeholder="Select counterparty account for transfers"
-            required={false}
           />
         </div>
 

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Account } from '../types/Transaction'
+import { StyledSelect } from './StyledSelect'
 
 const CURRENCIES = [
   { code: 'EUR', symbol: '€', name: 'Euro' },
@@ -93,19 +94,16 @@ export const AccountModal = ({ isOpen, account, onSave, onClose }: AccountModalP
             <label htmlFor="account-currency" className="form-label">
               Currency
             </label>
-            <select
+            <StyledSelect
               id="account-currency"
-              className="form-input"
               value={currency}
-              onChange={(e) => setCurrency(e.target.value)}
+              onChange={setCurrency}
               disabled={saving}
-            >
-              {CURRENCIES.map((c) => (
-                <option key={c.code} value={c.code}>
-                  {c.symbol} {c.code} - {c.name}
-                </option>
-              ))}
-            </select>
+              options={CURRENCIES.map((c) => ({
+                value: c.code,
+                label: `${c.symbol} ${c.code} - ${c.name}`,
+              }))}
+            />
           </div>
         </div>
 

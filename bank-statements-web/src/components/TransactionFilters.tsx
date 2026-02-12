@@ -3,6 +3,7 @@ import { Category, Account } from '../types/Transaction'
 import { CategorySelector } from './CategorySelector'
 import { DatePeriodNavigator } from './DatePeriodNavigator'
 import { FilterPreset } from '../api/FilterPresetClient'
+import { StyledSelect } from './StyledSelect'
 
 export type CategorizationFilter = 'all' | 'categorized' | 'uncategorized'
 
@@ -126,14 +127,12 @@ export const TransactionFilters = ({
   }, [onSavePreset, presetName, hasDateFilter, isRelative])
 
   const handleLoadPreset = useCallback(
-    (e: React.ChangeEvent<HTMLSelectElement>) => {
-      const presetId = e.target.value
+    (presetId: string) => {
       if (!presetId || !onLoadPreset) return
       const preset = filterPresets.find((p) => p.id === presetId)
       if (preset) {
         onLoadPreset(preset)
       }
-      e.target.value = ''
     },
     [filterPresets, onLoadPreset]
   )
@@ -152,21 +151,16 @@ export const TransactionFilters = ({
         <div className="filter-header-actions">
           {onLoadPreset && (
             <div className="preset-dropdown-container">
-              <select
-                className="preset-dropdown"
+              <StyledSelect
                 onChange={handleLoadPreset}
                 disabled={filterPresetsLoading || filterPresets.length === 0}
                 value={filterPresets.find((p) => p.name === currentPresetName)?.id ?? ''}
-              >
-                <option value="" disabled>
-                  {filterPresetsLoading ? 'Loading...' : 'Load preset...'}
-                </option>
-                {filterPresets.map((preset) => (
-                  <option key={preset.id} value={preset.id}>
-                    {preset.name}
-                  </option>
-                ))}
-              </select>
+                placeholder={filterPresetsLoading ? 'Loading...' : 'Load preset...'}
+                options={filterPresets.map((preset) => ({
+                  value: preset.id,
+                  label: preset.name,
+                }))}
+              />
               {onDeletePreset && currentPresetName && (
                 <button
                   className="preset-delete-button"
@@ -238,36 +232,35 @@ export const TransactionFilters = ({
               <label htmlFor="account-filter" className="filter-label">
                 Account
               </label>
-              <select
+              <StyledSelect
                 id="account-filter"
                 value={selectedAccountId || ''}
-                onChange={(e) => onAccountChange(e.target.value || undefined)}
-                className="filter-input filter-select"
-              >
-                <option value="">All Accounts</option>
-                {accounts.map((account) => (
-                  <option key={account.id} value={account.id}>
-                    {account.name}
-                  </option>
-                ))}
-              </select>
+                onChange={(v) => onAccountChange(v || undefined)}
+                options={[
+                  { value: '', label: 'All Accounts' },
+                  ...accounts.map((account) => ({
+                    value: account.id,
+                    label: account.name,
+                  })),
+                ]}
+              />
             </div>
 
             <div className="filter-group">
               <label htmlFor="transaction-type-filter" className="filter-label">
                 Type
               </label>
-              <select
+              <StyledSelect
                 id="transaction-type-filter"
                 value={transactionType}
-                onChange={(e) => onTransactionTypeChange(e.target.value as 'all' | 'debit' | 'credit')}
-                className="filter-input filter-select"
+                onChange={(v) => onTransactionTypeChange(v as 'all' | 'debit' | 'credit')}
                 disabled={transactionTypeDisabled}
-              >
-                <option value="all">All</option>
-                <option value="debit">Debits</option>
-                <option value="credit">Credits</option>
-              </select>
+                options={[
+                  { value: 'all', label: 'All' },
+                  { value: 'debit', label: 'Debits' },
+                  { value: 'credit', label: 'Credits' },
+                ]}
+              />
             </div>
 
             <div className="filter-group amount-group">
@@ -297,16 +290,16 @@ export const TransactionFilters = ({
               <label htmlFor="categorization-filter" className="filter-label">
                 Status
               </label>
-              <select
+              <StyledSelect
                 id="categorization-filter"
                 value={categorizationFilter}
-                onChange={(e) => onCategorizationFilterChange(e.target.value as CategorizationFilter)}
-                className="filter-input filter-select"
-              >
-                <option value="all">All</option>
-                <option value="categorized">Categorised</option>
-                {!hideUncategorizedOnlyOption && <option value="uncategorized">Uncategorised</option>}
-              </select>
+                onChange={(v) => onCategorizationFilterChange(v as CategorizationFilter)}
+                options={[
+                  { value: 'all', label: 'All' },
+                  { value: 'categorized', label: 'Categorised' },
+                  ...(!hideUncategorizedOnlyOption ? [{ value: 'uncategorized', label: 'Uncategorised' }] : []),
+                ]}
+              />
             </div>
 
             <div className="filter-group options-group">

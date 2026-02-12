@@ -1,5 +1,6 @@
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft'
 import ChevronRightIcon from '@mui/icons-material/ChevronRight'
+import { StyledSelect } from './StyledSelect'
 import './Pagination.css'
 
 interface PaginationProps {
@@ -55,16 +56,16 @@ export const Pagination = ({
         <span>
           Showing {startItem}-{endItem} of {totalItems} {itemName}
         </span>
-        <select
-          value={pageSize}
-          onChange={(e) => onPageSizeChange(Number(e.target.value))}
-          className="page-size-select"
-        >
-          <option value={10}>10 per page</option>
-          <option value={20}>20 per page</option>
-          <option value={50}>50 per page</option>
-          <option value={100}>100 per page</option>
-        </select>
+        <StyledSelect
+          value={String(pageSize)}
+          onChange={(v) => onPageSizeChange(Number(v))}
+          options={[
+            { value: '10', label: '10 per page' },
+            { value: '20', label: '20 per page' },
+            { value: '50', label: '50 per page' },
+            { value: '100', label: '100 per page' },
+          ]}
+        />
       </div>
 
       <div className="pagination-controls">

@@ -1,6 +1,7 @@
 import { Category } from '../types/Transaction'
 import { CategorizationSource } from '../types/TransactionCategorization'
 import { CategorySelector } from './CategorySelector'
+import { StyledSelect } from './StyledSelect'
 
 interface TransactionCategorizationFiltersProps {
   categories: Category[]
@@ -42,16 +43,16 @@ export const TransactionCategorizationFilters = ({
 
         {/* Source Filter */}
         <div className="filter-section">
-          <select
+          <StyledSelect
             id="source-filter"
             value={selectedSource || ''}
-            onChange={(e) => onSourceChange((e.target.value as CategorizationSource) || undefined)}
-            className="filter-select"
-          >
-            <option value="">All Sources</option>
-            <option value={CategorizationSource.MANUAL}>👤 Manual</option>
-            <option value={CategorizationSource.AI}>🤖 AI</option>
-          </select>
+            onChange={(v) => onSourceChange((v as CategorizationSource) || undefined)}
+            options={[
+              { value: '', label: 'All Sources' },
+              { value: CategorizationSource.MANUAL, label: 'Manual' },
+              { value: CategorizationSource.AI, label: 'AI' },
+            ]}
+          />
         </div>
 
         {/* Categories */}
