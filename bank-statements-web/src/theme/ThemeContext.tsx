@@ -60,7 +60,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           },
           background: {
             default: resolvedMode === 'dark' ? '#0f172a' : '#f8fafc',
-            paper: resolvedMode === 'dark' ? '#1e293b' : '#ffffff',
+            paper: resolvedMode === 'dark' ? '#151921' : '#ffffff',
           },
         },
         components: {
