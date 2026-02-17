@@ -128,12 +128,19 @@ export const TransactionsPage = () => {
     categorizeTransaction,
     bulkUpdateCategory,
     bulkReplaceCategory,
+    bulkCategorizeByIds,
     deleteTransaction,
   } = useTransactions()
 
   const { categories, loading: categoriesLoading, error: categoriesError } = useCategories()
   const { accounts, loading: accountsLoading, error: accountsError } = useAccounts()
-  const { tags: allTags, createTag, addTagToTransaction: rawAddTag, removeTagFromTransaction: rawRemoveTag } = useTags()
+  const {
+    tags: allTags,
+    createTag,
+    addTagToTransaction: rawAddTag,
+    removeTagFromTransaction: rawRemoveTag,
+    bulkAddTag,
+  } = useTags()
 
   const loading = transactionsLoading || categoriesLoading || accountsLoading
   const error = transactionsError || categoriesError || accountsError
@@ -144,6 +151,7 @@ export const TransactionsPage = () => {
   const [filterPresets, setFilterPresets] = useState<FilterPreset[]>([])
   const [filterPresetsLoading, setFilterPresetsLoading] = useState(false)
   const [currentPresetName, setCurrentPresetName] = useState<string | undefined>(undefined)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
 
   const isRuleFiltering = !!filters.enhancement_rule_id
 
@@ -280,6 +288,7 @@ export const TransactionsPage = () => {
 
   const handleFilterChange = useCallback(
     (newFilters: Partial<FilterType>) => {
+      setSelectedIds(new Set())
       const updatedFilters = {
         ...filters,
         ...newFilters,
@@ -302,6 +311,7 @@ export const TransactionsPage = () => {
 
   const handlePageChange = useCallback(
     (page: number) => {
+      setSelectedIds(new Set())
       const updatedFilters = {
         ...filters,
         page,
@@ -379,6 +389,40 @@ export const TransactionsPage = () => {
     },
     [rawRemoveTag, setTransactions]
   )
+
+  const handleToggleSelect = useCallback((transactionId: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(transactionId)) {
+        next.delete(transactionId)
+      } else {
+        next.add(transactionId)
+      }
+      return next
+    })
+  }, [])
+
+  const handleToggleSelectAll = useCallback(() => {
+    const pageIds = transactions.map((t) => t.id)
+    const allSelected = pageIds.every((id) => selectedIds.has(id))
+    if (allSelected) {
+      setSelectedIds((prev) => {
+        const next = new Set(prev)
+        pageIds.forEach((id) => next.delete(id))
+        return next
+      })
+    } else {
+      setSelectedIds((prev) => {
+        const next = new Set(prev)
+        pageIds.forEach((id) => next.add(id))
+        return next
+      })
+    }
+  }, [transactions, selectedIds])
+
+  const handleClearSelection = useCallback(() => {
+    setSelectedIds(new Set())
+  }, [])
 
   const handleAccountFilter = useCallback(
     (accountId?: string) => {
@@ -623,6 +667,30 @@ export const TransactionsPage = () => {
     })
   }, [filters, fetchTransactions])
 
+  const handleBulkTag = useCallback(
+    async (tagId: string) => {
+      const result = await bulkAddTag(Array.from(selectedIds), tagId)
+      if (result) {
+        setSelectedIds(new Set())
+        fetchWithConvertedAmounts()
+      }
+      return result
+    },
+    [selectedIds, bulkAddTag, fetchWithConvertedAmounts]
+  )
+
+  const handleBulkCategorizeByIds = useCallback(
+    async (categoryId?: string) => {
+      const result = await bulkCategorizeByIds(Array.from(selectedIds), categoryId)
+      if (result) {
+        setSelectedIds(new Set())
+        fetchWithConvertedAmounts()
+      }
+      return result
+    },
+    [selectedIds, bulkCategorizeByIds, fetchWithConvertedAmounts]
+  )
+
   const handleCategorizeTransaction = async (transactionId: string, categoryId?: string) => {
     await categorizeTransaction(transactionId, categoryId)
     fetchWithConvertedAmounts()
@@ -799,7 +867,17 @@ export const TransactionsPage = () => {
         <div className="transactions-content">
           <div className="transactions-header">
             <div className="transactions-summary">
-              <h2>Transactions</h2>
+              <h2>
+                Transactions
+                {selectedIds.size > 0 && (
+                  <span className="selection-count">
+                    {selectedIds.size} selected
+                    <span className="selection-clear" onClick={handleClearSelection} title="Clear selection">
+                      &times;
+                    </span>
+                  </span>
+                )}
+              </h2>
               {!loading &&
                 transactions.length > 0 &&
                 (() => {
@@ -855,6 +933,11 @@ export const TransactionsPage = () => {
               onAddTag={addTagToTransaction}
               onRemoveTag={removeTagFromTransaction}
               onCreateTag={createTag}
+              selectedIds={selectedIds}
+              onToggleSelect={handleToggleSelect}
+              onToggleSelectAll={handleToggleSelectAll}
+              onBulkTag={handleBulkTag}
+              onBulkCategorizeByIds={handleBulkCategorizeByIds}
             />
           </div>
 

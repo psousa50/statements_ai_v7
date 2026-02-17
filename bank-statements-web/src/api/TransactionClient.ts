@@ -171,6 +171,7 @@ export interface TransactionClient {
   countSimilar(filters: CountSimilarFilters): Promise<CountSimilarResponse>
   countByCategory(filters: CountByCategoryFilters): Promise<CountSimilarResponse>
   bulkReplaceCategory(request: BulkReplaceCategoryRequest): Promise<BulkReplaceCategoryResponse>
+  bulkCategorizeByIds(transactionIds: string[], categoryId?: string): Promise<BulkUpdateTransactionsResponse>
   previewEnhancement(request: EnhancementPreviewRequest): Promise<EnhancementPreviewResponse>
   createSavedFilter(transactionIds: string[]): Promise<SavedFilterResponse>
 }
@@ -505,6 +506,14 @@ export const transactionClient: TransactionClient = {
 
   async bulkReplaceCategory(request: BulkReplaceCategoryRequest) {
     const response = await axiosInstance.put<BulkReplaceCategoryResponse>(`${API_URL}/bulk-replace-category`, request)
+    return response.data
+  },
+
+  async bulkCategorizeByIds(transactionIds: string[], categoryId?: string) {
+    const response = await axiosInstance.post<BulkUpdateTransactionsResponse>(`${API_URL}/bulk-categorize-by-ids`, {
+      transaction_ids: transactionIds,
+      category_id: categoryId,
+    })
     return response.data
   },
 

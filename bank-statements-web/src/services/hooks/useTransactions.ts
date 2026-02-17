@@ -185,6 +185,15 @@ export const useTransactions = () => {
     },
   })
 
+  const bulkCategorizeByIdsMutation = useMutation({
+    mutationFn: async ({ transactionIds, categoryId }: { transactionIds: string[]; categoryId?: string }) => {
+      return api.transactions.bulkCategorizeByIds(transactionIds, categoryId)
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: TRANSACTION_QUERY_KEYS.all })
+    },
+  })
+
   const addTransaction = useCallback(
     async (transactionData: {
       date: string
@@ -302,6 +311,18 @@ export const useTransactions = () => {
     [bulkReplaceCategoryMutation]
   )
 
+  const bulkCategorizeByIds = useCallback(
+    async (transactionIds: string[], categoryId?: string) => {
+      try {
+        return await bulkCategorizeByIdsMutation.mutateAsync({ transactionIds, categoryId })
+      } catch {
+        setError('Failed to apply category to selected transactions.')
+        return null
+      }
+    },
+    [bulkCategorizeByIdsMutation]
+  )
+
   const getTransactionsByCategory = useCallback(
     (categoryId?: string) => {
       if (!categoryId) return transactions
@@ -338,6 +359,7 @@ export const useTransactions = () => {
     categorizeTransaction,
     bulkUpdateCategory,
     bulkReplaceCategory,
+    bulkCategorizeByIds,
     getTransactionsByCategory,
     getTransactionsByStatus,
   }

@@ -49,6 +49,16 @@ export const useTags = () => {
     },
   })
 
+  const bulkAddMutation = useMutation({
+    mutationFn: async ({ transactionIds, tagId }: { transactionIds: string[]; tagId: string }) => {
+      return api.tags.bulkAddToTransactions(transactionIds, tagId)
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: TAG_QUERY_KEYS.all })
+      queryClient.invalidateQueries({ queryKey: TRANSACTION_QUERY_KEYS.all })
+    },
+  })
+
   const createTag = useCallback(
     async (name: string) => {
       try {
@@ -82,6 +92,17 @@ export const useTags = () => {
     [removeFromTransactionMutation]
   )
 
+  const bulkAddTag = useCallback(
+    async (transactionIds: string[], tagId: string) => {
+      try {
+        return await bulkAddMutation.mutateAsync({ transactionIds, tagId })
+      } catch {
+        return null
+      }
+    },
+    [bulkAddMutation]
+  )
+
   return {
     tags: tagsQuery.data ?? [],
     loading: tagsQuery.isLoading,
@@ -89,6 +110,7 @@ export const useTags = () => {
     createTag,
     addTagToTransaction,
     removeTagFromTransaction,
+    bulkAddTag,
     isCreating: createMutation.isPending,
   }
 }

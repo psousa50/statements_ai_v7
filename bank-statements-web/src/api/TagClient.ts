@@ -6,11 +6,17 @@ export interface TagListResponse {
   total: number
 }
 
+export interface BulkTagResponse {
+  tagged_count: number
+  message: string
+}
+
 export interface TagClient {
   getAll(): Promise<TagListResponse>
   create(name: string): Promise<Tag>
   addToTransaction(transactionId: string, tagId: string): Promise<Transaction>
   removeFromTransaction(transactionId: string, tagId: string): Promise<Transaction>
+  bulkAddToTransactions(transactionIds: string[], tagId: string): Promise<BulkTagResponse>
 }
 
 const BASE_URL = import.meta.env.VITE_API_URL || ''
@@ -35,6 +41,14 @@ export const tagClient: TagClient = {
 
   async removeFromTransaction(transactionId: string, tagId: string) {
     const response = await axiosInstance.delete<Transaction>(`${TRANSACTIONS_URL}/${transactionId}/tags/${tagId}`)
+    return response.data
+  },
+
+  async bulkAddToTransactions(transactionIds: string[], tagId: string) {
+    const response = await axiosInstance.post<BulkTagResponse>(`${TAGS_URL}/bulk-add`, {
+      transaction_ids: transactionIds,
+      tag_id: tagId,
+    })
     return response.data
   },
 }

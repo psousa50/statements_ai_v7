@@ -15,6 +15,7 @@ import DeleteIcon from '@mui/icons-material/Delete'
 import UnfoldMoreIcon from '@mui/icons-material/UnfoldMore'
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward'
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward'
+import Checkbox from '@mui/material/Checkbox'
 import IconButton from '@mui/material/IconButton'
 import { ActionIconButton } from './ActionIconButton'
 import { formatCurrency } from '../utils/format'
@@ -58,6 +59,11 @@ interface TransactionTableProps {
   onAddTag?: (transactionId: string, tagId: string) => Promise<unknown>
   onRemoveTag?: (transactionId: string, tagId: string) => Promise<unknown>
   onCreateTag?: (name: string) => Promise<Tag | null>
+  selectedIds?: Set<string>
+  onToggleSelect?: (transactionId: string) => void
+  onToggleSelectAll?: () => void
+  onBulkTag?: (tagId: string) => Promise<unknown>
+  onBulkCategorizeByIds?: (categoryId?: string) => Promise<unknown>
 }
 
 interface BulkModalState {
@@ -297,6 +303,11 @@ export const TransactionTable = ({
   onAddTag,
   onRemoveTag,
   onCreateTag,
+  selectedIds,
+  onToggleSelect,
+  onToggleSelectAll,
+  onBulkTag,
+  onBulkCategorizeByIds,
 }: TransactionTableProps) => {
   const [toast, setToast] = useState<Omit<ToastProps, 'onClose'> | null>(null)
   const [localCategories, setLocalCategories] = useState<Category[]>(categories)
@@ -364,6 +375,40 @@ export const TransactionTable = ({
     setPendingDeleteTransaction(null)
   }, [pendingDeleteTransaction, onDelete, handleShowToast])
 
+  const selectionAwareAddTag = useCallback(
+    async (transactionId: string, tagId: string) => {
+      const result = await onAddTag?.(transactionId, tagId)
+      if (result && selectedIds && selectedIds.size > 0 && onBulkTag) {
+        const tagName = allTags?.find((t) => t.id === tagId)?.name || 'tag'
+        handleShowToast({
+          message: `Apply "${tagName}" to ${selectedIds.size} selected?`,
+          type: 'info',
+          duration: 6000,
+          action: { label: 'Apply', onClick: () => onBulkTag(tagId) },
+        })
+      }
+      return result
+    },
+    [onAddTag, selectedIds, onBulkTag, allTags, handleShowToast]
+  )
+
+  const selectionAwareCategorize = useCallback(
+    async (transactionId: string, categoryId?: string) => {
+      await onCategorize?.(transactionId, categoryId)
+      if (categoryId && selectedIds && selectedIds.size > 0 && onBulkCategorizeByIds) {
+        const category = localCategories.find((c) => c.id === categoryId)
+        const categoryName = category ? getCategoryDisplayName(category) : 'category'
+        handleShowToast({
+          message: `Apply "${categoryName}" to ${selectedIds.size} selected?`,
+          type: 'info',
+          duration: 6000,
+          action: { label: 'Apply', onClick: () => onBulkCategorizeByIds(categoryId) },
+        })
+      }
+    },
+    [onCategorize, selectedIds, onBulkCategorizeByIds, localCategories, handleShowToast]
+  )
+
   if (loading) {
     return <div className="loading">Loading transactions...</div>
   }
@@ -401,6 +446,7 @@ export const TransactionTable = ({
       <h2>Transactions</h2>
       <table>
         <colgroup>
+          {onToggleSelect && <col style={{ width: '40px' }} />}
           <col style={{ width: '10%' }} />
           <col style={{ width: onCategorize ? '33%' : '52%' }} />
           {onCategorize && <col style={{ width: '29%' }} />}
@@ -410,6 +456,24 @@ export const TransactionTable = ({
         </colgroup>
         <thead>
           <tr>
+            {onToggleSelect &&
+              (() => {
+                const pageIds = transactions.map((t) => t.id)
+                const selectedOnPage = pageIds.filter((id) => selectedIds?.has(id)).length
+                const allSelected = selectedOnPage === pageIds.length && pageIds.length > 0
+                const indeterminate = selectedOnPage > 0 && !allSelected
+                return (
+                  <th style={{ textAlign: 'center', width: 40 }}>
+                    <Checkbox
+                      size="small"
+                      checked={allSelected}
+                      indeterminate={indeterminate}
+                      onChange={onToggleSelectAll}
+                      sx={{ padding: '2px' }}
+                    />
+                  </th>
+                )
+              })()}
             <SortableHeader
               field="date"
               currentSortField={sortField}
@@ -446,7 +510,17 @@ export const TransactionTable = ({
         </thead>
         <tbody>
           {transactions.map((transaction) => (
-            <tr key={transaction.id}>
+            <tr key={transaction.id} className={selectedIds?.has(transaction.id) ? 'selected' : ''}>
+              {onToggleSelect && (
+                <td style={{ textAlign: 'center', width: 40 }}>
+                  <Checkbox
+                    size="small"
+                    checked={selectedIds?.has(transaction.id) ?? false}
+                    onChange={() => onToggleSelect(transaction.id)}
+                    sx={{ padding: '2px' }}
+                  />
+                </td>
+              )}
               <td>{formatDate(transaction.date)}</td>
               <td>
                 <div className="transaction-description">
@@ -482,7 +556,7 @@ export const TransactionTable = ({
                   <CategoryCell
                     transaction={transaction}
                     categories={localCategories}
-                    onCategorize={onCategorize}
+                    onCategorize={selectionAwareCategorize}
                     onBulkCategorize={onBulkCategorize}
                     onBulkReplaceCategory={onBulkReplaceCategory}
                     similarCountFilters={similarCountFilters}
@@ -585,7 +659,7 @@ export const TransactionTable = ({
               transactionId={tagPopoverTransaction.id}
               currentTags={tagPopoverTransaction.tags || []}
               allTags={allTags}
-              onAddTag={onAddTag}
+              onAddTag={selectionAwareAddTag}
               onRemoveTag={onRemoveTag}
               onCreateTag={onCreateTag}
               autoFocus
