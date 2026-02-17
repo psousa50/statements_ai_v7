@@ -10,6 +10,7 @@ from starlette import status as http_status
 from app.api.routes.auth import require_current_user
 from app.api.routes.feature_gate import require_feature
 from app.api.schemas import (
+    BulkCategorizeByIdsRequest,
     BulkReplaceCategoryRequest,
     BulkReplaceCategoryResponse,
     BulkUpdateTransactionsRequest,
@@ -696,6 +697,26 @@ def register_transaction_routes(
             message = f"Removed '{from_name}' from {updated_count} transactions"
 
         return BulkReplaceCategoryResponse(updated_count=updated_count, message=message)
+
+    @router.post(
+        "/bulk-categorize-by-ids",
+        response_model=BulkUpdateTransactionsResponse,
+    )
+    def bulk_categorize_by_ids(
+        request: BulkCategorizeByIdsRequest,
+        internal: InternalDependencies = Depends(provide_dependencies),
+        current_user: User = Depends(require_current_user),
+    ):
+        updated_count = internal.transaction_service.bulk_categorize_by_ids(
+            user_id=current_user.id,
+            transaction_ids=request.transaction_ids,
+            category_id=request.category_id,
+        )
+        action = "categorized" if request.category_id else "uncategorized"
+        return BulkUpdateTransactionsResponse(
+            updated_count=updated_count,
+            message=f"Successfully {action} {updated_count} transaction{'s' if updated_count != 1 else ''}",
+        )
 
     @router.get(
         "/{transaction_id}",

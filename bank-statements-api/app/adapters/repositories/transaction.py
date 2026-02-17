@@ -1160,6 +1160,32 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
 
         return {UUID(row[0]): row[1] for row in results}
 
+    def filter_owned_ids(self, transaction_ids: List[UUID], user_id: UUID) -> List[UUID]:
+        rows = (
+            self.db_session.query(Transaction.id)
+            .filter(Transaction.id.in_(transaction_ids), Transaction.user_id == user_id)
+            .all()
+        )
+        return [row[0] for row in rows]
+
+    def bulk_update_category_by_ids(
+        self,
+        transaction_ids: List[UUID],
+        category_id: Optional[UUID],
+        user_id: UUID,
+    ) -> int:
+        update_values = {
+            "category_id": category_id,
+            "categorization_status": (CategorizationStatus.RULE_BASED if category_id else CategorizationStatus.UNCATEGORIZED),
+        }
+        updated_count = (
+            self.db_session.query(Transaction)
+            .filter(Transaction.id.in_(transaction_ids), Transaction.user_id == user_id)
+            .update(update_values, synchronize_session="fetch")
+        )
+        self.db_session.commit()
+        return updated_count
+
     def get_running_balances(
         self,
         account_id: UUID,

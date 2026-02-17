@@ -37,3 +37,7 @@ class TagRepository(ABC):
     @abstractmethod
     def has_transactions(self, tag_id: UUID) -> bool:
         pass
+
+    @abstractmethod
+    def bulk_add_to_transactions(self, transaction_ids: List[UUID], tag_id: UUID) -> int:
+        pass

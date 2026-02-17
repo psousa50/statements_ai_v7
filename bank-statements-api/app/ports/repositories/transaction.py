@@ -321,6 +321,19 @@ class TransactionRepository(ABC):
         pass
 
     @abstractmethod
+    def filter_owned_ids(self, transaction_ids: List[UUID], user_id: UUID) -> List[UUID]:
+        pass
+
+    @abstractmethod
+    def bulk_update_category_by_ids(
+        self,
+        transaction_ids: List[UUID],
+        category_id: Optional[UUID],
+        user_id: UUID,
+    ) -> int:
+        pass
+
+    @abstractmethod
     def get_running_balances(
         self,
         account_id: UUID,

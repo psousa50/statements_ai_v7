@@ -43,6 +43,21 @@ class TagListResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class BulkTagRequest(BaseModel):
+    transaction_ids: List[UUID] = Field(..., min_length=1)
+    tag_id: UUID
+
+
+class BulkTagResponse(BaseModel):
+    tagged_count: int
+    message: str
+
+
+class BulkCategorizeByIdsRequest(BaseModel):
+    transaction_ids: List[UUID] = Field(..., min_length=1)
+    category_id: Optional[UUID] = None
+
+
 class CategoryBase(BaseModel):
     name: str
     color: Optional[str] = None

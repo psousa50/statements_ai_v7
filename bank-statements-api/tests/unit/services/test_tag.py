@@ -187,3 +187,57 @@ class TestTagService:
 
         mock_tag_repository.remove_from_transaction.assert_called_once()
         mock_tag_repository.delete.assert_called_once_with(sample_tag.id, user_id)
+
+    def test_bulk_add_tag_to_transactions(
+        self,
+        service,
+        mock_tag_repository,
+        mock_transaction_repository,
+        sample_tag,
+        user_id,
+    ):
+        transaction_ids = [uuid4(), uuid4(), uuid4()]
+        mock_tag_repository.get_by_id.return_value = sample_tag
+        mock_transaction_repository.filter_owned_ids.return_value = transaction_ids
+        mock_tag_repository.bulk_add_to_transactions.return_value = 3
+
+        result = service.bulk_add_tag_to_transactions(
+            transaction_ids=transaction_ids,
+            tag_id=sample_tag.id,
+            user_id=user_id,
+        )
+
+        assert result == 3
+        mock_tag_repository.get_by_id.assert_called_once_with(sample_tag.id, user_id)
+        mock_transaction_repository.filter_owned_ids.assert_called_once_with(transaction_ids, user_id)
+        mock_tag_repository.bulk_add_to_transactions.assert_called_once_with(transaction_ids, sample_tag.id)
+
+    def test_bulk_add_tag_not_found(self, service, mock_tag_repository, user_id):
+        mock_tag_repository.get_by_id.return_value = None
+
+        with pytest.raises(NotFoundError, match="Tag not found"):
+            service.bulk_add_tag_to_transactions(
+                transaction_ids=[uuid4()],
+                tag_id=uuid4(),
+                user_id=user_id,
+            )
+
+    def test_bulk_add_tag_no_owned_transactions(
+        self,
+        service,
+        mock_tag_repository,
+        mock_transaction_repository,
+        sample_tag,
+        user_id,
+    ):
+        mock_tag_repository.get_by_id.return_value = sample_tag
+        mock_transaction_repository.filter_owned_ids.return_value = []
+
+        result = service.bulk_add_tag_to_transactions(
+            transaction_ids=[uuid4()],
+            tag_id=sample_tag.id,
+            user_id=user_id,
+        )
+
+        assert result == 0
+        mock_tag_repository.bulk_add_to_transactions.assert_not_called()

@@ -402,6 +402,22 @@ class TransactionService:
             rule=rule,
         )
 
+    def bulk_categorize_by_ids(
+        self,
+        user_id: UUID,
+        transaction_ids: List[UUID],
+        category_id: Optional[UUID],
+    ) -> int:
+        owned_ids = self.transaction_repository.filter_owned_ids(transaction_ids, user_id)
+        if not owned_ids:
+            return 0
+
+        return self.transaction_repository.bulk_update_category_by_ids(
+            transaction_ids=owned_ids,
+            category_id=category_id,
+            user_id=user_id,
+        )
+
     def count_by_normalized_description(
         self,
         user_id: UUID,

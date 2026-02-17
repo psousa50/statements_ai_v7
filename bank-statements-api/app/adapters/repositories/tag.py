@@ -57,3 +57,23 @@ class SQLAlchemyTagRepository(TagRepository):
     def has_transactions(self, tag_id: UUID) -> bool:
         count = self.db_session.query(transaction_tags).filter(transaction_tags.c.tag_id == tag_id).count()
         return count > 0
+
+    def bulk_add_to_transactions(self, transaction_ids: List[UUID], tag_id: UUID) -> int:
+        existing = {
+            row.transaction_id
+            for row in self.db_session.query(transaction_tags.c.transaction_id)
+            .filter(
+                transaction_tags.c.tag_id == tag_id,
+                transaction_tags.c.transaction_id.in_(transaction_ids),
+            )
+            .all()
+        }
+        new_ids = [tid for tid in transaction_ids if tid not in existing]
+        if not new_ids:
+            return 0
+        self.db_session.execute(
+            transaction_tags.insert(),
+            [{"transaction_id": tid, "tag_id": tag_id} for tid in new_ids],
+        )
+        self.db_session.commit()
+        return len(new_ids)

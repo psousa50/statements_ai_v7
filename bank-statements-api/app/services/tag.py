@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Sequence
 from uuid import UUID
 
 from app.api.errors import ConflictError, NotFoundError, ValidationError
@@ -50,6 +50,17 @@ class TagService:
             self.tag_repository.add_to_transaction(transaction_id, tag_id)
 
         return self.transaction_repository.get_by_id(transaction_id, user_id)
+
+    def bulk_add_tag_to_transactions(self, transaction_ids: Sequence[UUID], tag_id: UUID, user_id: UUID) -> int:
+        tag = self.tag_repository.get_by_id(tag_id, user_id)
+        if not tag:
+            raise NotFoundError("Tag not found", {"tag_id": str(tag_id)})
+
+        owned_ids = self.transaction_repository.filter_owned_ids(list(transaction_ids), user_id)
+        if not owned_ids:
+            return 0
+
+        return self.tag_repository.bulk_add_to_transactions(owned_ids, tag_id)
 
     def remove_tag_from_transaction(self, transaction_id: UUID, tag_id: UUID, user_id: UUID) -> Transaction:
         tag = self.tag_repository.get_by_id(tag_id, user_id)
