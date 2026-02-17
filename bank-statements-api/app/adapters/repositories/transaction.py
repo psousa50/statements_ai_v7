@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 
 from app.common.text_normalization import normalize_description
 from app.domain.dto.statement_processing import TransactionDTO
+from app.domain.models.tag import Tag
 from app.domain.models.transaction import CategorizationStatus, SourceType, Transaction
 from app.ports.repositories.transaction import TransactionRepository
 
@@ -92,6 +93,7 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         exclude_uncategorized: Optional[bool] = None,
         transaction_type: Optional[str] = None,
         transaction_ids: Optional[List[UUID]] = None,
+        tag_ids: Optional[List[UUID]] = None,
     ) -> Tuple[List[Transaction], int, Decimal]:
         query = self.db_session.query(Transaction).filter(Transaction.user_id == user_id)
 
@@ -150,6 +152,10 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         # Transaction IDs filter
         if transaction_ids:
             filters.append(Transaction.id.in_(transaction_ids))
+
+        # Tag IDs filter (OR logic: transactions with ANY of the selected tags)
+        if tag_ids:
+            filters.append(Transaction.tags.any(Tag.id.in_(tag_ids)))
 
         if filters:
             query = query.filter(and_(*filters))

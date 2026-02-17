@@ -12,6 +12,7 @@ from .processing import (
 )
 from .statement import Statement
 from .subscription import TIER_LIMITS, Subscription, SubscriptionStatus, SubscriptionTier, SubscriptionUsage
+from .tag import Tag, transaction_tags
 from .transaction import CategorizationStatus, Transaction
 from .uploaded_file import FileAnalysisMetadata, UploadedFile
 
@@ -32,6 +33,9 @@ __all__ = [
     "SyncCategorizationResult",
     # Account
     "Account",
+    # Tag
+    "Tag",
+    "transaction_tags",
     # Transaction
     "CategorizationStatus",
     "Transaction",

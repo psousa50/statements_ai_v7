@@ -16,6 +16,33 @@ from app.domain.models.transaction import CategorizationStatus
 HEX_COLOR_PATTERN = re.compile(r"^#[0-9A-Fa-f]{6}$")
 
 
+class TagCreate(BaseModel):
+    name: str = Field(..., min_length=1, max_length=50)
+
+    @field_validator("name")
+    @classmethod
+    def validate_name(cls, v: str) -> str:
+        stripped = v.strip()
+        if not stripped:
+            raise ValueError("Tag name cannot be blank")
+        return stripped
+
+
+class TagResponse(BaseModel):
+    id: UUID
+    name: str
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class TagListResponse(BaseModel):
+    tags: Sequence[TagResponse]
+    total: int
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class CategoryBase(BaseModel):
     name: str
     color: Optional[str] = None
@@ -151,6 +178,7 @@ class TransactionResponse(BaseModel):
     sort_index: int
     source_type: str
     manual_position_after: Optional[UUID] = None
+    tags: List[TagResponse] = []
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -207,6 +235,7 @@ class TransactionFilters(BaseModel):
     start_date: Optional[date] = None
     end_date: Optional[date] = None
     transaction_ids: Optional[List[UUID]] = None
+    tag_ids: Optional[List[UUID]] = None
 
 
 class TransactionListResponse(BaseModel):

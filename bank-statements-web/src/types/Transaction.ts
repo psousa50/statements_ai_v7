@@ -27,6 +27,12 @@ export interface Account {
   initial_balance?: InitialBalance
 }
 
+export interface Tag {
+  id: string
+  name: string
+  created_at: string
+}
+
 export interface Transaction {
   id: string
   date: string
@@ -40,6 +46,7 @@ export interface Transaction {
   running_balance?: number
   counterparty_account_id?: string
   counterparty_status?: 'UNPROCESSED' | 'INFERRED' | 'CONFIRMED'
+  tags?: Tag[]
 }
 
 export interface TransactionCreate {

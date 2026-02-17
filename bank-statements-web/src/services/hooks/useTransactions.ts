@@ -326,6 +326,7 @@ export const useTransactions = () => {
 
   return {
     transactions,
+    setTransactions,
     loading: isLoading,
     error,
     enhancementRule,

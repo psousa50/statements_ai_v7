@@ -145,6 +145,7 @@ class TransactionService:
         exclude_uncategorized: Optional[bool] = None,
         transaction_type: Optional[str] = None,
         transaction_ids: Optional[List[UUID]] = None,
+        tag_ids: Optional[List[UUID]] = None,
     ) -> TransactionListResponse:
         expanded_category_ids = self._expand_category_ids(category_ids, user_id)
         (
@@ -169,6 +170,7 @@ class TransactionService:
             exclude_uncategorized=exclude_uncategorized,
             transaction_type=transaction_type,
             transaction_ids=transaction_ids,
+            tag_ids=tag_ids,
         )
 
         if include_running_balance and account_id is not None:

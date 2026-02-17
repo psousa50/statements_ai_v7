@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Category, Account, TransactionCreate, Transaction } from '../types/Transaction'
+import { Category, Account, TransactionCreate, Transaction, Tag } from '../types/Transaction'
 import { TransactionForm } from './TransactionForm'
 
 interface TransactionModalProps {
@@ -9,6 +9,10 @@ interface TransactionModalProps {
   onSave: (transaction: TransactionCreate, transactionId?: string) => Promise<Transaction | null>
   onClose: () => void
   transaction?: Transaction
+  allTags?: Tag[]
+  onAddTag?: (transactionId: string, tagId: string) => Promise<unknown>
+  onRemoveTag?: (transactionId: string, tagId: string) => Promise<unknown>
+  onCreateTag?: (name: string) => Promise<Tag | null>
 }
 
 export const TransactionModal = ({
@@ -18,6 +22,10 @@ export const TransactionModal = ({
   onSave,
   onClose,
   transaction,
+  allTags,
+  onAddTag,
+  onRemoveTag,
+  onCreateTag,
 }: TransactionModalProps) => {
   const [saving, setSaving] = useState(false)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
@@ -93,6 +101,10 @@ export const TransactionModal = ({
               accounts={accounts}
               isLoading={saving}
               initialTransaction={transaction}
+              allTags={allTags}
+              onAddTag={onAddTag}
+              onRemoveTag={onRemoveTag}
+              onCreateTag={onCreateTag}
             />
           )}
         </div>

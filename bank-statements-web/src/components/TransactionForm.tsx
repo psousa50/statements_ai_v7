@@ -1,9 +1,10 @@
 import { useState, FormEvent, useEffect, useCallback } from 'react'
-import { Category, Account, TransactionCreate, Transaction } from '../types/Transaction'
+import { Category, Account, TransactionCreate, Transaction, Tag } from '../types/Transaction'
 import { CategorySelector } from './CategorySelector'
 import { AccountSelector } from './AccountSelector'
 import { useApi } from '../api/ApiContext'
 import { EnhancementPreviewResponse } from '../api/TransactionClient'
+import { TagInput } from './TagInput'
 import './TransactionForm.css'
 
 interface TransactionFormProps {
@@ -12,6 +13,10 @@ interface TransactionFormProps {
   accounts: Account[]
   isLoading: boolean
   initialTransaction?: Transaction
+  allTags?: Tag[]
+  onAddTag?: (transactionId: string, tagId: string) => Promise<unknown>
+  onRemoveTag?: (transactionId: string, tagId: string) => Promise<unknown>
+  onCreateTag?: (name: string) => Promise<Tag | null>
 }
 
 export const TransactionForm = ({
@@ -20,6 +25,10 @@ export const TransactionForm = ({
   accounts,
   isLoading,
   initialTransaction,
+  allTags,
+  onAddTag,
+  onRemoveTag,
+  onCreateTag,
 }: TransactionFormProps) => {
   const api = useApi()
   const isEditing = !!initialTransaction
@@ -175,6 +184,20 @@ export const TransactionForm = ({
             multiple={false}
           />
         </div>
+
+        {isEditing && initialTransaction && allTags && onAddTag && onRemoveTag && onCreateTag && (
+          <div className="form-group">
+            <label>Tags</label>
+            <TagInput
+              transactionId={initialTransaction.id}
+              currentTags={initialTransaction.tags || []}
+              allTags={allTags}
+              onAddTag={onAddTag}
+              onRemoveTag={onRemoveTag}
+              onCreateTag={onCreateTag}
+            />
+          </div>
+        )}
 
         <button type="submit" className="button-primary" disabled={isLoading}>
           {isLoading ? (isEditing ? 'Updating...' : 'Adding...') : isEditing ? 'Update Transaction' : 'Add Transaction'}

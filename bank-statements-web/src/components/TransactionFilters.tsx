@@ -1,9 +1,12 @@
 import { useState, useCallback } from 'react'
-import { Category, Account } from '../types/Transaction'
+import { Category, Account, Tag } from '../types/Transaction'
 import { CategorySelector } from './CategorySelector'
 import { DatePeriodNavigator } from './DatePeriodNavigator'
 import { FilterPreset } from '../api/FilterPresetClient'
 import { StyledSelect } from './StyledSelect'
+import Autocomplete from '@mui/material/Autocomplete'
+import Chip from '@mui/material/Chip'
+import TextField from '@mui/material/TextField'
 
 export type CategorizationFilter = 'all' | 'categorized' | 'uncategorized'
 
@@ -25,6 +28,9 @@ interface TransactionFiltersProps {
   defaultTransactionType?: 'all' | 'debit' | 'credit'
   defaultCategorizationFilter?: CategorizationFilter
   defaultExcludeTransfers?: boolean
+  allTags?: Tag[]
+  selectedTagIds?: string[]
+  onTagChange?: (tagIds: string[]) => void
   onCategoryChange: (categoryIds: string[]) => void
   onAccountChange: (accountId?: string) => void
   onAmountRangeChange: (minAmount?: number, maxAmount?: number) => void
@@ -60,6 +66,9 @@ export const TransactionFilters = ({
   defaultTransactionType = 'all',
   defaultCategorizationFilter = 'all',
   defaultExcludeTransfers = true,
+  allTags,
+  selectedTagIds = [],
+  onTagChange,
   onCategoryChange,
   onAccountChange,
   onAmountRangeChange,
@@ -93,6 +102,7 @@ export const TransactionFilters = ({
 
   const hasActiveFilters =
     categoryIds.length > 0 ||
+    selectedTagIds.length > 0 ||
     minAmount !== undefined ||
     maxAmount !== undefined ||
     descriptionSearch ||
@@ -245,6 +255,36 @@ export const TransactionFilters = ({
                 ]}
               />
             </div>
+
+            {allTags && onTagChange && (
+              <div className="filter-group">
+                <label className="filter-label">Tags</label>
+                <Autocomplete
+                  multiple
+                  size="small"
+                  options={allTags}
+                  getOptionLabel={(option) => option.name}
+                  value={allTags.filter((t) => selectedTagIds.includes(t.id))}
+                  onChange={(_event, newValue) => onTagChange(newValue.map((t) => t.id))}
+                  renderTags={(value, getTagProps) =>
+                    value.map((option, index) => (
+                      <Chip
+                        {...getTagProps({ index })}
+                        key={option.id}
+                        label={option.name}
+                        variant="outlined"
+                        size="small"
+                        sx={{ height: 22, fontSize: '0.75rem' }}
+                      />
+                    ))
+                  }
+                  renderInput={(params) => (
+                    <TextField {...params} placeholder="Filter by tags..." variant="outlined" size="small" />
+                  )}
+                  sx={{ minWidth: 180 }}
+                />
+              </div>
+            )}
 
             <div className="filter-group">
               <label htmlFor="transaction-type-filter" className="filter-label">

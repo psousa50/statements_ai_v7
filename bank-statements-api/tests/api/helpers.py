@@ -31,6 +31,7 @@ from app.services.statement import StatementService
 from app.services.statement_processing.statement_analyzer import StatementAnalyzerService
 from app.services.statement_processing.statement_upload import StatementUploadService
 from app.services.subscription import SubscriptionService
+from app.services.tag import TagService
 from app.services.transaction import TransactionService
 from app.services.transaction_enhancement import TransactionEnhancer
 
@@ -73,6 +74,7 @@ def mocked_dependencies(
     llm_category_generator: LLMCategoryGenerator = None,
     subscription_service: SubscriptionService = None,
     chat_service: ChatService = None,
+    tag_service: TagService = None,
 ) -> InternalDependencies:
     if transaction_service is None:
         transaction_service = MagicMock(spec=TransactionService)
@@ -107,6 +109,7 @@ def mocked_dependencies(
         llm_category_generator=llm_category_generator or MagicMock(spec=LLMCategoryGenerator),
         subscription_service=subscription_service or MagicMock(spec=SubscriptionService),
         chat_service=chat_service or MagicMock(spec=ChatService),
+        tag_service=tag_service or MagicMock(spec=TagService),
     )
 
 

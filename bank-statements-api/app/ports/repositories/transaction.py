@@ -68,6 +68,7 @@ class TransactionRepository(ABC):
         transaction_type: Optional[str] = None,
         exclude_uncategorized: Optional[bool] = None,
         transaction_ids: Optional[List[UUID]] = None,
+        tag_ids: Optional[List[UUID]] = None,
     ) -> Tuple[List[Transaction], int, Decimal]:
         """
         Get paginated transactions with filters.

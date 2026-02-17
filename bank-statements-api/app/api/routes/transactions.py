@@ -135,6 +135,10 @@ def register_transaction_routes(
             None,
             description="ID of a saved filter containing transaction IDs",
         ),
+        tag_ids: Optional[str] = Query(
+            None,
+            description="Comma-separated list of tag IDs (OR filter)",
+        ),
         internal: InternalDependencies = Depends(provide_dependencies),
         current_user: User = Depends(require_current_user),
     ):
@@ -188,6 +192,16 @@ def register_transaction_routes(
                     detail="Invalid transaction IDs format",
                 )
 
+        parsed_tag_ids = None
+        if tag_ids:
+            try:
+                parsed_tag_ids = [UUID(tid.strip()) for tid in tag_ids.split(",") if tid.strip()]
+            except ValueError:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Invalid tag IDs format",
+                )
+
         transactions = internal.transaction_service.get_transactions_paginated(
             user_id=current_user.id,
             page=page,
@@ -207,6 +221,7 @@ def register_transaction_routes(
             exclude_uncategorized=exclude_uncategorized,
             transaction_type=transaction_type,
             transaction_ids=parsed_transaction_ids,
+            tag_ids=parsed_tag_ids,
         )
         return transactions
 

@@ -3,6 +3,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom'
 import { useTransactions } from '../services/hooks/useTransactions'
 import { useCategories } from '../services/hooks/useCategories'
 import { useAccounts } from '../services/hooks/useAccounts'
+import { useTags } from '../services/hooks/useTags'
 import {
   TransactionTable,
   TransactionSortField,
@@ -60,6 +61,7 @@ export const TransactionsPage = () => {
     const urlTransactionType = searchParams.get('transaction_type')
     const urlTransactionIds = searchParams.get('transaction_ids')
     const urlSavedFilterId = searchParams.get('saved_filter_id')
+    const urlTagIds = searchParams.get('tag_ids')
 
     return {
       page: 1,
@@ -80,6 +82,7 @@ export const TransactionsPage = () => {
       transaction_type: (urlTransactionType as 'all' | 'debit' | 'credit') || 'all',
       transaction_ids: urlTransactionIds ? urlTransactionIds.split(',') : undefined,
       saved_filter_id: urlSavedFilterId || undefined,
+      tag_ids: urlTagIds ? urlTagIds.split(',') : undefined,
     }
   }
 
@@ -114,6 +117,7 @@ export const TransactionsPage = () => {
 
   const {
     transactions,
+    setTransactions,
     loading: transactionsLoading,
     error: transactionsError,
     enhancementRule,
@@ -129,6 +133,7 @@ export const TransactionsPage = () => {
 
   const { categories, loading: categoriesLoading, error: categoriesError } = useCategories()
   const { accounts, loading: accountsLoading, error: accountsError } = useAccounts()
+  const { tags: allTags, createTag, addTagToTransaction: rawAddTag, removeTagFromTransaction: rawRemoveTag } = useTags()
 
   const loading = transactionsLoading || categoriesLoading || accountsLoading
   const error = transactionsError || categoriesError || accountsError
@@ -250,6 +255,7 @@ export const TransactionsPage = () => {
       params.set('transaction_type', filters.transaction_type)
     if (filters.transaction_ids?.length) params.set('transaction_ids', filters.transaction_ids.join(','))
     if (filters.saved_filter_id) params.set('saved_filter_id', filters.saved_filter_id)
+    if (filters.tag_ids?.length) params.set('tag_ids', filters.tag_ids.join(','))
 
     const patternLabelParam = searchParams.get('pattern_label')
     if (patternLabelParam) params.set('pattern_label', patternLabelParam)
@@ -343,6 +349,35 @@ export const TransactionsPage = () => {
       handleFilterChange({ category_ids: categoryIds })
     },
     [handleFilterChange]
+  )
+
+  const handleTagFilter = useCallback(
+    (tagIds: string[]) => {
+      handleFilterChange({ tag_ids: tagIds.length > 0 ? tagIds : undefined })
+    },
+    [handleFilterChange]
+  )
+
+  const addTagToTransaction = useCallback(
+    async (transactionId: string, tagId: string) => {
+      const updated = await rawAddTag(transactionId, tagId)
+      if (updated) {
+        setTransactions((prev) => prev.map((t) => (t.id === updated.id ? updated : t)))
+      }
+      return updated
+    },
+    [rawAddTag, setTransactions]
+  )
+
+  const removeTagFromTransaction = useCallback(
+    async (transactionId: string, tagId: string) => {
+      const updated = await rawRemoveTag(transactionId, tagId)
+      if (updated) {
+        setTransactions((prev) => prev.map((t) => (t.id === updated.id ? updated : t)))
+      }
+      return updated
+    },
+    [rawRemoveTag, setTransactions]
   )
 
   const handleAccountFilter = useCallback(
@@ -739,6 +774,9 @@ export const TransactionsPage = () => {
               excludeTransfers={filters.exclude_transfers}
               categorizationFilter={categorizationFilter}
               transactionType={filters.transaction_type || 'all'}
+              allTags={allTags}
+              selectedTagIds={filters.tag_ids}
+              onTagChange={handleTagFilter}
               onCategoryChange={handleCategoryFilter}
               onAccountChange={handleAccountFilter}
               onAmountRangeChange={handleAmountRangeFilter}
@@ -813,6 +851,10 @@ export const TransactionsPage = () => {
               sortDirection={filters.sort_direction}
               onSort={handleSort}
               showRunningBalance={!!filters.account_id}
+              allTags={allTags}
+              onAddTag={addTagToTransaction}
+              onRemoveTag={removeTagFromTransaction}
+              onCreateTag={createTag}
             />
           </div>
 
@@ -840,6 +882,10 @@ export const TransactionsPage = () => {
         onSave={handleSaveTransaction}
         onClose={handleCloseModal}
         transaction={editingTransaction}
+        allTags={allTags}
+        onAddTag={addTagToTransaction}
+        onRemoveTag={removeTagFromTransaction}
+        onCreateTag={createTag}
       />
     </div>
   )

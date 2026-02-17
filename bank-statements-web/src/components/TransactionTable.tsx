@@ -1,16 +1,21 @@
 import { format } from 'date-fns'
 import { useState, useCallback, useEffect } from 'react'
-import { Category, Transaction, Account } from '../types/Transaction'
+import Chip from '@mui/material/Chip'
+import Popover from '@mui/material/Popover'
+import LocalOfferOutlinedIcon from '@mui/icons-material/LocalOfferOutlined'
+import { Category, Transaction, Account, Tag } from '../types/Transaction'
 import { Toast, ToastProps } from './Toast'
 import { ConfirmationModal } from './ConfirmationModal'
 import { BulkCategorizeModal } from './BulkCategorizeModal'
 import { CategorySelector } from './CategorySelector'
+import { TagInput } from './TagInput'
 import { useApi } from '../api/ApiContext'
 import EditIcon from '@mui/icons-material/Edit'
 import DeleteIcon from '@mui/icons-material/Delete'
 import UnfoldMoreIcon from '@mui/icons-material/UnfoldMore'
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward'
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward'
+import IconButton from '@mui/material/IconButton'
 import { ActionIconButton } from './ActionIconButton'
 import { formatCurrency } from '../utils/format'
 
@@ -49,6 +54,10 @@ interface TransactionTableProps {
   sortDirection?: TransactionSortDirection
   onSort?: (field: TransactionSortField) => void
   showRunningBalance?: boolean
+  allTags?: Tag[]
+  onAddTag?: (transactionId: string, tagId: string) => Promise<unknown>
+  onRemoveTag?: (transactionId: string, tagId: string) => Promise<unknown>
+  onCreateTag?: (name: string) => Promise<Tag | null>
 }
 
 interface BulkModalState {
@@ -284,11 +293,18 @@ export const TransactionTable = ({
   sortDirection,
   onSort,
   showRunningBalance = false,
+  allTags,
+  onAddTag,
+  onRemoveTag,
+  onCreateTag,
 }: TransactionTableProps) => {
   const [toast, setToast] = useState<Omit<ToastProps, 'onClose'> | null>(null)
   const [localCategories, setLocalCategories] = useState<Category[]>(categories)
   const [pendingDeleteTransaction, setPendingDeleteTransaction] = useState<Transaction | null>(null)
   const [bulkModal, setBulkModal] = useState<BulkModalState | null>(null)
+  const [tagPopover, setTagPopover] = useState<{ anchorEl: HTMLElement; transactionId: string } | null>(null)
+  const tagPopoverOpen = Boolean(tagPopover)
+  const tagPopoverTransaction = tagPopover ? transactions.find((t) => t.id === tagPopover.transactionId) : null
 
   useEffect(() => {
     setLocalCategories(categories)
@@ -440,6 +456,25 @@ export const TransactionTable = ({
                       {transaction.amount < 0 ? 'to' : 'from'}: {getAccountName(transaction.counterparty_account_id)}
                     </div>
                   )}
+                  {transaction.tags && transaction.tags.length > 0 && (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 3, marginTop: 2 }}>
+                      {transaction.tags.map((tag) => (
+                        <Chip
+                          key={tag.id}
+                          label={tag.name}
+                          variant="outlined"
+                          size="small"
+                          onClick={onRemoveTag ? () => onRemoveTag(transaction.id, tag.id) : undefined}
+                          sx={{
+                            height: 18,
+                            fontSize: '0.65rem',
+                            opacity: 0.75,
+                            cursor: onRemoveTag ? 'pointer' : undefined,
+                          }}
+                        />
+                      ))}
+                    </div>
+                  )}
                 </div>
               </td>
               {onCategorize && (
@@ -472,6 +507,23 @@ export const TransactionTable = ({
               {(onEdit || onDelete) && (
                 <td style={{ textAlign: 'center' }}>
                   <div style={{ display: 'flex', gap: '4px', justifyContent: 'center' }}>
+                    {allTags && onAddTag && onRemoveTag && onCreateTag && (
+                      <IconButton
+                        size="small"
+                        title="Manage tags"
+                        onClick={(e) => setTagPopover({ anchorEl: e.currentTarget, transactionId: transaction.id })}
+                        sx={{
+                          minWidth: 0,
+                          padding: '4px',
+                          width: 28,
+                          height: 28,
+                          transition: 'all 0.2s',
+                          '&:hover': { transform: 'scale(1.1)' },
+                        }}
+                      >
+                        <LocalOfferOutlinedIcon fontSize="small" />
+                      </IconButton>
+                    )}
                     {onEdit && (
                       <ActionIconButton
                         onClick={() => onEdit(transaction)}
@@ -518,6 +570,28 @@ export const TransactionTable = ({
           onReplaceFromCategory={bulkModal.replaceOption ? handleReplaceFromCategory : undefined}
           onDismiss={() => setBulkModal(null)}
         />
+      )}
+      {allTags && onAddTag && onRemoveTag && onCreateTag && (
+        <Popover
+          open={tagPopoverOpen}
+          anchorEl={tagPopover?.anchorEl}
+          onClose={() => setTagPopover(null)}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
+          transformOrigin={{ vertical: 'top', horizontal: 'left' }}
+          slotProps={{ paper: { sx: { p: 1.5, minWidth: 220 } } }}
+        >
+          {tagPopoverTransaction && (
+            <TagInput
+              transactionId={tagPopoverTransaction.id}
+              currentTags={tagPopoverTransaction.tags || []}
+              allTags={allTags}
+              onAddTag={onAddTag}
+              onRemoveTag={onRemoveTag}
+              onCreateTag={onCreateTag}
+              autoFocus
+            />
+          )}
+        </Popover>
       )}
     </div>
   )

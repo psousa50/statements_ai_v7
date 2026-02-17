@@ -88,6 +88,13 @@ class Transaction(Base):
         back_populates="counterparty_transactions",
     )
 
+    tags = relationship(
+        "Tag",
+        secondary="transaction_tags",
+        back_populates="transactions",
+        lazy="selectin",
+    )
+
     categorization_status = Column(
         SQLAlchemyEnum(CategorizationStatus),
         default=CategorizationStatus.UNCATEGORIZED,

@@ -404,6 +404,12 @@ export const createMockApiClient = (overrides: ApiClientOverrides = {}): ApiClie
     enhancementRules: defaultEnhancementRuleClient,
     descriptionGroups: defaultDescriptionGroupClient,
     subscription: defaultSubscriptionClient,
+    tags: {
+      getAll: vi.fn().mockResolvedValue({ tags: [], total: 0 }),
+      create: vi.fn().mockResolvedValue({ id: 'mock-tag-id', name: 'mock-tag', created_at: '' }),
+      addToTransaction: vi.fn().mockResolvedValue({}),
+      removeFromTransaction: vi.fn().mockResolvedValue({}),
+    },
     chatClient: {
       sendMessage: vi.fn().mockResolvedValue(undefined),
     },

@@ -8,6 +8,7 @@ import { TransactionCategorizationClient } from './TransactionCategorizationClie
 import { EnhancementRuleClient } from './EnhancementRuleClient'
 import { DescriptionGroupClient } from './DescriptionGroupClient'
 import { SubscriptionClient } from './SubscriptionClient'
+import { TagClient } from './TagClient'
 
 interface BackendErrorResponse {
   code: string
@@ -108,6 +109,7 @@ export interface ApiClient {
   accounts: AccountClient
   descriptionGroups: DescriptionGroupClient
   subscription: SubscriptionClient
+  tags: TagClient
   chatClient: ChatClient
 }
 

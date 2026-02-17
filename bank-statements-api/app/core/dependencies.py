@@ -14,6 +14,7 @@ from app.adapters.repositories.initial_balance import SQLAlchemyInitialBalanceRe
 from app.adapters.repositories.saved_filter import SQLAlchemySavedFilterRepository
 from app.adapters.repositories.statement import SqlAlchemyStatementRepository
 from app.adapters.repositories.subscription import SQLAlchemySubscriptionRepository, SQLAlchemySubscriptionUsageRepository
+from app.adapters.repositories.tag import SQLAlchemyTagRepository
 from app.adapters.repositories.transaction import SQLAlchemyTransactionRepository
 from app.adapters.repositories.uploaded_file import SQLAlchemyFileAnalysisMetadataRepository, SQLAlchemyUploadedFileRepository
 from app.adapters.repositories.user import SQLAlchemyUserRepository
@@ -41,6 +42,7 @@ from app.services.statement_processing.statement_parser import StatementParser
 from app.services.statement_processing.statement_upload import StatementUploadService
 from app.services.statement_processing.transaction_normalizer import TransactionNormalizer
 from app.services.subscription import SubscriptionService
+from app.services.tag import TagService
 from app.services.transaction import TransactionService
 from app.services.transaction_enhancement import TransactionEnhancer
 from app.services.transaction_rule_enhancement import TransactionRuleEnhancementService
@@ -115,6 +117,7 @@ class InternalDependencies:
         llm_category_generator: LLMCategoryGenerator,
         subscription_service: SubscriptionService,
         chat_service: ChatService,
+        tag_service: TagService,
     ):
         self.transaction_service = transaction_service
         self.category_service = category_service
@@ -141,6 +144,7 @@ class InternalDependencies:
         self.llm_category_generator = llm_category_generator
         self.subscription_service = subscription_service
         self.chat_service = chat_service
+        self.tag_service = tag_service
 
 
 def build_external_dependencies() -> ExternalDependencies:
@@ -162,6 +166,7 @@ def build_internal_dependencies(
     description_group_repo = SQLAlchemyDescriptionGroupRepository(external.db)
     saved_filter_repo = SQLAlchemySavedFilterRepository(external.db)
     filter_preset_repo = SQLAlchemyFilterPresetRepository(external.db)
+    tag_repo = SQLAlchemyTagRepository(external.db)
     subscription_repo = SQLAlchemySubscriptionRepository(external.db)
     subscription_usage_repo = SQLAlchemySubscriptionUsageRepository(external.db)
     user_repo = SQLAlchemyUserRepository(external.db)
@@ -256,6 +261,11 @@ def build_internal_dependencies(
         stripe_client=stripe_client,
     )
 
+    tag_service = TagService(
+        tag_repository=tag_repo,
+        transaction_repository=transaction_repo,
+    )
+
     chat_service = ChatService(
         llm_client=external.llm_client,
         transaction_service=transaction_service,
@@ -290,6 +300,7 @@ def build_internal_dependencies(
         llm_category_generator=llm_category_generator,
         subscription_service=subscription_service,
         chat_service=chat_service,
+        tag_service=tag_service,
     )
 
 

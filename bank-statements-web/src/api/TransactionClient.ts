@@ -26,6 +26,7 @@ export interface TransactionFilters {
   active_only?: boolean
   transaction_ids?: string[]
   saved_filter_id?: string
+  tag_ids?: string[]
 }
 
 export interface SavedFilterCreate {
@@ -246,6 +247,9 @@ export const transactionClient: TransactionClient = {
     }
     if (filters?.saved_filter_id) {
       params.append('saved_filter_id', filters.saved_filter_id)
+    }
+    if (filters?.tag_ids && filters.tag_ids.length > 0) {
+      params.append('tag_ids', filters.tag_ids.join(','))
     }
 
     const url = params.toString() ? `${API_URL}?${params.toString()}` : API_URL
