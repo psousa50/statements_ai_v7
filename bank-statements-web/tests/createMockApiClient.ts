@@ -132,6 +132,7 @@ const defaultTransactionClient: TransactionClient = {
       updated_count: 0,
       message: 'No transactions updated',
     } as BulkReplaceCategoryResponse),
+  bulkCategorizeByIds: () => Promise.resolve({ updated_count: 0, message: '' }),
   categorize: function (_id: string, _categoryId?: string): Promise<Transaction> {
     throw new Error('Function not implemented.')
   },
