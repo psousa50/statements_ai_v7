@@ -22,6 +22,7 @@ from app.api.schemas import (
     CountSimilarResponse,
     EnhancementPreviewRequest,
     EnhancementPreviewResponse,
+    ExcludeFromAnalyticsRequest,
     RecurringPatternResponse,
     RecurringPatternsResponse,
     TransactionCreateRequest,
@@ -140,6 +141,10 @@ def register_transaction_routes(
             None,
             description="Comma-separated list of tag IDs (OR filter)",
         ),
+        exclude_from_analytics: Optional[bool] = Query(
+            None,
+            description="Filter by exclude_from_analytics flag",
+        ),
         internal: InternalDependencies = Depends(provide_dependencies),
         current_user: User = Depends(require_current_user),
     ):
@@ -223,6 +228,7 @@ def register_transaction_routes(
             transaction_type=transaction_type,
             transaction_ids=parsed_transaction_ids,
             tag_ids=parsed_tag_ids,
+            exclude_from_analytics=exclude_from_analytics,
         )
         return transactions
 
@@ -717,6 +723,28 @@ def register_transaction_routes(
             updated_count=updated_count,
             message=f"Successfully {action} {updated_count} transaction{'s' if updated_count != 1 else ''}",
         )
+
+    @router.put(
+        "/{transaction_id}/exclude-from-analytics",
+        response_model=TransactionResponse,
+    )
+    def toggle_exclude_from_analytics(
+        transaction_id: UUID,
+        request: ExcludeFromAnalyticsRequest,
+        internal: InternalDependencies = Depends(provide_dependencies),
+        current_user: User = Depends(require_current_user),
+    ):
+        result = internal.transaction_service.toggle_exclude_from_analytics(
+            transaction_id=transaction_id,
+            user_id=current_user.id,
+            exclude_from_analytics=request.exclude_from_analytics,
+        )
+        if not result:
+            raise HTTPException(
+                status_code=http_status.HTTP_404_NOT_FOUND,
+                detail=f"Transaction with ID {transaction_id} not found",
+            )
+        return result
 
     @router.get(
         "/{transaction_id}",

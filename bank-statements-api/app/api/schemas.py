@@ -194,6 +194,7 @@ class TransactionResponse(BaseModel):
     source_type: str
     manual_position_after: Optional[UUID] = None
     tags: List[TagResponse] = []
+    exclude_from_analytics: bool = False
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -237,6 +238,10 @@ class TransactionUpdateRequest(BaseModel):
     account_id: UUID
     category_id: Optional[UUID] = None
     counterparty_account_id: Optional[UUID] = None
+
+
+class ExcludeFromAnalyticsRequest(BaseModel):
+    exclude_from_analytics: bool
 
 
 class TransactionFilters(BaseModel):

@@ -94,6 +94,7 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         transaction_type: Optional[str] = None,
         transaction_ids: Optional[List[UUID]] = None,
         tag_ids: Optional[List[UUID]] = None,
+        exclude_from_analytics: Optional[bool] = None,
     ) -> Tuple[List[Transaction], int, Decimal]:
         query = self.db_session.query(Transaction).filter(Transaction.user_id == user_id)
 
@@ -157,6 +158,9 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         if tag_ids:
             filters.append(Transaction.tags.any(Tag.id.in_(tag_ids)))
 
+        if exclude_from_analytics is not None:
+            filters.append(Transaction.exclude_from_analytics == exclude_from_analytics)
+
         if filters:
             query = query.filter(and_(*filters))
 
@@ -216,6 +220,7 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         exclude_transfers: Optional[bool] = None,
         exclude_uncategorized: Optional[bool] = None,
         transaction_type: Optional[str] = None,
+        exclude_from_analytics: Optional[bool] = None,
     ) -> Dict[Optional[UUID], Dict[str, Decimal]]:
         query = self.db_session.query(
             Transaction.category_id,
@@ -275,6 +280,9 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
             filters.append(Transaction.amount > 0)
         # For 'all' or None, don't add any filter
 
+        if exclude_from_analytics:
+            filters.append(Transaction.exclude_from_analytics.is_(False))
+
         if filters:
             query = query.filter(and_(*filters))
 
@@ -311,6 +319,7 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         exclude_transfers: Optional[bool] = None,
         exclude_uncategorized: Optional[bool] = None,
         transaction_type: Optional[str] = None,
+        exclude_from_analytics: Optional[bool] = None,
     ) -> List[Dict]:
         if period == "month":
             period_expr = func.to_char(Transaction.date, "YYYY-MM")
@@ -378,6 +387,9 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
             filters.append(Transaction.amount < 0)
         elif transaction_type == "credit":
             filters.append(Transaction.amount > 0)
+
+        if exclude_from_analytics:
+            filters.append(Transaction.exclude_from_analytics.is_(False))
 
         if filters:
             query = query.filter(and_(*filters))

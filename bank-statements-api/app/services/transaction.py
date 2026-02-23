@@ -125,6 +125,19 @@ class TransactionService:
     def get_all_transactions(self, user_id: UUID) -> List[Transaction]:
         return self.transaction_repository.get_all(user_id)
 
+    def toggle_exclude_from_analytics(
+        self,
+        transaction_id: UUID,
+        user_id: UUID,
+        exclude_from_analytics: bool,
+    ) -> Optional[Transaction]:
+        transaction = self.transaction_repository.get_by_id(transaction_id, user_id)
+        if not transaction:
+            return None
+
+        transaction.exclude_from_analytics = exclude_from_analytics
+        return self.transaction_repository.update(transaction)
+
     def get_transactions_paginated(
         self,
         user_id: UUID,
@@ -146,13 +159,10 @@ class TransactionService:
         transaction_type: Optional[str] = None,
         transaction_ids: Optional[List[UUID]] = None,
         tag_ids: Optional[List[UUID]] = None,
+        exclude_from_analytics: Optional[bool] = None,
     ) -> TransactionListResponse:
         expanded_category_ids = self._expand_category_ids(category_ids, user_id)
-        (
-            transactions,
-            total,
-            total_amount,
-        ) = self.transaction_repository.get_paginated(
+        kwargs = dict(
             user_id=user_id,
             page=page,
             page_size=page_size,
@@ -171,7 +181,13 @@ class TransactionService:
             transaction_type=transaction_type,
             transaction_ids=transaction_ids,
             tag_ids=tag_ids,
+            exclude_from_analytics=exclude_from_analytics,
         )
+        (
+            transactions,
+            total,
+            total_amount,
+        ) = self.transaction_repository.get_paginated(**kwargs)
 
         if include_running_balance and account_id is not None:
             self._add_running_balance_to_transactions(transactions, account_id)
@@ -284,6 +300,7 @@ class TransactionService:
             exclude_transfers=exclude_transfers,
             exclude_uncategorized=exclude_uncategorized,
             transaction_type=transaction_type,
+            exclude_from_analytics=True,
         )
 
     def get_category_time_series(
@@ -319,6 +336,7 @@ class TransactionService:
             exclude_transfers=exclude_transfers,
             exclude_uncategorized=exclude_uncategorized,
             transaction_type=transaction_type,
+            exclude_from_analytics=True,
         )
 
     def update_transaction(

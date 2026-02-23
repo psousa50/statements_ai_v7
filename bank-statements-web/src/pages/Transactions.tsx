@@ -14,6 +14,7 @@ import { TransactionFilters, CategorizationFilter } from '../components/Transact
 import { TransactionModal } from '../components/TransactionModal'
 import { Pagination } from '../components/Pagination'
 import { CategorizationStatus, TransactionCreate, Transaction } from '../types/Transaction'
+import { useApi } from '../api/ApiContext'
 import { TransactionFilters as FilterType, transactionClient } from '../api/TransactionClient'
 import { filterPresetClient, FilterPreset, FilterPresetData } from '../api/FilterPresetClient'
 import { formatCurrency } from '../utils/format'
@@ -43,6 +44,7 @@ function convertAmountFiltersForApi(
 export const TransactionsPage = () => {
   const [searchParams, setSearchParams] = useSearchParams()
   const navigate = useNavigate()
+  const apiClient = useApi()
 
   const getInitialFilters = (): FilterType => {
     const urlDescriptionSearch = searchParams.get('description_search')
@@ -691,6 +693,17 @@ export const TransactionsPage = () => {
     [selectedIds, bulkCategorizeByIds, fetchWithConvertedAmounts]
   )
 
+  const handleToggleExcludeFromAnalytics = useCallback(
+    async (transactionId: string, exclude: boolean) => {
+      const updated = await apiClient.transactions.toggleExcludeFromAnalytics(transactionId, exclude)
+      if (updated) {
+        setTransactions((prev) => prev.map((t) => (t.id === updated.id ? updated : t)))
+      }
+      return updated
+    },
+    [apiClient, setTransactions]
+  )
+
   const handleCategorizeTransaction = async (transactionId: string, categoryId?: string) => {
     await categorizeTransaction(transactionId, categoryId)
     fetchWithConvertedAmounts()
@@ -938,6 +951,7 @@ export const TransactionsPage = () => {
               onToggleSelectAll={handleToggleSelectAll}
               onBulkTag={handleBulkTag}
               onBulkCategorizeByIds={handleBulkCategorizeByIds}
+              onToggleExcludeFromAnalytics={handleToggleExcludeFromAnalytics}
             />
           </div>
 

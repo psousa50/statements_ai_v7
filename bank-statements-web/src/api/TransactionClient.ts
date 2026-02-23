@@ -27,6 +27,7 @@ export interface TransactionFilters {
   transaction_ids?: string[]
   saved_filter_id?: string
   tag_ids?: string[]
+  exclude_from_analytics?: boolean
 }
 
 export interface SavedFilterCreate {
@@ -174,6 +175,7 @@ export interface TransactionClient {
   bulkCategorizeByIds(transactionIds: string[], categoryId?: string): Promise<BulkUpdateTransactionsResponse>
   previewEnhancement(request: EnhancementPreviewRequest): Promise<EnhancementPreviewResponse>
   createSavedFilter(transactionIds: string[]): Promise<SavedFilterResponse>
+  toggleExcludeFromAnalytics(transactionId: string, exclude: boolean): Promise<Transaction>
 }
 
 export interface SourceClient {
@@ -251,6 +253,9 @@ export const transactionClient: TransactionClient = {
     }
     if (filters?.tag_ids && filters.tag_ids.length > 0) {
       params.append('tag_ids', filters.tag_ids.join(','))
+    }
+    if (filters?.exclude_from_analytics !== undefined) {
+      params.append('exclude_from_analytics', filters.exclude_from_analytics.toString())
     }
 
     const url = params.toString() ? `${API_URL}?${params.toString()}` : API_URL
@@ -525,6 +530,13 @@ export const transactionClient: TransactionClient = {
   async createSavedFilter(transactionIds: string[]) {
     const response = await axiosInstance.post<SavedFilterResponse>(SAVED_FILTERS_API_URL, {
       transaction_ids: transactionIds,
+    })
+    return response.data
+  },
+
+  async toggleExcludeFromAnalytics(transactionId: string, exclude: boolean) {
+    const response = await axiosInstance.put<Transaction>(`${API_URL}/${transactionId}/exclude-from-analytics`, {
+      exclude_from_analytics: exclude,
     })
     return response.data
   },

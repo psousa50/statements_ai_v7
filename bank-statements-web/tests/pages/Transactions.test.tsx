@@ -25,6 +25,7 @@ const createTransaction = (overrides: Partial<Transaction> = {}): Transaction =>
   amount: -50.0,
   created_at: '2024-01-15T10:00:00Z',
   categorization_status: 'UNCATEGORIZED',
+  exclude_from_analytics: false,
   ...overrides,
 })
 

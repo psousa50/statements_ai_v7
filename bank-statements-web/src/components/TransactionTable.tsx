@@ -15,6 +15,7 @@ import DeleteIcon from '@mui/icons-material/Delete'
 import UnfoldMoreIcon from '@mui/icons-material/UnfoldMore'
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward'
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward'
+import VisibilityOffIcon from '@mui/icons-material/VisibilityOff'
 import Checkbox from '@mui/material/Checkbox'
 import IconButton from '@mui/material/IconButton'
 import { ActionIconButton } from './ActionIconButton'
@@ -64,6 +65,7 @@ interface TransactionTableProps {
   onToggleSelectAll?: () => void
   onBulkTag?: (tagId: string) => Promise<unknown>
   onBulkCategorizeByIds?: (categoryId?: string) => Promise<unknown>
+  onToggleExcludeFromAnalytics?: (transactionId: string, exclude: boolean) => Promise<unknown>
 }
 
 interface BulkModalState {
@@ -308,6 +310,7 @@ export const TransactionTable = ({
   onToggleSelectAll,
   onBulkTag,
   onBulkCategorizeByIds,
+  onToggleExcludeFromAnalytics,
 }: TransactionTableProps) => {
   const [toast, setToast] = useState<Omit<ToastProps, 'onClose'> | null>(null)
   const [localCategories, setLocalCategories] = useState<Category[]>(categories)
@@ -510,7 +513,11 @@ export const TransactionTable = ({
         </thead>
         <tbody>
           {transactions.map((transaction) => (
-            <tr key={transaction.id} className={selectedIds?.has(transaction.id) ? 'selected' : ''}>
+            <tr
+              key={transaction.id}
+              className={`${selectedIds?.has(transaction.id) ? 'selected' : ''} ${transaction.exclude_from_analytics ? 'excluded' : ''}`}
+              {...(transaction.exclude_from_analytics ? { 'data-excluded': 'true' } : {})}
+            >
               {onToggleSelect && (
                 <td style={{ textAlign: 'center', width: 40 }}>
                   <Checkbox
@@ -524,7 +531,12 @@ export const TransactionTable = ({
               <td>{formatDate(transaction.date)}</td>
               <td>
                 <div className="transaction-description">
-                  <div>{transaction.description}</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                    {transaction.exclude_from_analytics && (
+                      <VisibilityOffIcon data-testid="excluded-indicator" sx={{ fontSize: 14, opacity: 0.5 }} />
+                    )}
+                    {transaction.description}
+                  </div>
                   {transaction.counterparty_account_id && (
                     <div className={`counterparty-badge ${transaction.amount < 0 ? 'negative' : 'positive'}`}>
                       {transaction.amount < 0 ? 'to' : 'from'}: {getAccountName(transaction.counterparty_account_id)}
@@ -581,6 +593,30 @@ export const TransactionTable = ({
               {(onEdit || onDelete) && (
                 <td style={{ textAlign: 'center' }}>
                   <div style={{ display: 'flex', gap: '4px', justifyContent: 'center' }}>
+                    {onToggleExcludeFromAnalytics && (
+                      <IconButton
+                        size="small"
+                        aria-label={
+                          transaction.exclude_from_analytics ? 'include in analytics' : 'exclude from analytics'
+                        }
+                        onClick={() =>
+                          onToggleExcludeFromAnalytics(transaction.id, !transaction.exclude_from_analytics)
+                        }
+                        sx={{
+                          minWidth: 0,
+                          padding: '4px',
+                          width: 28,
+                          height: 28,
+                          transition: 'all 0.2s',
+                          '&:hover': { transform: 'scale(1.1)' },
+                        }}
+                      >
+                        <VisibilityOffIcon
+                          fontSize="small"
+                          sx={{ opacity: transaction.exclude_from_analytics ? 1 : 0.4 }}
+                        />
+                      </IconButton>
+                    )}
                     {allTags && onAddTag && onRemoveTag && onCreateTag && (
                       <IconButton
                         size="small"

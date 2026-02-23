@@ -47,6 +47,7 @@ export interface Transaction {
   counterparty_account_id?: string
   counterparty_status?: 'UNPROCESSED' | 'INFERRED' | 'CONFIRMED'
   tags?: Tag[]
+  exclude_from_analytics: boolean
 }
 
 export interface TransactionCreate {

@@ -4,7 +4,7 @@ from enum import Enum
 from typing import Optional
 from uuid import uuid4
 
-from sqlalchemy import Column, Date, DateTime
+from sqlalchemy import Boolean, Column, Date, DateTime
 from sqlalchemy import Enum as SQLAlchemyEnum
 from sqlalchemy import ForeignKey, Integer, Numeric, String
 from sqlalchemy.dialects.postgresql import UUID
@@ -126,9 +126,13 @@ class Transaction(Base):
         nullable=True,
     )
 
+    exclude_from_analytics = Column(Boolean, default=False, nullable=False, server_default="false")
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._running_balance: Optional[Decimal] = None
+        if self.exclude_from_analytics is None:
+            self.exclude_from_analytics = False
 
     @property
     def running_balance(self) -> Optional[Decimal]:

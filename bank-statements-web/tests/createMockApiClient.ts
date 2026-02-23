@@ -40,6 +40,7 @@ const defaultTransaction: Transaction = {
   amount: 100,
   created_at: '2023-01-01T00:00:00Z',
   categorization_status: 'UNCATEGORIZED',
+  exclude_from_analytics: false,
 }
 
 // Default mock category
@@ -145,6 +146,8 @@ const defaultTransactionClient: TransactionClient = {
       id: 'mock-saved-filter-id',
       transaction_ids: transactionIds,
     } as SavedFilterResponse),
+  toggleExcludeFromAnalytics: (_id: string, exclude: boolean) =>
+    Promise.resolve({ ...defaultTransaction, exclude_from_analytics: exclude }),
 }
 
 // Default mock category client implementation

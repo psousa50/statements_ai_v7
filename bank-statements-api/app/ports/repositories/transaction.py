@@ -69,6 +69,7 @@ class TransactionRepository(ABC):
         exclude_uncategorized: Optional[bool] = None,
         transaction_ids: Optional[List[UUID]] = None,
         tag_ids: Optional[List[UUID]] = None,
+        exclude_from_analytics: Optional[bool] = None,
     ) -> Tuple[List[Transaction], int, Decimal]:
         """
         Get paginated transactions with filters.
@@ -96,7 +97,29 @@ class TransactionRepository(ABC):
         exclude_transfers: Optional[bool] = None,
         exclude_uncategorized: Optional[bool] = None,
         transaction_type: Optional[str] = None,
+        exclude_from_analytics: Optional[bool] = None,
     ) -> Dict[Optional[UUID], Dict[str, Decimal]]:
+        pass
+
+    @abstractmethod
+    def get_category_time_series(
+        self,
+        user_id: UUID,
+        category_id: Optional[UUID] = None,
+        period: str = "month",
+        category_ids: Optional[List[UUID]] = None,
+        status: Optional[CategorizationStatus] = None,
+        min_amount: Optional[Decimal] = None,
+        max_amount: Optional[Decimal] = None,
+        description_search: Optional[str] = None,
+        account_id: Optional[UUID] = None,
+        start_date: Optional[date] = None,
+        end_date: Optional[date] = None,
+        exclude_transfers: Optional[bool] = None,
+        exclude_uncategorized: Optional[bool] = None,
+        transaction_type: Optional[str] = None,
+        exclude_from_analytics: Optional[bool] = None,
+    ) -> List[Dict]:
         pass
 
     @abstractmethod
