@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Bank Statements AI — Architecture Explorer</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: #0d1117;
+  color: #e2e8f0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+#toolbar {
+  background: #161b22;
+  border-bottom: 1px solid #21262d;
+  padding: 7px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+#toolbar h1 {
+  font-size: 13px;
+  font-weight: 700;
+  color: #7c3aed;
+  white-space: nowrap;
+  letter-spacing: -0.3px;
+}
+
+.sep { width: 1px; height: 18px; background: #21262d; flex-shrink: 0; }
+
+.preset-group { display: flex; gap: 3px; align-items: center; }
+
+.preset-btn {
+  background: #21262d;
+  border: 1px solid #30363d;
+  color: #8b949e;
+  padding: 3px 9px;
+  border-radius: 4px;
+  font-size: 11px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.12s;
+  line-height: 1.5;
+}
+.preset-btn:hover { background: #30363d; color: #c9d1d9; }
+.preset-btn.active { background: #7c3aed; border-color: #9d5cf6; color: #fff; font-weight: 600; }
+
+.group-label { font-size: 10px; color: #484f58; white-space: nowrap; }
+
+.toggle-row { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+
+.toggle-item {
+  display: flex; align-items: center; gap: 4px;
+  font-size: 11px; color: #8b949e; cursor: pointer;
+  user-select: none;
+}
+.toggle-item input { cursor: pointer; accent-color: #7c3aed; }
+
+.conn-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+
+.zoom-controls { display: flex; gap: 3px; align-items: center; margin-left: auto; }
+.zoom-btn {
+  background: #21262d; border: 1px solid #30363d; color: #8b949e;
+  width: 24px; height: 24px; border-radius: 4px; cursor: pointer;
+  font-size: 13px; display: flex; align-items: center; justify-content: center;
+}
+.zoom-btn:hover { background: #30363d; color: #c9d1d9; }
+#zoom-label { font-size: 11px; color: #484f58; min-width: 32px; text-align: center; }
+#zoom-reset { width: auto; padding: 0 7px; font-size: 10px; }
+
+#body {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+#canvas-wrap {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  background: #0a0e14;
+  cursor: grab;
+}
+#canvas-wrap.grabbing { cursor: grabbing; }
+
+#svg-outer {
+  position: absolute;
+  transform-origin: 0 0;
+}
+
+#canvas { display: block; }
+
+#legend {
+  position: absolute;
+  bottom: 12px; left: 12px;
+  background: rgba(22, 27, 34, 0.92);
+  border: 1px solid #21262d;
+  border-radius: 6px;
+  padding: 8px 11px;
+  font-size: 10px;
+  pointer-events: none;
+}
+.leg { display: flex; align-items: center; gap: 7px; margin-bottom: 5px; color: #8b949e; }
+.leg:last-child { margin-bottom: 0; }
+.leg-line { width: 18px; height: 0; border-top: 2px solid; flex-shrink: 0; }
+
+#hint {
+  position: absolute;
+  bottom: 12px; right: 12px;
+  font-size: 10px;
+  color: #484f58;
+  pointer-events: none;
+  line-height: 1.6;
+  text-align: right;
+}
+
+#sidebar {
+  width: 270px;
+  background: #0d1117;
+  border-left: 1px solid #21262d;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+#sidebar-top {
+  padding: 10px 12px 8px;
+  border-bottom: 1px solid #21262d;
+  font-size: 11px;
+  font-weight: 600;
+  color: #7c3aed;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+#comment-count-badge {
+  background: #21262d;
+  border-radius: 10px;
+  padding: 1px 7px;
+  font-size: 10px;
+  color: #8b949e;
+  font-weight: 400;
+}
+
+#comments-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+}
+#no-comments {
+  color: #484f58;
+  font-size: 11px;
+  text-align: center;
+  padding: 24px 12px;
+  line-height: 1.6;
+}
+
+.comment-card {
+  background: #161b22;
+  border: 1px solid #21262d;
+  border-radius: 5px;
+  padding: 8px 9px;
+  margin-bottom: 7px;
+  font-size: 11px;
+}
+.cc-head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2px; }
+.cc-label { color: #9d5cf6; font-weight: 600; }
+.cc-del {
+  background: none; border: none; color: #484f58; cursor: pointer;
+  font-size: 14px; line-height: 1; padding: 0; flex-shrink: 0; margin-left: 6px;
+}
+.cc-del:hover { color: #f85149; }
+.cc-file { font-family: monospace; font-size: 9.5px; color: #484f58; margin-bottom: 5px; }
+.cc-text { color: #8b949e; line-height: 1.4; }
+
+#prompt-area {
+  border-top: 1px solid #21262d;
+  padding: 9px 10px;
+}
+#prompt-lbl { font-size: 10px; color: #484f58; margin-bottom: 5px; }
+#prompt-out {
+  width: 100%;
+  background: #0a0e14;
+  border: 1px solid #21262d;
+  border-radius: 4px;
+  color: #8b949e;
+  font-family: 'SFMono-Regular', Consolas, monospace;
+  font-size: 9.5px;
+  padding: 7px 8px;
+  resize: none;
+  height: 110px;
+  line-height: 1.5;
+}
+#copy-btn {
+  margin-top: 5px;
+  width: 100%;
+  background: #7c3aed;
+  border: none; color: #fff;
+  padding: 6px; border-radius: 4px;
+  font-size: 12px; cursor: pointer;
+  transition: background 0.12s;
+}
+#copy-btn:hover { background: #9d5cf6; }
+#copy-btn.copied { background: #238636; }
+
+#modal-bg {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.65);
+  z-index: 200;
+  align-items: center;
+  justify-content: center;
+}
+#modal-bg.open { display: flex; }
+#modal {
+  background: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 8px;
+  padding: 18px 20px;
+  width: 380px;
+  max-width: 92vw;
+}
+#modal h3 { font-size: 13px; color: #9d5cf6; margin-bottom: 3px; }
+#modal-file { font-family: monospace; font-size: 10px; color: #484f58; margin-bottom: 11px; }
+#modal-ta {
+  width: 100%;
+  background: #0d1117;
+  border: 1px solid #30363d;
+  border-radius: 4px;
+  color: #e2e8f0;
+  padding: 8px;
+  font-size: 12px;
+  resize: vertical;
+  min-height: 80px;
+  font-family: inherit;
+  line-height: 1.5;
+}
+#modal-ta:focus { outline: none; border-color: #7c3aed; }
+.modal-btns { display: flex; gap: 7px; margin-top: 10px; justify-content: flex-end; }
+.mbtn {
+  padding: 5px 14px; border-radius: 4px; font-size: 12px;
+  cursor: pointer; border: 1px solid;
+}
+.mbtn.pri { background: #7c3aed; border-color: #9d5cf6; color: #fff; }
+.mbtn.pri:hover { background: #9d5cf6; }
+.mbtn.sec { background: transparent; border-color: #30363d; color: #8b949e; }
+.mbtn.sec:hover { background: #21262d; }
+</style>
+</head>
+<body>
+
+<div id="toolbar">
+  <h1>Bank Statements AI</h1>
+  <div class="sep"></div>
+
+  <span class="group-label">View:</span>
+  <div class="preset-group">
+    <button class="preset-btn active" data-preset="full">Full System</button>
+    <button class="preset-btn" data-preset="upload">Upload Flow</button>
+    <button class="preset-btn" data-preset="txquery">Tx Query</button>
+    <button class="preset-btn" data-preset="aiflow">AI Categorisation</button>
+    <button class="preset-btn" data-preset="chat">Chat Flow</button>
+    <button class="preset-btn" data-preset="hexagonal">Hexagonal Pattern</button>
+  </div>
+
+  <div class="sep"></div>
+  <span class="group-label">Layers:</span>
+  <div class="toggle-row">
+    <label class="toggle-item"><input type="checkbox" data-layer="fe-pages" checked> Pages</label>
+    <label class="toggle-item"><input type="checkbox" data-layer="fe-svc" checked> FE Services</label>
+    <label class="toggle-item"><input type="checkbox" data-layer="routes" checked> Routes</label>
+    <label class="toggle-item"><input type="checkbox" data-layer="services" checked> Services</label>
+    <label class="toggle-item"><input type="checkbox" data-layer="core" checked> Core</label>
+    <label class="toggle-item"><input type="checkbox" data-layer="domain" checked> Domain</label>
+    <label class="toggle-item"><input type="checkbox" data-layer="infra" checked> Infra</label>
+  </div>
+
+  <div class="sep"></div>
+  <span class="group-label">Connections:</span>
+  <div class="toggle-row">
+    <label class="toggle-item"><input type="checkbox" data-conn="http" checked><span class="conn-dot" style="background:#3b82f6"></span>HTTP</label>
+    <label class="toggle-item"><input type="checkbox" data-conn="service" checked><span class="conn-dot" style="background:#22c55e"></span>Service</label>
+    <label class="toggle-item"><input type="checkbox" data-conn="repo" checked><span class="conn-dot" style="background:#f59e0b"></span>Repo</label>
+    <label class="toggle-item"><input type="checkbox" data-conn="ai" checked><span class="conn-dot" style="background:#a855f7"></span>AI</label>
+    <label class="toggle-item"><input type="checkbox" data-conn="dep" checked><span class="conn-dot" style="background:#52525b"></span>Dep</label>
+  </div>
+
+  <div class="zoom-controls">
+    <button class="zoom-btn" id="zoom-out">−</button>
+    <span id="zoom-label">65%</span>
+    <button class="zoom-btn" id="zoom-in">+</button>
+    <button class="zoom-btn" id="zoom-reset">Reset</button>
+  </div>
+</div>
+
+<div id="body">
+  <div id="canvas-wrap">
+    <div id="svg-outer">
+      <svg id="canvas" width="1520" height="790"></svg>
+    </div>
+    <div id="legend">
+      <div class="leg"><div class="leg-line" style="border-color:#3b82f6"></div>HTTP Request</div>
+      <div class="leg"><div class="leg-line" style="border-color:#22c55e"></div>Service Call</div>
+      <div class="leg"><div class="leg-line" style="border-color:#f59e0b;border-top-style:dashed"></div>Repository</div>
+      <div class="leg"><div class="leg-line" style="border-color:#a855f7"></div>AI / LLM Call</div>
+      <div class="leg"><div class="leg-line" style="border-color:#52525b;border-top-style:dotted"></div>Dependency</div>
+    </div>
+    <div id="hint">Click a node to add a note<br>Drag to pan · Scroll to zoom</div>
+  </div>
+
+  <div id="sidebar">
+    <div id="sidebar-top">
+      Notes <span id="comment-count-badge">0</span>
+    </div>
+    <div id="comments-list">
+      <div id="no-comments">Click any node to add a<br>note or question about it</div>
+    </div>
+    <div id="prompt-area">
+      <div id="prompt-lbl">Generated Prompt</div>
+      <textarea id="prompt-out" readonly></textarea>
+      <button id="copy-btn">Copy Prompt</button>
+    </div>
+  </div>
+</div>
+
+<div id="modal-bg">
+  <div id="modal">
+    <h3 id="modal-title"></h3>
+    <div id="modal-file"></div>
+    <textarea id="modal-ta" placeholder="Add a note, question, or request…"></textarea>
+    <div class="modal-btns">
+      <button class="mbtn sec" id="modal-cancel">Cancel</button>
+      <button class="mbtn pri" id="modal-save">Save Note</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── DATA ──────────────────────────────────────────────────────────────────────
+
+const LAYER_META = {
+  'fe-pages':  { fill: '#0c1929', stroke: '#1d4ed8', text: '#60a5fa', label: 'Frontend Pages (React)' },
+  'fe-svc':    { fill: '#0c1929', stroke: '#0369a1', text: '#38bdf8', label: 'Frontend Services' },
+  'routes':    { fill: '#1a1500', stroke: '#a16207', text: '#fbbf24', label: 'API Routes (FastAPI)' },
+  'services':  { fill: '#0d1a0f', stroke: '#166534', text: '#4ade80', label: 'Business Logic Services' },
+  'core':      { fill: '#160c28', stroke: '#6d28d9', text: '#c084fc', label: 'Core · Ports & Adapters' },
+  'domain':    { fill: '#1a0c1a', stroke: '#86198f', text: '#e879f9', label: 'Domain Models' },
+  'infra':     { fill: '#190c0c', stroke: '#991b1b', text: '#fb7185', label: 'Infrastructure · External' },
+};
+
+const CONN_COLOR = { http: '#3b82f6', service: '#22c55e', repo: '#f59e0b', ai: '#a855f7', dep: '#52525b' };
+const CONN_DASH  = { http: 'none',    service: 'none',    repo: '6,3',     ai: 'none',   dep: '3,3'    };
+
+// Node layout helper
+function row(layer, y, items) {
+  const W = 152, H = 44;
+  const n = items.length;
+  const canvasW = 1520, margin = 20;
+  const total = canvasW - margin * 2;
+  const gap = n > 1 ? (total - n * W) / (n - 1) : 0;
+  return items.map((item, i) => ({
+    id: item.id, label: item.label, subtitle: item.sub,
+    x: margin + i * (W + gap), y, w: W, h: H, layer
+  }));
+}
+
+const nodes = [
+  ...row('fe-pages', 22, [
+    { id: 'pg-tx',   label: 'Transactions',    sub: 'pages/Transactions.tsx' },
+    { id: 'pg-up',   label: 'Upload',          sub: 'pages/Upload.tsx' },
+    { id: 'pg-ch',   label: 'Charts',          sub: 'pages/Charts.tsx' },
+    { id: 'pg-chat', label: 'Chat',            sub: 'pages/ChatPage.tsx' },
+    { id: 'pg-cat',  label: 'Categories',      sub: 'pages/Categories.tsx' },
+    { id: 'pg-acc',  label: 'Accounts',        sub: 'pages/Accounts.tsx' },
+    { id: 'pg-er',   label: 'Enhancement Rules', sub: 'pages/EnhancementRules.tsx' },
+    { id: 'pg-set',  label: 'Settings',        sub: 'pages/Settings.tsx' },
+  ]),
+  ...row('fe-svc', 140, [
+    { id: 'fs-hooks',  label: 'TanStack Query Hooks', sub: 'services/hooks/*.ts' },
+    { id: 'fs-api',    label: 'API Clients',    sub: 'api/*Client.ts' },
+    { id: 'fs-auth',   label: 'AuthContext',    sub: 'auth/AuthContext.tsx' },
+    { id: 'fs-err',    label: 'Error / Theme Context', sub: 'context/ + theme/' },
+  ]),
+  ...row('routes', 258, [
+    { id: 'rt-tx',   label: '/transactions',   sub: 'routes/transactions.py · 11 eps' },
+    { id: 'rt-st',   label: '/statements',     sub: 'routes/statements.py · 6 eps' },
+    { id: 'rt-cat',  label: '/categories',     sub: 'routes/categories.py · 7 eps' },
+    { id: 'rt-acc',  label: '/accounts',       sub: 'routes/accounts.py · 6 eps' },
+    { id: 'rt-auth', label: '/auth',           sub: 'routes/auth.py · 7 eps' },
+    { id: 'rt-chat', label: '/chat (SSE)',     sub: 'routes/chat.py' },
+    { id: 'rt-er',   label: '/enhancement-rules', sub: 'routes/enhancement_rules.py · 6' },
+    { id: 'rt-sub',  label: '/subscription',  sub: 'routes/subscription.py · 2 eps' },
+  ]),
+  ...row('services', 376, [
+    { id: 'sv-tx',   label: 'TransactionSvc',  sub: 'services/transaction.py' },
+    { id: 'sv-st',   label: 'StatementParsing', sub: 'services/statement.py + statement_processing/' },
+    { id: 'sv-cat',  label: 'CategorySvc',     sub: 'services/category.py' },
+    { id: 'sv-chat', label: 'ChatSvc',         sub: 'services/chat/' },
+    { id: 'sv-ai',   label: 'AI Categorisation', sub: 'services/ai/' },
+    { id: 'sv-schema', label: 'SchemaDetection', sub: 'services/schema_detection/' },
+    { id: 'sv-sub',  label: 'SubscriptionSvc', sub: 'services/subscription.py' },
+    { id: 'sv-er',   label: 'EnhancementRuleSvc', sub: 'services/enhancement_rule_management.py' },
+  ]),
+  ...row('core', 492, [
+    { id: 'co-di',   label: 'DI Container',    sub: 'core/dependencies.py (21 services wired)' },
+    { id: 'co-ports', label: 'Repository Ports', sub: 'ports/repositories/ (ABC interfaces)' },
+    { id: 'co-adapt', label: 'SQLAlchemy Adapters', sub: 'adapters/repositories/' },
+    { id: 'co-llm',  label: 'LLM Abstraction', sub: 'ai/ (Gemini | Groq | Noop)' },
+  ]),
+  ...row('domain', 608, [
+    { id: 'dm-models', label: 'ORM Models',    sub: 'domain/models/ · 15 tables' },
+    { id: 'dm-schemas', label: 'Pydantic Schemas', sub: 'api/schemas.py (*Create/*Update/*Response)' },
+    { id: 'dm-auth',  label: 'Auth Core',      sub: 'core/auth/ (JWT · OAuth · bcrypt)' },
+    { id: 'dm-mig',   label: 'Alembic Migrations', sub: 'migrations/versions/ · 20+ versions' },
+  ]),
+  ...row('infra', 724, [
+    { id: 'in-db',    label: 'PostgreSQL (Neon)', sub: 'Managed DB · cloud' },
+    { id: 'in-gem',   label: 'Gemini AI',      sub: 'External · Google AI API' },
+    { id: 'in-groq',  label: 'Groq AI',        sub: 'External · Groq API' },
+    { id: 'in-oauth', label: 'Google OAuth 2.0', sub: 'External · Authlib' },
+    { id: 'in-stripe', label: 'Stripe',        sub: 'External · Payments API' },
+  ]),
+];
+
+const connections = [
+  // Pages → Hooks
+  { f: 'pg-tx',   t: 'fs-hooks',  type: 'dep' },
+  { f: 'pg-up',   t: 'fs-hooks',  type: 'dep' },
+  { f: 'pg-ch',   t: 'fs-hooks',  type: 'dep' },
+  { f: 'pg-chat', t: 'fs-hooks',  type: 'dep' },
+  { f: 'pg-cat',  t: 'fs-hooks',  type: 'dep' },
+  { f: 'pg-acc',  t: 'fs-hooks',  type: 'dep' },
+  { f: 'pg-er',   t: 'fs-hooks',  type: 'dep' },
+  // Pages → Auth
+  { f: 'pg-tx',   t: 'fs-auth',   type: 'dep' },
+  { f: 'pg-set',  t: 'fs-auth',   type: 'dep' },
+  // Hooks → API Clients
+  { f: 'fs-hooks', t: 'fs-api',   type: 'dep' },
+  // API Clients → Routes
+  { f: 'fs-api',  t: 'rt-tx',     type: 'http', lbl: 'REST' },
+  { f: 'fs-api',  t: 'rt-st',     type: 'http' },
+  { f: 'fs-api',  t: 'rt-cat',    type: 'http' },
+  { f: 'fs-api',  t: 'rt-acc',    type: 'http' },
+  { f: 'fs-api',  t: 'rt-er',     type: 'http' },
+  { f: 'fs-api',  t: 'rt-chat',   type: 'http', lbl: 'SSE' },
+  { f: 'fs-api',  t: 'rt-sub',    type: 'http' },
+  { f: 'fs-auth', t: 'rt-auth',   type: 'http' },
+  // Routes → Services
+  { f: 'rt-tx',   t: 'sv-tx',     type: 'service' },
+  { f: 'rt-st',   t: 'sv-st',     type: 'service' },
+  { f: 'rt-cat',  t: 'sv-cat',    type: 'service' },
+  { f: 'rt-chat', t: 'sv-chat',   type: 'service' },
+  { f: 'rt-er',   t: 'sv-er',     type: 'service' },
+  { f: 'rt-acc',  t: 'sv-tx',     type: 'service' },
+  { f: 'rt-sub',  t: 'sv-sub',    type: 'service' },
+  { f: 'rt-auth', t: 'dm-auth',   type: 'service' },
+  // Statement → SchemaDetection
+  { f: 'sv-st',   t: 'sv-schema', type: 'service', lbl: 'detect cols' },
+  // Transaction → AI Categorisation
+  { f: 'sv-tx',   t: 'sv-ai',     type: 'service', lbl: 'categorise' },
+  { f: 'sv-cat',  t: 'sv-ai',     type: 'service' },
+  // Services → LLM Abstraction
+  { f: 'sv-ai',   t: 'co-llm',    type: 'ai' },
+  { f: 'sv-chat', t: 'co-llm',    type: 'ai' },
+  // Services → Repository Ports
+  { f: 'sv-tx',   t: 'co-ports',  type: 'repo' },
+  { f: 'sv-st',   t: 'co-ports',  type: 'repo' },
+  { f: 'sv-cat',  t: 'co-ports',  type: 'repo' },
+  { f: 'sv-er',   t: 'co-ports',  type: 'repo' },
+  { f: 'sv-sub',  t: 'co-ports',  type: 'repo' },
+  // DI Container wires everything
+  { f: 'co-di',   t: 'co-ports',  type: 'dep', lbl: 'wires' },
+  { f: 'co-di',   t: 'co-adapt',  type: 'dep' },
+  { f: 'co-di',   t: 'co-llm',    type: 'dep' },
+  // Ports → Adapters (hexagonal boundary)
+  { f: 'co-ports', t: 'co-adapt', type: 'repo', lbl: 'implements' },
+  // Adapters → ORM Models
+  { f: 'co-adapt', t: 'dm-models', type: 'repo' },
+  // Schemas used by routes (dep)
+  { f: 'dm-schemas', t: 'rt-tx',  type: 'dep' },
+  // ORM Models + Adapters → DB
+  { f: 'dm-models',  t: 'in-db',  type: 'repo' },
+  { f: 'co-adapt',   t: 'in-db',  type: 'repo' },
+  { f: 'dm-mig',     t: 'in-db',  type: 'dep' },
+  // LLM → external AI
+  { f: 'co-llm',  t: 'in-gem',    type: 'ai' },
+  { f: 'co-llm',  t: 'in-groq',   type: 'ai' },
+  // Auth → OAuth
+  { f: 'dm-auth', t: 'in-oauth',  type: 'http' },
+  // Subscription → Stripe
+  { f: 'sv-sub',  t: 'in-stripe', type: 'http' },
+];
+
+// Preset: which node IDs are "in focus" (null = all)
+const PRESETS = {
+  full:      { label: 'Full System',               focus: null },
+  upload:    { label: 'Upload Flow',               focus: new Set(['pg-up','fs-hooks','fs-api','rt-st','sv-st','sv-schema','co-di','co-ports','co-adapt','dm-models','in-db']) },
+  txquery:   { label: 'Transaction Query',         focus: new Set(['pg-tx','fs-hooks','fs-api','rt-tx','sv-tx','co-ports','co-adapt','dm-models','in-db']) },
+  aiflow:    { label: 'AI Categorisation',         focus: new Set(['pg-tx','fs-hooks','fs-api','rt-tx','sv-tx','sv-ai','co-llm','in-gem','in-groq','co-ports','dm-models']) },
+  chat:      { label: 'Chat Flow',                 focus: new Set(['pg-chat','fs-hooks','fs-api','rt-chat','sv-chat','co-llm','in-gem','in-groq']) },
+  hexagonal: { label: 'Hexagonal Architecture',   focus: new Set(['rt-tx','rt-cat','rt-st','sv-tx','sv-cat','sv-st','co-di','co-ports','co-adapt','dm-models','in-db']) },
+};
+
+// ── STATE ─────────────────────────────────────────────────────────────────────
+
+const state = {
+  preset: 'full',
+  layers:  { 'fe-pages': true, 'fe-svc': true, routes: true, services: true, core: true, domain: true, infra: true },
+  conns:   { http: true, service: true, repo: true, ai: true, dep: true },
+  zoom: 0.65, panX: 14, panY: 8,
+  comments: [],
+  activeNode: null,
+};
+
+// ── RENDER ────────────────────────────────────────────────────────────────────
+
+const svg = document.getElementById('canvas');
+const NS = 'http://www.w3.org/2000/svg';
+const nodeMap = Object.fromEntries(nodes.map(n => [n.id, n]));
+
+function el(tag, attrs = {}, parent) {
+  const e = document.createElementNS(NS, tag);
+  for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v);
+  if (parent) parent.appendChild(e);
+  return e;
+}
+
+function buildDefs() {
+  const defs = el('defs', {}, svg);
+  for (const [type, color] of Object.entries(CONN_COLOR)) {
+    for (const suf of ['', '-dim']) {
+      const m = el('marker', { id: `arr-${type}${suf}`, markerWidth: 8, markerHeight: 6, refX: 7, refY: 3, orient: 'auto' }, defs);
+      el('polygon', { points: '0 0, 8 3, 0 6', fill: suf ? color + '28' : color }, m);
+    }
+  }
+}
+
+function focused(id) {
+  const f = PRESETS[state.preset].focus;
+  return f === null || f.has(id);
+}
+
+function nodeVisible(n) { return !!state.layers[n.layer]; }
+
+function renderBands() {
+  const bands = [
+    { layer: 'fe-pages',  y: 10, h: 70 },
+    { layer: 'fe-svc',    y: 128, h: 70 },
+    { layer: 'routes',    y: 244, h: 70 },
+    { layer: 'services',  y: 362, h: 70 },
+    { layer: 'core',      y: 478, h: 70 },
+    { layer: 'domain',    y: 594, h: 70 },
+    { layer: 'infra',     y: 710, h: 70 },
+  ];
+  for (const b of bands) {
+    if (!state.layers[b.layer]) continue;
+    const m = LAYER_META[b.layer];
+    el('rect', { x: 4, y: b.y, width: 1512, height: b.h, rx: 5, fill: m.fill }, svg);
+    el('text', { x: 1508, y: b.y + 10, 'text-anchor': 'end', 'font-size': 8, fill: m.stroke,
+      'font-family': 'system-ui', 'letter-spacing': '0.5', 'text-transform': 'uppercase' }, svg)
+      .textContent = m.label.toUpperCase();
+  }
+}
+
+function connPath(fn, tn) {
+  const fx = fn.x + fn.w / 2, fy = fn.y + fn.h;
+  const tx = tn.x + tn.w / 2, ty = tn.y;
+  const sameRow = Math.abs(fn.y - tn.y) < 20;
+  if (sameRow) {
+    const mx = (fx + tx) / 2, dip = fn.y + fn.h + 18;
+    return `M ${fn.x + fn.w} ${fn.y + fn.h/2} C ${mx} ${dip} ${mx} ${dip} ${tn.x} ${tn.y + tn.h/2}`;
+  }
+  const my = (fy + ty) / 2;
+  return `M ${fx} ${fy} C ${fx} ${my} ${tx} ${my} ${tx} ${ty}`;
+}
+
+function renderConnections() {
+  for (const c of connections) {
+    if (!state.conns[c.type]) continue;
+    const fn = nodeMap[c.f], tn = nodeMap[c.t];
+    if (!fn || !tn || !nodeVisible(fn) || !nodeVisible(tn)) continue;
+    const foc = focused(c.f) && focused(c.t);
+    const color = CONN_COLOR[c.type];
+    const path = el('path', {
+      d: connPath(fn, tn), fill: 'none',
+      stroke: foc ? color : color + '20',
+      'stroke-width': foc ? 1.5 : 1,
+      'stroke-dasharray': CONN_DASH[c.type],
+      'marker-end': `url(#arr-${c.type}${foc ? '' : '-dim'})`,
+      opacity: foc ? 0.85 : 0.3,
+    }, svg);
+    if (c.lbl && foc) {
+      const fn2 = nodeMap[c.f], tn2 = nodeMap[c.t];
+      const lx = (fn2.x + fn2.w/2 + tn2.x + tn2.w/2) / 2;
+      const ly = (fn2.y + fn2.h + tn2.y) / 2;
+      const bg = el('rect', { x: lx - 16, y: ly - 8, width: 32, height: 11, rx: 2, fill: '#0d1117' }, svg);
+      el('text', { x: lx, y: ly, 'text-anchor': 'middle', 'font-size': 8, fill: color,
+        'font-family': 'monospace' }, svg).textContent = c.lbl;
+    }
+  }
+}
+
+function renderNodes() {
+  for (const n of nodes) {
+    if (!nodeVisible(n)) continue;
+    const m = LAYER_META[n.layer];
+    const foc = focused(n.id);
+    const hasNote = state.comments.some(c => c.nid === n.id);
+    const g = el('g', { opacity: foc ? 1 : 0.22 }, svg);
+    g.style.cursor = 'pointer';
+
+    if (hasNote && foc) {
+      el('rect', { x: n.x-2, y: n.y-2, width: n.w+4, height: n.h+4, rx: 7,
+        fill: 'none', stroke: '#7c3aed', 'stroke-width': 2 }, g);
+    }
+    el('rect', { x: n.x, y: n.y, width: n.w, height: n.h, rx: 5,
+      fill: foc ? '#1c2130' : '#12151f',
+      stroke: foc ? m.stroke : '#1a1d27', 'stroke-width': foc ? 1.5 : 1 }, g);
+    const lbl = el('text', { x: n.x + n.w/2, y: n.y + 16, 'text-anchor': 'middle',
+      'font-size': 11, 'font-weight': 600, fill: foc ? m.text : '#2d3748',
+      'font-family': 'system-ui, sans-serif' }, g);
+    lbl.textContent = n.label;
+    const sub = el('text', { x: n.x + n.w/2, y: n.y + 30, 'text-anchor': 'middle',
+      'font-size': 8.5, fill: foc ? '#4b5563' : '#1e2435', 'font-family': 'monospace' }, g);
+    sub.textContent = n.subtitle;
+
+    if (hasNote) {
+      el('circle', { cx: n.x + n.w - 5, cy: n.y + 5, r: 4, fill: '#7c3aed' }, g);
+    }
+
+    g.addEventListener('click', e => { e.stopPropagation(); openModal(n); });
+  }
+}
+
+function render() {
+  while (svg.firstChild) svg.removeChild(svg.firstChild);
+  buildDefs();
+  renderBands();
+  renderConnections();
+  renderNodes();
+}
+
+// ── MODAL ─────────────────────────────────────────────────────────────────────
+
+const modalBg = document.getElementById('modal-bg');
+const modalTitle = document.getElementById('modal-title');
+const modalFile = document.getElementById('modal-file');
+const modalTa = document.getElementById('modal-ta');
+
+function openModal(node) {
+  state.activeNode = node;
+  modalTitle.textContent = node.label;
+  modalFile.textContent = node.subtitle;
+  const existing = state.comments.find(c => c.nid === node.id);
+  modalTa.value = existing ? existing.text : '';
+  modalBg.classList.add('open');
+  setTimeout(() => modalTa.focus(), 60);
+}
+
+function closeModal() { modalBg.classList.remove('open'); state.activeNode = null; }
+
+document.getElementById('modal-cancel').addEventListener('click', closeModal);
+modalBg.addEventListener('click', e => { if (e.target === modalBg) closeModal(); });
+
+document.getElementById('modal-save').addEventListener('click', () => {
+  const text = modalTa.value.trim();
+  const n = state.activeNode;
+  if (!n) return;
+  state.comments = state.comments.filter(c => c.nid !== n.id);
+  if (text) state.comments.push({ id: Date.now(), nid: n.id, label: n.label, file: n.subtitle, text });
+  closeModal();
+  updateAll();
+});
+
+modalTa.addEventListener('keydown', e => {
+  if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') document.getElementById('modal-save').click();
+});
+
+// ── SIDEBAR ───────────────────────────────────────────────────────────────────
+
+function renderSidebar() {
+  document.getElementById('comment-count-badge').textContent = state.comments.length;
+  const list = document.getElementById('comments-list');
+  if (state.comments.length === 0) {
+    list.innerHTML = '<div id="no-comments">Click any node to add a<br>note or question about it</div>';
+    return;
+  }
+  list.innerHTML = '';
+  for (const c of state.comments) {
+    const card = document.createElement('div');
+    card.className = 'comment-card';
+    card.innerHTML = `
+      <div class="cc-head">
+        <span class="cc-label">${c.label}</span>
+        <button class="cc-del" data-id="${c.id}">×</button>
+      </div>
+      <div class="cc-file">${c.file}</div>
+      <div class="cc-text">${c.text}</div>`;
+    list.appendChild(card);
+  }
+  list.querySelectorAll('.cc-del').forEach(b => b.addEventListener('click', () => {
+    state.comments = state.comments.filter(c => c.id !== +b.dataset.id);
+    updateAll();
+  }));
+}
+
+// ── PROMPT ────────────────────────────────────────────────────────────────────
+
+function updatePrompt() {
+  const out = document.getElementById('prompt-out');
+  const presetLabel = PRESETS[state.preset].label;
+  const lines = [];
+
+  if (state.preset === 'full') {
+    lines.push("I'm exploring the Bank Statements AI codebase architecture.");
+  } else {
+    lines.push(`I'm looking at the ${presetLabel} in the Bank Statements AI codebase.`);
+  }
+
+  const visLayers = Object.entries(state.layers).filter(([,v]) => v).map(([k]) => LAYER_META[k].label);
+  if (visLayers.length < 7) lines.push(`Showing layers: ${visLayers.join(', ')}.`);
+
+  if (state.comments.length > 0) {
+    lines.push('');
+    lines.push('Notes and questions:');
+    for (const c of state.comments) {
+      lines.push('');
+      lines.push(`**${c.label}** (${c.file}):`);
+      lines.push(c.text);
+    }
+  } else {
+    lines.push('');
+    lines.push('(Click nodes to add notes, then copy this prompt into a new chat.)');
+  }
+
+  out.value = lines.join('\n');
+}
+
+// ── ZOOM & PAN ────────────────────────────────────────────────────────────────
+
+const outer = document.getElementById('svg-outer');
+
+function applyTransform() {
+  outer.style.transform = `translate(${state.panX}px, ${state.panY}px) scale(${state.zoom})`;
+  outer.style.transformOrigin = '0 0';
+  document.getElementById('zoom-label').textContent = Math.round(state.zoom * 100) + '%';
+}
+
+document.getElementById('zoom-in').addEventListener('click',  () => { state.zoom = Math.min(2, state.zoom + 0.1); applyTransform(); });
+document.getElementById('zoom-out').addEventListener('click', () => { state.zoom = Math.max(0.2, state.zoom - 0.1); applyTransform(); });
+document.getElementById('zoom-reset').addEventListener('click', () => { state.zoom = 0.65; state.panX = 14; state.panY = 8; applyTransform(); });
+
+const wrap = document.getElementById('canvas-wrap');
+wrap.addEventListener('wheel', e => {
+  e.preventDefault();
+  state.zoom = Math.max(0.2, Math.min(2, state.zoom + (e.deltaY > 0 ? -0.06 : 0.06)));
+  applyTransform();
+}, { passive: false });
+
+let drag = false, dragBase = {}, panBase = {};
+wrap.addEventListener('mousedown', e => {
+  const tgt = e.target;
+  if (tgt.closest('g[cursor]') || tgt.tagName === 'text' || tgt.tagName === 'rect' && tgt.closest('g')) return;
+  drag = true; dragBase = { x: e.clientX, y: e.clientY }; panBase = { x: state.panX, y: state.panY };
+  wrap.classList.add('grabbing');
+});
+window.addEventListener('mousemove', e => {
+  if (!drag) return;
+  state.panX = panBase.x + e.clientX - dragBase.x;
+  state.panY = panBase.y + e.clientY - dragBase.y;
+  applyTransform();
+});
+window.addEventListener('mouseup', () => { drag = false; wrap.classList.remove('grabbing'); });
+
+// ── CONTROLS ──────────────────────────────────────────────────────────────────
+
+document.querySelectorAll('.preset-btn').forEach(b => b.addEventListener('click', () => {
+  state.preset = b.dataset.preset;
+  document.querySelectorAll('.preset-btn').forEach(x => x.classList.remove('active'));
+  b.classList.add('active');
+  updateAll();
+}));
+
+document.querySelectorAll('[data-layer]').forEach(cb => cb.addEventListener('change', () => {
+  state.layers[cb.dataset.layer] = cb.checked; updateAll();
+}));
+
+document.querySelectorAll('[data-conn]').forEach(cb => cb.addEventListener('change', () => {
+  state.conns[cb.dataset.conn] = cb.checked; updateAll();
+}));
+
+document.getElementById('copy-btn').addEventListener('click', () => {
+  navigator.clipboard.writeText(document.getElementById('prompt-out').value).then(() => {
+    const b = document.getElementById('copy-btn');
+    b.textContent = 'Copied!'; b.classList.add('copied');
+    setTimeout(() => { b.textContent = 'Copy Prompt'; b.classList.remove('copied'); }, 1500);
+  });
+});
+
+// ── MAIN ──────────────────────────────────────────────────────────────────────
+
+function updateAll() {
+  render();
+  renderSidebar();
+  updatePrompt();
+}
+
+updateAll();
+applyTransform();
+</script>
+</body>
+</html>
