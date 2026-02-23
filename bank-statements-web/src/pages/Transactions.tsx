@@ -64,6 +64,7 @@ export const TransactionsPage = () => {
     const urlTransactionIds = searchParams.get('transaction_ids')
     const urlSavedFilterId = searchParams.get('saved_filter_id')
     const urlTagIds = searchParams.get('tag_ids')
+    const urlExcludeFromAnalytics = searchParams.get('exclude_from_analytics')
 
     return {
       page: 1,
@@ -85,6 +86,7 @@ export const TransactionsPage = () => {
       transaction_ids: urlTransactionIds ? urlTransactionIds.split(',') : undefined,
       saved_filter_id: urlSavedFilterId || undefined,
       tag_ids: urlTagIds ? urlTagIds.split(',') : undefined,
+      exclude_from_analytics: urlExcludeFromAnalytics === 'true' ? true : undefined,
     }
   }
 
@@ -116,6 +118,8 @@ export const TransactionsPage = () => {
   const debounceTimeoutRef = useRef<NodeJS.Timeout>()
   const bottomPaginationRef = useRef<HTMLDivElement>(null)
   const [isBottomPaginationVisible, setIsBottomPaginationVisible] = useState(true)
+  const isInternalUrlUpdate = useRef(false)
+  const initialMountRef = useRef(true)
 
   const {
     transactions,
@@ -157,12 +161,19 @@ export const TransactionsPage = () => {
 
   const isRuleFiltering = !!filters.enhancement_rule_id
 
-  // Update filters when URL changes
+  // Update filters when URL changes (skip initial mount and internal updates)
   useEffect(() => {
+    if (initialMountRef.current) {
+      initialMountRef.current = false
+      return
+    }
+    if (isInternalUrlUpdate.current) {
+      isInternalUrlUpdate.current = false
+      return
+    }
     const newFilters = getInitialFilters()
     setFilters(newFilters)
 
-    // Update local state for debounced inputs
     setLocalDescriptionSearch(searchParams.get('description_search') || '')
     setLocalMinAmount(searchParams.get('min_amount') ? parseFloat(searchParams.get('min_amount')!) : undefined)
     setLocalMaxAmount(searchParams.get('max_amount') ? parseFloat(searchParams.get('max_amount')!) : undefined)
@@ -266,10 +277,12 @@ export const TransactionsPage = () => {
     if (filters.transaction_ids?.length) params.set('transaction_ids', filters.transaction_ids.join(','))
     if (filters.saved_filter_id) params.set('saved_filter_id', filters.saved_filter_id)
     if (filters.tag_ids?.length) params.set('tag_ids', filters.tag_ids.join(','))
+    if (filters.exclude_from_analytics) params.set('exclude_from_analytics', 'true')
 
     const patternLabelParam = searchParams.get('pattern_label')
     if (patternLabelParam) params.set('pattern_label', patternLabelParam)
 
+    isInternalUrlUpdate.current = true
     setSearchParams(params, { replace: true })
   }, [filters, setSearchParams, searchParams])
 
@@ -450,6 +463,13 @@ export const TransactionsPage = () => {
       } else {
         handleFilterChange({ exclude_uncategorized: undefined, status: undefined })
       }
+    },
+    [handleFilterChange]
+  )
+
+  const handleExcludedOnlyFilter = useCallback(
+    (excludedOnly: boolean) => {
+      handleFilterChange({ exclude_from_analytics: excludedOnly ? true : undefined })
     },
     [handleFilterChange]
   )
@@ -857,6 +877,7 @@ export const TransactionsPage = () => {
               transactionType={filters.transaction_type || 'all'}
               allTags={allTags}
               selectedTagIds={filters.tag_ids}
+              excludedOnly={filters.exclude_from_analytics === true}
               onTagChange={handleTagFilter}
               onCategoryChange={handleCategoryFilter}
               onAccountChange={handleAccountFilter}
@@ -866,6 +887,7 @@ export const TransactionsPage = () => {
               onExcludeTransfersChange={handleExcludeTransfersFilter}
               onCategorizationFilterChange={handleCategorizationFilterChange}
               onTransactionTypeChange={handleTransactionTypeFilter}
+              onExcludedOnlyChange={handleExcludedOnlyFilter}
               onClearFilters={handleClearFilters}
               filterPresets={filterPresets}
               filterPresetsLoading={filterPresetsLoading}

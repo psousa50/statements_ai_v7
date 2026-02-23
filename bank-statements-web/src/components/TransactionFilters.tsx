@@ -30,6 +30,7 @@ interface TransactionFiltersProps {
   defaultExcludeTransfers?: boolean
   allTags?: Tag[]
   selectedTagIds?: string[]
+  excludedOnly?: boolean
   onTagChange?: (tagIds: string[]) => void
   onCategoryChange: (categoryIds: string[]) => void
   onAccountChange: (accountId?: string) => void
@@ -39,6 +40,7 @@ interface TransactionFiltersProps {
   onExcludeTransfersChange: (excludeTransfers: boolean) => void
   onCategorizationFilterChange: (filter: CategorizationFilter) => void
   onTransactionTypeChange: (type: 'all' | 'debit' | 'credit') => void
+  onExcludedOnlyChange?: (excludedOnly: boolean) => void
   onClearFilters: () => void
   filterPresets?: FilterPreset[]
   filterPresetsLoading?: boolean
@@ -68,6 +70,7 @@ export const TransactionFilters = ({
   defaultExcludeTransfers = true,
   allTags,
   selectedTagIds = [],
+  excludedOnly = false,
   onTagChange,
   onCategoryChange,
   onAccountChange,
@@ -77,6 +80,7 @@ export const TransactionFilters = ({
   onExcludeTransfersChange,
   onCategorizationFilterChange,
   onTransactionTypeChange,
+  onExcludedOnlyChange,
   onClearFilters,
   filterPresets = [],
   filterPresetsLoading = false,
@@ -109,7 +113,8 @@ export const TransactionFilters = ({
     selectedAccountId ||
     excludeTransfers !== defaultExcludeTransfers ||
     categorizationFilter !== defaultCategorizationFilter ||
-    transactionType !== defaultTransactionType
+    transactionType !== defaultTransactionType ||
+    excludedOnly
 
   const handleAmountChange = useCallback(
     (field: 'min' | 'max', value: string) => {
@@ -355,6 +360,20 @@ export const TransactionFilters = ({
                   />
                   <span className="checkbox-text">Exclude Transfers</span>
                 </label>
+                {onExcludedOnlyChange && (
+                  <label htmlFor="excluded-only" className="checkbox-label">
+                    <input
+                      id="excluded-only"
+                      type="checkbox"
+                      role="checkbox"
+                      aria-label="Excluded"
+                      checked={excludedOnly}
+                      onChange={(e) => onExcludedOnlyChange(e.target.checked)}
+                      className="checkbox-input"
+                    />
+                    <span className="checkbox-text">Excluded</span>
+                  </label>
+                )}
               </div>
             </div>
           </div>
