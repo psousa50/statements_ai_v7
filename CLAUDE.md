@@ -1,5 +1,8 @@
 # Project: Bank Statements AI
 
+Read ARCHITECTURE.md before planning features.
+Update ARCHITECTURE.md when making changes that affect its content.
+
 ## Overview
 
 Personal finance application for uploading, parsing, and analysing bank statements with AI-powered transaction categorisation and insights.
