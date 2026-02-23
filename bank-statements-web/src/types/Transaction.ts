@@ -48,6 +48,9 @@ export interface Transaction {
   counterparty_status?: 'UNPROCESSED' | 'INFERRED' | 'CONFIRMED'
   tags?: Tag[]
   exclude_from_analytics: boolean
+  is_split_parent?: boolean
+  is_split_child?: boolean
+  parent_transaction_id?: string
 }
 
 export interface TransactionCreate {

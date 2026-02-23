@@ -118,6 +118,7 @@ export const TransactionsPage = () => {
   const debounceTimeoutRef = useRef<NodeJS.Timeout>()
   const bottomPaginationRef = useRef<HTMLDivElement>(null)
   const [isBottomPaginationVisible, setIsBottomPaginationVisible] = useState(true)
+  const [isSplitDialogOpen, setIsSplitDialogOpen] = useState(false)
   const isInternalUrlUpdate = useRef(false)
   const initialMountRef = useRef(true)
 
@@ -914,6 +915,7 @@ export const TransactionsPage = () => {
                 )}
               </h2>
               {!loading &&
+                !isSplitDialogOpen &&
                 transactions.length > 0 &&
                 (() => {
                   const total = pagination.total_amount
@@ -974,6 +976,19 @@ export const TransactionsPage = () => {
               onBulkTag={handleBulkTag}
               onBulkCategorizeByIds={handleBulkCategorizeByIds}
               onToggleExcludeFromAnalytics={handleToggleExcludeFromAnalytics}
+              onSplitDialogStateChange={setIsSplitDialogOpen}
+              onSplitSuccess={() => {
+                const convertedAmounts = convertAmountFiltersForApi(
+                  filters.min_amount,
+                  filters.max_amount,
+                  filters.transaction_type || 'all'
+                )
+                fetchTransactions({
+                  ...filters,
+                  ...convertedAmounts,
+                  include_running_balance: !!filters.account_id,
+                })
+              }}
             />
           </div>
 

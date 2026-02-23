@@ -95,6 +95,7 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         transaction_ids: Optional[List[UUID]] = None,
         tag_ids: Optional[List[UUID]] = None,
         exclude_from_analytics: Optional[bool] = None,
+        include_running_balance: bool = False,
     ) -> Tuple[List[Transaction], int, Decimal]:
         query = self.db_session.query(Transaction).filter(Transaction.user_id == user_id)
 
@@ -1222,6 +1223,7 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
                 running_sum.label("cumulative_sum"),
             )
             .filter(Transaction.account_id == account_id)
+            .filter(Transaction.parent_transaction_id.is_(None))
             .subquery()
         )
 
@@ -1235,3 +1237,45 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         )
 
         return {row[0]: starting_balance + Decimal(str(row[1])) if row[1] else starting_balance for row in results}
+
+    def has_split_children(self, transaction_id: UUID) -> bool:
+        count = (
+            self.db_session.query(func.count(Transaction.id))
+            .filter(Transaction.parent_transaction_id == transaction_id)
+            .scalar()
+        )
+        return (count or 0) > 0
+
+    def get_split_parent_ids(self, transaction_ids: List[UUID]) -> set:
+        if not transaction_ids:
+            return set()
+        rows = (
+            self.db_session.query(Transaction.parent_transaction_id)
+            .filter(Transaction.parent_transaction_id.in_(transaction_ids))
+            .distinct()
+            .all()
+        )
+        return {row[0] for row in rows}
+
+    def get_split_children(self, parent_id: UUID, user_id: UUID) -> List[Transaction]:
+        return (
+            self.db_session.query(Transaction)
+            .filter(
+                Transaction.parent_transaction_id == parent_id,
+                Transaction.user_id == user_id,
+            )
+            .order_by(Transaction.created_at)
+            .all()
+        )
+
+    def split_transaction(self, parent: Transaction, children: List[Transaction]) -> List[Transaction]:
+        self.db_session.query(Transaction).filter(Transaction.parent_transaction_id == parent.id).delete(
+            synchronize_session=False
+        )
+        for child in children:
+            self.db_session.add(child)
+        self.db_session.commit()
+        self.db_session.refresh(parent)
+        for child in children:
+            self.db_session.refresh(child)
+        return children

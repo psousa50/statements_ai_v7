@@ -153,6 +153,16 @@ export interface RecurringPatternsResponse {
   }
 }
 
+export interface TransactionSplitPart {
+  amount: number
+  description?: string
+  category_id?: string
+}
+
+export interface TransactionSplitRequest {
+  parts: TransactionSplitPart[]
+}
+
 export interface TransactionClient {
   getAll(filters?: TransactionFilters): Promise<TransactionListResponse>
   exportCSV(filters?: Omit<TransactionFilters, 'page' | 'page_size'>): Promise<void>
@@ -176,6 +186,8 @@ export interface TransactionClient {
   previewEnhancement(request: EnhancementPreviewRequest): Promise<EnhancementPreviewResponse>
   createSavedFilter(transactionIds: string[]): Promise<SavedFilterResponse>
   toggleExcludeFromAnalytics(transactionId: string, exclude: boolean): Promise<Transaction>
+  splitTransaction(transactionId: string, request: TransactionSplitRequest): Promise<Transaction[]>
+  getSplitChildren(transactionId: string): Promise<Transaction[]>
 }
 
 export interface SourceClient {
@@ -538,6 +550,16 @@ export const transactionClient: TransactionClient = {
     const response = await axiosInstance.put<Transaction>(`${API_URL}/${transactionId}/exclude-from-analytics`, {
       exclude_from_analytics: exclude,
     })
+    return response.data
+  },
+
+  async splitTransaction(transactionId: string, request: TransactionSplitRequest) {
+    const response = await axiosInstance.post<Transaction[]>(`${API_URL}/${transactionId}/split`, request)
+    return response.data
+  },
+
+  async getSplitChildren(transactionId: string) {
+    const response = await axiosInstance.get<Transaction[]>(`${API_URL}/${transactionId}/split-children`)
     return response.data
   },
 }

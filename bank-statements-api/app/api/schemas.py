@@ -195,6 +195,9 @@ class TransactionResponse(BaseModel):
     manual_position_after: Optional[UUID] = None
     tags: List[TagResponse] = []
     exclude_from_analytics: bool = False
+    is_split_parent: bool = False
+    is_split_child: bool = False
+    parent_transaction_id: Optional[UUID] = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -204,6 +207,16 @@ class TransactionResponse(BaseModel):
         if isinstance(value, datetime):
             return value.date()
         return value
+
+
+class TransactionSplitPartRequest(BaseModel):
+    amount: Decimal
+    description: Optional[str] = None
+    category_id: Optional[UUID] = None
+
+
+class TransactionSplitRequest(BaseModel):
+    parts: List[TransactionSplitPartRequest] = Field(..., min_length=2)
 
 
 class TransactionCreateRequest(BaseModel):

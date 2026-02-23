@@ -128,21 +128,39 @@ class Transaction(Base):
 
     exclude_from_analytics = Column(Boolean, default=False, nullable=False, server_default="false")
 
+    parent_transaction_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("transactions.id"),
+        nullable=True,
+        index=True,
+    )
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._running_balance: Optional[Decimal] = None
+        self._is_split_parent: bool = False
         if self.exclude_from_analytics is None:
             self.exclude_from_analytics = False
 
     @property
     def running_balance(self) -> Optional[Decimal]:
-        """Get the running balance for this transaction"""
-        return self._running_balance
+        return getattr(self, "_running_balance", None)
 
     @running_balance.setter
     def running_balance(self, value: Optional[Decimal]):
-        """Set the running balance for this transaction"""
         self._running_balance = value
+
+    @property
+    def is_split_parent(self) -> bool:
+        return getattr(self, "_is_split_parent", False)
+
+    @is_split_parent.setter
+    def is_split_parent(self, value: bool):
+        self._is_split_parent = value
+
+    @property
+    def is_split_child(self) -> bool:
+        return self.parent_transaction_id is not None
 
     def mark_categorized(self):
         """Mark the transaction as categorized (for backward compatibility)"""

@@ -41,6 +41,8 @@ const defaultTransaction: Transaction = {
   created_at: '2023-01-01T00:00:00Z',
   categorization_status: 'UNCATEGORIZED',
   exclude_from_analytics: false,
+  is_split_parent: false,
+  is_split_child: false,
 }
 
 // Default mock category
@@ -148,6 +150,7 @@ const defaultTransactionClient: TransactionClient = {
     } as SavedFilterResponse),
   toggleExcludeFromAnalytics: (_id: string, exclude: boolean) =>
     Promise.resolve({ ...defaultTransaction, exclude_from_analytics: exclude }),
+  splitTransaction: (_id: string, _request: unknown) => Promise.resolve([]),
 }
 
 // Default mock category client implementation

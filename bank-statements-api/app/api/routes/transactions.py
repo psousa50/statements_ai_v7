@@ -1,6 +1,6 @@
 from datetime import date
 from decimal import Decimal
-from typing import Callable, Iterator, Optional
+from typing import Callable, Iterator, List, Optional
 from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, Query
@@ -28,6 +28,7 @@ from app.api.schemas import (
     TransactionCreateRequest,
     TransactionListResponse,
     TransactionResponse,
+    TransactionSplitRequest,
     TransactionUpdateRequest,
 )
 from app.common.text_normalization import normalize_description
@@ -762,6 +763,66 @@ def register_transaction_routes(
                 detail=f"Transaction with ID {transaction_id} not found",
             )
         return transaction
+
+    @router.post(
+        "/{transaction_id}/split",
+        response_model=List[TransactionResponse],
+    )
+    def split_transaction(
+        transaction_id: UUID,
+        split_request: TransactionSplitRequest,
+        internal: InternalDependencies = Depends(provide_dependencies),
+        current_user: User = Depends(require_current_user),
+    ):
+        from app.services.transaction import TransactionSplitConflictError
+
+        parts = [
+            {
+                "amount": part.amount,
+                "description": part.description,
+                "category_id": part.category_id,
+            }
+            for part in split_request.parts
+        ]
+
+        try:
+            result = internal.transaction_service.split_transaction(
+                transaction_id=transaction_id,
+                user_id=current_user.id,
+                parts=parts,
+            )
+        except TransactionSplitConflictError as e:
+            raise HTTPException(
+                status_code=http_status.HTTP_409_CONFLICT,
+                detail=str(e),
+            )
+        except ValueError as e:
+            raise HTTPException(
+                status_code=http_status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=str(e),
+            )
+
+        if result is None:
+            raise HTTPException(
+                status_code=http_status.HTTP_404_NOT_FOUND,
+                detail=f"Transaction with ID {transaction_id} not found",
+            )
+
+        return result
+
+    @router.get(
+        "/{transaction_id}/split-children",
+        response_model=List[TransactionResponse],
+    )
+    def get_split_children(
+        transaction_id: UUID,
+        internal: InternalDependencies = Depends(provide_dependencies),
+        current_user: User = Depends(require_current_user),
+    ):
+        return internal.transaction_service.get_split_children(
+            transaction_id=transaction_id,
+            user_id=current_user.id,
+        )
 
     @router.put(
         "/{transaction_id}",

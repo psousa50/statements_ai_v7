@@ -70,6 +70,7 @@ class TransactionRepository(ABC):
         transaction_ids: Optional[List[UUID]] = None,
         tag_ids: Optional[List[UUID]] = None,
         exclude_from_analytics: Optional[bool] = None,
+        include_running_balance: bool = False,
     ) -> Tuple[List[Transaction], int, Decimal]:
         """
         Get paginated transactions with filters.
@@ -354,6 +355,26 @@ class TransactionRepository(ABC):
         category_id: Optional[UUID],
         user_id: UUID,
     ) -> int:
+        pass
+
+    @abstractmethod
+    def has_split_children(self, transaction_id: UUID) -> bool:
+        """Return True if the transaction has any child split transactions."""
+        pass
+
+    @abstractmethod
+    def get_split_parent_ids(self, transaction_ids: List[UUID]) -> set:
+        """Return the subset of transaction_ids that have split children."""
+        pass
+
+    @abstractmethod
+    def get_split_children(self, parent_id: UUID, user_id: UUID) -> List["Transaction"]:
+        """Return all child transactions for a split parent."""
+        pass
+
+    @abstractmethod
+    def split_transaction(self, parent: "Transaction", children: List["Transaction"]) -> List["Transaction"]:
+        """Atomically update parent and create children in a single commit."""
         pass
 
     @abstractmethod

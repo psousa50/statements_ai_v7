@@ -2,6 +2,15 @@ import { format } from 'date-fns'
 import { useState, useCallback, useEffect } from 'react'
 import Chip from '@mui/material/Chip'
 import Popover from '@mui/material/Popover'
+import Dialog from '@mui/material/Dialog'
+import DialogTitle from '@mui/material/DialogTitle'
+import DialogContent from '@mui/material/DialogContent'
+import DialogActions from '@mui/material/DialogActions'
+import Button from '@mui/material/Button'
+import TextField from '@mui/material/TextField'
+import Stack from '@mui/material/Stack'
+import Typography from '@mui/material/Typography'
+import Box from '@mui/material/Box'
 import LocalOfferOutlinedIcon from '@mui/icons-material/LocalOfferOutlined'
 import { Category, Transaction, Account, Tag } from '../types/Transaction'
 import { Toast, ToastProps } from './Toast'
@@ -10,12 +19,18 @@ import { BulkCategorizeModal } from './BulkCategorizeModal'
 import { CategorySelector } from './CategorySelector'
 import { TagInput } from './TagInput'
 import { useApi } from '../api/ApiContext'
+import { useQueryClient } from '@tanstack/react-query'
+import { TRANSACTION_QUERY_KEYS } from '../services/hooks/useTransactions'
 import EditIcon from '@mui/icons-material/Edit'
 import DeleteIcon from '@mui/icons-material/Delete'
 import UnfoldMoreIcon from '@mui/icons-material/UnfoldMore'
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward'
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward'
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff'
+import CallSplitIcon from '@mui/icons-material/CallSplit'
+import CloseIcon from '@mui/icons-material/Close'
+import AddIcon from '@mui/icons-material/Add'
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline'
 import Checkbox from '@mui/material/Checkbox'
 import IconButton from '@mui/material/IconButton'
 import { ActionIconButton } from './ActionIconButton'
@@ -66,6 +81,8 @@ interface TransactionTableProps {
   onBulkTag?: (tagId: string) => Promise<unknown>
   onBulkCategorizeByIds?: (categoryId?: string) => Promise<unknown>
   onToggleExcludeFromAnalytics?: (transactionId: string, exclude: boolean) => Promise<unknown>
+  onSplitDialogStateChange?: (isOpen: boolean) => void
+  onSplitSuccess?: () => void
 }
 
 interface BulkModalState {
@@ -311,7 +328,11 @@ export const TransactionTable = ({
   onBulkTag,
   onBulkCategorizeByIds,
   onToggleExcludeFromAnalytics,
+  onSplitDialogStateChange,
+  onSplitSuccess,
 }: TransactionTableProps) => {
+  const apiClient = useApi()
+  const queryClient = useQueryClient()
   const [toast, setToast] = useState<Omit<ToastProps, 'onClose'> | null>(null)
   const [localCategories, setLocalCategories] = useState<Category[]>(categories)
   const [pendingDeleteTransaction, setPendingDeleteTransaction] = useState<Transaction | null>(null)
@@ -319,6 +340,13 @@ export const TransactionTable = ({
   const [tagPopover, setTagPopover] = useState<{ anchorEl: HTMLElement; transactionId: string } | null>(null)
   const tagPopoverOpen = Boolean(tagPopover)
   const tagPopoverTransaction = tagPopover ? transactions.find((t) => t.id === tagPopover.transactionId) : null
+
+  const [splitTransaction, setSplitTransaction] = useState<Transaction | null>(null)
+  const [splitParts, setSplitParts] = useState<{ amount: string; description: string; category_id: string }[]>([
+    { amount: '', description: '', category_id: '' },
+    { amount: '', description: '', category_id: '' },
+  ])
+  const [splitError, setSplitError] = useState<string | null>(null)
 
   useEffect(() => {
     setLocalCategories(categories)
@@ -366,6 +394,91 @@ export const TransactionTable = ({
   const handleCategoryCreated = useCallback((newCategory: Category) => {
     setLocalCategories((prev) => [...prev, newCategory].sort((a, b) => a.name.localeCompare(b.name)))
   }, [])
+
+  const handleOpenSplit = useCallback(
+    async (transaction: Transaction) => {
+      if (transaction.is_split_parent) {
+        const children = await apiClient.transactions.getSplitChildren(transaction.id)
+        setSplitParts(
+          children.map((c) => ({
+            amount: Math.abs(c.amount).toFixed(2),
+            description: c.description !== transaction.description ? c.description : '',
+            category_id: c.category_id ?? '',
+          }))
+        )
+      } else {
+        const absAmount = Math.abs(transaction.amount)
+        const half = (absAmount / 2).toFixed(2)
+        setSplitParts([
+          { amount: half, description: '', category_id: '' },
+          { amount: half, description: '', category_id: '' },
+        ])
+      }
+      setSplitTransaction(transaction)
+      setSplitError(null)
+      onSplitDialogStateChange?.(true)
+    },
+    [onSplitDialogStateChange, apiClient]
+  )
+
+  const handleCloseSplit = useCallback(() => {
+    setSplitTransaction(null)
+    setSplitError(null)
+    onSplitDialogStateChange?.(false)
+  }, [onSplitDialogStateChange])
+
+  const handleSplitPartChange = useCallback(
+    (index: number, field: 'amount' | 'description' | 'category_id', value: string) => {
+      setSplitParts((prev) => {
+        const updated = prev.map((p, i) => (i === index ? { ...p, [field]: value } : p))
+        if (field === 'amount' && splitTransaction && index < prev.length - 1) {
+          const parentAmount = Math.abs(splitTransaction.amount)
+          const sumOthers = updated.slice(0, -1).reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0)
+          const remainder = Math.max(0, parentAmount - sumOthers)
+          const last = updated[updated.length - 1]
+          updated[updated.length - 1] = { ...last, amount: remainder.toFixed(2) }
+        }
+        return updated
+      })
+    },
+    [splitTransaction]
+  )
+
+  const handleAddSplitPart = useCallback(() => {
+    setSplitParts((prev) => [...prev, { amount: '', description: '', category_id: '' }])
+  }, [])
+
+  const handleRemoveSplitPart = useCallback((index: number) => {
+    setSplitParts((prev) => prev.filter((_, i) => i !== index))
+  }, [])
+
+  const handleSubmitSplit = useCallback(async () => {
+    if (!splitTransaction) return
+    const absParentAmount = Math.abs(splitTransaction.amount)
+    const partAmounts = splitParts.map((p) => parseFloat(p.amount) || 0)
+    const total = partAmounts.reduce((sum, a) => sum + a, 0)
+    const diff = Math.abs(total - absParentAmount)
+    if (diff > 0.01 * splitParts.length) {
+      setSplitError(`Parts must equal the transaction amount (${absParentAmount.toFixed(2)})`)
+      return
+    }
+    const sign = splitTransaction.amount < 0 ? -1 : 1
+    const parts = splitParts.map((p, i) => ({
+      amount: sign * (partAmounts[i] || 0),
+      description: p.description || undefined,
+      category_id: p.category_id || undefined,
+    }))
+    try {
+      await apiClient.transactions.splitTransaction(splitTransaction.id, { parts })
+      setSplitTransaction(null)
+      setSplitError(null)
+      onSplitDialogStateChange?.(false)
+      queryClient.invalidateQueries({ queryKey: TRANSACTION_QUERY_KEYS.all })
+      onSplitSuccess?.()
+    } catch {
+      setSplitError('Failed to split transaction')
+    }
+  }, [splitTransaction, splitParts, apiClient, onSplitDialogStateChange, queryClient, onSplitSuccess])
 
   const handleConfirmDelete = useCallback(async () => {
     if (!pendingDeleteTransaction || !onDelete) return
@@ -517,6 +630,8 @@ export const TransactionTable = ({
               key={transaction.id}
               className={`${selectedIds?.has(transaction.id) ? 'selected' : ''} ${transaction.exclude_from_analytics ? 'excluded' : ''}`}
               {...(transaction.exclude_from_analytics ? { 'data-excluded': 'true' } : {})}
+              {...(transaction.is_split_parent ? { 'data-split-parent': 'true' } : {})}
+              {...(transaction.is_split_child ? { 'data-split-child': 'true' } : {})}
             >
               {onToggleSelect && (
                 <td style={{ textAlign: 'center', width: 40 }}>
@@ -636,6 +751,18 @@ export const TransactionTable = ({
                     )}
                     {onEdit && (
                       <ActionIconButton
+                        onClick={() => handleOpenSplit(transaction)}
+                        title={transaction.is_split_parent ? 'View split parts' : 'Split transaction'}
+                        icon={
+                          <CallSplitIcon
+                            fontSize="small"
+                            sx={{ color: transaction.is_split_parent ? 'primary.main' : undefined }}
+                          />
+                        }
+                      />
+                    )}
+                    {onEdit && (
+                      <ActionIconButton
                         onClick={() => onEdit(transaction)}
                         title="Edit transaction"
                         icon={<EditIcon fontSize="small" />}
@@ -703,6 +830,82 @@ export const TransactionTable = ({
           )}
         </Popover>
       )}
+      <Dialog
+        open={!!splitTransaction}
+        onClose={handleCloseSplit}
+        maxWidth="md"
+        fullWidth
+        PaperProps={{ sx: { overflow: 'visible' } }}
+      >
+        <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          Split Transaction
+          <IconButton onClick={handleCloseSplit} size="small">
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent sx={{ overflow: 'visible' }}>
+          {splitTransaction && (
+            <>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                {splitTransaction.description} &mdash;{' '}
+                {formatAmount(Math.abs(splitTransaction.amount), splitTransaction.account_id)}
+              </Typography>
+              <Stack spacing={2}>
+                {splitParts.map((part, index) => (
+                  <Stack key={index} direction="row" spacing={1} alignItems="flex-start">
+                    <TextField
+                      label={`Amount ${index + 1}`}
+                      type="number"
+                      value={part.amount}
+                      onChange={(e) => handleSplitPartChange(index, 'amount', e.target.value)}
+                      size="small"
+                      sx={{ width: 150 }}
+                      slotProps={{ htmlInput: { min: 0, step: '0.01', 'aria-label': `Amount ${index + 1}` } }}
+                    />
+                    <TextField
+                      label="Description"
+                      value={part.description}
+                      onChange={(e) => handleSplitPartChange(index, 'description', e.target.value)}
+                      size="small"
+                      sx={{ flex: 1 }}
+                      slotProps={{ htmlInput: { 'aria-label': `Description ${index + 1}` } }}
+                    />
+                    <Box sx={{ flex: 1, position: 'relative', zIndex: splitParts.length - index }}>
+                      <CategorySelector
+                        categories={localCategories}
+                        selectedCategoryId={part.category_id || undefined}
+                        onCategoryChange={(categoryId) => handleSplitPartChange(index, 'category_id', categoryId ?? '')}
+                        placeholder="Category"
+                        allowClear={true}
+                        variant="form"
+                      />
+                    </Box>
+                    {splitParts.length > 2 && (
+                      <IconButton size="small" onClick={() => handleRemoveSplitPart(index)} sx={{ mt: 0.5 }}>
+                        <DeleteOutlineIcon fontSize="small" />
+                      </IconButton>
+                    )}
+                  </Stack>
+                ))}
+              </Stack>
+              {splitError && (
+                <Typography variant="caption" color="error" sx={{ display: 'block', mt: 1 }}>
+                  {splitError}
+                </Typography>
+              )}
+              <Button startIcon={<AddIcon />} size="small" onClick={handleAddSplitPart} sx={{ mt: 2 }}>
+                Add part
+              </Button>
+            </>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseSplit}>Cancel</Button>
+          <Button onClick={handleSubmitSplit} variant="contained">
+            Confirm Split
+          </Button>
+        </DialogActions>
+      </Dialog>
     </div>
   )
 }

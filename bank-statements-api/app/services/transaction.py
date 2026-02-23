@@ -15,6 +15,13 @@ from app.ports.repositories.transaction import TransactionRepository
 from app.services.transaction_enhancement import TransactionEnhancer
 
 
+class ConflictError(Exception):
+    pass
+
+
+TransactionSplitConflictError = ConflictError
+
+
 class TransactionPersistenceResult:
     def __init__(self, transactions_saved: int, duplicates_found: int):
         self.transactions_saved = transactions_saved
@@ -120,7 +127,10 @@ class TransactionService:
         self.enhancement_rule_repository.save(rule)
 
     def get_transaction(self, transaction_id: UUID, user_id: UUID) -> Optional[Transaction]:
-        return self.transaction_repository.get_by_id(transaction_id, user_id)
+        transaction = self.transaction_repository.get_by_id(transaction_id, user_id)
+        if transaction is not None:
+            transaction.is_split_parent = self.transaction_repository.has_split_children(transaction.id)
+        return transaction
 
     def get_all_transactions(self, user_id: UUID) -> List[Transaction]:
         return self.transaction_repository.get_all(user_id)
@@ -191,6 +201,11 @@ class TransactionService:
 
         if include_running_balance and account_id is not None:
             self._add_running_balance_to_transactions(transactions, account_id)
+
+        if transactions:
+            split_parent_ids = self.transaction_repository.get_split_parent_ids([t.id for t in transactions])
+            for t in transactions:
+                t.is_split_parent = t.id in split_parent_ids
 
         total_pages = (total + page_size - 1) // page_size if total > 0 else 1
 
@@ -364,6 +379,67 @@ class TransactionService:
             transaction.counterparty_account_id = counterparty_account_id  # type: ignore
             return self.transaction_repository.update(transaction)
         return None
+
+    def get_split_children(self, transaction_id: UUID, user_id: UUID) -> List[Transaction]:
+        return self.transaction_repository.get_split_children(transaction_id, user_id)
+
+    def split_transaction(
+        self,
+        transaction_id: UUID,
+        user_id: UUID,
+        parts: List[Dict],
+    ) -> Optional[List[Transaction]]:
+        parent = self.transaction_repository.get_by_id(transaction_id, user_id)
+        if parent is None:
+            return None
+
+        if parent.parent_transaction_id is not None:
+            raise TransactionSplitConflictError("Cannot split a child transaction")
+
+        # If already split, delete existing children to allow re-splitting
+
+        if len(parts) < 2:
+            raise ValueError("At least two parts are required")
+
+        parts_amounts = [Decimal(str(p["amount"])) for p in parts]
+        total = sum(parts_amounts)
+        tolerance = Decimal("0.01")
+
+        if abs(total - parent.amount) > tolerance:
+            raise ValueError("Parts do not sum to parent amount")
+
+        if total != parent.amount:
+            parts_amounts[-1] = parent.amount - sum(parts_amounts[:-1])
+
+        children = []
+        for i, (part, amount) in enumerate(zip(parts, parts_amounts)):
+            child = Transaction(
+                id=uuid4(),
+                user_id=parent.user_id,
+                date=parent.date,
+                description=part.get("description") or parent.description,
+                normalized_description=normalize_description(part.get("description") or parent.description),
+                amount=amount,
+                account_id=parent.account_id,
+                statement_id=parent.statement_id,
+                source_type=parent.source_type,
+                categorization_status=(
+                    CategorizationStatus.MANUAL if part.get("category_id") else CategorizationStatus.UNCATEGORIZED
+                ),
+                sort_index=i,
+                row_index=i,
+                parent_transaction_id=parent.id,
+                category_id=part.get("category_id"),
+            )
+            children.append(child)
+
+        parent.category_id = None
+        parent.categorization_status = CategorizationStatus.UNCATEGORIZED
+        parent.exclude_from_analytics = True
+
+        self.transaction_repository.split_transaction(parent, children)
+
+        return children
 
     def delete_transaction(self, transaction_id: UUID, user_id: UUID) -> bool:
         return self.transaction_repository.delete(transaction_id, user_id)
