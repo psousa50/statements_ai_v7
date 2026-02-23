@@ -141,23 +141,3 @@ location.reload();
 ```
 
 This creates a test user (`e2e-test@example.com`) and sets auth cookies without requiring Google OAuth.
-
-## D3 Configuration
-
-### Spec Provider
-
-**Skill:** d3-atlassian:atlassian-spec-provider
-**Configuration:**
-
-- Cloud ID: 4bed29fa-cce2-4b34-b5a3-4f9a9329b776
-- Space Key: BSAI
-- Parent Page ID: 262322
-- Parent Page URL: https://pedronsousa.atlassian.net/wiki/spaces/BSAI/pages/262322/Specs
-
-### Story Provider
-
-**Skill:** d3-atlassian:atlassian-story-provider
-**Configuration:**
-
-- Cloud ID: 4bed29fa-cce2-4b34-b5a3-4f9a9329b776
-- Default Project: BSAI
