@@ -81,7 +81,6 @@ interface TransactionTableProps {
   onBulkTag?: (tagId: string) => Promise<unknown>
   onBulkCategorizeByIds?: (categoryId?: string) => Promise<unknown>
   onToggleExcludeFromAnalytics?: (transactionId: string, exclude: boolean) => Promise<unknown>
-  onSplitDialogStateChange?: (isOpen: boolean) => void
   onSplitSuccess?: () => void
 }
 
@@ -328,7 +327,6 @@ export const TransactionTable = ({
   onBulkTag,
   onBulkCategorizeByIds,
   onToggleExcludeFromAnalytics,
-  onSplitDialogStateChange,
   onSplitSuccess,
 }: TransactionTableProps) => {
   const apiClient = useApi()
@@ -416,16 +414,14 @@ export const TransactionTable = ({
       }
       setSplitTransaction(transaction)
       setSplitError(null)
-      onSplitDialogStateChange?.(true)
     },
-    [onSplitDialogStateChange, apiClient]
+    [apiClient]
   )
 
   const handleCloseSplit = useCallback(() => {
     setSplitTransaction(null)
     setSplitError(null)
-    onSplitDialogStateChange?.(false)
-  }, [onSplitDialogStateChange])
+  }, [])
 
   const handleSplitPartChange = useCallback(
     (index: number, field: 'amount' | 'description' | 'category_id', value: string) => {
@@ -472,13 +468,12 @@ export const TransactionTable = ({
       await apiClient.transactions.splitTransaction(splitTransaction.id, { parts })
       setSplitTransaction(null)
       setSplitError(null)
-      onSplitDialogStateChange?.(false)
       queryClient.invalidateQueries({ queryKey: TRANSACTION_QUERY_KEYS.all })
       onSplitSuccess?.()
     } catch {
       setSplitError('Failed to split transaction')
     }
-  }, [splitTransaction, splitParts, apiClient, onSplitDialogStateChange, queryClient, onSplitSuccess])
+  }, [splitTransaction, splitParts, apiClient, queryClient, onSplitSuccess])
 
   const handleConfirmDelete = useCallback(async () => {
     if (!pendingDeleteTransaction || !onDelete) return

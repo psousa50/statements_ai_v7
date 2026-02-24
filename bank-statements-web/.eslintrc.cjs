@@ -31,11 +31,5 @@ module.exports = {
         node: true,
       },
     },
-    {
-      files: ['tests/**/*.ts', 'tests/**/*.tsx'],
-      rules: {
-        '@typescript-eslint/no-unused-vars': 'off',
-      },
-    },
   ],
 }

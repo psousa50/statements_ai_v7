@@ -151,6 +151,7 @@ const defaultTransactionClient: TransactionClient = {
   toggleExcludeFromAnalytics: (_id: string, exclude: boolean) =>
     Promise.resolve({ ...defaultTransaction, exclude_from_analytics: exclude }),
   splitTransaction: (_id: string, _request: unknown) => Promise.resolve([]),
+  getSplitChildren: (_id: string) => Promise.resolve([]),
 }
 
 // Default mock category client implementation

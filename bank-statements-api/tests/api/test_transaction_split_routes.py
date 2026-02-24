@@ -2,8 +2,6 @@ from datetime import date, datetime
 from decimal import Decimal
 from uuid import uuid4
 
-import pytest
-
 from app.domain.models.transaction import CategorizationStatus, SourceType, Transaction
 from tests.api.helpers import TEST_USER_ID, build_client, mocked_dependencies
 

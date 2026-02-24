@@ -26,6 +26,8 @@ const createTransaction = (overrides: Partial<Transaction> = {}): Transaction =>
   created_at: '2024-01-15T10:00:00Z',
   categorization_status: 'UNCATEGORIZED',
   exclude_from_analytics: false,
+  is_split_parent: false,
+  is_split_child: false,
   ...overrides,
 })
 
