@@ -1238,10 +1238,13 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
 
         return {row[0]: starting_balance + Decimal(str(row[1])) if row[1] else starting_balance for row in results}
 
-    def has_split_children(self, transaction_id: UUID) -> bool:
+    def has_split_children(self, transaction_id: UUID, user_id: UUID) -> bool:
         count = (
             self.db_session.query(func.count(Transaction.id))
-            .filter(Transaction.parent_transaction_id == transaction_id)
+            .filter(
+                Transaction.parent_transaction_id == transaction_id,
+                Transaction.user_id == user_id,
+            )
             .scalar()
         )
         return (count or 0) > 0
@@ -1279,3 +1282,12 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         for child in children:
             self.db_session.refresh(child)
         return children
+
+    def unsplit_transaction(self, parent: Transaction) -> Transaction:
+        self.db_session.query(Transaction).filter(
+            Transaction.parent_transaction_id == parent.id,
+            Transaction.user_id == parent.user_id,
+        ).delete(synchronize_session=False)
+        self.db_session.commit()
+        self.db_session.refresh(parent)
+        return parent

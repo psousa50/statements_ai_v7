@@ -109,6 +109,25 @@ interface CategoryCellProps {
   onShowBulkModal: (state: BulkModalState) => void
 }
 
+function groupTransactions(transactions: Transaction[]): Transaction[] {
+  const placed = new Set<string>()
+  const result: Transaction[] = []
+  for (const t of transactions) {
+    if (placed.has(t.id)) continue
+    result.push(t)
+    placed.add(t.id)
+    if (t.is_split_parent) {
+      for (const child of transactions) {
+        if (!placed.has(child.id) && child.parent_transaction_id === t.id) {
+          result.push(child)
+          placed.add(child.id)
+        }
+      }
+    }
+  }
+  return result
+}
+
 const getCategoryDisplayName = (category: Category | undefined): string => {
   if (!category) return 'Unknown'
   if (category.parent) {
@@ -423,6 +442,19 @@ export const TransactionTable = ({
     setSplitError(null)
   }, [])
 
+  const handleDeleteSplit = useCallback(async () => {
+    if (!splitTransaction) return
+    try {
+      await apiClient.transactions.deleteSplit(splitTransaction.id)
+      setSplitTransaction(null)
+      setSplitError(null)
+      queryClient.invalidateQueries({ queryKey: TRANSACTION_QUERY_KEYS.all })
+      onSplitSuccess?.()
+    } catch {
+      setSplitError('Failed to delete split')
+    }
+  }, [splitTransaction, apiClient, queryClient, onSplitSuccess])
+
   const handleSplitPartChange = useCallback(
     (index: number, field: 'amount' | 'description' | 'category_id', value: string) => {
       setSplitParts((prev) => {
@@ -620,7 +652,7 @@ export const TransactionTable = ({
           </tr>
         </thead>
         <tbody>
-          {transactions.map((transaction) => (
+          {groupTransactions(transactions).map((transaction) => (
             <tr
               key={transaction.id}
               className={`${selectedIds?.has(transaction.id) ? 'selected' : ''} ${transaction.exclude_from_analytics ? 'excluded' : ''}`}
@@ -642,6 +674,11 @@ export const TransactionTable = ({
               <td>
                 <div className="transaction-description">
                   <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                    {transaction.is_split_child && (
+                      <span className="split-child-connector" aria-hidden="true">
+                        └
+                      </span>
+                    )}
                     {transaction.exclude_from_analytics && (
                       <VisibilityOffIcon data-testid="excluded-indicator" sx={{ fontSize: 14, opacity: 0.5 }} />
                     )}
@@ -754,6 +791,7 @@ export const TransactionTable = ({
                             sx={{ color: transaction.is_split_parent ? 'primary.main' : undefined }}
                           />
                         }
+                        style={transaction.is_split_child ? { visibility: 'hidden' } : undefined}
                       />
                     )}
                     {onEdit && (
@@ -762,6 +800,7 @@ export const TransactionTable = ({
                         title="Edit transaction"
                         icon={<EditIcon fontSize="small" />}
                         color="primary"
+                        style={transaction.is_split_child ? { visibility: 'hidden' } : undefined}
                       />
                     )}
                     {onDelete && (
@@ -770,6 +809,7 @@ export const TransactionTable = ({
                         title="Delete transaction"
                         icon={<DeleteIcon fontSize="small" />}
                         color="error"
+                        style={transaction.is_split_child ? { visibility: 'hidden' } : undefined}
                       />
                     )}
                   </div>
@@ -896,8 +936,13 @@ export const TransactionTable = ({
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseSplit}>Cancel</Button>
+          {splitTransaction?.is_split_parent && (
+            <Button onClick={handleDeleteSplit} color="error">
+              Delete Split
+            </Button>
+          )}
           <Button onClick={handleSubmitSplit} variant="contained">
-            Confirm Split
+            {splitTransaction?.is_split_parent ? 'Update Split' : 'Confirm Split'}
           </Button>
         </DialogActions>
       </Dialog>

@@ -8,6 +8,7 @@ interface ActionIconButtonProps {
   color?: 'default' | 'error' | 'primary' | 'secondary' | 'info' | 'success' | 'warning'
   size?: 'small' | 'medium' | 'large'
   sx?: SxProps<Theme>
+  style?: React.CSSProperties
 }
 
 export const ActionIconButton = ({
@@ -18,6 +19,7 @@ export const ActionIconButton = ({
   color = 'default',
   size = 'small',
   sx,
+  style,
 }: ActionIconButtonProps) => {
   const defaultSx: SxProps<Theme> = {
     minWidth: '0 !important',
@@ -40,6 +42,7 @@ export const ActionIconButton = ({
       title={title}
       color={color}
       sx={{ ...defaultSx, ...sx }}
+      style={style}
     >
       {icon}
     </IconButton>

@@ -232,6 +232,27 @@ td.amount-column {
   letter-spacing: -0.02em;
 }
 
+tr[data-split-parent] td:first-child,
+tr[data-split-child] td:first-child {
+  box-shadow: inset 3px 0 0 var(--accent-amber);
+}
+
+tr[data-split-child] td {
+  background-color: rgba(217, 119, 6, 0.04);
+}
+
+tr[data-split-child]:hover td {
+  background-color: rgba(217, 119, 6, 0.08);
+}
+
+.split-child-connector {
+  color: var(--accent-amber);
+  opacity: 0.6;
+  font-size: 0.85rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
 .loading,
 .no-data {
   text-align: center;

@@ -268,3 +268,70 @@ def test_split_requires_at_least_two_parts():
     )
 
     assert response.status_code == 422
+
+
+def test_delete_split_returns_200_on_success():
+    internal_dependencies = mocked_dependencies()
+    parent = _make_transaction(amount=Decimal("100.00"))
+    parent.is_split_parent = False
+    internal_dependencies.transaction_service.unsplit_transaction.return_value = parent
+    client = build_client(internal_dependencies)
+
+    response = client.delete(f"/api/v1/transactions/{parent.id}/split")
+
+    assert response.status_code == 200
+
+
+def test_delete_split_calls_service_with_correct_arguments():
+    internal_dependencies = mocked_dependencies()
+    parent = _make_transaction(amount=Decimal("100.00"))
+    parent.is_split_parent = False
+    internal_dependencies.transaction_service.unsplit_transaction.return_value = parent
+    client = build_client(internal_dependencies)
+
+    client.delete(f"/api/v1/transactions/{parent.id}/split")
+
+    internal_dependencies.transaction_service.unsplit_transaction.assert_called_once()
+    call_kwargs = internal_dependencies.transaction_service.unsplit_transaction.call_args
+    assert call_kwargs.kwargs["transaction_id"] == parent.id
+    assert call_kwargs.kwargs["user_id"] == TEST_USER_ID
+
+
+def test_delete_split_returns_transaction_with_is_split_parent_false():
+    internal_dependencies = mocked_dependencies()
+    parent = _make_transaction(amount=Decimal("100.00"))
+    parent.is_split_parent = False
+    internal_dependencies.transaction_service.unsplit_transaction.return_value = parent
+    client = build_client(internal_dependencies)
+
+    response = client.delete(f"/api/v1/transactions/{parent.id}/split")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["is_split_parent"] is False
+
+
+def test_delete_split_returns_404_when_transaction_not_found():
+    internal_dependencies = mocked_dependencies()
+    transaction_id = uuid4()
+    internal_dependencies.transaction_service.unsplit_transaction.return_value = None
+    client = build_client(internal_dependencies)
+
+    response = client.delete(f"/api/v1/transactions/{transaction_id}/split")
+
+    assert response.status_code == 404
+
+
+def test_delete_split_returns_409_when_transaction_is_not_a_split_parent():
+    from app.services.transaction import TransactionSplitConflictError
+
+    internal_dependencies = mocked_dependencies()
+    parent = _make_transaction(amount=Decimal("100.00"))
+    internal_dependencies.transaction_service.unsplit_transaction.side_effect = TransactionSplitConflictError(
+        "Transaction is not a split parent"
+    )
+    client = build_client(internal_dependencies)
+
+    response = client.delete(f"/api/v1/transactions/{parent.id}/split")
+
+    assert response.status_code == 409

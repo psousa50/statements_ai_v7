@@ -60,6 +60,8 @@ interface RenderOptions {
   accounts?: { id: string; name: string }[]
   initialRoute?: string
   splitTransaction?: Mock
+  deleteSplit?: Mock
+  getSplitChildren?: Mock
 }
 
 const renderTransactionsPage = (options: RenderOptions = {}) => {
@@ -69,12 +71,16 @@ const renderTransactionsPage = (options: RenderOptions = {}) => {
     accounts = [{ id: '1', name: 'Current Account' }],
     initialRoute = '/transactions',
     splitTransaction = vi.fn().mockResolvedValue([]),
+    deleteSplit = vi.fn().mockResolvedValue(createTransaction()),
+    getSplitChildren = vi.fn().mockResolvedValue([]),
   } = options
 
   const apiClient = createMockApiClient({
     transactions: {
       getAll: vi.fn().mockResolvedValue(transactions),
       splitTransaction,
+      deleteSplit,
+      getSplitChildren,
     },
     categories: {
       getAll: vi.fn().mockResolvedValue({ categories, total: categories.length }),
@@ -288,7 +294,8 @@ describe('Transaction Split', () => {
       })
 
       await screen.findByText('Part A')
-      expect(screen.queryByRole('button', { name: /^split$/i })).not.toBeInTheDocument()
+      const splitButton = screen.getByTitle(/split transaction/i)
+      expect(splitButton).toHaveStyle({ visibility: 'hidden' })
     })
   })
 
@@ -342,6 +349,119 @@ describe('Transaction Split', () => {
       const transaction = createTransaction()
       expect(transaction.is_split_parent).toBe(false)
       expect(transaction.is_split_child).toBe(false)
+    })
+  })
+
+  describe('AC2: Delete Split action accessible on split parents via the split dialog', () => {
+    test('split dialog shows a delete split button when transaction is a split parent', async () => {
+      const splitParent = createTransaction({
+        id: '1',
+        description: 'Original Purchase',
+        is_split_parent: true,
+        exclude_from_analytics: true,
+      })
+      const getSplitChildren = vi
+        .fn()
+        .mockResolvedValue([
+          createTransaction({ id: '2', amount: -60.0, description: 'Part A', parent_transaction_id: '1' }),
+          createTransaction({ id: '3', amount: -40.0, description: 'Part B', parent_transaction_id: '1' }),
+        ])
+      const { user } = renderTransactionsPage({
+        transactions: createPaginatedResponse([splitParent]),
+        getSplitChildren,
+      })
+
+      await screen.findByText('Original Purchase')
+      const splitButton = screen.getByRole('button', { name: /split/i })
+      await user.click(splitButton)
+
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /delete split/i })).toBeInTheDocument()
+      })
+    })
+
+    test('clicking delete split calls the deleteSplit API method', async () => {
+      const splitParent = createTransaction({
+        id: '1',
+        description: 'Original Purchase',
+        is_split_parent: true,
+        exclude_from_analytics: true,
+      })
+      const getSplitChildren = vi
+        .fn()
+        .mockResolvedValue([
+          createTransaction({ id: '2', amount: -60.0, description: 'Part A', parent_transaction_id: '1' }),
+          createTransaction({ id: '3', amount: -40.0, description: 'Part B', parent_transaction_id: '1' }),
+        ])
+      const deleteSplit = vi.fn().mockResolvedValue(createTransaction({ id: '1', is_split_parent: false }))
+      const { user } = renderTransactionsPage({
+        transactions: createPaginatedResponse([splitParent]),
+        getSplitChildren,
+        deleteSplit,
+      })
+
+      await screen.findByText('Original Purchase')
+      const splitButton = screen.getByRole('button', { name: /split/i })
+      await user.click(splitButton)
+
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /delete split/i })).toBeInTheDocument()
+      })
+
+      const deleteSplitButton = screen.getByRole('button', { name: /delete split/i })
+      await user.click(deleteSplitButton)
+
+      await waitFor(() => {
+        expect(deleteSplit).toHaveBeenCalledWith('1')
+      })
+    })
+
+    test('split dialog does not show delete split button for a regular transaction', async () => {
+      const { user } = renderTransactionsPage()
+
+      await screen.findByText('Test Transaction')
+      const splitButton = screen.getByRole('button', { name: /split/i })
+      await user.click(splitButton)
+
+      await waitFor(() => {
+        expect(screen.getAllByLabelText(/amount/i).length).toBeGreaterThanOrEqual(2)
+      })
+
+      expect(screen.queryByRole('button', { name: /delete split/i })).not.toBeInTheDocument()
+    })
+  })
+
+  describe('AC7: Edit, split, and delete actions hidden on split children', () => {
+    test('edit action is not shown for a split child transaction', async () => {
+      const child = createTransaction({
+        id: '2',
+        description: 'Part A',
+        is_split_child: true,
+        parent_transaction_id: '1',
+      })
+      renderTransactionsPage({
+        transactions: createPaginatedResponse([child]),
+      })
+
+      await screen.findByText('Part A')
+      const editButton = screen.getByTitle(/edit transaction/i)
+      expect(editButton).toHaveStyle({ visibility: 'hidden' })
+    })
+
+    test('delete action is not shown for a split child transaction', async () => {
+      const child = createTransaction({
+        id: '2',
+        description: 'Part A',
+        is_split_child: true,
+        parent_transaction_id: '1',
+      })
+      renderTransactionsPage({
+        transactions: createPaginatedResponse([child]),
+      })
+
+      await screen.findByText('Part A')
+      const deleteButton = screen.getByTitle(/delete transaction/i)
+      expect(deleteButton).toHaveStyle({ visibility: 'hidden' })
     })
   })
 })

@@ -810,6 +810,36 @@ def register_transaction_routes(
 
         return result
 
+    @router.delete(
+        "/{transaction_id}/split",
+        response_model=TransactionResponse,
+    )
+    def delete_split(
+        transaction_id: UUID,
+        internal: InternalDependencies = Depends(provide_dependencies),
+        current_user: User = Depends(require_current_user),
+    ):
+        from app.services.transaction import TransactionSplitConflictError
+
+        try:
+            result = internal.transaction_service.unsplit_transaction(
+                transaction_id=transaction_id,
+                user_id=current_user.id,
+            )
+        except TransactionSplitConflictError as e:
+            raise HTTPException(
+                status_code=http_status.HTTP_409_CONFLICT,
+                detail=str(e),
+            )
+
+        if result is None:
+            raise HTTPException(
+                status_code=http_status.HTTP_404_NOT_FOUND,
+                detail=f"Transaction with ID {transaction_id} not found",
+            )
+
+        return result
+
     @router.get(
         "/{transaction_id}/split-children",
         response_model=List[TransactionResponse],

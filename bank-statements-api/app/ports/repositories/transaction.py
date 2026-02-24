@@ -358,7 +358,7 @@ class TransactionRepository(ABC):
         pass
 
     @abstractmethod
-    def has_split_children(self, transaction_id: UUID) -> bool:
+    def has_split_children(self, transaction_id: UUID, user_id: UUID) -> bool:
         """Return True if the transaction has any child split transactions."""
         pass
 
@@ -375,6 +375,11 @@ class TransactionRepository(ABC):
     @abstractmethod
     def split_transaction(self, parent: "Transaction", children: List["Transaction"]) -> List["Transaction"]:
         """Atomically update parent and create children in a single commit."""
+        pass
+
+    @abstractmethod
+    def unsplit_transaction(self, parent: "Transaction") -> "Transaction":
+        """Atomically delete all split children and update parent in a single commit."""
         pass
 
     @abstractmethod

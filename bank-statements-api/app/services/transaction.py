@@ -129,7 +129,7 @@ class TransactionService:
     def get_transaction(self, transaction_id: UUID, user_id: UUID) -> Optional[Transaction]:
         transaction = self.transaction_repository.get_by_id(transaction_id, user_id)
         if transaction is not None:
-            transaction.is_split_parent = self.transaction_repository.has_split_children(transaction.id)
+            transaction.is_split_parent = self.transaction_repository.has_split_children(transaction.id, user_id)
         return transaction
 
     def get_all_transactions(self, user_id: UUID) -> List[Transaction]:
@@ -382,6 +382,17 @@ class TransactionService:
 
     def get_split_children(self, transaction_id: UUID, user_id: UUID) -> List[Transaction]:
         return self.transaction_repository.get_split_children(transaction_id, user_id)
+
+    def unsplit_transaction(self, transaction_id: UUID, user_id: UUID) -> Optional[Transaction]:
+        parent = self.transaction_repository.get_by_id(transaction_id, user_id)
+        if parent is None:
+            return None
+
+        if not self.transaction_repository.has_split_children(parent.id, user_id):
+            raise TransactionSplitConflictError("Transaction is not a split parent")
+
+        parent.exclude_from_analytics = False
+        return self.transaction_repository.unsplit_transaction(parent)
 
     def split_transaction(
         self,

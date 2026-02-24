@@ -234,7 +234,7 @@ class TestSplitTransactionIntegration:
         )
 
         repo = SQLAlchemyTransactionRepository(db_session)
-        assert repo.has_split_children(parent.id) is True
+        assert repo.has_split_children(parent.id, user_a.id) is True
 
     def test_has_split_children_returns_false_for_non_parent(
         self, db_session, user_a, account_for_user_a, statement_for_user_a
@@ -247,7 +247,7 @@ class TestSplitTransactionIntegration:
         )
 
         repo = SQLAlchemyTransactionRepository(db_session)
-        assert repo.has_split_children(txn.id) is False
+        assert repo.has_split_children(txn.id, user_a.id) is False
 
     def test_parent_category_cleared_after_split(
         self, db_session, user_a, account_for_user_a, statement_for_user_a, category_for_user_a

@@ -188,6 +188,7 @@ export interface TransactionClient {
   toggleExcludeFromAnalytics(transactionId: string, exclude: boolean): Promise<Transaction>
   splitTransaction(transactionId: string, request: TransactionSplitRequest): Promise<Transaction[]>
   getSplitChildren(transactionId: string): Promise<Transaction[]>
+  deleteSplit(transactionId: string): Promise<Transaction>
 }
 
 export interface SourceClient {
@@ -560,6 +561,11 @@ export const transactionClient: TransactionClient = {
 
   async getSplitChildren(transactionId: string) {
     const response = await axiosInstance.get<Transaction[]>(`${API_URL}/${transactionId}/split-children`)
+    return response.data
+  },
+
+  async deleteSplit(transactionId: string) {
+    const response = await axiosInstance.delete<Transaction>(`${API_URL}/${transactionId}/split`)
     return response.data
   },
 }
