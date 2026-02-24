@@ -9,6 +9,7 @@ import { descriptionGroupClient } from './DescriptionGroupClient'
 import { subscriptionClient } from './SubscriptionClient'
 import { createChatClient } from './ChatClient'
 import { tagClient } from './TagClient'
+import { filterPresetClient } from './FilterPresetClient'
 
 const BASE_URL = import.meta.env.VITE_API_URL || ''
 
@@ -24,6 +25,7 @@ export const createApiClient = (): ApiClient => {
     subscription: subscriptionClient,
     tags: tagClient,
     chatClient: createChatClient(BASE_URL),
+    filterPresets: filterPresetClient,
   }
 }
 

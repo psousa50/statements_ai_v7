@@ -9,14 +9,6 @@ import { createMockApiClient } from '../createMockApiClient'
 import { Transaction, TransactionListResponse } from '@/types/Transaction'
 import { Mock } from 'vitest'
 
-vi.mock('@/api/FilterPresetClient', () => ({
-  filterPresetClient: {
-    getAll: vi.fn().mockResolvedValue([]),
-    create: vi.fn().mockResolvedValue({ id: '1', name: 'test', filter_data: {}, created_at: '', updated_at: '' }),
-    delete: vi.fn().mockResolvedValue(undefined),
-  },
-}))
-
 const createTransaction = (overrides: Partial<Transaction> = {}): Transaction => ({
   id: '1',
   date: '2024-01-15',

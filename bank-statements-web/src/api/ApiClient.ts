@@ -9,6 +9,7 @@ import { EnhancementRuleClient } from './EnhancementRuleClient'
 import { DescriptionGroupClient } from './DescriptionGroupClient'
 import { SubscriptionClient } from './SubscriptionClient'
 import { TagClient } from './TagClient'
+import { FilterPresetClient } from './FilterPresetClient'
 
 interface BackendErrorResponse {
   code: string
@@ -111,6 +112,7 @@ export interface ApiClient {
   subscription: SubscriptionClient
   tags: TagClient
   chatClient: ChatClient
+  filterPresets: FilterPresetClient
 }
 
 import { ChatClient } from './ChatClient'

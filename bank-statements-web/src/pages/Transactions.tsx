@@ -16,7 +16,7 @@ import { Pagination } from '../components/Pagination'
 import { CategorizationStatus, TransactionCreate, Transaction } from '../types/Transaction'
 import { useApi } from '../api/ApiContext'
 import { TransactionFilters as FilterType, transactionClient } from '../api/TransactionClient'
-import { filterPresetClient, FilterPreset, FilterPresetData } from '../api/FilterPresetClient'
+import { FilterPreset, FilterPresetData } from '../api/FilterPresetClient'
 import { formatCurrency } from '../utils/format'
 import './TransactionsPage.css'
 
@@ -200,7 +200,7 @@ export const TransactionsPage = () => {
     const fetchPresets = async () => {
       setFilterPresetsLoading(true)
       try {
-        const presets = await filterPresetClient.getAll()
+        const presets = await apiClient.filterPresets.getAll()
         setFilterPresets(presets)
       } catch {
         console.error('Failed to fetch filter presets')
@@ -542,7 +542,7 @@ export const TransactionsPage = () => {
     async (name: string, isRelative: boolean) => {
       const existingPreset = filterPresets.find((p) => p.name === name)
       if (existingPreset) {
-        await filterPresetClient.delete(existingPreset.id)
+        await apiClient.filterPresets.delete(existingPreset.id)
       }
 
       const filterData: FilterPresetData = {}
@@ -567,7 +567,7 @@ export const TransactionsPage = () => {
         filterData.anchor_date = new Date().toISOString().split('T')[0]
       }
 
-      const preset = await filterPresetClient.create(name, filterData)
+      const preset = await apiClient.filterPresets.create(name, filterData)
       setFilterPresets((prev) => {
         const filtered = prev.filter((p) => p.id !== existingPreset?.id)
         return [...filtered, preset].sort((a, b) => a.name.localeCompare(b.name))
@@ -637,7 +637,7 @@ export const TransactionsPage = () => {
   )
 
   const handleDeletePreset = useCallback(async (presetId: string) => {
-    await filterPresetClient.delete(presetId)
+    await apiClient.filterPresets.delete(presetId)
     setFilterPresets((prev) => prev.filter((p) => p.id !== presetId))
   }, [])
 

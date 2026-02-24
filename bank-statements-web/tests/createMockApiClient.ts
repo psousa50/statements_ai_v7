@@ -1,6 +1,7 @@
 import { vi } from 'vitest'
 import { ApiClient } from '@/api/ApiClient'
 import { Account, AccountClient } from '@/api/AccountClient'
+import { FilterPresetClient } from '@/api/FilterPresetClient'
 import { SubscriptionClient, SubscriptionResponse } from '@/api/SubscriptionClient'
 import { CategoryClient, CategoryListResponse } from '@/api/CategoryClient'
 import { DescriptionGroupClient, DescriptionGroupListResponse } from '@/api/DescriptionGroupClient'
@@ -334,6 +335,13 @@ const defaultDescriptionGroupClient: DescriptionGroupClient = {
   delete: () => Promise.resolve(),
 }
 
+const defaultFilterPresetClient: FilterPresetClient = {
+  getAll: () => Promise.resolve([]),
+  create: (_name, _filterData) =>
+    Promise.resolve({ id: '1', name: 'test', filter_data: {}, created_at: '', updated_at: '' }),
+  delete: () => Promise.resolve(),
+}
+
 const defaultSubscriptionClient: SubscriptionClient = {
   getSubscription: () =>
     Promise.resolve({
@@ -413,6 +421,7 @@ export const createMockApiClient = (overrides: ApiClientOverrides = {}): ApiClie
     enhancementRules: defaultEnhancementRuleClient,
     descriptionGroups: defaultDescriptionGroupClient,
     subscription: defaultSubscriptionClient,
+    filterPresets: defaultFilterPresetClient,
     tags: {
       getAll: vi.fn().mockResolvedValue({ tags: [], total: 0 }),
       create: vi.fn().mockResolvedValue({ id: 'mock-tag-id', name: 'mock-tag', created_at: '' }),
