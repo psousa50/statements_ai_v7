@@ -100,7 +100,7 @@ export const Login: React.FC = () => {
           size="large"
           fullWidth
           startIcon={<GoogleIcon />}
-          onClick={() => login('google')}
+          onClick={() => login()}
           className="google-button"
         >
           Continue with Google

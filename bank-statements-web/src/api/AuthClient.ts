@@ -24,7 +24,6 @@ export interface AuthClient {
   register(data: RegisterRequest): Promise<User>
   login(data: LoginRequest): Promise<User>
   getGoogleAuthUrl(): string
-  getGithubAuthUrl(): string
 }
 
 export const authClient: AuthClient = {
@@ -53,9 +52,5 @@ export const authClient: AuthClient = {
 
   getGoogleAuthUrl() {
     return `${AUTH_URL}/google`
-  },
-
-  getGithubAuthUrl() {
-    return `${AUTH_URL}/github`
   },
 }

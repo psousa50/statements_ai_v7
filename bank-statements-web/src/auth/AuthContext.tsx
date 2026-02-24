@@ -5,7 +5,7 @@ import { AuthState } from '../types/Auth'
 import { authClient, RegisterRequest, LoginRequest } from '../api/AuthClient'
 
 interface AuthContextValue extends AuthState {
-  login: (provider: 'google' | 'github') => void
+  login: () => void
   loginWithPassword: (data: LoginRequest) => Promise<void>
   register: (data: RegisterRequest) => Promise<void>
   logout: () => Promise<void>
@@ -93,9 +93,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => axios.interceptors.response.eject(interceptor)
   }, [clearRefreshInterval])
 
-  const login = useCallback((provider: 'google' | 'github') => {
-    const url = provider === 'google' ? authClient.getGoogleAuthUrl() : authClient.getGithubAuthUrl()
-    window.location.href = url
+  const login = useCallback(() => {
+    window.location.href = authClient.getGoogleAuthUrl()
   }, [])
 
   const logout = useCallback(async () => {
