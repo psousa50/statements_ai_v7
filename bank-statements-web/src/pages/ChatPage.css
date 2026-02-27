@@ -13,7 +13,7 @@
   left: 0;
   right: 0;
   height: 300px;
-  background: radial-gradient(ellipse 80% 50% at 50% -20%, rgba(167, 139, 250, 0.08) 0%, transparent 100%);
+  background: radial-gradient(ellipse 80% 50% at 50% -20%, rgba(217, 119, 6, 0.08) 0%, transparent 100%);
   pointer-events: none;
   z-index: 0;
 }
@@ -106,7 +106,7 @@
   left: 0;
   right: 0;
   height: 1px;
-  background: linear-gradient(90deg, transparent, var(--accent-violet), transparent);
+  background: linear-gradient(90deg, transparent, var(--accent-amber), transparent);
   opacity: 0.5;
 }
 
@@ -121,7 +121,7 @@
 }
 
 .chat-page .welcome-icon {
-  color: var(--accent-violet);
+  color: var(--accent-amber);
   margin-bottom: 1.5rem;
   opacity: 0.8;
 }
@@ -161,7 +161,7 @@
 
 .chat-page .suggested-question:hover {
   color: var(--text-primary);
-  border-color: var(--accent-violet);
+  border-color: var(--accent-amber);
   background: var(--bg-hover);
 }
 
@@ -195,7 +195,7 @@
 }
 
 .chat-page .user-message .message-content {
-  background: var(--accent-violet);
+  background: var(--accent-amber);
   color: white;
   border-radius: var(--radius-lg) var(--radius-lg) 4px var(--radius-lg);
   padding: 0.875rem 1rem;
@@ -264,7 +264,7 @@
 }
 
 .chat-page .chat-input:focus {
-  border-color: var(--accent-violet);
+  border-color: var(--accent-amber);
   box-shadow: 0 0 0 2px rgba(167, 139, 250, 0.1);
 }
 
@@ -278,7 +278,7 @@
 
 .chat-page .send-button {
   padding: 0.875rem 1.25rem;
-  background: var(--accent-violet);
+  background: var(--accent-amber);
   border: none;
   border-radius: var(--radius-lg);
   color: white;
@@ -290,7 +290,7 @@
 }
 
 .chat-page .send-button:hover:not(:disabled) {
-  background: var(--accent-violet-hover, #9333ea);
+  background: var(--accent-gold);
   transform: translateY(-1px);
 }
 

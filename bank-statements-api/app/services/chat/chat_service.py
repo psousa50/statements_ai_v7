@@ -1,4 +1,5 @@
 from collections.abc import AsyncGenerator
+from datetime import date
 from typing import Any
 from uuid import UUID
 
@@ -40,12 +41,16 @@ class ChatService:
             recurring_analyzer=self.recurring_analyzer,
         )
 
+        accounts = self.account_service.get_all_accounts(user_id)
+        currencies = {acc.currency for acc in accounts if acc.currency}
+        currency = currencies.pop() if len(currencies) == 1 else "EUR"
+
         contents = list(history)
         contents.append({"role": "user", "content": message})
 
         async for chunk in self.llm_client.generate_with_tools(
             contents=contents,
             tools=tools,
-            system_prompt=CHAT_SYSTEM_PROMPT,
+            system_prompt=CHAT_SYSTEM_PROMPT.format(today=date.today().isoformat(), currency=currency),
         ):
             yield chunk

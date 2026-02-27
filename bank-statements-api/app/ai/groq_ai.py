@@ -152,7 +152,7 @@ class GroqAI(LLMClient):
                 yield {"type": "done"}
                 return
 
-            tool_call_count += 1
+            tool_call_count += len(message.tool_calls)
             messages.append({"role": "assistant", "tool_calls": message.tool_calls, "content": message.content or ""})
 
             for tc in message.tool_calls:
