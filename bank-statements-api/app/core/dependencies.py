@@ -55,17 +55,35 @@ def _create_llm_client() -> LLMClient:
         logger.info("Using NoopLLMClient (E2E_TEST_MODE)")
         return NoopLLMClient()
 
-    if settings.GROQ_API_KEY:
-        from app.ai.groq_ai import GroqAI
+    provider = settings.LLM_PROVIDER.lower()
 
-        logger.info("Using GroqAI LLM client")
-        return GroqAI()
+    providers = {
+        "anthropic": (settings.ANTHROPIC_API_KEY, "AnthropicAI", "app.ai.anthropic_ai"),
+        "groq": (settings.GROQ_API_KEY, "GroqAI", "app.ai.groq_ai"),
+        "gemini": (settings.GEMINI_API_KEY, "GeminiAI", "app.ai.gemini_ai"),
+    }
 
-    if settings.GEMINI_API_KEY:
-        from app.ai.gemini_ai import GeminiAI
+    if provider:
+        if provider not in providers:
+            raise ValueError(f"Unknown LLM_PROVIDER: {provider}. Must be one of: {', '.join(providers)}")
+        api_key, class_name, module_path = providers[provider]
+        if not api_key:
+            raise ValueError(f"LLM_PROVIDER is {provider} but no API key is set")
+        import importlib
 
-        logger.info("Using GeminiAI LLM client")
-        return GeminiAI()
+        module = importlib.import_module(module_path)
+        cls = getattr(module, class_name)
+        logger.info("Using %s LLM client", class_name)
+        return cls()
+
+    for name, (api_key, class_name, module_path) in providers.items():
+        if api_key:
+            import importlib
+
+            module = importlib.import_module(module_path)
+            cls = getattr(module, class_name)
+            logger.info("Using %s LLM client (auto-detected)", class_name)
+            return cls()
 
     logger.warning("Using NoopLLMClient (no API key set)")
     return NoopLLMClient()

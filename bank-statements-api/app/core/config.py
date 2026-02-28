@@ -30,9 +30,13 @@ class Settings(BaseSettings):
     API_BASE_URL: str = os.getenv("API_BASE_URL", "http://localhost:8000")
     WEB_BASE_URL: str = os.getenv("WEB_BASE_URL", "http://localhost:5173")
 
+    # LLM settings
+    LLM_PROVIDER: str = os.getenv("LLM_PROVIDER", "")
+
     # API Keys
     GOOGLE_API_KEY: str = os.getenv("GOOGLE_API_KEY", "")
     GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")
+    ANTHROPIC_API_KEY: str = os.getenv("ANTHROPIC_API_KEY", "")
     GROQ_API_KEY: str = os.getenv("GROQ_API_KEY", "")
 
     # Auth settings
