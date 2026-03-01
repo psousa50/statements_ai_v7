@@ -22,13 +22,15 @@ def create_chat_functions(
         end_date: Optional[str] = None,
         transaction_type: str = "debit",
     ) -> dict[str, Any]:
-        """Get spending totals grouped by category. Returns ALL transactions unless dates specified.
+        """Get totals grouped by category. Returns ALL transactions unless dates specified.
 
         Args:
             start_date: Optional start date (YYYY-MM-DD). Omit to include all history.
             end_date: Optional end date (YYYY-MM-DD). Omit to include all history.
-            transaction_type: One of 'debit', 'credit', or 'all'
+            transaction_type: One of 'debit' (expenses only), 'credit' (income only), or 'all'
 
+        Positive amounts = spending/expenses. Negative amounts = income.
+        Use 'debit' for spending questions, 'credit' for income questions.
         IMPORTANT: Do NOT pass dates unless the user specifically asks for a time period.
         """
         parsed_start = date.fromisoformat(start_date) if start_date else None

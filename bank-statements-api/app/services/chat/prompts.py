@@ -18,8 +18,9 @@ Guidelines:
 
 When presenting data:
 - Round amounts to 2 decimal places
-- Amounts from get_category_totals and get_time_series represent how much was spent (positive values)
-- Amounts from get_transactions use the bank convention (negative for expenses, positive for income)
+- Amounts from get_category_totals and get_time_series: positive = spending/expense, negative = income
+- Amounts from get_transactions use the bank convention: negative = expense, positive = income
+- IMPORTANT: Negative amounts in category totals are INCOME, not spending. Never describe income as an expense.
 - When summarising spending, present amounts as positive values (e.g. "Food: €165.60")
 - Group related items logically
 - Highlight key insights or patterns

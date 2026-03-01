@@ -12,6 +12,13 @@ from app.ai.llm_client import LLMClient
 logger = logging.getLogger(__name__)
 
 
+def _is_optional(type_hint) -> bool:
+    origin = getattr(type_hint, "__origin__", None)
+    if origin is Union:
+        return type(None) in type_hint.__args__
+    return False
+
+
 def _get_base_type(type_hint):
     origin = getattr(type_hint, "__origin__", None)
     if origin is Union:
@@ -27,7 +34,8 @@ def _function_to_tool_schema(func: Callable) -> dict:
     required = []
 
     for name, param in sig.parameters.items():
-        param_type = _get_base_type(hints.get(name, str))
+        hint = hints.get(name, str)
+        param_type = _get_base_type(hint)
         json_type = "string"
         if param_type is int:
             json_type = "integer"
@@ -36,7 +44,10 @@ def _function_to_tool_schema(func: Callable) -> dict:
         elif param_type is bool:
             json_type = "boolean"
 
-        props[name] = {"type": json_type}
+        if _is_optional(hint):
+            props[name] = {"type": [json_type, "null"]}
+        else:
+            props[name] = {"type": json_type}
         if param.default is inspect.Parameter.empty:
             required.append(name)
 
