@@ -3,6 +3,7 @@ name: CI & Deploy
 on:
   push:
     branches: [main]
+  workflow_dispatch:
 
 env:
   VITE_API_URL: http://localhost:8000
