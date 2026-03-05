@@ -209,13 +209,16 @@ class SubscriptionService:
         return checkout_url
 
     def create_portal_session(self, user_id: UUID) -> str:
+        self.sync_from_stripe(user_id)
         subscription = self.get_or_create_subscription(user_id)
 
         if not subscription.stripe_customer_id:
             raise ValueError("No billing account found. Please subscribe first.")
 
-        portal_url = self.stripe_client.create_portal_session(subscription.stripe_customer_id)
-        return portal_url
+        try:
+            return self.stripe_client.create_portal_session(subscription.stripe_customer_id)
+        except Exception:
+            raise ValueError("Unable to access billing portal. Please contact support.")
 
     def handle_webhook_event(self, payload: bytes, signature: str) -> None:
         event = self.stripe_client.construct_webhook_event(payload, signature)
@@ -361,7 +364,7 @@ class SubscriptionService:
         subscription.stripe_price_id = None
         subscription.current_period_start = None
         subscription.current_period_end = None
-        subscription.cancelled_at = datetime.now(timezone.utc)
+        subscription.cancelled_at = None
 
         self.subscription_repository.update(subscription)
 
@@ -383,16 +386,34 @@ class SubscriptionService:
             return SubscriptionTier.PRO
         return SubscriptionTier.FREE
 
+    def _reset_to_free(self, subscription: Subscription) -> None:
+        subscription.tier = SubscriptionTier.FREE
+        subscription.status = SubscriptionStatus.EXPIRED
+        subscription.stripe_subscription_id = None
+        subscription.stripe_price_id = None
+        subscription.current_period_start = None
+        subscription.current_period_end = None
+        subscription.cancelled_at = None
+        self.subscription_repository.update(subscription)
+
     def sync_from_stripe(self, user_id: UUID) -> None:
         subscription = self.subscription_repository.get_by_user_id(user_id)
-        if not subscription or not subscription.stripe_subscription_id:
+        if not subscription:
+            return
+
+        if not subscription.stripe_subscription_id:
+            has_stale_data = (
+                subscription.tier != SubscriptionTier.FREE
+                or subscription.cancelled_at is not None
+                or subscription.current_period_end is not None
+                or subscription.stripe_price_id is not None
+            )
+            if has_stale_data:
+                self._reset_to_free(subscription)
             return
 
         try:
             stripe_sub = self.stripe_client.retrieve_subscription(subscription.stripe_subscription_id)
             self._handle_subscription_updated(stripe_sub)
         except Exception:
-            subscription.tier = SubscriptionTier.FREE
-            subscription.status = SubscriptionStatus.EXPIRED
-            subscription.stripe_subscription_id = None
-            self.subscription_repository.update(subscription)
+            self._reset_to_free(subscription)

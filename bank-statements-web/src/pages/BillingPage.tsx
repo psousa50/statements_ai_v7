@@ -64,19 +64,13 @@ export const BillingPage = () => {
 
   const handleUpgrade = useCallback(
     async (tier: 'basic' | 'pro') => {
-      const success = await startCheckout(tier)
-      if (!success) {
-        setToast({ message: 'Failed to start checkout. Please try again.', type: 'error' })
-      }
+      await startCheckout(tier)
     },
     [startCheckout]
   )
 
   const handleManageBilling = useCallback(async () => {
-    const success = await openBillingPortal()
-    if (!success) {
-      setToast({ message: 'Failed to open billing portal. Please try again.', type: 'error' })
-    }
+    await openBillingPortal()
   }, [openBillingPortal])
 
   const handleCloseToast = useCallback(() => {
