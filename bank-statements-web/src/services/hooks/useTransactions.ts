@@ -6,6 +6,8 @@ import {
   TransactionFilters,
   CategoryTotalsResponse,
   CategoryTimeSeriesDataPoint,
+  IncomeSpendingDataPoint,
+  IncomeSpendingResponse,
   RecurringPatternsResponse,
 } from '../../api/TransactionClient'
 import { EnhancementRule } from '../../types/EnhancementRule'
@@ -25,6 +27,7 @@ export const TRANSACTION_QUERY_KEYS = {
   categoryTotals: (filters?: object) => ['transactions', 'categoryTotals', filters] as const,
   timeSeries: (categoryId?: string, period?: string, filters?: object) =>
     ['transactions', 'timeSeries', categoryId, period, filters] as const,
+  incomeSpending: (period?: string, filters?: object) => ['transactions', 'incomeSpending', period, filters] as const,
   recurringPatterns: (activeOnly?: boolean) => ['transactions', 'recurringPatterns', activeOnly] as const,
 }
 
@@ -459,6 +462,47 @@ export const useCategoryTimeSeries = () => {
     error,
     fetchCategoryTimeSeries,
   }
+}
+
+export const useIncomeSpendingTimeSeries = () => {
+  const api = useApi()
+  const queryClient = useQueryClient()
+  const [data, setData] = useState<IncomeSpendingDataPoint[] | null>(null)
+  const [loading, setLoading] = useState<boolean>(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const fetchIncomeSpendingTimeSeries = useCallback(
+    async (period: 'month' | 'week' | 'day' = 'month', filters?: Omit<TransactionFilters, 'page' | 'page_size'>) => {
+      setLoading(true)
+      setError(null)
+      try {
+        const cacheKey = TRANSACTION_QUERY_KEYS.incomeSpending(period, filters)
+        const queryState = queryClient.getQueryState(cacheKey)
+        const cached = queryClient.getQueryData<IncomeSpendingResponse>(cacheKey)
+
+        let response
+        const isStale = queryState?.isInvalidated || !queryState
+        if (cached && !isStale) {
+          response = cached
+        } else {
+          response = await api.transactions.getIncomeSpendingTimeSeries(period, filters)
+          queryClient.setQueryData(cacheKey, response)
+        }
+
+        setData(response.data_points)
+        return response.data_points
+      } catch (err) {
+        console.error('Error fetching income vs spending data:', err)
+        setError('Failed to fetch income vs spending data.')
+        return null
+      } finally {
+        setLoading(false)
+      }
+    },
+    [api.transactions, queryClient]
+  )
+
+  return { data, loading, error, fetchIncomeSpendingTimeSeries }
 }
 
 export const useRecurringPatterns = () => {

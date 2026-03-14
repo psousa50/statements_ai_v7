@@ -324,6 +324,27 @@ class CategoryTimeSeriesResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class IncomeSpendingDataPoint(BaseModel):
+    period: str
+    income: Decimal
+    spending: Decimal
+    net: Decimal
+    income_count: int
+    spending_count: int
+
+    model_config = ConfigDict(from_attributes=True)
+
+    @field_serializer("income", "spending", "net")
+    def serialize_decimal(self, value: Decimal) -> float:
+        return float(value)
+
+
+class IncomeSpendingResponse(BaseModel):
+    data_points: Sequence[IncomeSpendingDataPoint]
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class CategoryTotalsListResponse(BaseModel):
     totals: List[CategoryTotalsResponse]
     total_transactions: int

@@ -354,6 +354,25 @@ class TransactionService:
             exclude_from_analytics=True,
         )
 
+    def get_income_spending_time_series(
+        self,
+        user_id: UUID,
+        period: str = "month",
+        account_id: Optional[UUID] = None,
+        start_date: Optional[date] = None,
+        end_date: Optional[date] = None,
+        exclude_transfers: Optional[bool] = None,
+    ) -> List[Dict]:
+        return self.transaction_repository.get_income_spending_time_series(
+            user_id=user_id,
+            period=period,
+            account_id=account_id,
+            start_date=start_date,
+            end_date=end_date,
+            exclude_transfers=exclude_transfers,
+            exclude_from_analytics=True,
+        )
+
     def update_transaction(
         self,
         user_id: UUID,

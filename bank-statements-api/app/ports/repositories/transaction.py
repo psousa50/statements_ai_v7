@@ -124,6 +124,19 @@ class TransactionRepository(ABC):
         pass
 
     @abstractmethod
+    def get_income_spending_time_series(
+        self,
+        user_id: UUID,
+        period: str = "month",
+        account_id: Optional[UUID] = None,
+        start_date: Optional[date] = None,
+        end_date: Optional[date] = None,
+        exclude_transfers: Optional[bool] = None,
+        exclude_from_analytics: Optional[bool] = None,
+    ) -> List[Dict]:
+        pass
+
+    @abstractmethod
     def update(self, transaction: Transaction) -> Transaction:
         """Update a transaction"""
         pass

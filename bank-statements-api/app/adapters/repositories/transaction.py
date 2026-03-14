@@ -4,7 +4,7 @@ from typing import Dict, List, Optional, Tuple
 from uuid import UUID
 
 import pandas as pd
-from sqlalchemy import and_, func, or_, over
+from sqlalchemy import and_, case, func, or_, over
 from sqlalchemy.orm import Session
 
 from app.common.text_normalization import normalize_description
@@ -405,6 +405,76 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
                 "transaction_count": count,
             }
             for period_str, cat_id, total, count in results
+        ]
+
+    def get_income_spending_time_series(
+        self,
+        user_id: UUID,
+        period: str = "month",
+        account_id: Optional[UUID] = None,
+        start_date: Optional[date] = None,
+        end_date: Optional[date] = None,
+        exclude_transfers: Optional[bool] = None,
+        exclude_from_analytics: Optional[bool] = None,
+    ) -> List[Dict]:
+        if period == "month":
+            period_expr = func.to_char(Transaction.date, "YYYY-MM")
+        elif period == "week":
+            period_expr = func.to_char(Transaction.date, "IYYY-IW")
+        else:
+            period_expr = func.to_char(Transaction.date, "YYYY-MM-DD")
+
+        income_sum = func.coalesce(
+            func.sum(case((Transaction.amount > 0, Transaction.amount), else_=0)),
+            0,
+        )
+        spending_sum = func.coalesce(
+            func.sum(case((Transaction.amount < 0, -Transaction.amount), else_=0)),
+            0,
+        )
+        income_count = func.coalesce(
+            func.sum(case((Transaction.amount > 0, 1), else_=0)),
+            0,
+        )
+        spending_count = func.coalesce(
+            func.sum(case((Transaction.amount < 0, 1), else_=0)),
+            0,
+        )
+
+        query = self.db_session.query(
+            period_expr.label("period"),
+            income_sum.label("income"),
+            spending_sum.label("spending"),
+            income_count.label("income_count"),
+            spending_count.label("spending_count"),
+        ).filter(Transaction.user_id == user_id)
+
+        filters = []
+        if account_id is not None:
+            filters.append(Transaction.account_id == account_id)
+        if start_date is not None:
+            filters.append(Transaction.date >= start_date)
+        if end_date is not None:
+            filters.append(Transaction.date <= end_date)
+        if exclude_transfers is not False:
+            filters.append(Transaction.counterparty_account_id.is_(None))
+        if exclude_from_analytics:
+            filters.append(Transaction.exclude_from_analytics.is_(False))
+        if filters:
+            query = query.filter(and_(*filters))
+
+        results = query.group_by(period_expr).order_by(period_expr).all()
+
+        return [
+            {
+                "period": row.period,
+                "income": Decimal(str(row.income)),
+                "spending": Decimal(str(row.spending)),
+                "net": Decimal(str(row.income)) - Decimal(str(row.spending)),
+                "income_count": int(row.income_count or 0),
+                "spending_count": int(row.spending_count or 0),
+            }
+            for row in results
         ]
 
     def update(self, transaction: Transaction) -> Transaction:

@@ -60,6 +60,19 @@ export interface CategoryTimeSeriesResponse {
   data_points: CategoryTimeSeriesDataPoint[]
 }
 
+export interface IncomeSpendingDataPoint {
+  period: string
+  income: number
+  spending: number
+  net: number
+  income_count: number
+  spending_count: number
+}
+
+export interface IncomeSpendingResponse {
+  data_points: IncomeSpendingDataPoint[]
+}
+
 export interface BulkUpdateTransactionsRequest {
   normalized_description: string
   category_id?: string
@@ -172,6 +185,10 @@ export interface TransactionClient {
     period?: 'month' | 'week',
     filters?: Omit<TransactionFilters, 'page' | 'page_size'>
   ): Promise<CategoryTimeSeriesResponse>
+  getIncomeSpendingTimeSeries(
+    period?: 'month' | 'week' | 'day',
+    filters?: Omit<TransactionFilters, 'page' | 'page_size'>
+  ): Promise<IncomeSpendingResponse>
   getRecurringPatterns(activeOnly?: boolean): Promise<RecurringPatternsResponse>
   getById(id: string): Promise<Transaction>
   create(transaction: TransactionCreate): Promise<Transaction>
@@ -434,6 +451,23 @@ export const transactionClient: TransactionClient = {
       ? `${API_URL}/category-time-series?${params.toString()}`
       : `${API_URL}/category-time-series`
     const response = await axiosInstance.get<CategoryTimeSeriesResponse>(url)
+    return response.data
+  },
+
+  async getIncomeSpendingTimeSeries(
+    period: 'month' | 'week' | 'day' = 'month',
+    filters?: Omit<TransactionFilters, 'page' | 'page_size'>
+  ) {
+    const params = new URLSearchParams()
+    params.append('period', period)
+    if (filters?.account_id) params.append('account_id', filters.account_id)
+    if (filters?.start_date) params.append('start_date', filters.start_date)
+    if (filters?.end_date) params.append('end_date', filters.end_date)
+    if (filters?.exclude_transfers !== undefined)
+      params.append('exclude_transfers', filters.exclude_transfers.toString())
+
+    const url = `${API_URL}/income-spending-time-series?${params.toString()}`
+    const response = await axiosInstance.get<IncomeSpendingResponse>(url)
     return response.data
   },
 

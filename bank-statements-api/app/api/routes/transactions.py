@@ -23,6 +23,8 @@ from app.api.schemas import (
     EnhancementPreviewRequest,
     EnhancementPreviewResponse,
     ExcludeFromAnalyticsRequest,
+    IncomeSpendingDataPoint,
+    IncomeSpendingResponse,
     RecurringPatternResponse,
     RecurringPatternsResponse,
     TransactionCreateRequest,
@@ -489,6 +491,29 @@ def register_transaction_routes(
         ]
 
         return CategoryTimeSeriesResponse(data_points=response_data_points)
+
+    @router.get(
+        "/income-spending-time-series",
+        response_model=IncomeSpendingResponse,
+    )
+    def get_income_spending_time_series(
+        period: str = Query("month", description="Time period: 'month', 'week', or 'day'"),
+        account_id: Optional[UUID] = Query(None, description="Filter by account ID"),
+        start_date: Optional[date] = Query(None, description="Filter from this date"),
+        end_date: Optional[date] = Query(None, description="Filter to this date"),
+        exclude_transfers: Optional[bool] = Query(True, description="Exclude transfers between accounts"),
+        internal: InternalDependencies = Depends(provide_dependencies),
+        current_user: User = Depends(require_current_user),
+    ):
+        data_points = internal.transaction_service.get_income_spending_time_series(
+            user_id=current_user.id,
+            period=period,
+            account_id=account_id,
+            start_date=start_date,
+            end_date=end_date,
+            exclude_transfers=exclude_transfers,
+        )
+        return IncomeSpendingResponse(data_points=[IncomeSpendingDataPoint(**dp) for dp in data_points])
 
     @router.get(
         "/recurring-patterns",

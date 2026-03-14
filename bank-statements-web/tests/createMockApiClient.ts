@@ -101,6 +101,10 @@ const defaultTransactionClient: TransactionClient = {
     Promise.resolve({
       data_points: [],
     } as CategoryTimeSeriesResponse),
+  getIncomeSpendingTimeSeries: () =>
+    Promise.resolve({
+      data_points: [],
+    }),
   getRecurringPatterns: () =>
     Promise.resolve({
       patterns: [],

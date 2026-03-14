@@ -1,11 +1,16 @@
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts'
-import { useCategoryTotals, useCategoryTimeSeries } from '../services/hooks/useTransactions'
+import {
+  useCategoryTotals,
+  useCategoryTimeSeries,
+  useIncomeSpendingTimeSeries,
+} from '../services/hooks/useTransactions'
 import { useCategories } from '../services/hooks/useCategories'
 import { useAccounts } from '../services/hooks/useAccounts'
 import { TransactionFilters, CategorizationFilter } from '../components/TransactionFilters'
 import { CategoryTimeSeriesChart } from '../components/CategoryTimeSeriesChart'
+import { IncomeSpendingChart } from '../components/IncomeSpendingChart'
 import { CategoryTotalsBarChart } from '../components/CategoryTotalsBarChart'
 import { Category } from '../types/Transaction'
 import { TransactionFilters as FilterType } from '../api/TransactionClient'
@@ -68,8 +73,8 @@ export const ChartsPage = () => {
     () => (searchParams.get('transaction_type') as 'all' | 'debit' | 'credit') || 'all'
   )
   const [categorizationFilter, setCategorizationFilter] = useState<CategorizationFilter>('categorized')
-  const [viewMode, setViewMode] = useState<'pie' | 'bar' | 'timeseries'>(
-    () => (searchParams.get('view') as 'pie' | 'bar' | 'timeseries') || 'bar'
+  const [viewMode, setViewMode] = useState<'pie' | 'bar' | 'timeseries' | 'income-spending'>(
+    () => (searchParams.get('view') as 'pie' | 'bar' | 'timeseries' | 'income-spending') || 'bar'
   )
   const [timeSeriesPeriod, setTimeSeriesPeriod] = useState<'month' | 'week'>(
     () => (searchParams.get('period') as 'month' | 'week') || 'month'
@@ -103,11 +108,29 @@ export const ChartsPage = () => {
     fetchCategoryTimeSeries,
   } = useCategoryTimeSeries()
 
+  const {
+    data: incomeSpendingData,
+    loading: incomeSpendingLoading,
+    error: incomeSpendingError,
+    fetchIncomeSpendingTimeSeries,
+  } = useIncomeSpendingTimeSeries()
+
   const { categories, loading: categoriesLoading, error: categoriesError } = useCategories()
   const { accounts, loading: accountsLoading, error: accountsError } = useAccounts()
 
-  const loading = categoryTotalsLoading || categoriesLoading || accountsLoading || timeSeriesLoading
-  const error = categoryTotalsError || categoriesError || accountsError || timeSeriesError
+  const loading =
+    categoryTotalsLoading || categoriesLoading || accountsLoading || timeSeriesLoading || incomeSpendingLoading
+  const error = categoryTotalsError || categoriesError || accountsError || timeSeriesError || incomeSpendingError
+
+  const detectPeriod = useCallback((startDate?: string, endDate?: string): 'month' | 'week' | 'day' => {
+    if (!startDate || !endDate) return 'month'
+    const start = new Date(startDate)
+    const end = new Date(endDate)
+    const diffDays = Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24))
+    if (diffDays <= 14) return 'day'
+    if (diffDays <= 62) return 'week'
+    return 'month'
+  }, [])
 
   // Debounced filter update for search, amount, and date inputs
   useEffect(() => {
@@ -136,6 +159,10 @@ export const ChartsPage = () => {
         }
         setFilters(updatedFilters)
         fetchCategoryTotals(updatedFilters)
+        if (viewMode === 'income-spending') {
+          const period = detectPeriod(updatedFilters.start_date, updatedFilters.end_date)
+          fetchIncomeSpendingTimeSeries(period, updatedFilters)
+        }
       }
     }, 500) // 500ms debounce
 
@@ -152,6 +179,9 @@ export const ChartsPage = () => {
     localEndDate,
     filters,
     fetchCategoryTotals,
+    fetchIncomeSpendingTimeSeries,
+    detectPeriod,
+    viewMode,
     transactionType,
   ])
 
@@ -179,8 +209,12 @@ export const ChartsPage = () => {
       const updatedFilters = { ...filters, ...newFilters }
       setFilters(updatedFilters)
       fetchCategoryTotals(updatedFilters)
+      if (viewMode === 'income-spending') {
+        const period = detectPeriod(updatedFilters.start_date, updatedFilters.end_date)
+        fetchIncomeSpendingTimeSeries(period, updatedFilters)
+      }
     },
-    [filters, fetchCategoryTotals]
+    [filters, fetchCategoryTotals, fetchIncomeSpendingTimeSeries, viewMode, detectPeriod]
   )
 
   // Immediate updates (no debouncing needed)
@@ -544,14 +578,31 @@ export const ChartsPage = () => {
   const totalAmount = chartData.reduce((sum, item) => sum + item.value, 0)
   const totalTransactions = chartData.reduce((sum, item) => sum + item.count, 0)
 
+  const getCurrentFilters = useCallback(
+    () => ({
+      ...filters,
+      description_search: localDescriptionSearch || undefined,
+      min_amount: localMinAmount,
+      max_amount: localMaxAmount,
+      start_date: localStartDate || undefined,
+      end_date: localEndDate || undefined,
+      transaction_type: transactionType,
+    }),
+    [filters, localDescriptionSearch, localMinAmount, localMaxAmount, localStartDate, localEndDate, transactionType]
+  )
+
   const handleViewModeChange = useCallback(
-    (mode: 'pie' | 'bar' | 'timeseries') => {
+    (mode: 'pie' | 'bar' | 'timeseries' | 'income-spending') => {
       setViewMode(mode)
+      const currentFilters = getCurrentFilters()
       if (mode === 'timeseries') {
-        fetchCategoryTimeSeries(undefined, timeSeriesPeriod, filters)
+        fetchCategoryTimeSeries(undefined, timeSeriesPeriod, currentFilters)
+      } else if (mode === 'income-spending') {
+        const period = detectPeriod(currentFilters.start_date, currentFilters.end_date)
+        fetchIncomeSpendingTimeSeries(period, currentFilters)
       }
     },
-    [timeSeriesPeriod, filters, fetchCategoryTimeSeries]
+    [timeSeriesPeriod, getCurrentFilters, fetchCategoryTimeSeries, fetchIncomeSpendingTimeSeries, detectPeriod]
   )
 
   const handlePeriodChange = useCallback(
@@ -569,6 +620,18 @@ export const ChartsPage = () => {
       fetchCategoryTimeSeries(undefined, timeSeriesPeriod, filters)
     }
   }, [viewMode, timeSeriesPeriod, filters, fetchCategoryTimeSeries])
+
+  useEffect(() => {
+    if (viewMode === 'income-spending') {
+      const currentFilters = {
+        ...filters,
+        start_date: localStartDate || undefined,
+        end_date: localEndDate || undefined,
+      }
+      const period = detectPeriod(currentFilters.start_date, currentFilters.end_date)
+      fetchIncomeSpendingTimeSeries(period, currentFilters)
+    }
+  }, [viewMode, filters, localStartDate, localEndDate, fetchIncomeSpendingTimeSeries, detectPeriod])
 
   useEffect(() => {
     fetchCategoryTotals(filters)
@@ -625,13 +688,15 @@ export const ChartsPage = () => {
           <div className="charts-header">
             <div className="charts-summary">
               <h2>
-                {chartType === 'root'
-                  ? 'Spending by Category'
-                  : selectedRootCategory === 'uncategorized'
-                    ? 'Uncategorized Transactions'
-                    : `${categories?.find((c) => c.id === selectedRootCategory)?.name || ''} Breakdown`}
+                {viewMode === 'income-spending'
+                  ? 'Income vs Spending'
+                  : chartType === 'root'
+                    ? 'Spending by Category'
+                    : selectedRootCategory === 'uncategorized'
+                      ? 'Uncategorized Transactions'
+                      : `${categories?.find((c) => c.id === selectedRootCategory)?.name || ''} Breakdown`}
               </h2>
-              {!loading && (
+              {!loading && viewMode !== 'income-spending' && (
                 <div className="chart-stats">
                   <span className="stat">
                     <strong>Total Amount:</strong> ${totalAmount.toFixed(2)}
@@ -656,6 +721,12 @@ export const ChartsPage = () => {
                   className={viewMode === 'timeseries' ? 'active' : ''}
                 >
                   Time Series
+                </button>
+                <button
+                  onClick={() => handleViewModeChange('income-spending')}
+                  className={viewMode === 'income-spending' ? 'active' : ''}
+                >
+                  Income vs Spending
                 </button>
               </div>
               {viewMode === 'timeseries' && (
@@ -750,6 +821,8 @@ export const ChartsPage = () => {
                 onBarClick={handleChartClick}
                 noDataMessage={noDataMessage}
               />
+            ) : viewMode === 'income-spending' ? (
+              <IncomeSpendingChart dataPoints={incomeSpendingData || []} loading={incomeSpendingLoading} />
             ) : (
               <CategoryTimeSeriesChart
                 dataPoints={timeSeriesData || []}
@@ -760,7 +833,12 @@ export const ChartsPage = () => {
           </div>
 
           <div className="chart-help">
-            {viewMode === 'pie' || viewMode === 'bar' ? (
+            {viewMode === 'income-spending' ? (
+              <p>
+                Showing income vs spending over time. Granularity adjusts automatically based on the selected date
+                range.
+              </p>
+            ) : viewMode === 'pie' || viewMode === 'bar' ? (
               chartType === 'root' ? (
                 <p>Click on any category to see its subcategories breakdown</p>
               ) : (
