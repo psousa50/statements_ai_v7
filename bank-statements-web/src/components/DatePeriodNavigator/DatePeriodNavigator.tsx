@@ -343,7 +343,10 @@ export function DatePeriodNavigator({
                     numberOfMonths={1}
                     showOutsideDays
                     weekStartsOn={1}
+                    captionLayout="dropdown"
                     defaultMonth={selectedRange?.from || new Date()}
+                    startMonth={new Date(2015, 0)}
+                    endMonth={new Date(new Date().getFullYear() + 1, 11)}
                   />
                 </div>
               </div>
