@@ -156,6 +156,7 @@ export const ChartsPage = () => {
           end_date: localEndDate || undefined,
           transaction_type: transactionType,
           exclude_transfers: filters.exclude_transfers,
+          exclude_uncategorized: categorizationFilter === 'categorized' ? true : undefined,
         }
         setFilters(updatedFilters)
         fetchCategoryTotals(updatedFilters)
@@ -183,6 +184,7 @@ export const ChartsPage = () => {
     detectPeriod,
     viewMode,
     transactionType,
+    categorizationFilter,
   ])
 
   useEffect(() => {
@@ -587,8 +589,18 @@ export const ChartsPage = () => {
       start_date: localStartDate || undefined,
       end_date: localEndDate || undefined,
       transaction_type: transactionType,
+      exclude_uncategorized: categorizationFilter === 'categorized' ? true : undefined,
     }),
-    [filters, localDescriptionSearch, localMinAmount, localMaxAmount, localStartDate, localEndDate, transactionType]
+    [
+      filters,
+      localDescriptionSearch,
+      localMinAmount,
+      localMaxAmount,
+      localStartDate,
+      localEndDate,
+      transactionType,
+      categorizationFilter,
+    ]
   )
 
   const handleViewModeChange = useCallback(
@@ -627,11 +639,12 @@ export const ChartsPage = () => {
         ...filters,
         start_date: localStartDate || undefined,
         end_date: localEndDate || undefined,
+        exclude_uncategorized: categorizationFilter === 'categorized' ? true : undefined,
       }
       const period = detectPeriod(currentFilters.start_date, currentFilters.end_date)
       fetchIncomeSpendingTimeSeries(period, currentFilters)
     }
-  }, [viewMode, filters, localStartDate, localEndDate, fetchIncomeSpendingTimeSeries, detectPeriod])
+  }, [viewMode, filters, localStartDate, localEndDate, categorizationFilter, fetchIncomeSpendingTimeSeries, detectPeriod])
 
   useEffect(() => {
     fetchCategoryTotals(filters)

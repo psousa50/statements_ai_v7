@@ -465,6 +465,8 @@ export const transactionClient: TransactionClient = {
     if (filters?.end_date) params.append('end_date', filters.end_date)
     if (filters?.exclude_transfers !== undefined)
       params.append('exclude_transfers', filters.exclude_transfers.toString())
+    if (filters?.exclude_uncategorized !== undefined)
+      params.append('exclude_uncategorized', filters.exclude_uncategorized.toString())
 
     const url = `${API_URL}/income-spending-time-series?${params.toString()}`
     const response = await axiosInstance.get<IncomeSpendingResponse>(url)

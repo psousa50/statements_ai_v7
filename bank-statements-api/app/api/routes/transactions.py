@@ -502,6 +502,7 @@ def register_transaction_routes(
         start_date: Optional[date] = Query(None, description="Filter from this date"),
         end_date: Optional[date] = Query(None, description="Filter to this date"),
         exclude_transfers: Optional[bool] = Query(True, description="Exclude transfers between accounts"),
+        exclude_uncategorized: Optional[bool] = Query(False, description="Exclude uncategorized transactions"),
         internal: InternalDependencies = Depends(provide_dependencies),
         current_user: User = Depends(require_current_user),
     ):
@@ -512,6 +513,7 @@ def register_transaction_routes(
             start_date=start_date,
             end_date=end_date,
             exclude_transfers=exclude_transfers,
+            exclude_uncategorized=exclude_uncategorized,
         )
         return IncomeSpendingResponse(data_points=[IncomeSpendingDataPoint(**dp) for dp in data_points])
 

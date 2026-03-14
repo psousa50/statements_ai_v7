@@ -362,6 +362,7 @@ class TransactionService:
         start_date: Optional[date] = None,
         end_date: Optional[date] = None,
         exclude_transfers: Optional[bool] = None,
+        exclude_uncategorized: Optional[bool] = None,
     ) -> List[Dict]:
         return self.transaction_repository.get_income_spending_time_series(
             user_id=user_id,
@@ -370,6 +371,7 @@ class TransactionService:
             start_date=start_date,
             end_date=end_date,
             exclude_transfers=exclude_transfers,
+            exclude_uncategorized=exclude_uncategorized,
             exclude_from_analytics=True,
         )
 

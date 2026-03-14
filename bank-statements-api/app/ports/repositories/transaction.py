@@ -132,6 +132,7 @@ class TransactionRepository(ABC):
         start_date: Optional[date] = None,
         end_date: Optional[date] = None,
         exclude_transfers: Optional[bool] = None,
+        exclude_uncategorized: Optional[bool] = None,
         exclude_from_analytics: Optional[bool] = None,
     ) -> List[Dict]:
         pass

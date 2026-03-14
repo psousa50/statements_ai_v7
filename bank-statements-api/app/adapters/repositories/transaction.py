@@ -415,6 +415,7 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         start_date: Optional[date] = None,
         end_date: Optional[date] = None,
         exclude_transfers: Optional[bool] = None,
+        exclude_uncategorized: Optional[bool] = None,
         exclude_from_analytics: Optional[bool] = None,
     ) -> List[Dict]:
         if period == "month":
@@ -458,6 +459,8 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
             filters.append(Transaction.date <= end_date)
         if exclude_transfers is not False:
             filters.append(Transaction.counterparty_account_id.is_(None))
+        if exclude_uncategorized is True:
+            filters.append(Transaction.category_id.isnot(None))
         if exclude_from_analytics:
             filters.append(Transaction.exclude_from_analytics.is_(False))
         if filters:
