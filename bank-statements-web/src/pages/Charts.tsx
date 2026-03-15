@@ -644,7 +644,15 @@ export const ChartsPage = () => {
       const period = detectPeriod(currentFilters.start_date, currentFilters.end_date)
       fetchIncomeSpendingTimeSeries(period, currentFilters)
     }
-  }, [viewMode, filters, localStartDate, localEndDate, categorizationFilter, fetchIncomeSpendingTimeSeries, detectPeriod])
+  }, [
+    viewMode,
+    filters,
+    localStartDate,
+    localEndDate,
+    categorizationFilter,
+    fetchIncomeSpendingTimeSeries,
+    detectPeriod,
+  ])
 
   useEffect(() => {
     fetchCategoryTotals(filters)

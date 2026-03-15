@@ -1,4 +1,14 @@
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceLine } from 'recharts'
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  ReferenceLine,
+} from 'recharts'
 import { IncomeSpendingDataPoint } from '../api/TransactionClient'
 
 interface IncomeSpendingChartProps {
@@ -37,15 +47,11 @@ export const IncomeSpendingChart = ({ dataPoints, loading }: IncomeSpendingChart
       <div style={{ display: 'flex', gap: '24px', marginBottom: '16px', justifyContent: 'center' }}>
         <div style={{ textAlign: 'center' }}>
           <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Total Income</div>
-          <div style={{ fontSize: '18px', fontWeight: 600, color: INCOME_COLOR }}>
-            ${totalIncome.toFixed(2)}
-          </div>
+          <div style={{ fontSize: '18px', fontWeight: 600, color: INCOME_COLOR }}>${totalIncome.toFixed(2)}</div>
         </div>
         <div style={{ textAlign: 'center' }}>
           <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Total Spending</div>
-          <div style={{ fontSize: '18px', fontWeight: 600, color: SPENDING_COLOR }}>
-            ${totalSpending.toFixed(2)}
-          </div>
+          <div style={{ fontSize: '18px', fontWeight: 600, color: SPENDING_COLOR }}>${totalSpending.toFixed(2)}</div>
         </div>
         <div style={{ textAlign: 'center' }}>
           <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Net</div>
