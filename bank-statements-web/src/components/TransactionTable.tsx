@@ -552,12 +552,24 @@ export const TransactionTable = ({
     [onCategorize, selectedIds, onBulkCategorizeByIds, localCategories, handleShowToast]
   )
 
+  const toastNode = toast && <Toast {...toast} onClose={() => setToast(null)} />
+
   if (loading) {
-    return <div className="loading">Loading transactions...</div>
+    return (
+      <>
+        <div className="loading">Loading transactions...</div>
+        {toastNode}
+      </>
+    )
   }
 
   if (transactions.length === 0) {
-    return <div className="no-data">No transactions found. Add one to get started!</div>
+    return (
+      <>
+        <div className="no-data">No transactions found. Add one to get started!</div>
+        {toastNode}
+      </>
+    )
   }
 
   const formatDate = (dateString: string) => {
@@ -819,7 +831,7 @@ export const TransactionTable = ({
           ))}
         </tbody>
       </table>
-      {toast && <Toast {...toast} onClose={() => setToast(null)} />}
+      {toastNode}
       {pendingDeleteTransaction && (
         <ConfirmationModal
           isOpen={true}

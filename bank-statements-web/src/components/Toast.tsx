@@ -1,4 +1,5 @@
 import { useEffect, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 
 export interface ToastAction {
   label: string
@@ -36,7 +37,7 @@ export const Toast = ({ message, type = 'success', duration = 4000, onClose, onU
 
   const allActions = actions || (action ? [action] : [])
 
-  return (
+  return createPortal(
     <div className={`toast toast-${type}`}>
       <div className="toast-header">
         <span className="toast-icon">
@@ -63,6 +64,7 @@ export const Toast = ({ message, type = 'success', duration = 4000, onClose, onU
           ))}
         </div>
       )}
-    </div>
+    </div>,
+    document.body
   )
 }

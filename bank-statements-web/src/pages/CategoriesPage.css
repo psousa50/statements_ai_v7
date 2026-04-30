@@ -639,7 +639,7 @@
 
 .categories-page .toast {
   position: fixed;
-  top: 80px;
+  bottom: 20px;
   right: 20px;
   z-index: 1300;
   max-width: 400px;
