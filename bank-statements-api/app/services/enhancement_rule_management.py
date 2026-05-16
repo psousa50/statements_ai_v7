@@ -1,6 +1,7 @@
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
+from app.common.text_normalization import normalize_description
 from app.domain.models.enhancement_rule import EnhancementRule, EnhancementRuleSource, MatchType
 from app.ports.repositories.account import AccountRepository
 from app.ports.repositories.category import CategoryRepository
@@ -107,7 +108,7 @@ class EnhancementRuleManagementService:
 
         rule = EnhancementRule(
             user_id=user_id,
-            normalized_description_pattern=normalized_description_pattern,
+            normalized_description_pattern=normalize_description(normalized_description_pattern),
             match_type=match_type,
             category_id=category_id,
             counterparty_account_id=counterparty_account_id,
@@ -152,7 +153,7 @@ class EnhancementRuleManagementService:
         if min_amount is not None and max_amount is not None and min_amount > max_amount:
             raise ValueError("min_amount cannot be greater than max_amount")
 
-        rule.normalized_description_pattern = normalized_description_pattern
+        rule.normalized_description_pattern = normalize_description(normalized_description_pattern)
         rule.match_type = match_type
         rule.category_id = category_id
         rule.counterparty_account_id = counterparty_account_id
@@ -347,7 +348,7 @@ class EnhancementRuleManagementService:
 
         temp_rule = EnhancementRule(
             user_id=user_id,
-            normalized_description_pattern=rule_preview.normalized_description_pattern,
+            normalized_description_pattern=normalize_description(rule_preview.normalized_description_pattern),
             match_type=rule_preview.match_type,
             category_id=rule_preview.category_id,
             counterparty_account_id=rule_preview.counterparty_account_id,
