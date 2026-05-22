@@ -20,7 +20,6 @@ export interface TransactionFilters {
   sort_field?: string
   sort_direction?: 'asc' | 'desc'
   enhancement_rule_id?: string
-  exclude_transfers?: boolean
   exclude_uncategorized?: boolean
   transaction_type?: 'all' | 'debit' | 'credit'
   active_only?: boolean
@@ -79,7 +78,6 @@ export interface BulkUpdateTransactionsRequest {
   account_id?: string
   start_date?: string
   end_date?: string
-  exclude_transfers?: boolean
   enhancement_rule_id?: string
 }
 
@@ -93,7 +91,6 @@ export interface CountSimilarFilters {
   account_id?: string
   start_date?: string
   end_date?: string
-  exclude_transfers?: boolean
   enhancement_rule_id?: string
 }
 
@@ -106,7 +103,6 @@ export interface CountByCategoryFilters {
   account_id?: string
   start_date?: string
   end_date?: string
-  exclude_transfers?: boolean
 }
 
 export interface BulkReplaceCategoryRequest {
@@ -115,7 +111,6 @@ export interface BulkReplaceCategoryRequest {
   account_id?: string
   start_date?: string
   end_date?: string
-  exclude_transfers?: boolean
 }
 
 export interface BulkReplaceCategoryResponse {
@@ -266,9 +261,6 @@ export const transactionClient: TransactionClient = {
     if (filters?.enhancement_rule_id) {
       params.append('enhancement_rule_id', filters.enhancement_rule_id)
     }
-    if (filters?.exclude_transfers !== undefined) {
-      params.append('exclude_transfers', filters.exclude_transfers.toString())
-    }
     if (filters?.exclude_uncategorized !== undefined) {
       params.append('exclude_uncategorized', filters.exclude_uncategorized.toString())
     }
@@ -325,9 +317,6 @@ export const transactionClient: TransactionClient = {
     }
     if (filters?.sort_direction) {
       params.append('sort_direction', filters.sort_direction)
-    }
-    if (filters?.exclude_transfers !== undefined) {
-      params.append('exclude_transfers', filters.exclude_transfers.toString())
     }
     if (filters?.exclude_uncategorized !== undefined) {
       params.append('exclude_uncategorized', filters.exclude_uncategorized.toString())
@@ -386,9 +375,6 @@ export const transactionClient: TransactionClient = {
     if (filters?.end_date) {
       params.append('end_date', filters.end_date)
     }
-    if (filters?.exclude_transfers !== undefined) {
-      params.append('exclude_transfers', filters.exclude_transfers.toString())
-    }
     if (filters?.exclude_uncategorized !== undefined) {
       params.append('exclude_uncategorized', filters.exclude_uncategorized.toString())
     }
@@ -437,9 +423,6 @@ export const transactionClient: TransactionClient = {
     if (filters?.end_date) {
       params.append('end_date', filters.end_date)
     }
-    if (filters?.exclude_transfers !== undefined) {
-      params.append('exclude_transfers', filters.exclude_transfers.toString())
-    }
     if (filters?.exclude_uncategorized !== undefined) {
       params.append('exclude_uncategorized', filters.exclude_uncategorized.toString())
     }
@@ -463,8 +446,6 @@ export const transactionClient: TransactionClient = {
     if (filters?.account_id) params.append('account_id', filters.account_id)
     if (filters?.start_date) params.append('start_date', filters.start_date)
     if (filters?.end_date) params.append('end_date', filters.end_date)
-    if (filters?.exclude_transfers !== undefined)
-      params.append('exclude_transfers', filters.exclude_transfers.toString())
     if (filters?.exclude_uncategorized !== undefined)
       params.append('exclude_uncategorized', filters.exclude_uncategorized.toString())
 
@@ -529,9 +510,6 @@ export const transactionClient: TransactionClient = {
     if (filters.end_date) {
       params.append('end_date', filters.end_date)
     }
-    if (filters.exclude_transfers !== undefined) {
-      params.append('exclude_transfers', filters.exclude_transfers.toString())
-    }
     if (filters.enhancement_rule_id) {
       params.append('enhancement_rule_id', filters.enhancement_rule_id)
     }
@@ -550,9 +528,6 @@ export const transactionClient: TransactionClient = {
     }
     if (filters.end_date) {
       params.append('end_date', filters.end_date)
-    }
-    if (filters.exclude_transfers !== undefined) {
-      params.append('exclude_transfers', filters.exclude_transfers.toString())
     }
     const response = await axiosInstance.get<CountSimilarResponse>(`${API_URL}/count-by-category?${params.toString()}`)
     return response.data

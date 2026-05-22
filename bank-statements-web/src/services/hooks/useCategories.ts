@@ -45,8 +45,18 @@ export const useCategories = () => {
   )
 
   const addMutation = useMutation({
-    mutationFn: async ({ name, parentId, color }: { name: string; parentId?: string; color?: string }) => {
-      return api.categories.create({ name, parent_id: parentId, color })
+    mutationFn: async ({
+      name,
+      parentId,
+      color,
+      includeInSpending,
+    }: {
+      name: string
+      parentId?: string
+      color?: string
+      includeInSpending?: boolean
+    }) => {
+      return api.categories.create({ name, parent_id: parentId, color, include_in_spending: includeInSpending })
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: CATEGORY_QUERY_KEYS.all })
@@ -60,13 +70,15 @@ export const useCategories = () => {
       name,
       parentId,
       color,
+      includeInSpending,
     }: {
       id: string
       name: string
       parentId?: string
       color?: string
+      includeInSpending?: boolean
     }) => {
-      return api.categories.update(id, { name, parent_id: parentId, color })
+      return api.categories.update(id, { name, parent_id: parentId, color, include_in_spending: includeInSpending })
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: CATEGORY_QUERY_KEYS.all })
@@ -103,9 +115,9 @@ export const useCategories = () => {
   })
 
   const addCategory = useCallback(
-    async (name: string, parentId?: string, color?: string) => {
+    async (name: string, parentId?: string, color?: string, includeInSpending?: boolean) => {
       try {
-        return await addMutation.mutateAsync({ name, parentId, color })
+        return await addMutation.mutateAsync({ name, parentId, color, includeInSpending })
       } catch {
         return null
       }
@@ -114,9 +126,9 @@ export const useCategories = () => {
   )
 
   const updateCategory = useCallback(
-    async (id: string, name: string, parentId?: string, color?: string) => {
+    async (id: string, name: string, parentId?: string, color?: string, includeInSpending?: boolean) => {
       try {
-        return await updateMutation.mutateAsync({ id, name, parentId, color })
+        return await updateMutation.mutateAsync({ id, name, parentId, color, includeInSpending })
       } catch {
         return null
       }

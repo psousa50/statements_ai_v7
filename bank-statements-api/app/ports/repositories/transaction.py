@@ -64,7 +64,6 @@ class TransactionRepository(ABC):
         end_date: Optional[date] = None,
         sort_field: Optional[str] = None,
         sort_direction: Optional[str] = None,
-        exclude_transfers: Optional[bool] = None,
         transaction_type: Optional[str] = None,
         exclude_uncategorized: Optional[bool] = None,
         transaction_ids: Optional[List[UUID]] = None,
@@ -95,7 +94,6 @@ class TransactionRepository(ABC):
         account_id: Optional[UUID] = None,
         start_date: Optional[date] = None,
         end_date: Optional[date] = None,
-        exclude_transfers: Optional[bool] = None,
         exclude_uncategorized: Optional[bool] = None,
         transaction_type: Optional[str] = None,
         exclude_from_analytics: Optional[bool] = None,
@@ -116,7 +114,6 @@ class TransactionRepository(ABC):
         account_id: Optional[UUID] = None,
         start_date: Optional[date] = None,
         end_date: Optional[date] = None,
-        exclude_transfers: Optional[bool] = None,
         exclude_uncategorized: Optional[bool] = None,
         transaction_type: Optional[str] = None,
         exclude_from_analytics: Optional[bool] = None,
@@ -131,7 +128,6 @@ class TransactionRepository(ABC):
         account_id: Optional[UUID] = None,
         start_date: Optional[date] = None,
         end_date: Optional[date] = None,
-        exclude_transfers: Optional[bool] = None,
         exclude_uncategorized: Optional[bool] = None,
         exclude_from_analytics: Optional[bool] = None,
     ) -> List[Dict]:
@@ -253,7 +249,6 @@ class TransactionRepository(ABC):
         account_id: Optional[UUID] = None,
         start_date: Optional[date] = None,
         end_date: Optional[date] = None,
-        exclude_transfers: Optional[bool] = None,
     ) -> int:
         pass
 
@@ -265,7 +260,6 @@ class TransactionRepository(ABC):
         account_id: Optional[UUID] = None,
         start_date: Optional[date] = None,
         end_date: Optional[date] = None,
-        exclude_transfers: Optional[bool] = None,
     ) -> int:
         pass
 
@@ -278,7 +272,6 @@ class TransactionRepository(ABC):
         account_id: Optional[UUID] = None,
         start_date: Optional[date] = None,
         end_date: Optional[date] = None,
-        exclude_transfers: Optional[bool] = None,
     ) -> int:
         pass
 

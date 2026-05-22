@@ -9,7 +9,13 @@ interface CategoryModalProps {
   category: Category | null
   parentId?: string
   categories: Category[]
-  onSave: (name: string, parentId?: string, categoryId?: string, color?: string) => Promise<void>
+  onSave: (
+    name: string,
+    parentId?: string,
+    categoryId?: string,
+    color?: string,
+    includeInSpending?: boolean
+  ) => Promise<void>
   onClose: () => void
 }
 
@@ -17,6 +23,7 @@ export const CategoryModal = ({ isOpen, category, parentId, categories, onSave, 
   const [name, setName] = useState('')
   const [selectedParentId, setSelectedParentId] = useState<string | undefined>(undefined)
   const [selectedColor, setSelectedColor] = useState<string | undefined>(undefined)
+  const [includeInSpending, setIncludeInSpending] = useState(true)
   const [saving, setSaving] = useState(false)
 
   const isEditing = !!category
@@ -34,10 +41,12 @@ export const CategoryModal = ({ isOpen, category, parentId, categories, onSave, 
         setName(category.name)
         setSelectedParentId(category.parent_id)
         setSelectedColor(category.color)
+        setIncludeInSpending(category.include_in_spending)
       } else {
         setName('')
         setSelectedParentId(parentId)
         setSelectedColor(parentId ? undefined : PRESET_COLORS[0])
+        setIncludeInSpending(true)
       }
     }
   }, [isOpen, category, parentId])
@@ -104,7 +113,13 @@ export const CategoryModal = ({ isOpen, category, parentId, categories, onSave, 
 
     setSaving(true)
     try {
-      await onSave(trimmedName, selectedParentId, category?.id, isRootCategory ? selectedColor : undefined)
+      await onSave(
+        trimmedName,
+        selectedParentId,
+        category?.id,
+        isRootCategory ? selectedColor : undefined,
+        includeInSpending
+      )
     } catch (error) {
       console.error('Failed to save category:', error)
     } finally {
@@ -171,6 +186,22 @@ export const CategoryModal = ({ isOpen, category, parentId, categories, onSave, 
               <ColorSwatchPicker value={selectedColor} onChange={setSelectedColor} usedColors={usedColors} />
             </div>
           )}
+
+          <div className="form-group">
+            <label className="checkbox-label" htmlFor="include-in-spending">
+              <input
+                id="include-in-spending"
+                type="checkbox"
+                checked={includeInSpending}
+                onChange={(e) => setIncludeInSpending(e.target.checked)}
+              />
+              Include in spending totals
+            </label>
+            <div className="form-help-text">
+              When off, transactions in this category are excluded from spending/income analytics. Use for internal
+              transfers and reimbursable expenses.
+            </div>
+          </div>
 
           {isEditing && category && (
             <div className="form-group">

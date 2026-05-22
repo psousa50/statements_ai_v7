@@ -32,6 +32,7 @@ def test_create_category():
         user_id=TEST_USER_ID,
         parent_id=None,
         color=None,
+        include_in_spending=True,
     )
 
 
@@ -109,6 +110,7 @@ def test_update_category():
         user_id=TEST_USER_ID,
         parent_id=None,
         color=None,
+        include_in_spending=True,
     )
 
 

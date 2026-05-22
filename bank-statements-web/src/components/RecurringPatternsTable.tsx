@@ -99,7 +99,6 @@ export const RecurringPatternsTable = ({
 
   const handleViewTransactions = async (pattern: RecurringPattern) => {
     const params = new URLSearchParams()
-    params.set('exclude_transfers', 'false')
     params.set('pattern_label', pattern.description)
 
     if (pattern.transaction_ids.length <= TRANSACTION_IDS_URL_THRESHOLD) {

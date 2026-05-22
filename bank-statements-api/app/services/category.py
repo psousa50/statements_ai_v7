@@ -13,7 +13,12 @@ class CategoryService:
         self.category_repository = category_repository
 
     def create_category(
-        self, name: str, user_id: UUID, parent_id: Optional[UUID] = None, color: Optional[str] = None
+        self,
+        name: str,
+        user_id: UUID,
+        parent_id: Optional[UUID] = None,
+        color: Optional[str] = None,
+        include_in_spending: bool = True,
     ) -> Category:
         if parent_id:
             parent = self.category_repository.get_by_id(parent_id, user_id)
@@ -23,7 +28,9 @@ class CategoryService:
             if parent.parent_id:
                 raise ValidationError("Cannot create more than 2 levels of categories")
 
-        category = Category(name=name, user_id=user_id, parent_id=parent_id, color=color)
+        category = Category(
+            name=name, user_id=user_id, parent_id=parent_id, color=color, include_in_spending=include_in_spending
+        )
         return self.category_repository.create(category)
 
     def get_category(self, category_id: UUID, user_id: UUID) -> Optional[Category]:
@@ -49,6 +56,7 @@ class CategoryService:
         user_id: UUID,
         parent_id: Optional[UUID] = None,
         color: Optional[str] = None,
+        include_in_spending: bool = True,
     ) -> Optional[Category]:
         category = self.category_repository.get_by_id(category_id, user_id)
         if not category:
@@ -68,6 +76,7 @@ class CategoryService:
         category.name = name
         category.parent_id = parent_id
         category.color = color
+        category.include_in_spending = include_in_spending
 
         return self.category_repository.update(category)
 

@@ -50,7 +50,6 @@ export const ChartsPage = () => {
     const urlEndDate = searchParams.get('end_date')
     const urlAccountId = searchParams.get('account_id')
     const urlCategoryIds = searchParams.get('category_ids')
-    const urlExcludeTransfers = searchParams.get('exclude_transfers')
     const urlTransactionType = searchParams.get('transaction_type')
 
     return {
@@ -61,7 +60,6 @@ export const ChartsPage = () => {
       end_date: urlEndDate || undefined,
       account_id: urlAccountId || undefined,
       category_ids: urlCategoryIds ? urlCategoryIds.split(',') : undefined,
-      exclude_transfers: urlExcludeTransfers === 'false' ? false : true,
       transaction_type: (urlTransactionType as 'all' | 'debit' | 'credit') || 'all',
     }
   }
@@ -155,7 +153,6 @@ export const ChartsPage = () => {
           start_date: localStartDate || undefined,
           end_date: localEndDate || undefined,
           transaction_type: transactionType,
-          exclude_transfers: filters.exclude_transfers,
           exclude_uncategorized: categorizationFilter === 'categorized' ? true : undefined,
         }
         setFilters(updatedFilters)
@@ -197,7 +194,6 @@ export const ChartsPage = () => {
     if (filters.max_amount !== undefined) params.set('max_amount', filters.max_amount.toString())
     if (filters.start_date) params.set('start_date', filters.start_date)
     if (filters.end_date) params.set('end_date', filters.end_date)
-    if (filters.exclude_transfers === false) params.set('exclude_transfers', 'false')
     if (filters.transaction_type && filters.transaction_type !== 'all')
       params.set('transaction_type', filters.transaction_type)
     if (viewMode !== 'bar') params.set('view', viewMode)
@@ -234,13 +230,6 @@ export const ChartsPage = () => {
     [handleFilterChange]
   )
 
-  const handleExcludeTransfersFilter = useCallback(
-    (excludeTransfers: boolean) => {
-      handleFilterChange({ exclude_transfers: excludeTransfers })
-    },
-    [handleFilterChange]
-  )
-
   const handleCategorizationFilterChange = useCallback((filter: CategorizationFilter) => {
     setCategorizationFilter(filter)
   }, [])
@@ -270,7 +259,6 @@ export const ChartsPage = () => {
 
   const handleClearFilters = useCallback(() => {
     const defaultFilters = {
-      exclude_transfers: true,
       transaction_type: 'all' as const,
     }
     setFilters(defaultFilters)
@@ -483,7 +471,6 @@ export const ChartsPage = () => {
       if (filters.start_date) params.set('start_date', filters.start_date)
       if (filters.end_date) params.set('end_date', filters.end_date)
       if (filters.account_id) params.set('account_id', filters.account_id)
-      if (filters.exclude_transfers) params.set('exclude_transfers', 'true')
       if (filters.transaction_type && filters.transaction_type !== 'all')
         params.set('transaction_type', filters.transaction_type)
 
@@ -685,20 +672,17 @@ export const ChartsPage = () => {
             descriptionSearch={localDescriptionSearch}
             startDate={localStartDate}
             endDate={localEndDate}
-            excludeTransfers={filters.exclude_transfers}
             categorizationFilter={categorizationFilter}
             hideUncategorizedOnlyOption={true}
             transactionType={transactionType}
             transactionTypeDisabled={true}
             defaultTransactionType="all"
             defaultCategorizationFilter="categorized"
-            defaultExcludeTransfers={true}
             onCategoryChange={handleCategoryFilter}
             onAccountChange={handleAccountFilter}
             onAmountRangeChange={handleAmountRangeFilter}
             onDescriptionSearchChange={handleDescriptionSearchFilter}
             onDateRangeChange={handleDateRangeFilter}
-            onExcludeTransfersChange={handleExcludeTransfersFilter}
             onCategorizationFilterChange={handleCategorizationFilterChange}
             onTransactionTypeChange={handleTransactionTypeFilter}
             onClearFilters={handleClearFilters}

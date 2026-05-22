@@ -40,7 +40,6 @@ def create_chat_functions(
             user_id=user_id,
             start_date=parsed_start,
             end_date=parsed_end,
-            exclude_transfers=True,
             transaction_type=transaction_type,
         )
 
@@ -111,7 +110,6 @@ def create_chat_functions(
             end_date=parsed_end,
             min_amount=Decimal(str(min_amount)) if min_amount is not None else None,
             max_amount=Decimal(str(max_amount)) if max_amount is not None else None,
-            exclude_transfers=True,
             sort_field="date",
             sort_direction="desc",
         )
@@ -154,7 +152,6 @@ def create_chat_functions(
             page=1,
             page_size=5000,
             start_date=cutoff_date,
-            exclude_transfers=True,
             transaction_type="debit",
         )
 
@@ -223,7 +220,6 @@ def create_chat_functions(
             period=period,
             start_date=parsed_start,
             end_date=parsed_end,
-            exclude_transfers=True,
             transaction_type="debit",
         )
 

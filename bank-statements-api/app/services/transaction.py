@@ -164,7 +164,6 @@ class TransactionService:
         include_running_balance: bool = False,
         sort_field: Optional[str] = None,
         sort_direction: Optional[str] = None,
-        exclude_transfers: Optional[bool] = None,
         exclude_uncategorized: Optional[bool] = None,
         transaction_type: Optional[str] = None,
         transaction_ids: Optional[List[UUID]] = None,
@@ -186,7 +185,6 @@ class TransactionService:
             end_date=end_date,
             sort_field=sort_field,
             sort_direction=sort_direction,
-            exclude_transfers=exclude_transfers,
             exclude_uncategorized=exclude_uncategorized,
             transaction_type=transaction_type,
             transaction_ids=transaction_ids,
@@ -297,7 +295,6 @@ class TransactionService:
         account_id: Optional[UUID] = None,
         start_date: Optional[date] = None,
         end_date: Optional[date] = None,
-        exclude_transfers: Optional[bool] = None,
         exclude_uncategorized: Optional[bool] = None,
         transaction_type: Optional[str] = None,
     ) -> Dict[Optional[UUID], Dict[str, Decimal]]:
@@ -312,7 +309,6 @@ class TransactionService:
             account_id=account_id,
             start_date=start_date,
             end_date=end_date,
-            exclude_transfers=exclude_transfers,
             exclude_uncategorized=exclude_uncategorized,
             transaction_type=transaction_type,
             exclude_from_analytics=True,
@@ -331,7 +327,6 @@ class TransactionService:
         account_id: Optional[UUID] = None,
         start_date: Optional[date] = None,
         end_date: Optional[date] = None,
-        exclude_transfers: Optional[bool] = None,
         exclude_uncategorized: Optional[bool] = None,
         transaction_type: Optional[str] = None,
     ) -> List[Dict]:
@@ -348,7 +343,6 @@ class TransactionService:
             account_id=account_id,
             start_date=start_date,
             end_date=end_date,
-            exclude_transfers=exclude_transfers,
             exclude_uncategorized=exclude_uncategorized,
             transaction_type=transaction_type,
             exclude_from_analytics=True,
@@ -361,7 +355,6 @@ class TransactionService:
         account_id: Optional[UUID] = None,
         start_date: Optional[date] = None,
         end_date: Optional[date] = None,
-        exclude_transfers: Optional[bool] = None,
         exclude_uncategorized: Optional[bool] = None,
     ) -> List[Dict]:
         return self.transaction_repository.get_income_spending_time_series(
@@ -370,7 +363,6 @@ class TransactionService:
             account_id=account_id,
             start_date=start_date,
             end_date=end_date,
-            exclude_transfers=exclude_transfers,
             exclude_uncategorized=exclude_uncategorized,
             exclude_from_analytics=True,
         )
@@ -508,7 +500,6 @@ class TransactionService:
         account_id: Optional[UUID] = None,
         start_date: Optional[date] = None,
         end_date: Optional[date] = None,
-        exclude_transfers: Optional[bool] = None,
         enhancement_rule_id: Optional[UUID] = None,
     ) -> int:
         rule = None
@@ -524,7 +515,6 @@ class TransactionService:
             account_id=account_id,
             start_date=start_date,
             end_date=end_date,
-            exclude_transfers=exclude_transfers,
             rule=rule,
         )
 
@@ -551,7 +541,6 @@ class TransactionService:
         account_id: Optional[UUID] = None,
         start_date: Optional[date] = None,
         end_date: Optional[date] = None,
-        exclude_transfers: Optional[bool] = None,
         enhancement_rule_id: Optional[UUID] = None,
     ) -> int:
         rule = None
@@ -566,7 +555,6 @@ class TransactionService:
             account_id=account_id,
             start_date=start_date,
             end_date=end_date,
-            exclude_transfers=exclude_transfers,
             rule=rule,
         )
 
@@ -577,7 +565,6 @@ class TransactionService:
         account_id: Optional[UUID] = None,
         start_date: Optional[date] = None,
         end_date: Optional[date] = None,
-        exclude_transfers: Optional[bool] = None,
     ) -> int:
         return self.transaction_repository.count_by_category_id(
             user_id=user_id,
@@ -585,7 +572,6 @@ class TransactionService:
             account_id=account_id,
             start_date=start_date,
             end_date=end_date,
-            exclude_transfers=exclude_transfers,
         )
 
     def bulk_update_by_category_id(
@@ -596,7 +582,6 @@ class TransactionService:
         account_id: Optional[UUID] = None,
         start_date: Optional[date] = None,
         end_date: Optional[date] = None,
-        exclude_transfers: Optional[bool] = None,
     ) -> int:
         return self.transaction_repository.bulk_update_by_category_id(
             user_id=user_id,
@@ -605,7 +590,6 @@ class TransactionService:
             account_id=account_id,
             start_date=start_date,
             end_date=end_date,
-            exclude_transfers=exclude_transfers,
         )
 
     def save_transactions_from_dtos(

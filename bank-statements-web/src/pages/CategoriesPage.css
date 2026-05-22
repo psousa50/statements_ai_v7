@@ -365,6 +365,19 @@
   font-weight: 500;
 }
 
+.categories-page .category-excluded-badge {
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  color: var(--text-muted);
+  background: var(--bg-secondary);
+  padding: 0.125rem 0.5rem;
+  border-radius: var(--radius-full);
+  font-weight: 500;
+  margin-left: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
 .categories-page .category-actions {
   display: flex;
   gap: 2px;

@@ -12,6 +12,7 @@ export interface Category {
   color?: string
   parent_id?: string
   parent?: CategoryParent
+  include_in_spending: boolean
 }
 
 export interface InitialBalance {

@@ -20,14 +20,12 @@ interface TransactionFiltersProps {
   descriptionSearch?: string
   startDate?: string
   endDate?: string
-  excludeTransfers?: boolean
   categorizationFilter?: CategorizationFilter
   hideUncategorizedOnlyOption?: boolean
   transactionType?: 'all' | 'debit' | 'credit'
   transactionTypeDisabled?: boolean
   defaultTransactionType?: 'all' | 'debit' | 'credit'
   defaultCategorizationFilter?: CategorizationFilter
-  defaultExcludeTransfers?: boolean
   allTags?: Tag[]
   selectedTagIds?: string[]
   excludedOnly?: boolean
@@ -37,7 +35,6 @@ interface TransactionFiltersProps {
   onAmountRangeChange: (minAmount?: number, maxAmount?: number) => void
   onDescriptionSearchChange: (search?: string) => void
   onDateRangeChange?: (startDate?: string, endDate?: string) => void
-  onExcludeTransfersChange: (excludeTransfers: boolean) => void
   onCategorizationFilterChange: (filter: CategorizationFilter) => void
   onTransactionTypeChange: (type: 'all' | 'debit' | 'credit') => void
   onExcludedOnlyChange?: (excludedOnly: boolean) => void
@@ -60,14 +57,12 @@ export const TransactionFilters = ({
   descriptionSearch,
   startDate,
   endDate,
-  excludeTransfers,
   categorizationFilter = 'all',
   hideUncategorizedOnlyOption = false,
   transactionType = 'all',
   transactionTypeDisabled = false,
   defaultTransactionType = 'all',
   defaultCategorizationFilter = 'all',
-  defaultExcludeTransfers = true,
   allTags,
   selectedTagIds = [],
   excludedOnly = false,
@@ -77,7 +72,6 @@ export const TransactionFilters = ({
   onAmountRangeChange,
   onDescriptionSearchChange,
   onDateRangeChange,
-  onExcludeTransfersChange,
   onCategorizationFilterChange,
   onTransactionTypeChange,
   onExcludedOnlyChange,
@@ -111,7 +105,6 @@ export const TransactionFilters = ({
     maxAmount !== undefined ||
     descriptionSearch ||
     selectedAccountId ||
-    excludeTransfers !== defaultExcludeTransfers ||
     categorizationFilter !== defaultCategorizationFilter ||
     transactionType !== defaultTransactionType ||
     excludedOnly
@@ -350,16 +343,6 @@ export const TransactionFilters = ({
             <div className="filter-group options-group">
               <label className="filter-label">Options</label>
               <div className="checkbox-container">
-                <label htmlFor="exclude-transfers" className="checkbox-label">
-                  <input
-                    id="exclude-transfers"
-                    type="checkbox"
-                    checked={excludeTransfers !== false}
-                    onChange={(e) => onExcludeTransfersChange(e.target.checked)}
-                    className="checkbox-input"
-                  />
-                  <span className="checkbox-text">Exclude Transfers</span>
-                </label>
                 {onExcludedOnlyChange && (
                   <label htmlFor="excluded-only" className="checkbox-label">
                     <input

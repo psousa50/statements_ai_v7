@@ -120,10 +120,6 @@ def register_transaction_routes(
             None,
             description="Filter by enhancement rule ID (overrides other filters)",
         ),
-        exclude_transfers: Optional[bool] = Query(
-            True,
-            description="Exclude transfers between accounts",
-        ),
         exclude_uncategorized: Optional[bool] = Query(
             False,
             description="Exclude uncategorized transactions",
@@ -226,7 +222,6 @@ def register_transaction_routes(
             include_running_balance=include_running_balance,
             sort_field=sort_field,
             sort_direction=sort_direction,
-            exclude_transfers=exclude_transfers,
             exclude_uncategorized=exclude_uncategorized,
             transaction_type=transaction_type,
             transaction_ids=parsed_transaction_ids,
@@ -247,7 +242,6 @@ def register_transaction_routes(
         end_date: Optional[date] = Query(None),
         sort_field: Optional[str] = Query(None),
         sort_direction: Optional[str] = Query(None),
-        exclude_transfers: Optional[bool] = Query(True),
         exclude_uncategorized: Optional[bool] = Query(False),
         transaction_type: Optional[str] = Query(None),
         internal: InternalDependencies = Depends(provide_dependencies),
@@ -275,7 +269,6 @@ def register_transaction_routes(
             end_date=end_date,
             sort_field=sort_field,
             sort_direction=sort_direction,
-            exclude_transfers=exclude_transfers,
             exclude_uncategorized=exclude_uncategorized,
             transaction_type=transaction_type,
             include_running_balance=include_running_balance,
@@ -354,10 +347,6 @@ def register_transaction_routes(
             None,
             description="Filter transactions to this date",
         ),
-        exclude_transfers: Optional[bool] = Query(
-            True,
-            description="Exclude transfers between accounts",
-        ),
         exclude_uncategorized: Optional[bool] = Query(
             False,
             description="Exclude uncategorized transactions",
@@ -389,7 +378,6 @@ def register_transaction_routes(
             account_id=account_id,
             start_date=start_date,
             end_date=end_date,
-            exclude_transfers=exclude_transfers,
             exclude_uncategorized=exclude_uncategorized,
             transaction_type=transaction_type,
         )
@@ -438,10 +426,6 @@ def register_transaction_routes(
             None,
             description="Filter transactions to this date",
         ),
-        exclude_transfers: Optional[bool] = Query(
-            True,
-            description="Exclude transfers between accounts",
-        ),
         exclude_uncategorized: Optional[bool] = Query(
             False,
             description="Exclude uncategorized transactions",
@@ -475,7 +459,6 @@ def register_transaction_routes(
             account_id=account_id,
             start_date=start_date,
             end_date=end_date,
-            exclude_transfers=exclude_transfers,
             exclude_uncategorized=exclude_uncategorized,
             transaction_type=transaction_type,
         )
@@ -501,7 +484,6 @@ def register_transaction_routes(
         account_id: Optional[UUID] = Query(None, description="Filter by account ID"),
         start_date: Optional[date] = Query(None, description="Filter from this date"),
         end_date: Optional[date] = Query(None, description="Filter to this date"),
-        exclude_transfers: Optional[bool] = Query(True, description="Exclude transfers between accounts"),
         exclude_uncategorized: Optional[bool] = Query(False, description="Exclude uncategorized transactions"),
         internal: InternalDependencies = Depends(provide_dependencies),
         current_user: User = Depends(require_current_user),
@@ -512,7 +494,6 @@ def register_transaction_routes(
             account_id=account_id,
             start_date=start_date,
             end_date=end_date,
-            exclude_transfers=exclude_transfers,
             exclude_uncategorized=exclude_uncategorized,
         )
         return IncomeSpendingResponse(data_points=[IncomeSpendingDataPoint(**dp) for dp in data_points])
@@ -540,7 +521,6 @@ def register_transaction_routes(
             page=1,
             page_size=10000,
             start_date=lookback_start,
-            exclude_transfers=True,
             transaction_type="debit",
         )
 
@@ -639,7 +619,6 @@ def register_transaction_routes(
                 account_id=request.account_id,
                 start_date=request.start_date,
                 end_date=request.end_date,
-                exclude_transfers=request.exclude_transfers,
                 enhancement_rule_id=request.enhancement_rule_id,
             )
 
@@ -662,7 +641,6 @@ def register_transaction_routes(
         account_id: Optional[UUID] = Query(None),
         start_date: Optional[date] = Query(None),
         end_date: Optional[date] = Query(None),
-        exclude_transfers: Optional[bool] = Query(None),
         enhancement_rule_id: Optional[UUID] = Query(None),
         internal: InternalDependencies = Depends(provide_dependencies),
         current_user: User = Depends(require_current_user),
@@ -673,7 +651,6 @@ def register_transaction_routes(
             account_id=account_id,
             start_date=start_date,
             end_date=end_date,
-            exclude_transfers=exclude_transfers,
             enhancement_rule_id=enhancement_rule_id,
         )
         return CountSimilarResponse(count=count)
@@ -687,7 +664,6 @@ def register_transaction_routes(
         account_id: Optional[UUID] = Query(None),
         start_date: Optional[date] = Query(None),
         end_date: Optional[date] = Query(None),
-        exclude_transfers: Optional[bool] = Query(None),
         internal: InternalDependencies = Depends(provide_dependencies),
         current_user: User = Depends(require_current_user),
     ):
@@ -697,7 +673,6 @@ def register_transaction_routes(
             account_id=account_id,
             start_date=start_date,
             end_date=end_date,
-            exclude_transfers=exclude_transfers,
         )
         return CountSimilarResponse(count=count)
 
@@ -717,7 +692,6 @@ def register_transaction_routes(
             account_id=request.account_id,
             start_date=request.start_date,
             end_date=request.end_date,
-            exclude_transfers=request.exclude_transfers,
         )
 
         from_category = internal.category_repository.get_by_id(request.from_category_id, current_user.id)

@@ -8,7 +8,6 @@ export interface FilterPresetData {
   description_search?: string
   start_date?: string
   end_date?: string
-  exclude_transfers?: boolean
   categorization_filter?: 'all' | 'categorized' | 'uncategorized'
   transaction_type?: 'all' | 'debit' | 'credit'
   sort_field?: 'date' | 'amount' | 'description' | 'created_at'

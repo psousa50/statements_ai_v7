@@ -58,7 +58,6 @@ export const TransactionsPage = () => {
     const urlSortField = searchParams.get('sort_field')
     const urlSortDirection = searchParams.get('sort_direction')
     const urlEnhancementRuleId = searchParams.get('enhancement_rule_id')
-    const urlExcludeTransfers = searchParams.get('exclude_transfers')
     const urlExcludeUncategorized = searchParams.get('exclude_uncategorized')
     const urlTransactionType = searchParams.get('transaction_type')
     const urlTransactionIds = searchParams.get('transaction_ids')
@@ -80,7 +79,6 @@ export const TransactionsPage = () => {
       sort_field: (urlSortField as TransactionSortField) || 'date',
       sort_direction: (urlSortDirection as TransactionSortDirection) || 'desc',
       enhancement_rule_id: urlEnhancementRuleId || undefined,
-      exclude_transfers: urlExcludeTransfers === 'false' ? false : true,
       exclude_uncategorized: urlExcludeUncategorized === 'true' ? true : false,
       transaction_type: (urlTransactionType as 'all' | 'debit' | 'credit') || 'all',
       transaction_ids: urlTransactionIds ? urlTransactionIds.split(',') : undefined,
@@ -271,7 +269,6 @@ export const TransactionsPage = () => {
     if (filters.sort_direction && filters.sort_direction !== 'desc')
       params.set('sort_direction', filters.sort_direction)
     if (filters.enhancement_rule_id) params.set('enhancement_rule_id', filters.enhancement_rule_id)
-    if (filters.exclude_transfers === false) params.set('exclude_transfers', 'false')
     if (filters.exclude_uncategorized) params.set('exclude_uncategorized', 'true')
     if (filters.transaction_type && filters.transaction_type !== 'all')
       params.set('transaction_type', filters.transaction_type)
@@ -447,13 +444,6 @@ export const TransactionsPage = () => {
     [handleFilterChange]
   )
 
-  const handleExcludeTransfersFilter = useCallback(
-    (excludeTransfers: boolean) => {
-      handleFilterChange({ exclude_transfers: excludeTransfers })
-    },
-    [handleFilterChange]
-  )
-
   const handleCategorizationFilterChange = useCallback(
     (filter: CategorizationFilter) => {
       setCategorizationFilter(filter)
@@ -553,7 +543,6 @@ export const TransactionsPage = () => {
       if (localDescriptionSearch) filterData.description_search = localDescriptionSearch
       if (localStartDate) filterData.start_date = localStartDate
       if (localEndDate) filterData.end_date = localEndDate
-      if (filters.exclude_transfers !== undefined) filterData.exclude_transfers = filters.exclude_transfers
       if (categorizationFilter !== 'all') filterData.categorization_filter = categorizationFilter
       if (filters.transaction_type && filters.transaction_type !== 'all')
         filterData.transaction_type = filters.transaction_type
@@ -577,7 +566,6 @@ export const TransactionsPage = () => {
     [
       filters.category_ids,
       filters.account_id,
-      filters.exclude_transfers,
       filters.transaction_type,
       filters.sort_field,
       filters.sort_direction,
@@ -613,7 +601,6 @@ export const TransactionsPage = () => {
         description_search: data.description_search ?? undefined,
         start_date: data.start_date ?? undefined,
         end_date: data.end_date ?? undefined,
-        exclude_transfers: data.exclude_transfers ?? undefined,
         status: data.categorization_filter === 'uncategorized' ? 'UNCATEGORIZED' : undefined,
         exclude_uncategorized: data.categorization_filter === 'categorized' ? true : undefined,
         transaction_type: data.transaction_type ?? undefined,
@@ -747,7 +734,6 @@ export const TransactionsPage = () => {
       account_id: filters.account_id,
       start_date: filters.start_date,
       end_date: filters.end_date,
-      exclude_transfers: filters.exclude_transfers,
     })
     if (result) {
       fetchWithConvertedAmounts()
@@ -873,7 +859,6 @@ export const TransactionsPage = () => {
               descriptionSearch={localDescriptionSearch}
               startDate={localStartDate}
               endDate={localEndDate}
-              excludeTransfers={filters.exclude_transfers}
               categorizationFilter={categorizationFilter}
               transactionType={filters.transaction_type || 'all'}
               allTags={allTags}
@@ -885,7 +870,6 @@ export const TransactionsPage = () => {
               onAmountRangeChange={handleAmountRangeFilter}
               onDescriptionSearchChange={handleDescriptionSearchFilter}
               onDateRangeChange={handleDateRangeFilter}
-              onExcludeTransfersChange={handleExcludeTransfersFilter}
               onCategorizationFilterChange={handleCategorizationFilterChange}
               onTransactionTypeChange={handleTransactionTypeFilter}
               onExcludedOnlyChange={handleExcludedOnlyFilter}
@@ -956,7 +940,6 @@ export const TransactionsPage = () => {
                 account_id: filters.account_id,
                 start_date: filters.start_date,
                 end_date: filters.end_date,
-                exclude_transfers: filters.exclude_transfers,
                 enhancement_rule_id: filters.enhancement_rule_id,
               }}
               onEdit={handleEditTransaction}

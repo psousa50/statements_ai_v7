@@ -162,7 +162,6 @@ export const useTransactions = () => {
       account_id?: string
       start_date?: string
       end_date?: string
-      exclude_transfers?: boolean
       enhancement_rule_id?: string
     }) => {
       return api.transactions.bulkUpdateCategory(params)
@@ -179,7 +178,6 @@ export const useTransactions = () => {
       account_id?: string
       start_date?: string
       end_date?: string
-      exclude_transfers?: boolean
     }) => {
       return api.transactions.bulkReplaceCategory(params)
     },
@@ -271,7 +269,6 @@ export const useTransactions = () => {
         account_id?: string
         start_date?: string
         end_date?: string
-        exclude_transfers?: boolean
         enhancement_rule_id?: string
       }
     ) => {
@@ -297,7 +294,6 @@ export const useTransactions = () => {
         account_id?: string
         start_date?: string
         end_date?: string
-        exclude_transfers?: boolean
       }
     ) => {
       try {

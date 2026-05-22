@@ -87,6 +87,11 @@ const CategoryTreeNode = ({
             style={{ backgroundColor: getCategoryColor(category, allCategories).solid }}
           />
           <div className="category-name">{category.name}</div>
+          {!category.include_in_spending && (
+            <span className="category-excluded-badge" title="Excluded from spending/income analytics">
+              Excluded
+            </span>
+          )}
           <div className="category-stats">
             {hasSubcategories && <span className="subcategory-count">{subcategories.length} subcategories</span>}
           </div>

@@ -48,7 +48,6 @@ export interface SimilarCountFilters {
   account_id?: string
   start_date?: string
   end_date?: string
-  exclude_transfers?: boolean
   enhancement_rule_id?: string
 }
 

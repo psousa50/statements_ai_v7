@@ -61,6 +61,7 @@ class BulkCategorizeByIdsRequest(BaseModel):
 class CategoryBase(BaseModel):
     name: str
     color: Optional[str] = None
+    include_in_spending: bool = True
 
     @field_validator("color")
     @classmethod
@@ -94,6 +95,7 @@ class CategoryResponse(BaseModel):
     color: Optional[str] = None
     parent_id: Optional[UUID] = None
     parent: Optional[CategoryParentResponse] = None
+    include_in_spending: bool = True
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -578,7 +580,6 @@ class BulkUpdateTransactionsRequest(BaseModel):
     account_id: Optional[UUID] = None
     start_date: Optional[date] = None
     end_date: Optional[date] = None
-    exclude_transfers: Optional[bool] = None
     enhancement_rule_id: Optional[UUID] = None
 
 
@@ -597,7 +598,6 @@ class BulkReplaceCategoryRequest(BaseModel):
     account_id: Optional[UUID] = None
     start_date: Optional[date] = None
     end_date: Optional[date] = None
-    exclude_transfers: Optional[bool] = None
 
 
 class BulkReplaceCategoryResponse(BaseModel):
@@ -823,7 +823,6 @@ class FilterPresetData(BaseModel):
     description_search: Optional[str] = None
     start_date: Optional[str] = None
     end_date: Optional[str] = None
-    exclude_transfers: Optional[bool] = None
     categorization_filter: Optional[str] = None
     transaction_type: Optional[str] = None
     sort_field: Optional[str] = None

@@ -4,14 +4,22 @@ from typing import Dict, List, Optional, Tuple
 from uuid import UUID
 
 import pandas as pd
-from sqlalchemy import and_, case, func, or_, over
+from sqlalchemy import and_, case, func, or_, over, select
 from sqlalchemy.orm import Session
 
 from app.common.text_normalization import normalize_description
 from app.domain.dto.statement_processing import TransactionDTO
+from app.domain.models.category import Category
 from app.domain.models.tag import Tag
 from app.domain.models.transaction import CategorizationStatus, SourceType, Transaction
 from app.ports.repositories.transaction import TransactionRepository
+
+
+def _spending_filter():
+    return or_(
+        Transaction.category_id.in_(select(Category.id).where(Category.include_in_spending.is_(True))),
+        and_(Transaction.category_id.is_(None), Transaction.counterparty_account_id.is_(None)),
+    )
 
 
 class SQLAlchemyTransactionRepository(TransactionRepository):
@@ -89,7 +97,6 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         end_date: Optional[date] = None,
         sort_field: Optional[str] = None,
         sort_direction: Optional[str] = None,
-        exclude_transfers: Optional[bool] = None,
         exclude_uncategorized: Optional[bool] = None,
         transaction_type: Optional[str] = None,
         transaction_ids: Optional[List[UUID]] = None,
@@ -135,10 +142,6 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
             filters.append(Transaction.date >= start_date)
         if end_date is not None:
             filters.append(Transaction.date <= end_date)
-
-        # Exclude transfers filter (default to True)
-        if exclude_transfers is not False:
-            filters.append(Transaction.counterparty_account_id.is_(None))
 
         # Exclude uncategorized filter
         if exclude_uncategorized is True:
@@ -218,7 +221,6 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         account_id: Optional[UUID] = None,
         start_date: Optional[date] = None,
         end_date: Optional[date] = None,
-        exclude_transfers: Optional[bool] = None,
         exclude_uncategorized: Optional[bool] = None,
         transaction_type: Optional[str] = None,
         exclude_from_analytics: Optional[bool] = None,
@@ -266,9 +268,7 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         if end_date is not None:
             filters.append(Transaction.date <= end_date)
 
-        # Exclude transfers filter (default to True)
-        if exclude_transfers is not False:
-            filters.append(Transaction.counterparty_account_id.is_(None))
+            filters.append(_spending_filter())
 
         # Exclude uncategorized filter
         if exclude_uncategorized is True:
@@ -317,7 +317,6 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         account_id: Optional[UUID] = None,
         start_date: Optional[date] = None,
         end_date: Optional[date] = None,
-        exclude_transfers: Optional[bool] = None,
         exclude_uncategorized: Optional[bool] = None,
         transaction_type: Optional[str] = None,
         exclude_from_analytics: Optional[bool] = None,
@@ -378,8 +377,7 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         if end_date is not None:
             filters.append(Transaction.date <= end_date)
 
-        if exclude_transfers is not False:
-            filters.append(Transaction.counterparty_account_id.is_(None))
+            filters.append(_spending_filter())
 
         if exclude_uncategorized is True:
             filters.append(Transaction.category_id.isnot(None))
@@ -414,7 +412,6 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         account_id: Optional[UUID] = None,
         start_date: Optional[date] = None,
         end_date: Optional[date] = None,
-        exclude_transfers: Optional[bool] = None,
         exclude_uncategorized: Optional[bool] = None,
         exclude_from_analytics: Optional[bool] = None,
     ) -> List[Dict]:
@@ -457,8 +454,7 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
             filters.append(Transaction.date >= start_date)
         if end_date is not None:
             filters.append(Transaction.date <= end_date)
-        if exclude_transfers is not False:
-            filters.append(Transaction.counterparty_account_id.is_(None))
+            filters.append(_spending_filter())
         if exclude_uncategorized is True:
             filters.append(Transaction.category_id.isnot(None))
         if exclude_from_analytics:
@@ -657,7 +653,6 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         account_id: Optional[UUID] = None,
         start_date: Optional[date] = None,
         end_date: Optional[date] = None,
-        exclude_transfers: Optional[bool] = None,
         rule=None,
     ) -> int:
         from app.domain.models.enhancement_rule import MatchType
@@ -689,8 +684,6 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
             subquery = subquery.filter(Transaction.date >= start_date)
         if end_date is not None:
             subquery = subquery.filter(Transaction.date <= end_date)
-        if exclude_transfers is not False:
-            subquery = subquery.filter(Transaction.counterparty_account_id.is_(None))
 
         subquery = subquery.subquery()
 
@@ -715,7 +708,6 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         account_id: Optional[UUID] = None,
         start_date: Optional[date] = None,
         end_date: Optional[date] = None,
-        exclude_transfers: Optional[bool] = None,
         rule=None,
     ) -> int:
         from app.domain.models.enhancement_rule import MatchType
@@ -747,8 +739,6 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
             query = query.filter(Transaction.date >= start_date)
         if end_date is not None:
             query = query.filter(Transaction.date <= end_date)
-        if exclude_transfers is not False:
-            query = query.filter(Transaction.counterparty_account_id.is_(None))
 
         return query.scalar() or 0
 
@@ -759,7 +749,6 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         account_id: Optional[UUID] = None,
         start_date: Optional[date] = None,
         end_date: Optional[date] = None,
-        exclude_transfers: Optional[bool] = None,
     ) -> int:
         query = (
             self.db_session.query(func.count(Transaction.id))
@@ -776,9 +765,6 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         if end_date is not None:
             query = query.filter(Transaction.date <= end_date)
 
-        if exclude_transfers is not False:
-            query = query.filter(Transaction.counterparty_account_id.is_(None))
-
         return query.scalar() or 0
 
     def bulk_update_by_category_id(
@@ -789,7 +775,6 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         account_id: Optional[UUID] = None,
         start_date: Optional[date] = None,
         end_date: Optional[date] = None,
-        exclude_transfers: Optional[bool] = None,
     ) -> int:
         subquery = (
             self.db_session.query(Transaction.id)
@@ -805,9 +790,6 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
 
         if end_date is not None:
             subquery = subquery.filter(Transaction.date <= end_date)
-
-        if exclude_transfers is not False:
-            subquery = subquery.filter(Transaction.counterparty_account_id.is_(None))
 
         subquery = subquery.subquery()
 
