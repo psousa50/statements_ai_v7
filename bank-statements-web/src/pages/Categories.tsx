@@ -383,7 +383,11 @@ export const CategoriesPage = () => {
                     : 'Showing only non-excluded. Click to show all.'
               }
             >
-              {excludedFilter === 'any' ? 'Excluded: any' : excludedFilter === 'on' ? 'Excluded: only' : 'Excluded: none'}
+              {excludedFilter === 'any'
+                ? 'Excluded: any'
+                : excludedFilter === 'on'
+                  ? 'Excluded: only'
+                  : 'Excluded: none'}
             </button>
             <button
               type="button"
