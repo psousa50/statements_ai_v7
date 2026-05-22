@@ -19,7 +19,8 @@ class Category(Base):
         ForeignKey("categories.id"),
         nullable=True,
     )
-    include_in_spending = Column(Boolean, nullable=False, default=True, server_default="true")
+    exclude_from_spending = Column(Boolean, nullable=False, default=False, server_default="false")
+    is_irregular = Column(Boolean, nullable=False, default=False, server_default="false")
 
     user = relationship("User", back_populates="categories")
     parent = relationship(
@@ -29,7 +30,8 @@ class Category(Base):
     )
 
     def __init__(self, **kwargs):
-        kwargs.setdefault("include_in_spending", True)
+        kwargs.setdefault("exclude_from_spending", False)
+        kwargs.setdefault("is_irregular", False)
         super().__init__(**kwargs)
 
     def __repr__(self):

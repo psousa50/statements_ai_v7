@@ -46,7 +46,8 @@ def register_category_routes(
             user_id=current_user.id,
             parent_id=category_data.parent_id,
             color=category_data.color,
-            include_in_spending=category_data.include_in_spending,
+            exclude_from_spending=category_data.exclude_from_spending,
+            is_irregular=category_data.is_irregular,
         )
 
     @router.get("", response_model=CategoryListResponse)
@@ -140,7 +141,8 @@ def register_category_routes(
             user_id=current_user.id,
             parent_id=category_data.parent_id,
             color=category_data.color,
-            include_in_spending=category_data.include_in_spending,
+            exclude_from_spending=category_data.exclude_from_spending,
+            is_irregular=category_data.is_irregular,
         )
         if not updated_category:
             raise HTTPException(

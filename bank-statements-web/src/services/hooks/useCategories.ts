@@ -49,14 +49,22 @@ export const useCategories = () => {
       name,
       parentId,
       color,
-      includeInSpending,
+      excludeFromSpending,
+      isIrregular,
     }: {
       name: string
       parentId?: string
       color?: string
-      includeInSpending?: boolean
+      excludeFromSpending?: boolean
+      isIrregular?: boolean
     }) => {
-      return api.categories.create({ name, parent_id: parentId, color, include_in_spending: includeInSpending })
+      return api.categories.create({
+        name,
+        parent_id: parentId,
+        color,
+        exclude_from_spending: excludeFromSpending,
+        is_irregular: isIrregular,
+      })
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: CATEGORY_QUERY_KEYS.all })
@@ -70,15 +78,23 @@ export const useCategories = () => {
       name,
       parentId,
       color,
-      includeInSpending,
+      excludeFromSpending,
+      isIrregular,
     }: {
       id: string
       name: string
       parentId?: string
       color?: string
-      includeInSpending?: boolean
+      excludeFromSpending?: boolean
+      isIrregular?: boolean
     }) => {
-      return api.categories.update(id, { name, parent_id: parentId, color, include_in_spending: includeInSpending })
+      return api.categories.update(id, {
+        name,
+        parent_id: parentId,
+        color,
+        exclude_from_spending: excludeFromSpending,
+        is_irregular: isIrregular,
+      })
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: CATEGORY_QUERY_KEYS.all })
@@ -115,9 +131,9 @@ export const useCategories = () => {
   })
 
   const addCategory = useCallback(
-    async (name: string, parentId?: string, color?: string, includeInSpending?: boolean) => {
+    async (name: string, parentId?: string, color?: string, excludeFromSpending?: boolean, isIrregular?: boolean) => {
       try {
-        return await addMutation.mutateAsync({ name, parentId, color, includeInSpending })
+        return await addMutation.mutateAsync({ name, parentId, color, excludeFromSpending, isIrregular })
       } catch {
         return null
       }
@@ -126,9 +142,16 @@ export const useCategories = () => {
   )
 
   const updateCategory = useCallback(
-    async (id: string, name: string, parentId?: string, color?: string, includeInSpending?: boolean) => {
+    async (
+      id: string,
+      name: string,
+      parentId?: string,
+      color?: string,
+      excludeFromSpending?: boolean,
+      isIrregular?: boolean
+    ) => {
       try {
-        return await updateMutation.mutateAsync({ id, name, parentId, color, includeInSpending })
+        return await updateMutation.mutateAsync({ id, name, parentId, color, excludeFromSpending, isIrregular })
       } catch {
         return null
       }

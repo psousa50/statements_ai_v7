@@ -68,6 +68,7 @@ export const ChartsPage = () => {
   const [chartType, setChartType] = useState<'root' | 'sub'>('root')
   const [selectedRootCategory, setSelectedRootCategory] = useState<string | null>(null)
   const [hiddenChartCategoryIds, setHiddenChartCategoryIds] = useState<Set<string>>(new Set())
+  const [regularOnly, setRegularOnly] = useState(false)
   const [transactionType, setTransactionType] = useState<'all' | 'debit' | 'credit'>(
     () => (searchParams.get('transaction_type') as 'all' | 'debit' | 'credit') || 'all'
   )
@@ -297,7 +298,7 @@ export const ChartsPage = () => {
 
       categoryTotals.totals.forEach((total) => {
         if (!total.category_id) {
-          // Uncategorized transaction
+          if (regularOnly) return
           const existing = rootCategoryData.get('uncategorized')!
           existing.value += total.total_amount
           existing.count += total.transaction_count
@@ -315,6 +316,12 @@ export const ChartsPage = () => {
           rootCategory = parent
         }
 
+        if (regularOnly) {
+          if (rootCategory.is_irregular) return
+          const isRootItself = category.id === rootCategory.id
+          if (!isRootItself && category.is_irregular) return
+        }
+
         const existing = rootCategoryData.get(rootCategory.id)
         if (existing) {
           existing.value += total.total_amount
@@ -325,6 +332,11 @@ export const ChartsPage = () => {
       return Array.from(rootCategoryData.entries())
         .filter(([_, data]) => data.value > 0)
         .filter(([id, _]) => !(categorizationFilter === 'categorized' && id === 'uncategorized'))
+        .filter(([id, _]) => {
+          if (!regularOnly) return true
+          if (id === 'uncategorized') return false
+          return !(categoryMap.get(id)?.is_irregular ?? false)
+        })
         .map(([id, data]) => ({
           id,
           name: id === 'uncategorized' ? 'Uncategorized' : categoryMap.get(id)?.name || 'Unknown',
@@ -336,10 +348,16 @@ export const ChartsPage = () => {
     } else {
       if (!selectedRootCategory) return []
 
+      if (regularOnly && selectedRootCategory !== 'uncategorized') {
+        const root = categoryMap.get(selectedRootCategory)
+        if (root?.is_irregular) return []
+      }
+      if (regularOnly && selectedRootCategory === 'uncategorized') return []
+
       const subcategories =
         selectedRootCategory === 'uncategorized'
           ? []
-          : categories.filter((cat) => cat.parent_id === selectedRootCategory)
+          : categories.filter((cat) => cat.parent_id === selectedRootCategory && (!regularOnly || !cat.is_irregular))
 
       const subcategoryData = new Map<string, { value: number; count: number }>()
 
@@ -422,7 +440,7 @@ export const ChartsPage = () => {
               : getCategoryColor(categoryMap.get(id)!, categories).solid,
         }))
     }
-  }, [categoryTotals, categories, chartType, selectedRootCategory, categorizationFilter])
+  }, [categoryTotals, categories, chartType, selectedRootCategory, categorizationFilter, regularOnly])
 
   const visibleChartData = useMemo(() => {
     const filtered = chartData.filter((d) => !hiddenChartCategoryIds.has(d.id))
@@ -852,6 +870,16 @@ export const ChartsPage = () => {
                 <button onClick={handleBackToRoot} className="back-button">
                   ← Back to All Categories
                 </button>
+              )}
+              {(viewMode === 'bar' || viewMode === 'pie') && (
+                <label className="regular-only-toggle">
+                  <input
+                    type="checkbox"
+                    checked={regularOnly}
+                    onChange={(e) => setRegularOnly(e.target.checked)}
+                  />
+                  Regular only
+                </label>
               )}
             </div>
           </div>

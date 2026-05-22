@@ -160,6 +160,21 @@
   order: 1;
 }
 
+.charts-page .regular-only-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+  user-select: none;
+  order: 2;
+}
+
+.charts-page .regular-only-toggle input {
+  cursor: pointer;
+}
+
 .charts-page .view-mode-toggle button {
   background: transparent;
   border: 1px solid var(--border-primary);

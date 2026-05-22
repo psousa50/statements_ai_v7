@@ -14,7 +14,8 @@ interface CategoryModalProps {
     parentId?: string,
     categoryId?: string,
     color?: string,
-    includeInSpending?: boolean
+    excludeFromSpending?: boolean,
+    isIrregular?: boolean
   ) => Promise<void>
   onClose: () => void
 }
@@ -23,7 +24,8 @@ export const CategoryModal = ({ isOpen, category, parentId, categories, onSave, 
   const [name, setName] = useState('')
   const [selectedParentId, setSelectedParentId] = useState<string | undefined>(undefined)
   const [selectedColor, setSelectedColor] = useState<string | undefined>(undefined)
-  const [includeInSpending, setIncludeInSpending] = useState(true)
+  const [excludeFromSpending, setExcludeFromSpending] = useState(false)
+  const [isIrregular, setIsIrregular] = useState(false)
   const [saving, setSaving] = useState(false)
 
   const isEditing = !!category
@@ -34,6 +36,8 @@ export const CategoryModal = ({ isOpen, category, parentId, categories, onSave, 
       ? `Create Subcategory under ${parentCategory?.name || 'Unknown'}`
       : 'Create Root Category'
   const isRootCategory = !selectedParentId
+  const selectedParent = selectedParentId ? categories.find((c) => c.id === selectedParentId) : null
+  const parentIsRegular = selectedParent ? !selectedParent.is_irregular : true
 
   useEffect(() => {
     if (isOpen) {
@@ -41,12 +45,14 @@ export const CategoryModal = ({ isOpen, category, parentId, categories, onSave, 
         setName(category.name)
         setSelectedParentId(category.parent_id)
         setSelectedColor(category.color)
-        setIncludeInSpending(category.include_in_spending)
+        setExcludeFromSpending(category.exclude_from_spending)
+        setIsIrregular(category.is_irregular)
       } else {
         setName('')
         setSelectedParentId(parentId)
         setSelectedColor(parentId ? undefined : PRESET_COLORS[0])
-        setIncludeInSpending(true)
+        setExcludeFromSpending(false)
+        setIsIrregular(false)
       }
     }
   }, [isOpen, category, parentId])
@@ -118,7 +124,8 @@ export const CategoryModal = ({ isOpen, category, parentId, categories, onSave, 
         selectedParentId,
         category?.id,
         isRootCategory ? selectedColor : undefined,
-        includeInSpending
+        excludeFromSpending,
+        isIrregular
       )
     } catch (error) {
       console.error('Failed to save category:', error)
@@ -188,18 +195,36 @@ export const CategoryModal = ({ isOpen, category, parentId, categories, onSave, 
           )}
 
           <div className="form-group">
-            <label className="checkbox-label" htmlFor="include-in-spending">
+            <label className="checkbox-label" htmlFor="exclude-from-spending">
               <input
-                id="include-in-spending"
+                id="exclude-from-spending"
                 type="checkbox"
-                checked={includeInSpending}
-                onChange={(e) => setIncludeInSpending(e.target.checked)}
+                checked={excludeFromSpending}
+                onChange={(e) => setExcludeFromSpending(e.target.checked)}
               />
-              Include in spending totals
+              Exclude from spending totals
             </label>
             <div className="form-help-text">
-              When off, transactions in this category are excluded from spending/income analytics. Use for internal
+              When on, transactions in this category are excluded from spending/income analytics. Use for internal
               transfers and reimbursable expenses.
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label className="checkbox-label" htmlFor="is-irregular">
+              <input
+                id="is-irregular"
+                type="checkbox"
+                checked={isIrregular}
+                onChange={(e) => setIsIrregular(e.target.checked)}
+                disabled={!isRootCategory && !parentIsRegular}
+              />
+              Irregular / one-off expense
+            </label>
+            <div className="form-help-text">
+              {!isRootCategory && !parentIsRegular
+                ? `Parent ${selectedParent?.name ?? ''} is already marked irregular, so this subcategory inherits that.`
+                : 'Mark as irregular to exclude from the regular-only spending view (e.g. travel, one-off purchases).'}
             </div>
           </div>
 

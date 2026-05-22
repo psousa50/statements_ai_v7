@@ -17,7 +17,7 @@ from app.ports.repositories.transaction import TransactionRepository
 
 def _spending_filter():
     return or_(
-        Transaction.category_id.in_(select(Category.id).where(Category.include_in_spending.is_(True))),
+        Transaction.category_id.in_(select(Category.id).where(Category.exclude_from_spending.is_(False))),
         and_(Transaction.category_id.is_(None), Transaction.counterparty_account_id.is_(None)),
     )
 

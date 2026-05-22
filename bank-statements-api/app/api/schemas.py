@@ -61,7 +61,8 @@ class BulkCategorizeByIdsRequest(BaseModel):
 class CategoryBase(BaseModel):
     name: str
     color: Optional[str] = None
-    include_in_spending: bool = True
+    exclude_from_spending: bool = False
+    is_irregular: bool = False
 
     @field_validator("color")
     @classmethod
@@ -95,7 +96,8 @@ class CategoryResponse(BaseModel):
     color: Optional[str] = None
     parent_id: Optional[UUID] = None
     parent: Optional[CategoryParentResponse] = None
-    include_in_spending: bool = True
+    exclude_from_spending: bool = False
+    is_irregular: bool = False
 
     model_config = ConfigDict(from_attributes=True)
 

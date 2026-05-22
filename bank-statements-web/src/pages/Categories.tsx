@@ -144,10 +144,24 @@ export const CategoriesPage = () => {
   }, [])
 
   const handleSaveCategory = useCallback(
-    async (name: string, parentId?: string, categoryId?: string, color?: string, includeInSpending?: boolean) => {
+    async (
+      name: string,
+      parentId?: string,
+      categoryId?: string,
+      color?: string,
+      excludeFromSpending?: boolean,
+      isIrregular?: boolean
+    ) => {
       try {
         if (categoryId) {
-          const updatedCategory = await updateCategory(categoryId, name, parentId, color, includeInSpending)
+          const updatedCategory = await updateCategory(
+            categoryId,
+            name,
+            parentId,
+            color,
+            excludeFromSpending,
+            isIrregular
+          )
           if (updatedCategory) {
             setToast({
               message: `Category "${name}" updated successfully`,
@@ -156,7 +170,7 @@ export const CategoriesPage = () => {
             setEditingCategory(null)
           }
         } else {
-          const newCategory = await addCategory(name, parentId, color, includeInSpending)
+          const newCategory = await addCategory(name, parentId, color, excludeFromSpending, isIrregular)
           if (newCategory) {
             setToast({
               message: `Category "${name}" created successfully`,

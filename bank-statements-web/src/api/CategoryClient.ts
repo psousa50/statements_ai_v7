@@ -51,8 +51,23 @@ export interface CategoryClient {
   getRootCategories(): Promise<CategoryListResponse>
   getById(id: string): Promise<Category>
   getSubcategories(parentId: string): Promise<CategoryListResponse>
-  create(category: { name: string; parent_id?: string; color?: string; include_in_spending?: boolean }): Promise<Category>
-  update(id: string, category: { name: string; parent_id?: string; color?: string; include_in_spending?: boolean }): Promise<Category>
+  create(category: {
+    name: string
+    parent_id?: string
+    color?: string
+    exclude_from_spending?: boolean
+    is_irregular?: boolean
+  }): Promise<Category>
+  update(
+    id: string,
+    category: {
+      name: string
+      parent_id?: string
+      color?: string
+      exclude_from_spending?: boolean
+      is_irregular?: boolean
+    }
+  ): Promise<Category>
   delete(id: string): Promise<void>
   generateSuggestions(): Promise<GenerateCategoriesResponse>
   createSelectedCategories(request: CreateSelectedCategoriesRequest): Promise<CreateSelectedCategoriesResponse>
@@ -87,12 +102,27 @@ export const categoryClient: CategoryClient = {
     return response.data
   },
 
-  async create(category: { name: string; parent_id?: string; color?: string; include_in_spending?: boolean }) {
+  async create(category: {
+    name: string
+    parent_id?: string
+    color?: string
+    exclude_from_spending?: boolean
+    is_irregular?: boolean
+  }) {
     const response = await axiosInstance.post<Category>(API_URL, category)
     return response.data
   },
 
-  async update(id: string, category: { name: string; parent_id?: string; color?: string; include_in_spending?: boolean }) {
+  async update(
+    id: string,
+    category: {
+      name: string
+      parent_id?: string
+      color?: string
+      exclude_from_spending?: boolean
+      is_irregular?: boolean
+    }
+  ) {
     const response = await axiosInstance.put<Category>(`${API_URL}/${id}`, category)
     return response.data
   },
