@@ -16,7 +16,7 @@ interface NoDataMessage {
 interface CategoryTotalsBarChartProps {
   data: ChartData[]
   loading?: boolean
-  onBarClick?: (data: ChartData) => void
+  onBarClick?: (data: ChartData, modifiers: { shiftKey: boolean }) => void
   noDataMessage?: NoDataMessage
 }
 
@@ -36,9 +36,9 @@ export const CategoryTotalsBarChart = ({ data, loading, onBarClick, noDataMessag
 
   const sortedData = [...data].sort((a, b) => b.value - a.value)
 
-  const handleClick = (entry: ChartData) => {
+  const handleClick = (entry: ChartData, event?: { shiftKey?: boolean }) => {
     if (onBarClick) {
-      onBarClick(entry)
+      onBarClick(entry, { shiftKey: !!event?.shiftKey })
     }
   }
 
@@ -92,7 +92,9 @@ export const CategoryTotalsBarChart = ({ data, loading, onBarClick, noDataMessag
           />
           <Bar
             dataKey="value"
-            onClick={(data) => handleClick(data as ChartData)}
+            onClick={(data, _index, event) =>
+              handleClick(data as ChartData, event as unknown as { shiftKey?: boolean })
+            }
             style={{ cursor: 'pointer' }}
             animationDuration={300}
             radius={[0, 8, 8, 0]}

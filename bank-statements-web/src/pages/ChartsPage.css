@@ -123,7 +123,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 2rem;
+  margin-bottom: 0.5rem;
   padding-bottom: 1rem;
   border-bottom: 1px solid var(--glass-border);
 }
@@ -325,13 +325,14 @@
 }
 
 .charts-page .chart-container {
-  margin: 2rem 0;
+  margin: 0;
   min-height: 500px;
   display: flex;
-  align-items: center;
-  justify-content: center;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
   position: relative;
-  padding: 2rem;
+  padding: 0.5rem 2rem 2rem;
   background: linear-gradient(135deg, transparent 0%, rgba(251, 191, 36, 0.02) 100%);
   border-radius: var(--radius-lg);
 }
@@ -510,4 +511,79 @@
   .charts-page .date-shortcuts {
     justify-content: center;
   }
+}
+
+.charts-page .bar-chart-wrapper {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+
+.charts-page .chart-container .hidden-chart-chips {
+  margin-bottom: 0.25rem;
+}
+
+
+
+.charts-page .chart-hint {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  font-style: italic;
+  margin-top: 0.25rem;
+}
+
+.charts-page .hidden-chart-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem;
+  min-height: 1.75rem;
+}
+
+.charts-page .hidden-chart-chips-label {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-right: 0.25rem;
+}
+
+.charts-page .hidden-chart-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.125rem 0.375rem;
+  border-radius: var(--radius-full);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--bg-secondary);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast);
+}
+
+.charts-page .hidden-chart-chip:hover {
+  background: var(--bg-hover);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: var(--text-primary);
+}
+
+.charts-page .hidden-chart-chip-swatch {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.charts-page .hidden-chart-chip-name {
+  font-size: 0.7rem;
+  line-height: 1;
+  max-width: 8rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.charts-page .hidden-chart-chip-close {
+  font-size: 0.875rem;
+  line-height: 1;
 }

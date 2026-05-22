@@ -67,6 +67,7 @@ export const ChartsPage = () => {
   const [filters, setFilters] = useState<Omit<FilterType, 'page' | 'page_size'>>(getInitialFilters)
   const [chartType, setChartType] = useState<'root' | 'sub'>('root')
   const [selectedRootCategory, setSelectedRootCategory] = useState<string | null>(null)
+  const [hiddenChartCategoryIds, setHiddenChartCategoryIds] = useState<Set<string>>(new Set())
   const [transactionType, setTransactionType] = useState<'all' | 'debit' | 'credit'>(
     () => (searchParams.get('transaction_type') as 'all' | 'debit' | 'credit') || 'all'
   )
@@ -423,6 +424,16 @@ export const ChartsPage = () => {
     }
   }, [categoryTotals, categories, chartType, selectedRootCategory, categorizationFilter])
 
+  const visibleChartData = useMemo(
+    () => chartData.filter((d) => !hiddenChartCategoryIds.has(d.id)),
+    [chartData, hiddenChartCategoryIds]
+  )
+
+  const hiddenChartEntries = useMemo(
+    () => chartData.filter((d) => hiddenChartCategoryIds.has(d.id)),
+    [chartData, hiddenChartCategoryIds]
+  )
+
   const noDataMessage = useMemo(() => {
     if (!categoryTotals) {
       return { title: 'Loading...', description: 'Fetching transaction data.' }
@@ -486,7 +497,16 @@ export const ChartsPage = () => {
   )
 
   const handleChartClick = useCallback(
-    (data: ChartData) => {
+    (data: ChartData, modifiers?: { shiftKey: boolean }) => {
+      if (modifiers?.shiftKey) {
+        setHiddenChartCategoryIds((prev) => {
+          const next = new Set(prev)
+          next.add(data.id)
+          return next
+        })
+        return
+      }
+
       if (data.id === 'uncategorized') {
         openTransactionsWindow(data.id)
         return
@@ -502,10 +522,23 @@ export const ChartsPage = () => {
     [chartType, openTransactionsWindow]
   )
 
+  const handleRestoreHiddenCategory = useCallback((id: string) => {
+    setHiddenChartCategoryIds((prev) => {
+      const next = new Set(prev)
+      next.delete(id)
+      return next
+    })
+  }, [])
+
   const handleBackToRoot = useCallback(() => {
     setChartType('root')
     setSelectedRootCategory(null)
+    setHiddenChartCategoryIds(new Set())
   }, [])
+
+  useEffect(() => {
+    setHiddenChartCategoryIds(new Set())
+  }, [chartType, selectedRootCategory])
 
   const renderCustomizedLabel = ({
     cx,
@@ -759,6 +792,31 @@ export const ChartsPage = () => {
           </div>
 
           <div className="chart-container">
+            {viewMode === 'bar' && (
+              <div className="hidden-chart-chips">
+                {hiddenChartEntries.length > 0 && (
+                  <>
+                    <span className="hidden-chart-chips-label">Hidden from chart:</span>
+                    {hiddenChartEntries.map((entry) => (
+                      <button
+                        key={entry.id}
+                        type="button"
+                        className="hidden-chart-chip"
+                        onClick={() => handleRestoreHiddenCategory(entry.id)}
+                        title={`Show ${entry.name}`}
+                        aria-label={`Show ${entry.name}`}
+                      >
+                        <span className="hidden-chart-chip-swatch" style={{ backgroundColor: entry.color }} />
+                        <span className="hidden-chart-chip-name">{entry.name}</span>
+                        <span className="hidden-chart-chip-close" aria-hidden>
+                          ×
+                        </span>
+                      </button>
+                    ))}
+                  </>
+                )}
+              </div>
+            )}
             {viewMode === 'pie' ? (
               loading ? (
                 <div className="loading-indicator">Loading chart data...</div>
@@ -781,7 +839,7 @@ export const ChartsPage = () => {
                       paddingAngle={2}
                       fill="#8884d8"
                       dataKey="value"
-                      onClick={handleChartClick}
+                      onClick={(data) => handleChartClick(data as ChartData)}
                       style={{ cursor: 'pointer' }}
                       animationDuration={300}
                     >
@@ -820,12 +878,15 @@ export const ChartsPage = () => {
                 </ResponsiveContainer>
               )
             ) : viewMode === 'bar' ? (
-              <CategoryTotalsBarChart
-                data={chartData}
-                loading={loading}
-                onBarClick={handleChartClick}
-                noDataMessage={noDataMessage}
-              />
+              <div className="bar-chart-wrapper">
+                <CategoryTotalsBarChart
+                  data={visibleChartData}
+                  loading={loading}
+                  onBarClick={handleChartClick}
+                  noDataMessage={noDataMessage}
+                />
+                <div className="chart-hint">Shift+click a bar to hide it.</div>
+              </div>
             ) : viewMode === 'income-spending' ? (
               <IncomeSpendingChart dataPoints={incomeSpendingData || []} loading={incomeSpendingLoading} />
             ) : (
