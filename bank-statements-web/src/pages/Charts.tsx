@@ -424,15 +424,85 @@ export const ChartsPage = () => {
     }
   }, [categoryTotals, categories, chartType, selectedRootCategory, categorizationFilter])
 
-  const visibleChartData = useMemo(
-    () => chartData.filter((d) => !hiddenChartCategoryIds.has(d.id)),
-    [chartData, hiddenChartCategoryIds]
-  )
+  const visibleChartData = useMemo(() => {
+    const filtered = chartData.filter((d) => !hiddenChartCategoryIds.has(d.id))
+    if (chartType !== 'root' || !categories || !categoryTotals) return filtered
 
-  const hiddenChartEntries = useMemo(
-    () => chartData.filter((d) => hiddenChartCategoryIds.has(d.id)),
-    [chartData, hiddenChartCategoryIds]
-  )
+    const categoryMap = new Map(categories.map((c) => [c.id, c]))
+    const rawTotals = new Map<string, { value: number; count: number }>()
+    categoryTotals.totals.forEach((t) => {
+      if (t.category_id) rawTotals.set(t.category_id, { value: t.total_amount, count: t.transaction_count })
+    })
+
+    const rootIdOf = (id: string): string | null => {
+      let cat = categoryMap.get(id)
+      if (!cat) return null
+      while (cat.parent_id) {
+        const parent = categoryMap.get(cat.parent_id)
+        if (!parent) break
+        cat = parent
+      }
+      return cat.id
+    }
+
+    const adjustments = new Map<string, { value: number; count: number }>()
+    hiddenChartCategoryIds.forEach((hiddenId) => {
+      const cat = categoryMap.get(hiddenId)
+      if (!cat || !cat.parent_id) return
+      const rootId = rootIdOf(hiddenId)
+      if (!rootId || rootId === hiddenId) return
+      const sub = rawTotals.get(hiddenId)
+      if (!sub) return
+      const existing = adjustments.get(rootId) ?? { value: 0, count: 0 }
+      adjustments.set(rootId, { value: existing.value + sub.value, count: existing.count + sub.count })
+    })
+
+    if (adjustments.size === 0) return filtered
+
+    return filtered
+      .map((entry) => {
+        const adj = adjustments.get(entry.id)
+        if (!adj) return entry
+        return {
+          ...entry,
+          value: Math.max(0, entry.value - adj.value),
+          count: Math.max(0, entry.count - adj.count),
+        }
+      })
+      .filter((entry) => entry.value > 0)
+  }, [chartData, hiddenChartCategoryIds, chartType, categories, categoryTotals])
+
+  const hiddenChartEntries = useMemo(() => {
+    if (!categories) return chartData.filter((d) => hiddenChartCategoryIds.has(d.id))
+    const categoryMap = new Map(categories.map((c) => [c.id, c]))
+    const qualifiedName = (id: string): string | null => {
+      if (id === 'uncategorized') return 'Uncategorized'
+      const cat = categoryMap.get(id)
+      if (!cat) return null
+      if (cat.parent_id) {
+        const parent = categoryMap.get(cat.parent_id)
+        if (parent) return `${parent.name} › ${cat.name}`
+      }
+      return cat.name
+    }
+    const fromChart = new Map(chartData.filter((d) => hiddenChartCategoryIds.has(d.id)).map((d) => [d.id, d]))
+    return Array.from(hiddenChartCategoryIds).map((id) => {
+      const name = qualifiedName(id) ?? 'Unknown'
+      const existing = fromChart.get(id)
+      if (existing) return { ...existing, name }
+      if (id === 'uncategorized') {
+        return { id, name, value: 0, count: 0, color: UNCATEGORIZED_COLOR }
+      }
+      const cat = categoryMap.get(id)
+      return {
+        id,
+        name,
+        value: 0,
+        count: 0,
+        color: cat ? getCategoryColor(cat, categories).solid : UNCATEGORIZED_COLOR,
+      }
+    })
+  }, [chartData, hiddenChartCategoryIds, categories])
 
   const noDataMessage = useMemo(() => {
     if (!categoryTotals) {
@@ -533,12 +603,7 @@ export const ChartsPage = () => {
   const handleBackToRoot = useCallback(() => {
     setChartType('root')
     setSelectedRootCategory(null)
-    setHiddenChartCategoryIds(new Set())
   }, [])
-
-  useEffect(() => {
-    setHiddenChartCategoryIds(new Set())
-  }, [chartType, selectedRootCategory])
 
   const renderCustomizedLabel = ({
     cx,
@@ -597,8 +662,8 @@ export const ChartsPage = () => {
     )
   }
 
-  const totalAmount = chartData.reduce((sum, item) => sum + item.value, 0)
-  const totalTransactions = chartData.reduce((sum, item) => sum + item.count, 0)
+  const totalAmount = visibleChartData.reduce((sum, item) => sum + item.value, 0)
+  const totalTransactions = visibleChartData.reduce((sum, item) => sum + item.count, 0)
 
   const getCurrentFilters = useCallback(
     () => ({

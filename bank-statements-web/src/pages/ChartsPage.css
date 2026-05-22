@@ -577,7 +577,7 @@
 .charts-page .hidden-chart-chip-name {
   font-size: 0.7rem;
   line-height: 1;
-  max-width: 8rem;
+  max-width: 14rem;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
