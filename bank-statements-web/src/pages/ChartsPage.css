@@ -538,8 +538,6 @@
   margin-bottom: 0.25rem;
 }
 
-
-
 .charts-page .chart-hint {
   font-size: 0.7rem;
   color: var(--text-muted);
@@ -573,7 +571,10 @@
   background: var(--bg-secondary);
   color: var(--text-muted);
   cursor: pointer;
-  transition: background var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast);
+  transition:
+    background var(--transition-fast),
+    border-color var(--transition-fast),
+    color var(--transition-fast);
 }
 
 .charts-page .hidden-chart-chip:hover {
