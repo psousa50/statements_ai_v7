@@ -48,6 +48,14 @@ The frontend follows a modular architecture:
 - Transaction table with categorization
 - Clear separation of concerns
 
+## Deployment
+
+| Component | Platform |
+| --- | --- |
+| Frontend | [Cloudflare Pages](https://dash.cloudflare.com/?to=/:account/pages) |
+| Backend | [Render](https://dashboard.render.com/) |
+| Database | [Supabase](https://supabase.com/dashboard) |
+
 ## Getting Started
 
 ### Prerequisites

@@ -4,7 +4,7 @@ Personal finance app for uploading, parsing, and analysing bank statements with 
 
 ## Tech Stack
 
-Python 3.12 / FastAPI / SQLAlchemy 2.x / PostgreSQL | React 18 / TypeScript / Vite / MUI / TanStack Query | Gemini/Groq AI | Docker / GitHub Actions / Render / Cloudflare Pages / Neon
+Python 3.12 / FastAPI / SQLAlchemy 2.x / PostgreSQL | React 18 / TypeScript / Vite / MUI / TanStack Query | Gemini/Groq AI | Docker / GitHub Actions / Render / Cloudflare Pages / Supabase
 
 ## Directory Structure
 
