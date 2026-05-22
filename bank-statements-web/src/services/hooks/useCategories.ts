@@ -96,7 +96,33 @@ export const useCategories = () => {
         is_irregular: isIrregular,
       })
     },
-    onSuccess: () => {
+    onMutate: async ({ id, name, parentId, color, excludeFromSpending, isIrregular }) => {
+      await queryClient.cancelQueries({ queryKey: CATEGORY_QUERY_KEYS.all })
+      await queryClient.cancelQueries({ queryKey: CATEGORY_QUERY_KEYS.root })
+      const previousAll = queryClient.getQueryData<Category[]>(CATEGORY_QUERY_KEYS.all)
+      const previousRoot = queryClient.getQueryData<Category[]>(CATEGORY_QUERY_KEYS.root)
+      const applyPatch = (list?: Category[]) =>
+        list?.map((c) =>
+          c.id === id
+            ? {
+                ...c,
+                name,
+                parent_id: parentId,
+                color,
+                exclude_from_spending: excludeFromSpending ?? c.exclude_from_spending,
+                is_irregular: isIrregular ?? c.is_irregular,
+              }
+            : c
+        )
+      queryClient.setQueryData<Category[]>(CATEGORY_QUERY_KEYS.all, (old) => applyPatch(old) ?? old)
+      queryClient.setQueryData<Category[]>(CATEGORY_QUERY_KEYS.root, (old) => applyPatch(old) ?? old)
+      return { previousAll, previousRoot }
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previousAll) queryClient.setQueryData(CATEGORY_QUERY_KEYS.all, context.previousAll)
+      if (context?.previousRoot) queryClient.setQueryData(CATEGORY_QUERY_KEYS.root, context.previousRoot)
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: CATEGORY_QUERY_KEYS.all })
       queryClient.invalidateQueries({ queryKey: CATEGORY_QUERY_KEYS.root })
     },
@@ -191,9 +217,8 @@ export const useCategories = () => {
     [uploadMutation]
   )
 
-  const loading =
-    categoriesQuery.isLoading ||
-    rootCategoriesQuery.isLoading ||
+  const loading = categoriesQuery.isLoading || rootCategoriesQuery.isLoading
+  const mutating =
     addMutation.isPending ||
     updateMutation.isPending ||
     deleteMutation.isPending ||
@@ -206,6 +231,7 @@ export const useCategories = () => {
     categories: categoriesQuery.data ?? [],
     rootCategories: rootCategoriesQuery.data ?? [],
     loading,
+    mutating,
     error,
     fetchCategories: () => queryClient.invalidateQueries({ queryKey: CATEGORY_QUERY_KEYS.all }),
     fetchRootCategories: () => queryClient.invalidateQueries({ queryKey: CATEGORY_QUERY_KEYS.root }),

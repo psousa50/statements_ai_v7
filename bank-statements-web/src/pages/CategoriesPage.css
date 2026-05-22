@@ -365,30 +365,84 @@
   font-weight: 500;
 }
 
-.categories-page .category-excluded-badge {
+.categories-page .category-flag-toggle {
   font-family: var(--font-mono);
   font-size: 0.625rem;
   color: var(--text-muted);
-  background: var(--bg-secondary);
+  background: transparent;
+  border: 1px dashed var(--glass-border);
   padding: 0.125rem 0.5rem;
   border-radius: var(--radius-full);
   font-weight: 500;
   margin-left: 0.5rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+  cursor: pointer;
+  opacity: 0.75;
+  transition:
+    opacity var(--transition-fast),
+    background var(--transition-fast),
+    color var(--transition-fast);
 }
 
-.categories-page .category-regular-badge {
-  font-family: var(--font-mono);
-  font-size: 0.625rem;
-  color: var(--color-success, var(--text-primary));
+.categories-page .category-flag-toggle:hover {
+  opacity: 1;
+}
+
+.categories-page .category-flag-toggle.is-on {
+  opacity: 1;
+  border-style: solid;
   background: var(--bg-secondary);
-  padding: 0.125rem 0.5rem;
+  color: var(--text-primary);
+}
+
+.categories-page .category-flag-irregular.is-on {
+  color: var(--color-warning, var(--text-primary));
+}
+
+.categories-page .category-filter-chip {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  padding: 0.375rem 0.75rem;
   border-radius: var(--radius-full);
-  font-weight: 500;
+  border: 1px solid var(--glass-border);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
   margin-left: 0.5rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+  white-space: nowrap;
+  transition:
+    background var(--transition-fast),
+    color var(--transition-fast),
+    border-color var(--transition-fast);
+}
+
+.categories-page .category-filter-chip:hover {
+  color: var(--text-primary);
+  border-color: var(--text-primary);
+}
+
+.categories-page .category-filter-chip.filter-on,
+.categories-page .category-filter-chip.filter-off {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border-color: var(--text-primary);
+}
+
+.categories-page .category-filter-reset {
+  font-size: 0.75rem;
+  padding: 0.375rem 0.75rem;
+  border-radius: var(--radius-full);
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  margin-left: 0.5rem;
+  text-decoration: underline;
+}
+
+.categories-page .category-filter-reset:hover {
+  color: var(--text-primary);
 }
 
 .categories-page .category-actions {

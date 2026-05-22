@@ -7,7 +7,7 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import ChevronRightIcon from '@mui/icons-material/ChevronRight'
 import ExpandLessIcon from '@mui/icons-material/ExpandLess'
 import { ActionIconButton } from './ActionIconButton'
-import { IconButton } from '@mui/material'
+import { IconButton, Tooltip } from '@mui/material'
 import { getCategoryColor } from '../utils/categoryColors'
 
 interface CategoryTreeProps {
@@ -17,6 +17,9 @@ interface CategoryTreeProps {
   onEdit: (category: Category) => void
   onDelete: (category: Category) => void
   onCreateSubcategory: (parentId: string) => void
+  onToggleExcludeFromSpending: (category: Category) => void
+  onToggleIrregular: (category: Category) => void
+  forceExpandedCategories?: Set<string>
 }
 
 interface CategoryTreeNodeProps {
@@ -26,6 +29,8 @@ interface CategoryTreeNodeProps {
   onEdit: (category: Category) => void
   onDelete: (category: Category) => void
   onCreateSubcategory: (parentId: string) => void
+  onToggleExcludeFromSpending: (category: Category) => void
+  onToggleIrregular: (category: Category) => void
   expandedCategories: Set<string>
   onToggleExpand: (categoryId: string) => void
 }
@@ -37,6 +42,8 @@ const CategoryTreeNode = ({
   onEdit,
   onDelete,
   onCreateSubcategory,
+  onToggleExcludeFromSpending,
+  onToggleIrregular,
   expandedCategories,
   onToggleExpand,
 }: CategoryTreeNodeProps) => {
@@ -57,14 +64,31 @@ const CategoryTreeNode = ({
 
   const indentLevel = level * 20
 
+  const handleRowClick = () => {
+    if (hasSubcategories) {
+      onToggleExpand(category.id)
+    } else {
+      onEdit(category)
+    }
+  }
+
+  const stop = (e: React.MouseEvent) => e.stopPropagation()
+
   return (
     <div className="category-tree-node">
-      <div className="category-row" style={{ paddingLeft: `${indentLevel}px` }}>
+      <div
+        className="category-row"
+        style={{ paddingLeft: `${indentLevel}px`, cursor: 'pointer' }}
+        onClick={handleRowClick}
+      >
         <div className="category-info">
           <div className="category-expand">
             {hasSubcategories ? (
               <IconButton
-                onClick={handleToggleExpand}
+                onClick={(e) => {
+                  stop(e)
+                  handleToggleExpand()
+                }}
                 size="small"
                 aria-label={isExpanded ? 'Collapse' : 'Expand'}
                 sx={{
@@ -87,21 +111,49 @@ const CategoryTreeNode = ({
             style={{ backgroundColor: getCategoryColor(category, allCategories).solid }}
           />
           <div className="category-name">{category.name}</div>
-          {category.exclude_from_spending && (
-            <span className="category-excluded-badge" title="Excluded from spending/income analytics">
-              Excluded
-            </span>
-          )}
-          {category.is_irregular && (
-            <span className="category-regular-badge" title="Irregular / one-off expense">
-              Irregular
-            </span>
-          )}
+          <Tooltip
+            title={
+              category.exclude_from_spending
+                ? 'Transactions in this category are excluded from spending/income analytics. Click to include them.'
+                : 'Include this category in spending/income analytics. Toggle off for things like internal transfers or reimbursable expenses.'
+            }
+            arrow
+          >
+            <button
+              type="button"
+              className={`category-flag-toggle ${category.exclude_from_spending ? 'is-on' : ''}`}
+              onClick={(e) => {
+                stop(e)
+                onToggleExcludeFromSpending(category)
+              }}
+            >
+              {category.exclude_from_spending ? 'Excluded' : '+ Exclude'}
+            </button>
+          </Tooltip>
+          <Tooltip
+            title={
+              category.is_irregular
+                ? 'Treated as one-off / discretionary spending. Hidden from the "Regular only" chart view. Click to mark as regular.'
+                : 'Mark as irregular / one-off (e.g. travel, shopping sprees). It will be hidden from the "Regular only" chart view.'
+            }
+            arrow
+          >
+            <button
+              type="button"
+              className={`category-flag-toggle category-flag-irregular ${category.is_irregular ? 'is-on' : ''}`}
+              onClick={(e) => {
+                stop(e)
+                onToggleIrregular(category)
+              }}
+            >
+              {category.is_irregular ? 'Irregular' : '+ Irregular'}
+            </button>
+          </Tooltip>
           <div className="category-stats">
             {hasSubcategories && <span className="subcategory-count">{subcategories.length} subcategories</span>}
           </div>
         </div>
-        <div className="category-actions">
+        <div className="category-actions" onClick={stop}>
           <ActionIconButton
             onClick={() => onCreateSubcategory(category.id)}
             title="Add subcategory"
@@ -135,6 +187,8 @@ const CategoryTreeNode = ({
               onEdit={onEdit}
               onDelete={onDelete}
               onCreateSubcategory={onCreateSubcategory}
+              onToggleExcludeFromSpending={onToggleExcludeFromSpending}
+              onToggleIrregular={onToggleIrregular}
               expandedCategories={expandedCategories}
               onToggleExpand={onToggleExpand}
             />
@@ -152,8 +206,18 @@ export const CategoryTree = ({
   onEdit,
   onDelete,
   onCreateSubcategory,
+  onToggleExcludeFromSpending,
+  onToggleIrregular,
+  forceExpandedCategories,
 }: CategoryTreeProps) => {
-  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set())
+  const [userExpandedCategories, setUserExpandedCategories] = useState<Set<string>>(new Set())
+  const expandedCategories = useMemo(() => {
+    if (!forceExpandedCategories || forceExpandedCategories.size === 0) return userExpandedCategories
+    const merged = new Set(userExpandedCategories)
+    forceExpandedCategories.forEach((id) => merged.add(id))
+    return merged
+  }, [userExpandedCategories, forceExpandedCategories])
+  const setExpandedCategories = setUserExpandedCategories
 
   const handleToggleExpand = useCallback((categoryId: string) => {
     setExpandedCategories((prev) => {
@@ -253,6 +317,8 @@ export const CategoryTree = ({
             onEdit={onEdit}
             onDelete={onDelete}
             onCreateSubcategory={onCreateSubcategory}
+            onToggleExcludeFromSpending={onToggleExcludeFromSpending}
+            onToggleIrregular={onToggleIrregular}
             expandedCategories={expandedCategories}
             onToggleExpand={handleToggleExpand}
           />

@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react'
+import { useState, useCallback, useRef, useMemo } from 'react'
 import { useCategories } from '../services/hooks/useCategories'
 import { useCategorySuggestions } from '../services/hooks/useCategorySuggestions'
 import { useSubscription } from '../services/hooks/useSubscription'
@@ -21,6 +21,11 @@ export const CategoriesPage = () => {
   const [isCreating, setIsCreating] = useState(false)
   const [selectedParentId, setSelectedParentId] = useState<string | undefined>(undefined)
   const [searchTerm, setSearchTerm] = useState('')
+  const [excludedFilter, setExcludedFilter] = useState<'any' | 'on' | 'off'>('any')
+  const [irregularFilter, setIrregularFilter] = useState<'any' | 'on' | 'off'>('any')
+
+  const cycleFilter = (current: 'any' | 'on' | 'off'): 'any' | 'on' | 'off' =>
+    current === 'any' ? 'on' : current === 'on' ? 'off' : 'any'
   const [toast, setToast] = useState<Omit<ToastProps, 'onClose'> | null>(null)
   const [confirmDelete, setConfirmDelete] = useState<Category | null>(null)
   const [suggestionModalOpen, setSuggestionModalOpen] = useState(false)
@@ -34,6 +39,7 @@ export const CategoriesPage = () => {
     categories,
     rootCategories,
     loading,
+    mutating,
     error,
     addCategory,
     updateCategory,
@@ -69,16 +75,23 @@ export const CategoriesPage = () => {
     return hierarchy
   }
 
-  const filteredCategories = !searchTerm
+  const hasActiveFilter = !!searchTerm || excludedFilter !== 'any' || irregularFilter !== 'any'
+
+  const filteredCategories = !hasActiveFilter
     ? categories
     : (() => {
         const searchLower = searchTerm.toLowerCase()
         const matchingIds = new Set<string>()
 
-        categories.forEach((category) => {
-          const categoryNameMatch = category.name.toLowerCase().includes(searchLower)
+        const matchesFlag = (value: boolean, filter: 'any' | 'on' | 'off') =>
+          filter === 'any' || (filter === 'on' ? value : !value)
 
-          if (categoryNameMatch) {
+        categories.forEach((category) => {
+          const nameMatches = !searchTerm || category.name.toLowerCase().includes(searchLower)
+          const excludedMatches = matchesFlag(category.exclude_from_spending, excludedFilter)
+          const irregularMatches = matchesFlag(category.is_irregular, irregularFilter)
+
+          if (nameMatches && excludedMatches && irregularMatches) {
             matchingIds.add(category.id)
             getCategoryHierarchy(category.id).forEach((id) => matchingIds.add(id))
           }
@@ -87,7 +100,16 @@ export const CategoriesPage = () => {
         return categories.filter((c) => matchingIds.has(c.id)).sort((a, b) => a.name.localeCompare(b.name))
       })()
 
-  const filteredRootCategories = !searchTerm
+  const forceExpandedCategories = useMemo(() => {
+    if (!hasActiveFilter) return undefined
+    const expanded = new Set<string>()
+    filteredCategories.forEach((c) => {
+      if (filteredCategories.some((other) => other.parent_id === c.id)) expanded.add(c.id)
+    })
+    return expanded
+  }, [hasActiveFilter, filteredCategories])
+
+  const filteredRootCategories = !hasActiveFilter
     ? rootCategories
     : rootCategories
         .filter((c) => filteredCategories.some((fc) => fc.id === c.id))
@@ -189,6 +211,34 @@ export const CategoriesPage = () => {
       }
     },
     [addCategory, updateCategory]
+  )
+
+  const handleToggleExcludeFromSpending = useCallback(
+    async (category: Category) => {
+      await updateCategory(
+        category.id,
+        category.name,
+        category.parent_id,
+        category.color,
+        !category.exclude_from_spending,
+        category.is_irregular
+      )
+    },
+    [updateCategory]
+  )
+
+  const handleToggleIrregular = useCallback(
+    async (category: Category) => {
+      await updateCategory(
+        category.id,
+        category.name,
+        category.parent_id,
+        category.color,
+        category.exclude_from_spending,
+        !category.is_irregular
+      )
+    },
+    [updateCategory]
   )
 
   const handleCloseModal = useCallback(() => {
@@ -321,6 +371,52 @@ export const CategoriesPage = () => {
               onChange={(e) => setSearchTerm(e.target.value)}
               className="search-input"
             />
+            <button
+              type="button"
+              className={`category-filter-chip filter-${excludedFilter}`}
+              onClick={() => setExcludedFilter(cycleFilter(excludedFilter))}
+              title={
+                excludedFilter === 'any'
+                  ? 'Showing all. Click to show only excluded.'
+                  : excludedFilter === 'on'
+                    ? 'Showing only excluded. Click to show only non-excluded.'
+                    : 'Showing only non-excluded. Click to show all.'
+              }
+            >
+              {excludedFilter === 'any' ? 'Excluded: any' : excludedFilter === 'on' ? 'Excluded: only' : 'Excluded: none'}
+            </button>
+            <button
+              type="button"
+              className={`category-filter-chip filter-${irregularFilter}`}
+              onClick={() => setIrregularFilter(cycleFilter(irregularFilter))}
+              title={
+                irregularFilter === 'any'
+                  ? 'Showing all. Click to show only irregular.'
+                  : irregularFilter === 'on'
+                    ? 'Showing only irregular. Click to show only regular.'
+                    : 'Showing only regular. Click to show all.'
+              }
+            >
+              {irregularFilter === 'any'
+                ? 'Irregular: any'
+                : irregularFilter === 'on'
+                  ? 'Irregular: only'
+                  : 'Irregular: none'}
+            </button>
+            {hasActiveFilter && (
+              <button
+                type="button"
+                className="category-filter-reset"
+                onClick={() => {
+                  setSearchTerm('')
+                  setExcludedFilter('any')
+                  setIrregularFilter('any')
+                }}
+                title="Clear search and filters"
+              >
+                Reset
+              </button>
+            )}
           </div>
           <div className="action-buttons">
             <input
@@ -333,7 +429,7 @@ export const CategoriesPage = () => {
             <Button
               onClick={handleExportCategories}
               variant="outlined"
-              disabled={loading}
+              disabled={loading || mutating}
               startIcon={<DownloadIcon />}
               sx={{ textTransform: 'none', mr: 1 }}
             >
@@ -342,7 +438,7 @@ export const CategoriesPage = () => {
             <Button
               onClick={handleUploadClick}
               variant="outlined"
-              disabled={loading}
+              disabled={loading || mutating}
               startIcon={<UploadIcon />}
               sx={{ textTransform: 'none', mr: 1 }}
             >
@@ -351,7 +447,7 @@ export const CategoriesPage = () => {
             <Button
               onClick={handleOpenSuggestionModal}
               variant="outlined"
-              disabled={loading}
+              disabled={loading || mutating}
               startIcon={<AutoAwesomeIcon />}
               endIcon={
                 !hasAICategorisation ? (
@@ -365,7 +461,7 @@ export const CategoriesPage = () => {
             <Button
               onClick={() => handleCreateCategory()}
               variant="contained"
-              disabled={loading}
+              disabled={loading || mutating}
               startIcon={<AddIcon />}
               sx={{ textTransform: 'none' }}
             >
@@ -380,7 +476,7 @@ export const CategoriesPage = () => {
           <h2>Categories</h2>
           {!loading && (
             <span className="category-count">
-              {searchTerm ? `${filteredCategories.length} of ${totalCategories}` : totalCategories} categories
+              {hasActiveFilter ? `${filteredCategories.length} of ${totalCategories}` : totalCategories} categories
             </span>
           )}
         </div>
@@ -393,6 +489,9 @@ export const CategoriesPage = () => {
             onEdit={handleEditCategory}
             onDelete={handleDeleteCategory}
             onCreateSubcategory={handleCreateCategory}
+            onToggleExcludeFromSpending={handleToggleExcludeFromSpending}
+            onToggleIrregular={handleToggleIrregular}
+            forceExpandedCategories={forceExpandedCategories}
           />
         </div>
       </div>
