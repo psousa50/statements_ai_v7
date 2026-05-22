@@ -8,22 +8,22 @@ usage() {
     echo "Usage: $0 <direction>"
     echo ""
     echo "Directions:"
-    echo "  neon-to-local    Dump Neon DB and restore to local"
-    echo "  local-to-neon    Dump local DB and restore to Neon"
+    echo "  from-remote    Dump remote DB and restore to local"
+    echo "  to-remote      Dump local DB and restore to remote"
     echo ""
-    echo "Neon connection string must be provided via:"
-    echo "  - NEON_DATABASE_URL environment variable, or"
+    echo "Remote connection string must be provided via:"
+    echo "  - REMOTE_DATABASE_URL environment variable, or"
     echo "  - Clipboard (will prompt to confirm)"
     echo ""
     echo "Examples:"
-    echo "  NEON_DATABASE_URL='postgresql://...' $0 neon-to-local"
-    echo "  $0 local-to-neon  # uses clipboard"
+    echo "  REMOTE_DATABASE_URL='postgresql://...' $0 from-remote"
+    echo "  $0 to-remote  # uses clipboard"
     exit 1
 }
 
-get_neon_url() {
-    if [ -n "$NEON_DATABASE_URL" ]; then
-        echo "$NEON_DATABASE_URL"
+get_remote_url() {
+    if [ -n "$REMOTE_DATABASE_URL" ]; then
+        echo "$REMOTE_DATABASE_URL"
         return
     fi
 
@@ -32,7 +32,7 @@ get_neon_url() {
     elif command -v xclip &> /dev/null; then
         CLIPBOARD=$(xclip -selection clipboard -o)
     else
-        echo "Error: No clipboard tool found and NEON_DATABASE_URL not set" >&2
+        echo "Error: No clipboard tool found and REMOTE_DATABASE_URL not set" >&2
         exit 1
     fi
 
@@ -54,42 +54,42 @@ get_neon_url() {
     echo "$CLIPBOARD"
 }
 
-neon_to_local() {
-    NEON_URL=$(get_neon_url)
+from_remote() {
+    REMOTE_URL=$(get_remote_url)
 
-    echo "==> Dumping Neon database..."
-    pg_dump "$NEON_URL" --no-owner --no-acl -F p > "$DUMP_FILE"
+    echo "==> Dumping remote database..."
+    pg_dump "$REMOTE_URL" --no-owner --no-acl -F p > "$DUMP_FILE"
 
     echo "==> Restoring to local database..."
     psql "$LOCAL_DB" -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;" 2>/dev/null || true
     psql "$LOCAL_DB" < "$DUMP_FILE"
 
     rm -f "$DUMP_FILE"
-    echo "==> Done! Local database synced from Neon."
+    echo "==> Done! Local database synced from remote."
 }
 
-local_to_neon() {
-    NEON_URL=$(get_neon_url)
+to_remote() {
+    REMOTE_URL=$(get_remote_url)
 
     echo "==> Dumping local database..."
     pg_dump "$LOCAL_DB" --no-owner --no-acl -F p > "$DUMP_FILE"
 
-    echo "==> Restoring to Neon database..."
-    psql "$NEON_URL" -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;" 2>/dev/null || true
-    psql "$NEON_URL" < "$DUMP_FILE"
+    echo "==> Restoring to remote database..."
+    psql "$REMOTE_URL" -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;" 2>/dev/null || true
+    psql "$REMOTE_URL" < "$DUMP_FILE"
 
     rm -f "$DUMP_FILE"
-    echo "==> Done! Neon database synced from local."
+    echo "==> Done! Remote database synced from local."
     echo ""
-    echo "NOTE: You may need to redeploy on Render to run migrations."
+    echo "NOTE: You may need to redeploy to run migrations."
 }
 
 case "${1:-}" in
-    neon-to-local)
-        neon_to_local
+    from-remote)
+        from_remote
         ;;
-    local-to-neon)
-        local_to_neon
+    to-remote)
+        to_remote
         ;;
     *)
         usage
