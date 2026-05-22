@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 REMOTE_SHA=$(git rev-parse @{upstream} 2>/dev/null || git rev-parse HEAD~1)
 
 pnpm check
