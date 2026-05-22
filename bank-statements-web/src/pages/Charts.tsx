@@ -873,11 +873,7 @@ export const ChartsPage = () => {
               )}
               {(viewMode === 'bar' || viewMode === 'pie') && (
                 <label className="regular-only-toggle">
-                  <input
-                    type="checkbox"
-                    checked={regularOnly}
-                    onChange={(e) => setRegularOnly(e.target.checked)}
-                  />
+                  <input type="checkbox" checked={regularOnly} onChange={(e) => setRegularOnly(e.target.checked)} />
                   Regular only
                 </label>
               )}
