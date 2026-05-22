@@ -60,6 +60,7 @@ class Settings(BaseSettings):
 
     # E2E Testing
     E2E_TEST_MODE: bool = os.getenv("E2E_TEST_MODE", "").lower() == "true"
+    E2E_TEST_LOGIN_EMAIL: str = os.getenv("E2E_TEST_LOGIN_EMAIL", "")
 
     # Stripe settings
     STRIPE_SECRET_KEY: str = os.getenv("STRIPE_SECRET_KEY", "")

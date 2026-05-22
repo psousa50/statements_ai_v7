@@ -10,6 +10,7 @@
     "dev:web": "./bin/web-run.sh run dev",
     "start": "pnpm run db:start && pnpm run dev",
     "start:e2e": "E2E_TEST_MODE=true pnpm run start",
+    "start:as": "./bin/start-as.sh",
     "stop": "./bin/dev-stop.sh",
     "========== DATABASE ==========": "",
     "db:up": "docker-compose up db -d",

@@ -267,17 +267,26 @@ def register_auth_routes(app: FastAPI):
             refresh_token_repo = SQLAlchemyRefreshTokenRepository(db)
             auth_service = AuthService(user_repo, refresh_token_repo)
 
-            user = auth_service.get_or_create_user_from_oauth(
-                oauth_provider="test",
-                oauth_id="e2e-test-user",
-                email="e2e-test@example.com",
-                name="E2E Test User",
-                avatar_url=None,
-            )
+            impersonation_email = settings.E2E_TEST_LOGIN_EMAIL.strip()
+            if impersonation_email:
+                user = user_repo.get_by_email(impersonation_email)
+                if not user:
+                    raise HTTPException(
+                        status_code=status.HTTP_404_NOT_FOUND,
+                        detail=f"E2E_TEST_LOGIN_EMAIL user {impersonation_email} not found",
+                    )
+            else:
+                user = auth_service.get_or_create_user_from_oauth(
+                    oauth_provider="test",
+                    oauth_id="e2e-test-user",
+                    email="e2e-test@example.com",
+                    name="E2E Test User",
+                    avatar_url=None,
+                )
 
             account_repo = SQLAlchemyAccountRepository(db)
             accounts = account_repo.get_all(user.id)
-            if not accounts:
+            if not accounts and not impersonation_email:
                 test_account = Account(
                     name="E2E Test Account",
                     user_id=user.id,
@@ -286,7 +295,7 @@ def register_auth_routes(app: FastAPI):
                 db.commit()
                 account_id = str(test_account.id)
             else:
-                account_id = str(accounts[0].id)
+                account_id = str(accounts[0].id) if accounts else None
 
             tokens = auth_service.create_tokens_for_user(user)
             _set_auth_cookies(response, tokens.access_token, tokens.refresh_token)
