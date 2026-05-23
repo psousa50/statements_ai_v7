@@ -92,7 +92,17 @@ def main():
 
         by_exact, prefixes, infixes = index_rules_by_pattern(rules)
 
-        cat_names = {c.id: c.name for c in session.query(Category).filter(Category.user_id == u.id).all()}
+        cats_by_id = {c.id: c for c in session.query(Category).filter(Category.user_id == u.id).all()}
+
+        def category_path(cat_id):
+            if cat_id is None:
+                return "<none>"
+            cat = cats_by_id.get(cat_id)
+            if cat is None:
+                return f"<unknown {cat_id}>"
+            if cat.parent_id and cat.parent_id in cats_by_id:
+                return f"{cats_by_id[cat.parent_id].name} > {cat.name}"
+            return cat.name
 
         q = session.query(Transaction).filter(Transaction.user_id == u.id)
         if args.limit:
@@ -118,8 +128,8 @@ def main():
                     skipped_manual += 1
                 elif txn.categorization_status in REAPPLICABLE_CATEGORIZATION_STATUSES:
                     pair = (
-                        cat_names.get(txn.category_id, "<none>"),
-                        cat_names.get(chosen.category_id, "<none>"),
+                        category_path(txn.category_id),
+                        category_path(chosen.category_id),
                     )
                     changes_by_pair[pair] += 1
                     txn.category_id = chosen.category_id

@@ -202,11 +202,11 @@ _MATCH_TYPE_PRIORITY = {MatchType.EXACT: 0, MatchType.PREFIX: 1, MatchType.INFIX
 
 
 def _rule_specificity_key(rule: EnhancementRule):
-    has_amount = rule.min_amount is not None or rule.max_amount is not None
-    has_date = rule.start_date is not None or rule.end_date is not None
+    constraint_count = sum(
+        1 for value in (rule.min_amount, rule.max_amount, rule.start_date, rule.end_date) if value is not None
+    )
     return (
-        0 if has_amount else 1,
-        0 if has_date else 1,
+        -constraint_count,
         _MATCH_TYPE_PRIORITY.get(rule.match_type, 99),
         rule.created_at or datetime.min,
     )

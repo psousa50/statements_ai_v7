@@ -323,6 +323,54 @@ class TestTransactionRuleEnhancementService:
         assert result.rule_based_matches == 0
         assert result.has_unmatched
 
+    def test_tighter_amount_window_wins_over_looser_one_for_same_description(
+        self,
+        enhancement_service,
+        mock_enhancement_rule_repository,
+        user_id,
+    ):
+        from decimal import Decimal
+
+        looser_rule = EnhancementRule(
+            id=uuid4(),
+            normalized_description_pattern="transferencia vencimento",
+            match_type=MatchType.EXACT,
+            min_amount=None,
+            max_amount=Decimal("2000.00"),
+            category_id="category-travel",
+            counterparty_account_id=None,
+            source=EnhancementRuleSource.AUTO,
+        )
+        tighter_rule = EnhancementRule(
+            id=uuid4(),
+            normalized_description_pattern="transferencia vencimento",
+            match_type=MatchType.EXACT,
+            min_amount=Decimal("100.00"),
+            max_amount=Decimal("120.00"),
+            category_id="category-claude-code",
+            counterparty_account_id=None,
+            source=EnhancementRuleSource.AUTO,
+        )
+        mock_enhancement_rule_repository.find_matching_rules_batch.return_value = [
+            looser_rule,
+            tighter_rule,
+        ]
+        mock_enhancement_rule_repository.find_by_normalized_description.return_value = None
+
+        dtos = [
+            TransactionDTO(
+                date="2024-01-01",
+                amount=110.70,
+                description="TRANSFERENCIA - VENCIMENTO",
+                user_id=user_id,
+                account_id="acc1",
+            ),
+        ]
+
+        result = enhancement_service.enhance_transactions(user_id, dtos)
+
+        assert result.enhanced_dtos[0].category_id == "category-claude-code"
+
     def test_amount_constrained_rule_wins_over_broader_rule_for_same_description(
         self,
         enhancement_service,
