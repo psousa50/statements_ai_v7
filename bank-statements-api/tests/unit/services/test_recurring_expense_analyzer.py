@@ -585,7 +585,7 @@ class TestRecurringExpenseAnalyzer:
         yearly_patterns = [p for p in result.patterns if p.pattern_type == "yearly"]
         assert len(yearly_patterns) == 1
 
-    def test_yearly_pattern_rejects_over_10_percent_variance(self):
+    def test_yearly_pattern_isolates_dominant_cluster_when_one_amount_is_outlier(self):
         transactions = [
             self.create_transaction(
                 normalized_description="variable annual fee",
@@ -607,7 +607,10 @@ class TestRecurringExpenseAnalyzer:
         result = self.analyzer.analyze_patterns(transactions, self.user_id)
 
         yearly_patterns = [p for p in result.patterns if p.pattern_type == "yearly"]
-        assert len(yearly_patterns) == 0
+        assert len(yearly_patterns) == 1
+        pattern = yearly_patterns[0]
+        assert pattern.average_amount == Decimal("100.00")
+        assert pattern.transaction_count == 2
 
     def test_mixed_monthly_and_yearly_patterns_detected(self):
         transactions = [
@@ -760,3 +763,43 @@ class TestRecurringExpenseAnalyzer:
         assert len(quarterly_patterns) == 1
         pattern = quarterly_patterns[0]
         assert pattern.total_annual_cost == Decimal("100.00")
+
+    def test_monthly_pattern_detected_when_outliers_are_off_monthly_cadence(self):
+        analyzer = RecurringExpenseAnalyzer(min_occurrences=3, amount_variance_threshold=0.15)
+        category_id = uuid.uuid4()
+
+        transactions = [
+            self.create_transaction(
+                normalized_description="playstation",
+                amount=Decimal("8.99"),
+                transaction_date=date(2025, m, 28),
+                category_id=category_id,
+            )
+            for m in range(1, 11)
+        ]
+        transactions.append(
+            self.create_transaction(
+                normalized_description="playstation",
+                amount=Decimal("39.99"),
+                transaction_date=date(2025, 10, 25),
+                category_id=category_id,
+            )
+        )
+        transactions.append(
+            self.create_transaction(
+                normalized_description="playstation",
+                amount=Decimal("71.99"),
+                transaction_date=date(2025, 11, 8),
+                category_id=category_id,
+            )
+        )
+
+        result = analyzer.analyze_patterns(transactions, self.user_id)
+
+        monthly_patterns = [p for p in result.patterns if p.pattern_type == "monthly"]
+        assert len(monthly_patterns) == 1
+        pattern = monthly_patterns[0]
+        assert pattern.average_amount == Decimal("8.99")
+        assert pattern.transaction_count == 10
+        assert all(abs(t.amount) == Decimal("8.99") for t in pattern.transactions)
+        assert len(pattern.transactions) == 10

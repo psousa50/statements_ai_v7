@@ -142,7 +142,12 @@ class RecurringExpenseAnalyzer:
             if len(group_transactions) < self.min_occurrences:
                 continue
 
-            sorted_transactions = sorted(group_transactions, key=lambda t: t.date)
+            amount_cluster = self._keep_dominant_amount_cluster(group_transactions, self.amount_variance_threshold)
+
+            if len(amount_cluster) < self.min_occurrences:
+                continue
+
+            sorted_transactions = sorted(amount_cluster, key=lambda t: t.date)
             monthly_transactions = self._filter_to_monthly_sequence(sorted_transactions)
 
             if len(monthly_transactions) < self.min_occurrences:
@@ -154,25 +159,24 @@ class RecurringExpenseAnalyzer:
 
             avg_interval = sum(intervals) / len(intervals)
 
-            first_date = sorted_transactions[0].date
-            last_date = sorted_transactions[-1].date
+            first_date = monthly_transactions[0].date
+            last_date = monthly_transactions[-1].date
             months_covered = (last_date.year - first_date.year) * 12 + (last_date.month - first_date.month) + 1
 
-            total_amount = sum(abs(t.amount) for t in group_transactions)
-            avg_amount = Decimal(total_amount) / Decimal(months_covered)
+            amounts = [abs(t.amount) for t in monthly_transactions]
+            total_amount = sum(amounts)
+            avg_amount = Decimal(total_amount) / Decimal(len(amounts))
 
             if avg_amount == 0:
                 continue
 
-            amounts = [abs(t.amount) for t in group_transactions]
-            avg_per_txn = total_amount / len(amounts)
-            variance = max(abs(a - avg_per_txn) / avg_per_txn for a in amounts) if avg_per_txn > 0 else 0
+            variance = max(abs(a - avg_amount) / avg_amount for a in amounts)
 
             if variance <= self.amount_variance_threshold:
                 description = monthly_transactions[0].description
                 actual_normalized_description = monthly_transactions[0].normalized_description
 
-                annual_cost = avg_amount * Decimal("12")
+                annual_cost = (Decimal(total_amount) / Decimal(months_covered)) * Decimal("12")
 
                 pattern = RecurringPattern(
                     description=description,
@@ -180,11 +184,11 @@ class RecurringExpenseAnalyzer:
                     interval_days=avg_interval,
                     average_amount=avg_amount,
                     amount_variance=variance,
-                    transaction_count=len(group_transactions),
-                    transactions=group_transactions,
+                    transaction_count=len(monthly_transactions),
+                    transactions=monthly_transactions,
                     category_id=category_id,
-                    first_transaction_date=sorted_transactions[0].date,
-                    last_transaction_date=sorted_transactions[-1].date,
+                    first_transaction_date=first_date,
+                    last_transaction_date=last_date,
                     total_annual_cost=annual_cost,
                 )
                 patterns.append(pattern)
@@ -199,7 +203,12 @@ class RecurringExpenseAnalyzer:
             if len(group_transactions) < self.YEARLY_MIN_OCCURRENCES:
                 continue
 
-            sorted_transactions = sorted(group_transactions, key=lambda t: t.date)
+            amount_cluster = self._keep_dominant_amount_cluster(group_transactions, self.YEARLY_VARIANCE_THRESHOLD)
+
+            if len(amount_cluster) < self.YEARLY_MIN_OCCURRENCES:
+                continue
+
+            sorted_transactions = sorted(amount_cluster, key=lambda t: t.date)
             yearly_transactions = self._filter_to_yearly_sequence(sorted_transactions)
 
             if len(yearly_transactions) < self.YEARLY_MIN_OCCURRENCES:
@@ -211,13 +220,13 @@ class RecurringExpenseAnalyzer:
 
             avg_interval = sum(intervals) / len(intervals)
 
-            total_amount = sum(abs(t.amount) for t in group_transactions)
-            avg_amount = Decimal(total_amount) / Decimal(len(group_transactions))
+            amounts = [abs(t.amount) for t in yearly_transactions]
+            total_amount = sum(amounts)
+            avg_amount = Decimal(total_amount) / Decimal(len(yearly_transactions))
 
             if avg_amount == 0:
                 continue
 
-            amounts = [abs(t.amount) for t in group_transactions]
             avg_per_txn = total_amount / len(amounts)
             variance = max(abs(a - avg_per_txn) / avg_per_txn for a in amounts) if avg_per_txn > 0 else 0
 
@@ -231,11 +240,11 @@ class RecurringExpenseAnalyzer:
                     interval_days=avg_interval,
                     average_amount=avg_amount,
                     amount_variance=variance,
-                    transaction_count=len(group_transactions),
-                    transactions=group_transactions,
+                    transaction_count=len(yearly_transactions),
+                    transactions=yearly_transactions,
                     category_id=category_id,
-                    first_transaction_date=sorted_transactions[0].date,
-                    last_transaction_date=sorted_transactions[-1].date,
+                    first_transaction_date=yearly_transactions[0].date,
+                    last_transaction_date=yearly_transactions[-1].date,
                     total_annual_cost=avg_amount,
                     pattern_type="yearly",
                 )
@@ -251,7 +260,12 @@ class RecurringExpenseAnalyzer:
             if len(group_transactions) < self.QUARTERLY_MIN_OCCURRENCES:
                 continue
 
-            sorted_transactions = sorted(group_transactions, key=lambda t: t.date)
+            amount_cluster = self._keep_dominant_amount_cluster(group_transactions, self.QUARTERLY_VARIANCE_THRESHOLD)
+
+            if len(amount_cluster) < self.QUARTERLY_MIN_OCCURRENCES:
+                continue
+
+            sorted_transactions = sorted(amount_cluster, key=lambda t: t.date)
             quarterly_transactions = self._filter_to_quarterly_sequence(sorted_transactions)
 
             if len(quarterly_transactions) < self.QUARTERLY_MIN_OCCURRENCES:
@@ -263,13 +277,13 @@ class RecurringExpenseAnalyzer:
 
             avg_interval = sum(intervals) / len(intervals)
 
-            total_amount = sum(abs(t.amount) for t in group_transactions)
-            avg_amount = Decimal(total_amount) / Decimal(len(group_transactions))
+            amounts = [abs(t.amount) for t in quarterly_transactions]
+            total_amount = sum(amounts)
+            avg_amount = Decimal(total_amount) / Decimal(len(quarterly_transactions))
 
             if avg_amount == 0:
                 continue
 
-            amounts = [abs(t.amount) for t in group_transactions]
             avg_per_txn = total_amount / len(amounts)
             variance = max(abs(a - avg_per_txn) / avg_per_txn for a in amounts) if avg_per_txn > 0 else 0
 
@@ -285,11 +299,11 @@ class RecurringExpenseAnalyzer:
                     interval_days=avg_interval,
                     average_amount=avg_amount,
                     amount_variance=variance,
-                    transaction_count=len(group_transactions),
-                    transactions=group_transactions,
+                    transaction_count=len(quarterly_transactions),
+                    transactions=quarterly_transactions,
                     category_id=category_id,
-                    first_transaction_date=sorted_transactions[0].date,
-                    last_transaction_date=sorted_transactions[-1].date,
+                    first_transaction_date=quarterly_transactions[0].date,
+                    last_transaction_date=quarterly_transactions[-1].date,
                     total_annual_cost=annual_cost,
                     pattern_type="quarterly",
                 )
@@ -363,6 +377,23 @@ class RecurringExpenseAnalyzer:
                 best_sequence = sequence
 
         return best_sequence
+
+    def _keep_dominant_amount_cluster(self, transactions: List[Transaction], tolerance: float) -> List[Transaction]:
+        if len(transactions) < 2:
+            return transactions
+
+        non_zero = [t for t in transactions if abs(t.amount) > 0]
+        if not non_zero:
+            return transactions
+
+        best_cluster: List[Transaction] = []
+        for reference in non_zero:
+            ref_amount = abs(reference.amount)
+            cluster = [t for t in transactions if ref_amount > 0 and abs(abs(t.amount) - ref_amount) / ref_amount <= tolerance]
+            if len(cluster) > len(best_cluster):
+                best_cluster = cluster
+
+        return best_cluster
 
     def _calculate_intervals(self, sorted_transactions: List[Transaction]) -> List[float]:
         intervals = []
