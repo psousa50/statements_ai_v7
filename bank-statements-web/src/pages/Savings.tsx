@@ -121,9 +121,11 @@ export const SavingsPage = () => {
     return sum + subTotals
   }, 0)
 
+  const totalSpend = rows.reduce((s, r) => s + r.total, 0)
   const months = monthsInRange(startDate, endDate)
   const monthlyBaseline = baselineSpend / months
-  const annualSavings = (projectionTotal / months) * 12
+  const monthlySavings = projectionTotal / months
+  const annualSavings = monthlySavings * 12
   const cuttableEntries = useMemo(() => {
     type Entry = { category: Category; total: number; effective: CategoryKind; parentName?: string }
     const entries: Entry[] = []
@@ -174,7 +176,7 @@ export const SavingsPage = () => {
         <h1>Savings Analysis</h1>
         <p className="page-description">
           Classify each category. The baseline shows your ongoing essentials + comforts; the projection annualises what
-          you'd save by cutting comforts and wants.
+          you'd save by cutting comforts and extras.
         </p>
       </div>
 
@@ -206,7 +208,9 @@ export const SavingsPage = () => {
         <div className="stat stat-save">
           <div className="stat-label">Projected annual savings</div>
           <div className="stat-value">{formatCurrency(annualSavings)}</div>
-          <div className="stat-sub">if you cut comforts and wants going forward</div>
+          <div className="stat-sub">
+            ≈ {formatCurrency(monthlySavings)} / month — if you cut comforts and extras going forward
+          </div>
         </div>
       </div>
 
@@ -220,7 +224,7 @@ export const SavingsPage = () => {
             {rows.map((row) => {
               const isExpanded = expandedRoots.has(row.category.id)
               const hasSubs = row.subRows.length > 0
-              const pct = baselineSpend > 0 ? (row.total / baselineSpend) * 100 : 0
+              const pct = totalSpend > 0 ? (row.total / totalSpend) * 100 : 0
               const isUnplanned = row.category.kind === 'unplanned'
               return (
                 <div key={row.category.id} className="root-group">
@@ -269,7 +273,7 @@ export const SavingsPage = () => {
                   {isExpanded &&
                     row.subRows.map((sub) => {
                       const subKind = effectiveKind(sub, row.category)
-                      const subPct = baselineSpend > 0 ? (sub.total / baselineSpend) * 100 : 0
+                      const subPct = totalSpend > 0 ? (sub.total / totalSpend) * 100 : 0
                       const parentOverrides = row.category.kind !== 'need'
                       return (
                         <div
