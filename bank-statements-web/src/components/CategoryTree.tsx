@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback } from 'react'
-import { Category } from '../types/Transaction'
+import { CATEGORY_KIND_LABELS, Category, CategoryKind } from '../types/Transaction'
 import EditIcon from '@mui/icons-material/Edit'
 import DeleteIcon from '@mui/icons-material/Delete'
 import AddIcon from '@mui/icons-material/Add'
@@ -18,7 +18,7 @@ interface CategoryTreeProps {
   onDelete: (category: Category) => void
   onCreateSubcategory: (parentId: string) => void
   onToggleExcludeFromSpending: (category: Category) => void
-  onToggleIrregular: (category: Category) => void
+  onChangeKind: (category: Category, kind: CategoryKind) => void
   forceExpandedCategories?: Set<string>
 }
 
@@ -30,7 +30,7 @@ interface CategoryTreeNodeProps {
   onDelete: (category: Category) => void
   onCreateSubcategory: (parentId: string) => void
   onToggleExcludeFromSpending: (category: Category) => void
-  onToggleIrregular: (category: Category) => void
+  onChangeKind: (category: Category, kind: CategoryKind) => void
   expandedCategories: Set<string>
   onToggleExpand: (categoryId: string) => void
 }
@@ -43,7 +43,7 @@ const CategoryTreeNode = ({
   onDelete,
   onCreateSubcategory,
   onToggleExcludeFromSpending,
-  onToggleIrregular,
+  onChangeKind,
   expandedCategories,
   onToggleExpand,
 }: CategoryTreeNodeProps) => {
@@ -130,25 +130,19 @@ const CategoryTreeNode = ({
               {category.exclude_from_spending ? 'Excluded' : '+ Exclude'}
             </button>
           </Tooltip>
-          <Tooltip
-            title={
-              category.is_irregular
-                ? 'Treated as one-off / discretionary spending. Hidden from the "Regular only" chart view. Click to mark as regular.'
-                : 'Mark as irregular / one-off (e.g. travel, shopping sprees). It will be hidden from the "Regular only" chart view.'
-            }
-            arrow
+          <select
+            className={`category-kind-select kind-${category.kind}`}
+            value={category.kind}
+            onClick={stop}
+            onChange={(e) => onChangeKind(category, e.target.value as CategoryKind)}
+            title="Spending kind"
           >
-            <button
-              type="button"
-              className={`category-flag-toggle category-flag-irregular ${category.is_irregular ? 'is-on' : ''}`}
-              onClick={(e) => {
-                stop(e)
-                onToggleIrregular(category)
-              }}
-            >
-              {category.is_irregular ? 'Irregular' : '+ Irregular'}
-            </button>
-          </Tooltip>
+            {(Object.keys(CATEGORY_KIND_LABELS) as CategoryKind[]).map((k) => (
+              <option key={k} value={k}>
+                {CATEGORY_KIND_LABELS[k]}
+              </option>
+            ))}
+          </select>
           <div className="category-stats">
             {hasSubcategories && <span className="subcategory-count">{subcategories.length} subcategories</span>}
           </div>
@@ -188,7 +182,7 @@ const CategoryTreeNode = ({
               onDelete={onDelete}
               onCreateSubcategory={onCreateSubcategory}
               onToggleExcludeFromSpending={onToggleExcludeFromSpending}
-              onToggleIrregular={onToggleIrregular}
+              onChangeKind={onChangeKind}
               expandedCategories={expandedCategories}
               onToggleExpand={onToggleExpand}
             />
@@ -207,7 +201,7 @@ export const CategoryTree = ({
   onDelete,
   onCreateSubcategory,
   onToggleExcludeFromSpending,
-  onToggleIrregular,
+  onChangeKind,
   forceExpandedCategories,
 }: CategoryTreeProps) => {
   const [userExpandedCategories, setUserExpandedCategories] = useState<Set<string>>(new Set())
@@ -318,7 +312,7 @@ export const CategoryTree = ({
             onDelete={onDelete}
             onCreateSubcategory={onCreateSubcategory}
             onToggleExcludeFromSpending={onToggleExcludeFromSpending}
-            onToggleIrregular={onToggleIrregular}
+            onChangeKind={onChangeKind}
             expandedCategories={expandedCategories}
             onToggleExpand={handleToggleExpand}
           />

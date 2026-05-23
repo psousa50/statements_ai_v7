@@ -19,7 +19,7 @@ class CategoryService:
         parent_id: Optional[UUID] = None,
         color: Optional[str] = None,
         exclude_from_spending: bool = False,
-        is_irregular: bool = False,
+        kind: str = "need",
     ) -> Category:
         if parent_id:
             parent = self.category_repository.get_by_id(parent_id, user_id)
@@ -35,7 +35,7 @@ class CategoryService:
             parent_id=parent_id,
             color=color,
             exclude_from_spending=exclude_from_spending,
-            is_irregular=is_irregular,
+            kind=kind,
         )
         return self.category_repository.create(category)
 
@@ -63,7 +63,7 @@ class CategoryService:
         parent_id: Optional[UUID] = None,
         color: Optional[str] = None,
         exclude_from_spending: bool = False,
-        is_irregular: bool = False,
+        kind: str = "need",
     ) -> Optional[Category]:
         category = self.category_repository.get_by_id(category_id, user_id)
         if not category:
@@ -84,7 +84,7 @@ class CategoryService:
         category.parent_id = parent_id
         category.color = color
         category.exclude_from_spending = exclude_from_spending
-        category.is_irregular = is_irregular
+        category.kind = kind
 
         return self.category_repository.update(category)
 

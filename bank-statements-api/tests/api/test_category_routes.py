@@ -33,7 +33,7 @@ def test_create_category():
         parent_id=None,
         color=None,
         exclude_from_spending=False,
-        is_irregular=False,
+        kind="need",
     )
 
 
@@ -112,7 +112,7 @@ def test_update_category():
         parent_id=None,
         color=None,
         exclude_from_spending=False,
-        is_irregular=False,
+        kind="need",
     )
 
 

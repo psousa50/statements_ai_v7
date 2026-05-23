@@ -62,7 +62,7 @@ class CategoryBase(BaseModel):
     name: str
     color: Optional[str] = None
     exclude_from_spending: bool = False
-    is_irregular: bool = False
+    kind: str = "need"
 
     @field_validator("color")
     @classmethod
@@ -97,7 +97,7 @@ class CategoryResponse(BaseModel):
     parent_id: Optional[UUID] = None
     parent: Optional[CategoryParentResponse] = None
     exclude_from_spending: bool = False
-    is_irregular: bool = False
+    kind: str = "need"
 
     model_config = ConfigDict(from_attributes=True)
 

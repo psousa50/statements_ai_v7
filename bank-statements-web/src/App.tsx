@@ -5,6 +5,7 @@ import { EnhancementRules } from './pages/EnhancementRules'
 import { CategoriesPage } from './pages/Categories'
 import { AccountsPage } from './pages/Accounts'
 import { ChartsPage } from './pages/Charts'
+import { SavingsPage } from './pages/Savings'
 import { RecurringExpensesPage } from './pages/RecurringExpensesPage'
 import { Statements } from './pages/Statements'
 import { Upload } from './pages/Upload'
@@ -48,6 +49,7 @@ const router = createBrowserRouter(
         { path: 'categories', element: <CategoriesPage /> },
         { path: 'accounts', element: <AccountsPage /> },
         { path: 'charts', element: <ChartsPage /> },
+        { path: 'savings', element: <SavingsPage /> },
         { path: 'recurring', element: <RecurringExpensesPage /> },
         { path: 'statements', element: <Statements /> },
         { path: 'upload', element: <Upload /> },

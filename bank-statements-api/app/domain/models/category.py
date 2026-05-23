@@ -1,10 +1,18 @@
+from enum import Enum as PyEnum
 from uuid import uuid4
 
-from sqlalchemy import Boolean, Column, ForeignKey, String
+from sqlalchemy import Boolean, Column, Enum, ForeignKey, String
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
 from app.core.database import Base
+
+
+class CategoryKind(str, PyEnum):
+    NEED = "need"
+    COMFORT = "comfort"
+    UNPLANNED = "unplanned"
+    EXTRA = "extra"
 
 
 class Category(Base):
@@ -20,7 +28,12 @@ class Category(Base):
         nullable=True,
     )
     exclude_from_spending = Column(Boolean, nullable=False, default=False, server_default="false")
-    is_irregular = Column(Boolean, nullable=False, default=False, server_default="false")
+    kind = Column(
+        Enum(CategoryKind, name="category_kind", values_callable=lambda x: [e.value for e in x]),
+        nullable=False,
+        default=CategoryKind.NEED,
+        server_default=CategoryKind.NEED.value,
+    )
 
     user = relationship("User", back_populates="categories")
     parent = relationship(
@@ -31,7 +44,7 @@ class Category(Base):
 
     def __init__(self, **kwargs):
         kwargs.setdefault("exclude_from_spending", False)
-        kwargs.setdefault("is_irregular", False)
+        kwargs.setdefault("kind", CategoryKind.NEED)
         super().__init__(**kwargs)
 
     def __repr__(self):

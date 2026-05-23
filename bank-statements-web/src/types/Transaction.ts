@@ -13,7 +13,23 @@ export interface Category {
   parent_id?: string
   parent?: CategoryParent
   exclude_from_spending: boolean
-  is_irregular: boolean
+  kind: CategoryKind
+}
+
+export type CategoryKind = 'need' | 'comfort' | 'unplanned' | 'extra'
+
+export const CATEGORY_KIND_LABELS: Record<CategoryKind, string> = {
+  need: 'Need',
+  comfort: 'Comfort',
+  unplanned: 'Unplanned',
+  extra: 'Extra',
+}
+
+export const CATEGORY_KIND_DESCRIPTIONS: Record<CategoryKind, string> = {
+  need: 'Essential ongoing spending (rent, groceries, utilities).',
+  comfort: 'Ongoing but cuttable (subscriptions, gym, takeaway).',
+  unplanned: 'One-off necessities (repairs, projects, medical).',
+  extra: 'One-off treats (travel, shopping sprees).',
 }
 
 export interface InitialBalance {

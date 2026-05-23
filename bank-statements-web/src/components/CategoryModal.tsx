@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { Category } from '../types/Transaction'
+import { CATEGORY_KIND_DESCRIPTIONS, CATEGORY_KIND_LABELS, Category, CategoryKind } from '../types/Transaction'
 import { CategorySelector } from './CategorySelector'
 import { ColorSwatchPicker } from './ColorSwatchPicker'
 import { PRESET_COLORS } from '../utils/categoryColors'
@@ -15,7 +15,7 @@ interface CategoryModalProps {
     categoryId?: string,
     color?: string,
     excludeFromSpending?: boolean,
-    isIrregular?: boolean
+    kind?: CategoryKind
   ) => Promise<void>
   onClose: () => void
 }
@@ -25,7 +25,7 @@ export const CategoryModal = ({ isOpen, category, parentId, categories, onSave, 
   const [selectedParentId, setSelectedParentId] = useState<string | undefined>(undefined)
   const [selectedColor, setSelectedColor] = useState<string | undefined>(undefined)
   const [excludeFromSpending, setExcludeFromSpending] = useState(false)
-  const [isIrregular, setIsIrregular] = useState(false)
+  const [kind, setKind] = useState<CategoryKind>('need')
   const [saving, setSaving] = useState(false)
 
   const isEditing = !!category
@@ -36,8 +36,6 @@ export const CategoryModal = ({ isOpen, category, parentId, categories, onSave, 
       ? `Create Subcategory under ${parentCategory?.name || 'Unknown'}`
       : 'Create Root Category'
   const isRootCategory = !selectedParentId
-  const selectedParent = selectedParentId ? categories.find((c) => c.id === selectedParentId) : null
-  const parentIsRegular = selectedParent ? !selectedParent.is_irregular : true
 
   useEffect(() => {
     if (isOpen) {
@@ -46,13 +44,13 @@ export const CategoryModal = ({ isOpen, category, parentId, categories, onSave, 
         setSelectedParentId(category.parent_id)
         setSelectedColor(category.color)
         setExcludeFromSpending(category.exclude_from_spending)
-        setIsIrregular(category.is_irregular)
+        setKind(category.kind)
       } else {
         setName('')
         setSelectedParentId(parentId)
         setSelectedColor(parentId ? undefined : PRESET_COLORS[0])
         setExcludeFromSpending(false)
-        setIsIrregular(false)
+        setKind('need')
       }
     }
   }, [isOpen, category, parentId])
@@ -125,7 +123,7 @@ export const CategoryModal = ({ isOpen, category, parentId, categories, onSave, 
         category?.id,
         isRootCategory ? selectedColor : undefined,
         excludeFromSpending,
-        isIrregular
+        kind
       )
     } catch (error) {
       console.error('Failed to save category:', error)
@@ -211,21 +209,20 @@ export const CategoryModal = ({ isOpen, category, parentId, categories, onSave, 
           </div>
 
           <div className="form-group">
-            <label className="checkbox-label" htmlFor="is-irregular">
-              <input
-                id="is-irregular"
-                type="checkbox"
-                checked={isIrregular}
-                onChange={(e) => setIsIrregular(e.target.checked)}
-                disabled={!isRootCategory && !parentIsRegular}
-              />
-              Irregular / one-off expense
-            </label>
-            <div className="form-help-text">
-              {!isRootCategory && !parentIsRegular
-                ? `Parent ${selectedParent?.name ?? ''} is already marked irregular, so this subcategory inherits that.`
-                : 'Mark as irregular to exclude from the regular-only spending view (e.g. travel, one-off purchases).'}
-            </div>
+            <label htmlFor="category-kind">Kind</label>
+            <select
+              id="category-kind"
+              value={kind}
+              onChange={(e) => setKind(e.target.value as CategoryKind)}
+              className="kind-select"
+            >
+              {(Object.keys(CATEGORY_KIND_LABELS) as CategoryKind[]).map((k) => (
+                <option key={k} value={k}>
+                  {CATEGORY_KIND_LABELS[k]}
+                </option>
+              ))}
+            </select>
+            <div className="form-help-text">{CATEGORY_KIND_DESCRIPTIONS[kind]}</div>
           </div>
 
           {isEditing && category && (

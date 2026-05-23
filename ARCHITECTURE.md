@@ -70,7 +70,7 @@ bin/                             # Shell scripts (dev, db, deploy, test)
 | `users` | Root entity; OAuth + password auth |
 | `accounts` | Belongs to user; has currency; holds transactions |
 | `transactions` | Belongs to account + statement; has category, counterparty_account, tags (M2M via `transaction_tags`) |
-| `categories` | Hierarchical (max 2 levels via parent_id); has colour; `exclude_from_spending` opts a category out of analytics totals; `is_irregular` flags one-off/discretionary categories so the "Regular only" chart view hides them |
+| `categories` | Hierarchical (max 2 levels via parent_id); has colour; `exclude_from_spending` opts a category out of analytics totals; `kind` enum (need/comfort/unplanned/want) classifies categories along the regular/irregular × essential/cuttable matrix used by the Savings page and Charts "Essentials only" filter |
 | `statements` | Belongs to account; stores raw file content |
 | `enhancement_rules` | Pattern matching rules with AI suggestion fields |
 | `tags` | M2M with transactions via junction table |

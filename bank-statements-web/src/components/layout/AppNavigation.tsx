@@ -15,6 +15,7 @@ import PaymentIcon from '@mui/icons-material/Payment'
 import CloudUploadIcon from '@mui/icons-material/CloudUpload'
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome'
 import ChatIcon from '@mui/icons-material/Chat'
+import SavingsIcon from '@mui/icons-material/Savings'
 
 interface AppNavigationProps {
   onNavigate?: () => void
@@ -45,6 +46,7 @@ const navSections: NavSection[] = [
         matchPaths: ['/transactions', '/'],
       },
       { path: '/charts', label: 'Charts', icon: <BarChartIcon /> },
+      { path: '/savings', label: 'Savings', icon: <SavingsIcon /> },
       { path: '/recurring', label: 'Recurring', icon: <RepeatIcon /> },
     ],
   },

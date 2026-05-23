@@ -8,7 +8,7 @@ import { CategoryModal } from '../components/CategoryModal'
 import { CategorySuggestionPanel } from '../components/CategorySuggestionPanel'
 import { ConfirmationModal } from '../components/ConfirmationModal'
 import { Toast, ToastProps } from '../components/Toast'
-import { Category } from '../types/Transaction'
+import { CATEGORY_KIND_LABELS, Category, CategoryKind } from '../types/Transaction'
 import { Button, Dialog, DialogTitle, DialogContent, Chip } from '@mui/material'
 import AddIcon from '@mui/icons-material/Add'
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome'
@@ -22,7 +22,7 @@ export const CategoriesPage = () => {
   const [selectedParentId, setSelectedParentId] = useState<string | undefined>(undefined)
   const [searchTerm, setSearchTerm] = useState('')
   const [excludedFilter, setExcludedFilter] = useState<'any' | 'on' | 'off'>('any')
-  const [irregularFilter, setIrregularFilter] = useState<'any' | 'on' | 'off'>('any')
+  const [kindFilter, setKindFilter] = useState<CategoryKind | 'any'>('any')
 
   const cycleFilter = (current: 'any' | 'on' | 'off'): 'any' | 'on' | 'off' =>
     current === 'any' ? 'on' : current === 'on' ? 'off' : 'any'
@@ -75,7 +75,7 @@ export const CategoriesPage = () => {
     return hierarchy
   }
 
-  const hasActiveFilter = !!searchTerm || excludedFilter !== 'any' || irregularFilter !== 'any'
+  const hasActiveFilter = !!searchTerm || excludedFilter !== 'any' || kindFilter !== 'any'
 
   const filteredCategories = !hasActiveFilter
     ? categories
@@ -89,9 +89,9 @@ export const CategoriesPage = () => {
         categories.forEach((category) => {
           const nameMatches = !searchTerm || category.name.toLowerCase().includes(searchLower)
           const excludedMatches = matchesFlag(category.exclude_from_spending, excludedFilter)
-          const irregularMatches = matchesFlag(category.is_irregular, irregularFilter)
+          const kindMatches = kindFilter === 'any' || category.kind === kindFilter
 
-          if (nameMatches && excludedMatches && irregularMatches) {
+          if (nameMatches && excludedMatches && kindMatches) {
             matchingIds.add(category.id)
             getCategoryHierarchy(category.id).forEach((id) => matchingIds.add(id))
           }
@@ -172,18 +172,11 @@ export const CategoriesPage = () => {
       categoryId?: string,
       color?: string,
       excludeFromSpending?: boolean,
-      isIrregular?: boolean
+      kind?: CategoryKind
     ) => {
       try {
         if (categoryId) {
-          const updatedCategory = await updateCategory(
-            categoryId,
-            name,
-            parentId,
-            color,
-            excludeFromSpending,
-            isIrregular
-          )
+          const updatedCategory = await updateCategory(categoryId, name, parentId, color, excludeFromSpending, kind)
           if (updatedCategory) {
             setToast({
               message: `Category "${name}" updated successfully`,
@@ -192,7 +185,7 @@ export const CategoriesPage = () => {
             setEditingCategory(null)
           }
         } else {
-          const newCategory = await addCategory(name, parentId, color, excludeFromSpending, isIrregular)
+          const newCategory = await addCategory(name, parentId, color, excludeFromSpending, kind)
           if (newCategory) {
             setToast({
               message: `Category "${name}" created successfully`,
@@ -221,21 +214,21 @@ export const CategoriesPage = () => {
         category.parent_id,
         category.color,
         !category.exclude_from_spending,
-        category.is_irregular
+        category.kind
       )
     },
     [updateCategory]
   )
 
-  const handleToggleIrregular = useCallback(
-    async (category: Category) => {
+  const handleChangeKind = useCallback(
+    async (category: Category, kind: CategoryKind) => {
       await updateCategory(
         category.id,
         category.name,
         category.parent_id,
         category.color,
         category.exclude_from_spending,
-        !category.is_irregular
+        kind
       )
     },
     [updateCategory]
@@ -389,24 +382,19 @@ export const CategoriesPage = () => {
                   ? 'Excluded: only'
                   : 'Excluded: none'}
             </button>
-            <button
-              type="button"
-              className={`category-filter-chip filter-${irregularFilter}`}
-              onClick={() => setIrregularFilter(cycleFilter(irregularFilter))}
-              title={
-                irregularFilter === 'any'
-                  ? 'Showing all. Click to show only irregular.'
-                  : irregularFilter === 'on'
-                    ? 'Showing only irregular. Click to show only regular.'
-                    : 'Showing only regular. Click to show all.'
-              }
+            <select
+              className="category-filter-select"
+              value={kindFilter}
+              onChange={(e) => setKindFilter(e.target.value as CategoryKind | 'any')}
+              title="Filter by kind"
             >
-              {irregularFilter === 'any'
-                ? 'Irregular: any'
-                : irregularFilter === 'on'
-                  ? 'Irregular: only'
-                  : 'Irregular: none'}
-            </button>
+              <option value="any">Kind: any</option>
+              {(Object.keys(CATEGORY_KIND_LABELS) as CategoryKind[]).map((k) => (
+                <option key={k} value={k}>
+                  Kind: {CATEGORY_KIND_LABELS[k]}
+                </option>
+              ))}
+            </select>
             {hasActiveFilter && (
               <button
                 type="button"
@@ -414,7 +402,7 @@ export const CategoriesPage = () => {
                 onClick={() => {
                   setSearchTerm('')
                   setExcludedFilter('any')
-                  setIrregularFilter('any')
+                  setKindFilter('any')
                 }}
                 title="Clear search and filters"
               >
@@ -494,7 +482,7 @@ export const CategoriesPage = () => {
             onDelete={handleDeleteCategory}
             onCreateSubcategory={handleCreateCategory}
             onToggleExcludeFromSpending={handleToggleExcludeFromSpending}
-            onToggleIrregular={handleToggleIrregular}
+            onChangeKind={handleChangeKind}
             forceExpandedCategories={forceExpandedCategories}
           />
         </div>

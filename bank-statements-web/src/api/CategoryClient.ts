@@ -56,7 +56,7 @@ export interface CategoryClient {
     parent_id?: string
     color?: string
     exclude_from_spending?: boolean
-    is_irregular?: boolean
+    kind?: string
   }): Promise<Category>
   update(
     id: string,
@@ -65,7 +65,7 @@ export interface CategoryClient {
       parent_id?: string
       color?: string
       exclude_from_spending?: boolean
-      is_irregular?: boolean
+      kind?: string
     }
   ): Promise<Category>
   delete(id: string): Promise<void>
@@ -107,7 +107,7 @@ export const categoryClient: CategoryClient = {
     parent_id?: string
     color?: string
     exclude_from_spending?: boolean
-    is_irregular?: boolean
+    kind?: string
   }) {
     const response = await axiosInstance.post<Category>(API_URL, category)
     return response.data
@@ -120,7 +120,7 @@ export const categoryClient: CategoryClient = {
       parent_id?: string
       color?: string
       exclude_from_spending?: boolean
-      is_irregular?: boolean
+      kind?: string
     }
   ) {
     const response = await axiosInstance.put<Category>(`${API_URL}/${id}`, category)

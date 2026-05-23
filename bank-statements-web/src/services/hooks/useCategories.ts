@@ -1,6 +1,6 @@
 import { useCallback } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Category } from '../../types/Transaction'
+import { Category, CategoryKind } from '../../types/Transaction'
 import { useApi } from '../../api/ApiContext'
 
 const sortByName = (categories: Category[]) => [...categories].sort((a, b) => a.name.localeCompare(b.name))
@@ -50,20 +50,20 @@ export const useCategories = () => {
       parentId,
       color,
       excludeFromSpending,
-      isIrregular,
+      kind,
     }: {
       name: string
       parentId?: string
       color?: string
       excludeFromSpending?: boolean
-      isIrregular?: boolean
+      kind?: CategoryKind
     }) => {
       return api.categories.create({
         name,
         parent_id: parentId,
         color,
         exclude_from_spending: excludeFromSpending,
-        is_irregular: isIrregular,
+        kind,
       })
     },
     onSuccess: () => {
@@ -79,24 +79,24 @@ export const useCategories = () => {
       parentId,
       color,
       excludeFromSpending,
-      isIrregular,
+      kind,
     }: {
       id: string
       name: string
       parentId?: string
       color?: string
       excludeFromSpending?: boolean
-      isIrregular?: boolean
+      kind?: CategoryKind
     }) => {
       return api.categories.update(id, {
         name,
         parent_id: parentId,
         color,
         exclude_from_spending: excludeFromSpending,
-        is_irregular: isIrregular,
+        kind,
       })
     },
-    onMutate: async ({ id, name, parentId, color, excludeFromSpending, isIrregular }) => {
+    onMutate: async ({ id, name, parentId, color, excludeFromSpending, kind }) => {
       await queryClient.cancelQueries({ queryKey: CATEGORY_QUERY_KEYS.all })
       await queryClient.cancelQueries({ queryKey: CATEGORY_QUERY_KEYS.root })
       const previousAll = queryClient.getQueryData<Category[]>(CATEGORY_QUERY_KEYS.all)
@@ -110,7 +110,7 @@ export const useCategories = () => {
                 parent_id: parentId,
                 color,
                 exclude_from_spending: excludeFromSpending ?? c.exclude_from_spending,
-                is_irregular: isIrregular ?? c.is_irregular,
+                kind: kind ?? c.kind,
               }
             : c
         )
@@ -157,9 +157,9 @@ export const useCategories = () => {
   })
 
   const addCategory = useCallback(
-    async (name: string, parentId?: string, color?: string, excludeFromSpending?: boolean, isIrregular?: boolean) => {
+    async (name: string, parentId?: string, color?: string, excludeFromSpending?: boolean, kind?: CategoryKind) => {
       try {
-        return await addMutation.mutateAsync({ name, parentId, color, excludeFromSpending, isIrregular })
+        return await addMutation.mutateAsync({ name, parentId, color, excludeFromSpending, kind })
       } catch {
         return null
       }
@@ -174,10 +174,10 @@ export const useCategories = () => {
       parentId?: string,
       color?: string,
       excludeFromSpending?: boolean,
-      isIrregular?: boolean
+      kind?: CategoryKind
     ) => {
       try {
-        return await updateMutation.mutateAsync({ id, name, parentId, color, excludeFromSpending, isIrregular })
+        return await updateMutation.mutateAsync({ id, name, parentId, color, excludeFromSpending, kind })
       } catch {
         return null
       }

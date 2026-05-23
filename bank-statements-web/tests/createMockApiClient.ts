@@ -51,7 +51,7 @@ const defaultCategory: Category = {
   id: '1',
   name: 'Sample Category',
   exclude_from_spending: false,
-  is_irregular: false,
+  kind: 'need',
 }
 
 // Default mock account
