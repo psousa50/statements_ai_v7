@@ -172,27 +172,20 @@ class TransactionRuleEnhancementService:
             logger.warning(f"Failed to create unmatched rule for {normalized_description}: {e}")
 
     def _build_rules_map(self, transactions: List[Transaction], rules: List[EnhancementRule]) -> dict:
-        """
-        Build a lookup map from normalized_description to the best matching rule.
-        For each transaction, find the first matching rule (rules are already sorted by precedence).
-        """
+        ordered_rules = sorted(rules, key=_rule_specificity_key)
         rules_map = {}
 
         for transaction in transactions:
-            if transaction.normalized_description in rules_map:
-                continue
-
-            for rule in rules:
+            for rule in ordered_rules:
                 if rule.matches_transaction(transaction):
-                    rules_map[transaction.normalized_description] = rule
+                    rules_map[transaction.id] = rule
                     break
 
         return rules_map
 
     def _apply_rules_from_map(self, transactions: List[Transaction], rules_map: dict) -> List[Transaction]:
-        """Apply enhancement rules to transactions using the lookup map"""
         for transaction in transactions:
-            rule = rules_map.get(transaction.normalized_description)
+            rule = rules_map.get(transaction.id)
             if rule:
                 if rule.category_id is not None:
                     transaction.category_id = rule.category_id
@@ -203,3 +196,17 @@ class TransactionRuleEnhancementService:
                     transaction.mark_rule_based_counterparty()
 
         return transactions
+
+
+_MATCH_TYPE_PRIORITY = {MatchType.EXACT: 0, MatchType.PREFIX: 1, MatchType.INFIX: 2}
+
+
+def _rule_specificity_key(rule: EnhancementRule):
+    has_amount = rule.min_amount is not None or rule.max_amount is not None
+    has_date = rule.start_date is not None or rule.end_date is not None
+    return (
+        0 if has_amount else 1,
+        0 if has_date else 1,
+        _MATCH_TYPE_PRIORITY.get(rule.match_type, 99),
+        rule.created_at or datetime.min,
+    )

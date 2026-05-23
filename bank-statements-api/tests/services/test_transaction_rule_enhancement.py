@@ -322,3 +322,60 @@ class TestTransactionRuleEnhancementService:
         assert result.total_processed == 5
         assert result.rule_based_matches == 0
         assert result.has_unmatched
+
+    def test_amount_constrained_rule_wins_over_broader_rule_for_same_description(
+        self,
+        enhancement_service,
+        mock_enhancement_rule_repository,
+        user_id,
+    ):
+        from decimal import Decimal
+
+        storage_rule = EnhancementRule(
+            id=uuid4(),
+            normalized_description_pattern="google",
+            match_type=MatchType.EXACT,
+            category_id="category-storage",
+            counterparty_account_id=None,
+            source=EnhancementRuleSource.AUTO,
+        )
+        youtube_rule = EnhancementRule(
+            id=uuid4(),
+            normalized_description_pattern="google",
+            match_type=MatchType.EXACT,
+            min_amount=Decimal("-17.99"),
+            max_amount=Decimal("-17.99"),
+            category_id="category-youtube",
+            counterparty_account_id=None,
+            source=EnhancementRuleSource.AUTO,
+        )
+        mock_enhancement_rule_repository.find_matching_rules_batch.return_value = [
+            storage_rule,
+            youtube_rule,
+        ]
+        mock_enhancement_rule_repository.find_by_normalized_description.return_value = None
+
+        dtos = [
+            TransactionDTO(
+                date="2024-01-01",
+                amount=-2.99,
+                description="Google",
+                user_id=user_id,
+                account_id="acc1",
+            ),
+            TransactionDTO(
+                date="2024-01-02",
+                amount=-17.99,
+                description="Google",
+                user_id=user_id,
+                account_id="acc1",
+            ),
+        ]
+
+        result = enhancement_service.enhance_transactions(user_id, dtos)
+
+        storage_dto = next(d for d in result.enhanced_dtos if d.amount == -2.99)
+        youtube_dto = next(d for d in result.enhanced_dtos if d.amount == -17.99)
+
+        assert storage_dto.category_id == "category-storage"
+        assert youtube_dto.category_id == "category-youtube"
