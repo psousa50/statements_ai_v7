@@ -68,7 +68,7 @@ export const ChartsPage = () => {
   const [chartType, setChartType] = useState<'root' | 'sub'>('root')
   const [selectedRootCategory, setSelectedRootCategory] = useState<string | null>(null)
   const [hiddenChartCategoryIds, setHiddenChartCategoryIds] = useState<Set<string>>(new Set())
-  const [regularOnly, setRegularOnly] = useState(false)
+  const [regularOnly, setRegularOnly] = useState(() => searchParams.get('regular_only') === 'true')
   const [transactionType, setTransactionType] = useState<'all' | 'debit' | 'credit'>(
     () => (searchParams.get('transaction_type') as 'all' | 'debit' | 'credit') || 'all'
   )
@@ -200,9 +200,10 @@ export const ChartsPage = () => {
       params.set('transaction_type', filters.transaction_type)
     if (viewMode !== 'bar') params.set('view', viewMode)
     if (timeSeriesPeriod !== 'month') params.set('period', timeSeriesPeriod)
+    if (regularOnly) params.set('regular_only', 'true')
 
     setSearchParams(params, { replace: true })
-  }, [filters, viewMode, timeSeriesPeriod, setSearchParams])
+  }, [filters, viewMode, timeSeriesPeriod, regularOnly, setSearchParams])
 
   const handleFilterChange = useCallback(
     (newFilters: Partial<Omit<FilterType, 'page' | 'page_size'>>) => {
