@@ -64,6 +64,7 @@ services:
     volumes:
       - ./bank-statements-web:/app
       - /app/node_modules
+      - ./VERSION:/VERSION:ro
     ports:
       - '${WEB_PORT:-5173}:5173'
     environment:

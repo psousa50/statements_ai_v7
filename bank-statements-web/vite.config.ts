@@ -7,7 +7,16 @@ import { readFileSync } from 'fs'
 const WEB_PORT = process.env.WEB_PORT ? parseInt(process.env.WEB_PORT) : 5173
 const API_URL = process.env.VITE_API_URL || process.env.API_BASE_URL || 'http://localhost:8000'
 
-const appVersion = readFileSync(path.resolve(__dirname, '../VERSION'), 'utf-8').trim()
+const appVersion = (() => {
+  for (const candidate of [path.resolve(__dirname, '../VERSION'), path.resolve(__dirname, 'VERSION'), '/VERSION']) {
+    try {
+      return readFileSync(candidate, 'utf-8').trim()
+    } catch {
+      // try next
+    }
+  }
+  return 'unknown'
+})()
 const gitCommit = (() => {
   try {
     return execSync('git rev-parse --short HEAD', { cwd: __dirname }).toString().trim()
