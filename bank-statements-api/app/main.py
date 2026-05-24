@@ -1,5 +1,8 @@
 import logging
+import os
+import subprocess
 import time
+from pathlib import Path
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -15,7 +18,43 @@ from app.logging.config import init_logging
 init_logging()
 logger = logging.getLogger(__name__)
 
-app = FastAPI()
+
+def _resolve_version() -> str:
+    if env_version := os.environ.get("APP_VERSION"):
+        return env_version.strip()
+    api_dir = Path(__file__).resolve().parents[1]
+    for candidate in (api_dir.parent / "VERSION", api_dir / "VERSION", Path("/VERSION")):
+        if candidate.is_file():
+            return candidate.read_text().strip()
+    return "unknown"
+
+
+def _resolve_commit() -> str:
+    if env_commit := os.environ.get("APP_COMMIT"):
+        return env_commit.strip()
+    try:
+        return (
+            subprocess.check_output(
+                ["git", "rev-parse", "--short", "HEAD"],
+                cwd=Path(__file__).resolve().parents[2],
+                stderr=subprocess.DEVNULL,
+            )
+            .decode()
+            .strip()
+        )
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        return "unknown"
+
+
+APP_VERSION = _resolve_version()
+APP_COMMIT = _resolve_commit()
+
+app = FastAPI(version=APP_VERSION)
+
+
+@app.get("/version", tags=["meta"])
+def get_version() -> dict[str, str]:
+    return {"version": APP_VERSION, "commit": APP_COMMIT}
 
 
 @app.middleware("http")

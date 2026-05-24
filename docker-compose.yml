@@ -54,6 +54,7 @@ services:
         condition: service_healthy
     volumes:
       - ./bank-statements-api:/app
+      - ./VERSION:/VERSION:ro
 
   # Bank Statements Web Frontend
   web:

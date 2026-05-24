@@ -45,9 +45,14 @@ export const AppLayout = () => {
   const drawerContent = (
     <>
       <Toolbar sx={{ justifyContent: 'space-between' }}>
-        <Typography variant="h6" noWrap component="div">
-          Menu
-        </Typography>
+        <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1 }}>
+          <Typography variant="h6" noWrap component="div">
+            Menu
+          </Typography>
+          <Typography variant="caption" sx={{ color: 'text.disabled' }}>
+            v{import.meta.env.VITE_APP_VERSION}
+          </Typography>
+        </Box>
         {!usePermanentDrawer && (
           <IconButton onClick={handleDrawerToggle} size="small" aria-label="close menu">
             <CloseIcon />

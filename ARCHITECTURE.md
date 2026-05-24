@@ -104,7 +104,8 @@ All routes under `/api/v1`, all require authentication.
 | Layer | Mechanism |
 |-------|-----------|
 | Backend settings | Pydantic BaseSettings loading from `.env` (generated from `config/settings.*.yaml`) |
-| Frontend settings | `VITE_*` env vars injected at build time |
+| Frontend settings | `VITE_*` env vars injected at build time (incl. `VITE_APP_VERSION` from root `VERSION` file and `VITE_APP_COMMIT` from `git rev-parse --short HEAD`, both set in `vite.config.ts`) |
+| App version | Single source of truth: `VERSION` file at repo root. Web reads it at build time (meta tags + footer); API reads it at startup (`APP_VERSION` env var override, else `VERSION` file, else `unknown`) and exposes `GET /version` returning `{version, commit}`. Bump manually before each push. |
 | LLM provider | Auto-selected: E2E mode → Noop, else Groq (if key) → Gemini (if key) → Noop |
 | Feature gates | Subscription tier limits checked via SubscriptionService |
 | Env generation | `bin/generate-env-files.py` reads YAML config, writes `.env` files for root/api/web |

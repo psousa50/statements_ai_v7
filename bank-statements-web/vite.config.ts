@@ -1,9 +1,22 @@
 import { defineConfig } from 'vitest/config'
 import path from 'path'
+import { execSync } from 'child_process'
+import { readFileSync } from 'fs'
 
 // Only VITE_ variables are exposed to frontend code. WEB_PORT is used only for dev server config.
 const WEB_PORT = process.env.WEB_PORT ? parseInt(process.env.WEB_PORT) : 5173
 const API_URL = process.env.VITE_API_URL || process.env.API_BASE_URL || 'http://localhost:8000'
+
+const appVersion = readFileSync(path.resolve(__dirname, '../VERSION'), 'utf-8').trim()
+const gitCommit = (() => {
+  try {
+    return execSync('git rev-parse --short HEAD', { cwd: __dirname }).toString().trim()
+  } catch {
+    return 'unknown'
+  }
+})()
+process.env.VITE_APP_VERSION = appVersion
+process.env.VITE_APP_COMMIT = gitCommit
 
 export default defineConfig({
   test: {
