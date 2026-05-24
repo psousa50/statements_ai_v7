@@ -281,7 +281,9 @@
   color: var(--text-muted);
 }
 .savings-page .row.kind-unplanned .amount,
-.savings-page .row.kind-unplanned .pct {
+.savings-page .row.kind-unplanned .pct,
+.savings-page .row.kind-extra .amount,
+.savings-page .row.kind-extra .pct {
   text-decoration: line-through;
   opacity: 0.6;
 }

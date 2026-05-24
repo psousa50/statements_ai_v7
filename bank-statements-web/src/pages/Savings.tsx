@@ -81,16 +81,22 @@ export const SavingsPage = () => {
           })
           .filter((sub) => sub.total > 0)
         const rootSelfTotal = totalByCategory.get(root.id) ?? { value: 0, count: 0 }
-        const totalIncludingSubs = subs.reduce((s, r) => s + r.total, 0) + rootSelfTotal.value
+        const effectiveSubKind = (subKind: CategoryKind) => (root.kind !== 'need' ? root.kind : subKind)
+        const rootSelfCounts = inBaseline(root.kind) ? rootSelfTotal.value : 0
+        const subTotalsInScope = subs.reduce(
+          (s, sub) => (inBaseline(effectiveSubKind(sub.category.kind)) ? s + sub.total : s),
+          0
+        )
+        const totalInScope = subTotalsInScope + rootSelfCounts
         const countIncludingSubs = subs.reduce((s, r) => s + r.count, 0) + rootSelfTotal.count
         return {
           category: root,
-          total: totalIncludingSubs,
+          total: totalInScope,
           count: countIncludingSubs,
           subRows: subs,
         }
       })
-      .filter((row) => row.total > 0)
+      .filter((row) => row.total > 0 || row.subRows.length > 0)
       .sort((a, b) => b.total - a.total)
   }, [categoryTotals, categories])
 
