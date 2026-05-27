@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useCategoryTotals } from '../services/hooks/useTransactions'
 import { useCategories } from '../services/hooks/useCategories'
 import { DatePeriodNavigator } from '../components/DatePeriodNavigator'
-import { CATEGORY_KIND_LABELS, Category, CategoryKind } from '../types/Transaction'
+import { CATEGORY_PRIORITY_LABELS, Category, CategoryPriority } from '../types/Transaction'
 import { getCategoryColor } from '../utils/categoryColors'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import ChevronRightIcon from '@mui/icons-material/ChevronRight'
@@ -27,8 +27,8 @@ const monthsInRange = (startDate?: string, endDate?: string): number => {
 const formatCurrency = (value: number) =>
   new Intl.NumberFormat('en-IE', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(value)
 
-const inBaseline = (k: CategoryKind) => k === 'need' || k === 'comfort'
-const inProjection = (k: CategoryKind) => k === 'comfort' || k === 'extra'
+const inBaseline = (p: CategoryPriority) => p === 'need' || p === 'comfort'
+const inProjection = (p: CategoryPriority) => p === 'comfort' || p === 'extra'
 
 const currentYearRange = () => {
   const now = new Date()
@@ -53,6 +53,7 @@ export const SavingsPage = () => {
       start_date: startDate,
       end_date: endDate,
       exclude_uncategorized: true,
+      kinds: 'expense',
     })
   }, [startDate, endDate, fetchCategoryTotals])
 
@@ -67,13 +68,13 @@ export const SavingsPage = () => {
     })
 
     const rootCategories = categories
-      .filter((c) => !c.parent_id && !c.exclude_from_spending)
+      .filter((c) => !c.parent_id && c.kind === 'expense')
       .sort((a, b) => a.name.localeCompare(b.name))
 
     return rootCategories
       .map((root) => {
         const subs = categories
-          .filter((c) => c.parent_id === root.id && !c.exclude_from_spending)
+          .filter((c) => c.parent_id === root.id && c.kind === 'expense')
           .sort((a, b) => a.name.localeCompare(b.name))
           .map<CategoryRow>((sub) => {
             const t = totalByCategory.get(sub.id) ?? { value: 0, count: 0 }
@@ -81,10 +82,11 @@ export const SavingsPage = () => {
           })
           .filter((sub) => sub.total > 0)
         const rootSelfTotal = totalByCategory.get(root.id) ?? { value: 0, count: 0 }
-        const effectiveSubKind = (subKind: CategoryKind) => (root.kind !== 'need' ? root.kind : subKind)
-        const rootSelfCounts = inBaseline(root.kind) ? rootSelfTotal.value : 0
+        const effectiveSubPriority = (subPriority: CategoryPriority) =>
+          root.priority !== 'need' ? root.priority : subPriority
+        const rootSelfCounts = inBaseline(root.priority) ? rootSelfTotal.value : 0
         const subTotalsInScope = subs.reduce(
-          (s, sub) => (inBaseline(effectiveSubKind(sub.category.kind)) ? s + sub.total : s),
+          (s, sub) => (inBaseline(effectiveSubPriority(sub.category.priority)) ? s + sub.total : s),
           0
         )
         const totalInScope = subTotalsInScope + rootSelfCounts
@@ -100,17 +102,17 @@ export const SavingsPage = () => {
       .sort((a, b) => b.total - a.total)
   }, [categoryTotals, categories])
 
-  const effectiveKind = (row: CategoryRow, parent?: Category): CategoryKind => {
-    if (parent && parent.kind !== 'need') return parent.kind
-    return row.category.kind
+  const effectivePriority = (row: CategoryRow, parent?: Category): CategoryPriority => {
+    if (parent && parent.priority !== 'need') return parent.priority
+    return row.category.priority
   }
 
   const baselineSpend = rows.reduce((sum, row) => {
     if (row.subRows.length === 0) {
-      return inBaseline(row.category.kind) ? sum + row.total : sum
+      return inBaseline(row.category.priority) ? sum + row.total : sum
     }
     const subTotals = row.subRows.reduce(
-      (s, sub) => (inBaseline(effectiveKind(sub, row.category)) ? s + sub.total : s),
+      (s, sub) => (inBaseline(effectivePriority(sub, row.category)) ? s + sub.total : s),
       0
     )
     return sum + subTotals
@@ -118,10 +120,10 @@ export const SavingsPage = () => {
 
   const projectionTotal = rows.reduce((sum, row) => {
     if (row.subRows.length === 0) {
-      return inProjection(row.category.kind) ? sum + row.total : sum
+      return inProjection(row.category.priority) ? sum + row.total : sum
     }
     const subTotals = row.subRows.reduce(
-      (s, sub) => (inProjection(effectiveKind(sub, row.category)) ? s + sub.total : s),
+      (s, sub) => (inProjection(effectivePriority(sub, row.category)) ? s + sub.total : s),
       0
     )
     return sum + subTotals
@@ -133,17 +135,17 @@ export const SavingsPage = () => {
   const monthlySavings = projectionTotal / months
   const annualSavings = monthlySavings * 12
   const cuttableEntries = useMemo(() => {
-    type Entry = { category: Category; total: number; effective: CategoryKind; parentName?: string }
+    type Entry = { category: Category; total: number; effective: CategoryPriority; parentName?: string }
     const entries: Entry[] = []
     rows.forEach((row) => {
       if (row.subRows.length === 0) {
-        if (inProjection(row.category.kind)) {
-          entries.push({ category: row.category, total: row.total, effective: row.category.kind })
+        if (inProjection(row.category.priority)) {
+          entries.push({ category: row.category, total: row.total, effective: row.category.priority })
         }
         return
       }
       row.subRows.forEach((sub) => {
-        const eff = effectiveKind(sub, row.category)
+        const eff = effectivePriority(sub, row.category)
         if (inProjection(eff)) {
           entries.push({ category: sub.category, total: sub.total, effective: eff, parentName: row.category.name })
         }
@@ -163,15 +165,15 @@ export const SavingsPage = () => {
     })
   }
 
-  const changeKind = async (category: Category, kind: CategoryKind) => {
-    await updateCategory(
-      category.id,
-      category.name,
-      category.parent_id,
-      category.color,
-      category.exclude_from_spending,
-      kind
-    )
+  const changePriority = async (category: Category, priority: CategoryPriority) => {
+    await updateCategory(category.id, {
+      name: category.name,
+      parentId: category.parent_id,
+      color: category.color,
+      kind: category.kind,
+      priority,
+      isRegular: category.is_regular,
+    })
   }
 
   const loading = totalsLoading || categoriesLoading
@@ -231,10 +233,10 @@ export const SavingsPage = () => {
               const isExpanded = expandedRoots.has(row.category.id)
               const hasSubs = row.subRows.length > 0
               const pct = totalSpend > 0 ? (row.total / totalSpend) * 100 : 0
-              const isUnplanned = row.category.kind === 'unplanned'
+              const isUnplanned = row.category.priority === 'unplanned'
               return (
                 <div key={row.category.id} className="root-group">
-                  <div className={`row root kind-${row.category.kind} ${isUnplanned ? 'outside-baseline' : ''}`}>
+                  <div className={`row root kind-${row.category.priority} ${isUnplanned ? 'outside-baseline' : ''}`}>
                     <button
                       type="button"
                       className="expand-btn"
@@ -253,13 +255,13 @@ export const SavingsPage = () => {
                       )}
                     </button>
                     <select
-                      className={`kind-select kind-${row.category.kind}`}
-                      value={row.category.kind}
-                      onChange={(e) => changeKind(row.category, e.target.value as CategoryKind)}
+                      className={`kind-select kind-${row.category.priority}`}
+                      value={row.category.priority}
+                      onChange={(e) => changePriority(row.category, e.target.value as CategoryPriority)}
                     >
-                      {(Object.keys(CATEGORY_KIND_LABELS) as CategoryKind[]).map((k) => (
-                        <option key={k} value={k}>
-                          {CATEGORY_KIND_LABELS[k]}
+                      {(Object.keys(CATEGORY_PRIORITY_LABELS) as CategoryPriority[]).map((p) => (
+                        <option key={p} value={p}>
+                          {CATEGORY_PRIORITY_LABELS[p]}
                         </option>
                       ))}
                     </select>
@@ -278,29 +280,29 @@ export const SavingsPage = () => {
                   </div>
                   {isExpanded &&
                     row.subRows.map((sub) => {
-                      const subKind = effectiveKind(sub, row.category)
+                      const subPriority = effectivePriority(sub, row.category)
                       const subPct = totalSpend > 0 ? (sub.total / totalSpend) * 100 : 0
-                      const parentOverrides = row.category.kind !== 'need'
+                      const parentOverrides = row.category.priority !== 'need'
                       return (
                         <div
                           key={sub.category.id}
-                          className={`row sub kind-${subKind} ${subKind === 'unplanned' ? 'outside-baseline' : ''}`}
+                          className={`row sub kind-${subPriority} ${subPriority === 'unplanned' ? 'outside-baseline' : ''}`}
                         >
                           <span className="expand-spacer" />
                           <select
-                            className={`kind-select kind-${sub.category.kind}`}
-                            value={sub.category.kind}
+                            className={`kind-select kind-${sub.category.priority}`}
+                            value={sub.category.priority}
                             disabled={parentOverrides}
                             title={
                               parentOverrides
-                                ? `Parent ${row.category.name} is ${CATEGORY_KIND_LABELS[row.category.kind]}, which overrides.`
+                                ? `Parent ${row.category.name} is ${CATEGORY_PRIORITY_LABELS[row.category.priority]}, which overrides.`
                                 : undefined
                             }
-                            onChange={(e) => changeKind(sub.category, e.target.value as CategoryKind)}
+                            onChange={(e) => changePriority(sub.category, e.target.value as CategoryPriority)}
                           >
-                            {(Object.keys(CATEGORY_KIND_LABELS) as CategoryKind[]).map((k) => (
-                              <option key={k} value={k}>
-                                {CATEGORY_KIND_LABELS[k]}
+                            {(Object.keys(CATEGORY_PRIORITY_LABELS) as CategoryPriority[]).map((p) => (
+                              <option key={p} value={p}>
+                                {CATEGORY_PRIORITY_LABELS[p]}
                               </option>
                             ))}
                           </select>
@@ -339,7 +341,7 @@ export const SavingsPage = () => {
                           {entry.category.name}
                         </div>
                         <span className={`cuttable-kind-badge kind-${entry.effective}`}>
-                          {CATEGORY_KIND_LABELS[entry.effective]}
+                          {CATEGORY_PRIORITY_LABELS[entry.effective]}
                         </span>
                       </div>
                       <div className="cuttable-item-meta">
@@ -348,7 +350,7 @@ export const SavingsPage = () => {
                         <button
                           type="button"
                           className="cuttable-reset"
-                          onClick={() => changeKind(entry.category, 'need')}
+                          onClick={() => changePriority(entry.category, 'need')}
                           title="Reset to Need (remove from cuttable)"
                         >
                           ×

@@ -1,22 +1,33 @@
 import { useState, useEffect, useMemo } from 'react'
-import { CATEGORY_KIND_DESCRIPTIONS, CATEGORY_KIND_LABELS, Category, CategoryKind } from '../types/Transaction'
+import {
+  CATEGORY_KIND_DESCRIPTIONS,
+  CATEGORY_KIND_LABELS,
+  CATEGORY_PRIORITY_DESCRIPTIONS,
+  CATEGORY_PRIORITY_LABELS,
+  Category,
+  CategoryKind,
+  CategoryPriority,
+} from '../types/Transaction'
 import { CategorySelector } from './CategorySelector'
 import { ColorSwatchPicker } from './ColorSwatchPicker'
 import { PRESET_COLORS } from '../utils/categoryColors'
+
+export interface CategoryModalSaveFields {
+  name: string
+  parentId?: string
+  categoryId?: string
+  color?: string
+  kind: CategoryKind
+  priority: CategoryPriority
+  isRegular: boolean
+}
 
 interface CategoryModalProps {
   isOpen: boolean
   category: Category | null
   parentId?: string
   categories: Category[]
-  onSave: (
-    name: string,
-    parentId?: string,
-    categoryId?: string,
-    color?: string,
-    excludeFromSpending?: boolean,
-    kind?: CategoryKind
-  ) => Promise<void>
+  onSave: (fields: CategoryModalSaveFields) => Promise<void>
   onClose: () => void
 }
 
@@ -24,8 +35,9 @@ export const CategoryModal = ({ isOpen, category, parentId, categories, onSave, 
   const [name, setName] = useState('')
   const [selectedParentId, setSelectedParentId] = useState<string | undefined>(undefined)
   const [selectedColor, setSelectedColor] = useState<string | undefined>(undefined)
-  const [excludeFromSpending, setExcludeFromSpending] = useState(false)
-  const [kind, setKind] = useState<CategoryKind>('need')
+  const [kind, setKind] = useState<CategoryKind>('expense')
+  const [priority, setPriority] = useState<CategoryPriority>('need')
+  const [isRegular, setIsRegular] = useState(false)
   const [saving, setSaving] = useState(false)
 
   const isEditing = !!category
@@ -36,6 +48,16 @@ export const CategoryModal = ({ isOpen, category, parentId, categories, onSave, 
       ? `Create Subcategory under ${parentCategory?.name || 'Unknown'}`
       : 'Create Root Category'
   const isRootCategory = !selectedParentId
+  const parentForSelected = selectedParentId ? categories.find((c) => c.id === selectedParentId) : null
+  const rootForRegular = isRootCategory ? null : parentForSelected
+  const regularDisabled = !isRootCategory && rootForRegular ? !rootForRegular.is_regular : false
+  const regularHelp =
+    !isRootCategory && rootForRegular
+      ? rootForRegular.is_regular
+        ? 'Counts as regular only if both this and its root are flagged.'
+        : `Root "${rootForRegular.name}" is not flagged regular, so this subcategory is excluded from the regular baseline regardless.`
+      : 'Part of your predictable monthly baseline.'
+  const showPriority = kind === 'expense'
 
   useEffect(() => {
     if (isOpen) {
@@ -43,17 +65,20 @@ export const CategoryModal = ({ isOpen, category, parentId, categories, onSave, 
         setName(category.name)
         setSelectedParentId(category.parent_id)
         setSelectedColor(category.color)
-        setExcludeFromSpending(category.exclude_from_spending)
         setKind(category.kind)
+        setPriority(category.priority)
+        setIsRegular(category.is_regular)
       } else {
+        const inferredParent = parentId ? categories.find((c) => c.id === parentId) : null
         setName('')
         setSelectedParentId(parentId)
         setSelectedColor(parentId ? undefined : PRESET_COLORS[0])
-        setExcludeFromSpending(false)
-        setKind('need')
+        setKind(inferredParent?.kind ?? 'expense')
+        setPriority(inferredParent?.priority ?? 'need')
+        setIsRegular(false)
       }
     }
-  }, [isOpen, category, parentId])
+  }, [isOpen, category, parentId, categories])
 
   useEffect(() => {
     if (selectedParentId) {
@@ -94,6 +119,8 @@ export const CategoryModal = ({ isOpen, category, parentId, categories, onSave, 
 
   if (!isOpen) return null
 
+  const parentKindMismatch = parentForSelected && parentForSelected.kind !== kind
+
   const handleSave = async () => {
     const trimmedName = name.trim()
     if (!trimmedName) return
@@ -117,14 +144,15 @@ export const CategoryModal = ({ isOpen, category, parentId, categories, onSave, 
 
     setSaving(true)
     try {
-      await onSave(
-        trimmedName,
-        selectedParentId,
-        category?.id,
-        isRootCategory ? selectedColor : undefined,
-        excludeFromSpending,
-        kind
-      )
+      await onSave({
+        name: trimmedName,
+        parentId: selectedParentId,
+        categoryId: category?.id,
+        color: isRootCategory ? selectedColor : undefined,
+        kind,
+        priority,
+        isRegular,
+      })
     } catch (error) {
       console.error('Failed to save category:', error)
     } finally {
@@ -193,22 +221,6 @@ export const CategoryModal = ({ isOpen, category, parentId, categories, onSave, 
           )}
 
           <div className="form-group">
-            <label className="checkbox-label" htmlFor="exclude-from-spending">
-              <input
-                id="exclude-from-spending"
-                type="checkbox"
-                checked={excludeFromSpending}
-                onChange={(e) => setExcludeFromSpending(e.target.checked)}
-              />
-              Exclude from spending totals
-            </label>
-            <div className="form-help-text">
-              When on, transactions in this category are excluded from spending/income analytics. Use for internal
-              transfers and reimbursable expenses.
-            </div>
-          </div>
-
-          <div className="form-group">
             <label htmlFor="category-kind">Kind</label>
             <select
               id="category-kind"
@@ -223,6 +235,45 @@ export const CategoryModal = ({ isOpen, category, parentId, categories, onSave, 
               ))}
             </select>
             <div className="form-help-text">{CATEGORY_KIND_DESCRIPTIONS[kind]}</div>
+            {parentKindMismatch && (
+              <div className="form-help-text" style={{ color: 'var(--color-warning, #b58105)' }}>
+                Parent "{parentForSelected!.name}" is {CATEGORY_KIND_LABELS[parentForSelected!.kind]}. Subcategory kind
+                differs — confirm this is intentional.
+              </div>
+            )}
+          </div>
+
+          {showPriority && (
+            <div className="form-group">
+              <label htmlFor="category-priority">Priority</label>
+              <select
+                id="category-priority"
+                value={priority}
+                onChange={(e) => setPriority(e.target.value as CategoryPriority)}
+                className="kind-select"
+              >
+                {(Object.keys(CATEGORY_PRIORITY_LABELS) as CategoryPriority[]).map((p) => (
+                  <option key={p} value={p}>
+                    {CATEGORY_PRIORITY_LABELS[p]}
+                  </option>
+                ))}
+              </select>
+              <div className="form-help-text">{CATEGORY_PRIORITY_DESCRIPTIONS[priority]}</div>
+            </div>
+          )}
+
+          <div className="form-group">
+            <label className="checkbox-label" htmlFor="is-regular">
+              <input
+                id="is-regular"
+                type="checkbox"
+                checked={isRegular}
+                onChange={(e) => setIsRegular(e.target.checked)}
+                disabled={regularDisabled}
+              />
+              Regular monthly {kind === 'income' ? 'income' : 'expense'}
+            </label>
+            <div className="form-help-text">{regularHelp}</div>
           </div>
 
           {isEditing && category && (

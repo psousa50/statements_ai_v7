@@ -9,6 +9,13 @@ from app.core.database import Base
 
 
 class CategoryKind(str, PyEnum):
+    EXPENSE = "expense"
+    INCOME = "income"
+    TRANSFER = "transfer"
+    REIMBURSABLE = "reimbursable"
+
+
+class CategoryPriority(str, PyEnum):
     NEED = "need"
     COMFORT = "comfort"
     UNPLANNED = "unplanned"
@@ -27,13 +34,19 @@ class Category(Base):
         ForeignKey("categories.id"),
         nullable=True,
     )
-    exclude_from_spending = Column(Boolean, nullable=False, default=False, server_default="false")
     kind = Column(
         Enum(CategoryKind, name="category_kind", values_callable=lambda x: [e.value for e in x]),
         nullable=False,
-        default=CategoryKind.NEED,
-        server_default=CategoryKind.NEED.value,
+        default=CategoryKind.EXPENSE,
+        server_default=CategoryKind.EXPENSE.value,
     )
+    priority = Column(
+        Enum(CategoryPriority, name="category_priority", values_callable=lambda x: [e.value for e in x]),
+        nullable=False,
+        default=CategoryPriority.NEED,
+        server_default=CategoryPriority.NEED.value,
+    )
+    is_regular = Column(Boolean, nullable=False, default=False, server_default="false")
 
     user = relationship("User", back_populates="categories")
     parent = relationship(
@@ -43,8 +56,9 @@ class Category(Base):
     )
 
     def __init__(self, **kwargs):
-        kwargs.setdefault("exclude_from_spending", False)
-        kwargs.setdefault("kind", CategoryKind.NEED)
+        kwargs.setdefault("kind", CategoryKind.EXPENSE)
+        kwargs.setdefault("priority", CategoryPriority.NEED)
+        kwargs.setdefault("is_regular", False)
         super().__init__(**kwargs)
 
     def __repr__(self):

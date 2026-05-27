@@ -1,6 +1,6 @@
 import { useCallback } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Category, CategoryKind } from '../../types/Transaction'
+import { Category, CategoryKind, CategoryPriority } from '../../types/Transaction'
 import { useApi } from '../../api/ApiContext'
 
 const sortByName = (categories: Category[]) => [...categories].sort((a, b) => a.name.localeCompare(b.name))
@@ -9,6 +9,15 @@ export const CATEGORY_QUERY_KEYS = {
   all: ['categories'] as const,
   root: ['categories', 'root'] as const,
   subcategories: (parentId: string) => ['categories', 'subcategories', parentId] as const,
+}
+
+export interface CategoryWriteFields {
+  name: string
+  parentId?: string
+  color?: string
+  kind?: CategoryKind
+  priority?: CategoryPriority
+  isRegular?: boolean
 }
 
 export const useCategories = () => {
@@ -45,30 +54,20 @@ export const useCategories = () => {
   )
 
   const addMutation = useMutation({
-    mutationFn: async ({
-      name,
-      parentId,
-      color,
-      excludeFromSpending,
-      kind,
-    }: {
-      name: string
-      parentId?: string
-      color?: string
-      excludeFromSpending?: boolean
-      kind?: CategoryKind
-    }) => {
+    mutationFn: async ({ name, parentId, color, kind, priority, isRegular }: CategoryWriteFields) => {
       return api.categories.create({
         name,
         parent_id: parentId,
         color,
-        exclude_from_spending: excludeFromSpending,
         kind,
+        priority,
+        is_regular: isRegular,
       })
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: CATEGORY_QUERY_KEYS.all })
       queryClient.invalidateQueries({ queryKey: CATEGORY_QUERY_KEYS.root })
+      queryClient.invalidateQueries({ queryKey: ['transactions'] })
     },
   })
 
@@ -78,25 +77,20 @@ export const useCategories = () => {
       name,
       parentId,
       color,
-      excludeFromSpending,
       kind,
-    }: {
-      id: string
-      name: string
-      parentId?: string
-      color?: string
-      excludeFromSpending?: boolean
-      kind?: CategoryKind
-    }) => {
+      priority,
+      isRegular,
+    }: CategoryWriteFields & { id: string }) => {
       return api.categories.update(id, {
         name,
         parent_id: parentId,
         color,
-        exclude_from_spending: excludeFromSpending,
         kind,
+        priority,
+        is_regular: isRegular,
       })
     },
-    onMutate: async ({ id, name, parentId, color, excludeFromSpending, kind }) => {
+    onMutate: async ({ id, name, parentId, color, kind, priority, isRegular }) => {
       await queryClient.cancelQueries({ queryKey: CATEGORY_QUERY_KEYS.all })
       await queryClient.cancelQueries({ queryKey: CATEGORY_QUERY_KEYS.root })
       const previousAll = queryClient.getQueryData<Category[]>(CATEGORY_QUERY_KEYS.all)
@@ -109,8 +103,9 @@ export const useCategories = () => {
                 name,
                 parent_id: parentId,
                 color,
-                exclude_from_spending: excludeFromSpending ?? c.exclude_from_spending,
                 kind: kind ?? c.kind,
+                priority: priority ?? c.priority,
+                is_regular: isRegular ?? c.is_regular,
               }
             : c
         )
@@ -125,6 +120,7 @@ export const useCategories = () => {
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: CATEGORY_QUERY_KEYS.all })
       queryClient.invalidateQueries({ queryKey: CATEGORY_QUERY_KEYS.root })
+      queryClient.invalidateQueries({ queryKey: ['transactions'] })
     },
   })
 
@@ -136,6 +132,7 @@ export const useCategories = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: CATEGORY_QUERY_KEYS.all })
       queryClient.invalidateQueries({ queryKey: CATEGORY_QUERY_KEYS.root })
+      queryClient.invalidateQueries({ queryKey: ['transactions'] })
     },
   })
 
@@ -157,9 +154,9 @@ export const useCategories = () => {
   })
 
   const addCategory = useCallback(
-    async (name: string, parentId?: string, color?: string, excludeFromSpending?: boolean, kind?: CategoryKind) => {
+    async (fields: CategoryWriteFields) => {
       try {
-        return await addMutation.mutateAsync({ name, parentId, color, excludeFromSpending, kind })
+        return await addMutation.mutateAsync(fields)
       } catch {
         return null
       }
@@ -168,16 +165,9 @@ export const useCategories = () => {
   )
 
   const updateCategory = useCallback(
-    async (
-      id: string,
-      name: string,
-      parentId?: string,
-      color?: string,
-      excludeFromSpending?: boolean,
-      kind?: CategoryKind
-    ) => {
+    async (id: string, fields: CategoryWriteFields) => {
       try {
-        return await updateMutation.mutateAsync({ id, name, parentId, color, excludeFromSpending, kind })
+        return await updateMutation.mutateAsync({ id, ...fields })
       } catch {
         return null
       }

@@ -6,6 +6,7 @@ from uuid import UUID
 
 from app.api.schemas import TransactionCreateRequest
 from app.domain.dto.statement_processing import TransactionDTO
+from app.domain.models.category import CategoryKind, CategoryPriority
 from app.domain.models.transaction import CategorizationStatus, Transaction
 
 
@@ -69,6 +70,8 @@ class TransactionRepository(ABC):
         transaction_ids: Optional[List[UUID]] = None,
         tag_ids: Optional[List[UUID]] = None,
         exclude_from_analytics: Optional[bool] = None,
+        kinds: Optional[List[CategoryKind]] = None,
+        priorities: Optional[List[CategoryPriority]] = None,
         include_running_balance: bool = False,
     ) -> Tuple[List[Transaction], int, Decimal]:
         """
@@ -97,6 +100,7 @@ class TransactionRepository(ABC):
         exclude_uncategorized: Optional[bool] = None,
         transaction_type: Optional[str] = None,
         exclude_from_analytics: Optional[bool] = None,
+        kinds: Optional[List[CategoryKind]] = None,
     ) -> Dict[Optional[UUID], Dict[str, Decimal]]:
         pass
 
@@ -117,6 +121,7 @@ class TransactionRepository(ABC):
         exclude_uncategorized: Optional[bool] = None,
         transaction_type: Optional[str] = None,
         exclude_from_analytics: Optional[bool] = None,
+        kinds: Optional[List[CategoryKind]] = None,
     ) -> List[Dict]:
         pass
 
@@ -130,6 +135,7 @@ class TransactionRepository(ABC):
         end_date: Optional[date] = None,
         exclude_uncategorized: Optional[bool] = None,
         exclude_from_analytics: Optional[bool] = None,
+        kinds: Optional[List[CategoryKind]] = None,
     ) -> List[Dict]:
         pass
 

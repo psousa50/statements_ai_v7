@@ -1,5 +1,13 @@
 import { useState, useCallback } from 'react'
-import { Category, Account, Tag } from '../types/Transaction'
+import {
+  CATEGORY_KIND_LABELS,
+  CATEGORY_PRIORITY_LABELS,
+  Category,
+  CategoryKind,
+  CategoryPriority,
+  Account,
+  Tag,
+} from '../types/Transaction'
 import { CategorySelector } from './CategorySelector'
 import { DatePeriodNavigator } from './DatePeriodNavigator'
 import { FilterPreset } from '../api/FilterPresetClient'
@@ -25,6 +33,8 @@ interface TransactionFiltersProps {
   transactionType?: 'all' | 'debit' | 'credit'
   transactionTypeDisabled?: boolean
   defaultTransactionType?: 'all' | 'debit' | 'credit'
+  kind?: CategoryKind | 'all'
+  priority?: CategoryPriority | 'all'
   defaultCategorizationFilter?: CategorizationFilter
   allTags?: Tag[]
   selectedTagIds?: string[]
@@ -37,6 +47,8 @@ interface TransactionFiltersProps {
   onDateRangeChange?: (startDate?: string, endDate?: string) => void
   onCategorizationFilterChange: (filter: CategorizationFilter) => void
   onTransactionTypeChange: (type: 'all' | 'debit' | 'credit') => void
+  onKindChange?: (kind: CategoryKind | 'all') => void
+  onPriorityChange?: (priority: CategoryPriority | 'all') => void
   onExcludedOnlyChange?: (excludedOnly: boolean) => void
   onClearFilters: () => void
   filterPresets?: FilterPreset[]
@@ -63,6 +75,8 @@ export const TransactionFilters = ({
   transactionTypeDisabled = false,
   defaultTransactionType = 'all',
   defaultCategorizationFilter = 'all',
+  kind = 'all',
+  priority = 'all',
   allTags,
   selectedTagIds = [],
   excludedOnly = false,
@@ -74,6 +88,8 @@ export const TransactionFilters = ({
   onDateRangeChange,
   onCategorizationFilterChange,
   onTransactionTypeChange,
+  onKindChange,
+  onPriorityChange,
   onExcludedOnlyChange,
   onClearFilters,
   filterPresets = [],
@@ -107,6 +123,8 @@ export const TransactionFilters = ({
     selectedAccountId ||
     categorizationFilter !== defaultCategorizationFilter ||
     transactionType !== defaultTransactionType ||
+    kind !== 'all' ||
+    priority !== 'all' ||
     excludedOnly
 
   const handleAmountChange = useCallback(
@@ -300,6 +318,46 @@ export const TransactionFilters = ({
                 ]}
               />
             </div>
+
+            {onKindChange && (
+              <div className="filter-group">
+                <label htmlFor="kind-filter" className="filter-label">
+                  Kind
+                </label>
+                <StyledSelect
+                  id="kind-filter"
+                  value={kind}
+                  onChange={(v) => onKindChange(v as CategoryKind | 'all')}
+                  options={[
+                    { value: 'all', label: 'All' },
+                    ...(Object.keys(CATEGORY_KIND_LABELS) as CategoryKind[]).map((k) => ({
+                      value: k,
+                      label: CATEGORY_KIND_LABELS[k],
+                    })),
+                  ]}
+                />
+              </div>
+            )}
+
+            {onPriorityChange && (
+              <div className="filter-group">
+                <label htmlFor="priority-filter" className="filter-label">
+                  Priority
+                </label>
+                <StyledSelect
+                  id="priority-filter"
+                  value={priority}
+                  onChange={(v) => onPriorityChange(v as CategoryPriority | 'all')}
+                  options={[
+                    { value: 'all', label: 'All' },
+                    ...(Object.keys(CATEGORY_PRIORITY_LABELS) as CategoryPriority[]).map((p) => ({
+                      value: p,
+                      label: CATEGORY_PRIORITY_LABELS[p],
+                    })),
+                  ]}
+                />
+              </div>
+            )}
 
             <div className="filter-group amount-group">
               <label className="filter-label">Amount</label>

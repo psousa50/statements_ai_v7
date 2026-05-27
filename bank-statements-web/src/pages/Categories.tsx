@@ -8,7 +8,14 @@ import { CategoryModal } from '../components/CategoryModal'
 import { CategorySuggestionPanel } from '../components/CategorySuggestionPanel'
 import { ConfirmationModal } from '../components/ConfirmationModal'
 import { Toast, ToastProps } from '../components/Toast'
-import { CATEGORY_KIND_LABELS, Category, CategoryKind } from '../types/Transaction'
+import {
+  CATEGORY_KIND_LABELS,
+  CATEGORY_PRIORITY_LABELS,
+  Category,
+  CategoryKind,
+  CategoryPriority,
+} from '../types/Transaction'
+import { CategoryModalSaveFields } from '../components/CategoryModal'
 import { Button, Dialog, DialogTitle, DialogContent, Chip } from '@mui/material'
 import AddIcon from '@mui/icons-material/Add'
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome'
@@ -21,8 +28,9 @@ export const CategoriesPage = () => {
   const [isCreating, setIsCreating] = useState(false)
   const [selectedParentId, setSelectedParentId] = useState<string | undefined>(undefined)
   const [searchTerm, setSearchTerm] = useState('')
-  const [excludedFilter, setExcludedFilter] = useState<'any' | 'on' | 'off'>('any')
+  const [regularFilter, setRegularFilter] = useState<'any' | 'on' | 'off'>('any')
   const [kindFilter, setKindFilter] = useState<CategoryKind | 'any'>('any')
+  const [priorityFilter, setPriorityFilter] = useState<CategoryPriority | 'any'>('any')
 
   const cycleFilter = (current: 'any' | 'on' | 'off'): 'any' | 'on' | 'off' =>
     current === 'any' ? 'on' : current === 'on' ? 'off' : 'any'
@@ -75,7 +83,7 @@ export const CategoriesPage = () => {
     return hierarchy
   }
 
-  const hasActiveFilter = !!searchTerm || excludedFilter !== 'any' || kindFilter !== 'any'
+  const hasActiveFilter = !!searchTerm || regularFilter !== 'any' || kindFilter !== 'any' || priorityFilter !== 'any'
 
   const filteredCategories = !hasActiveFilter
     ? categories
@@ -88,10 +96,11 @@ export const CategoriesPage = () => {
 
         categories.forEach((category) => {
           const nameMatches = !searchTerm || category.name.toLowerCase().includes(searchLower)
-          const excludedMatches = matchesFlag(category.exclude_from_spending, excludedFilter)
+          const regularMatches = matchesFlag(category.is_regular, regularFilter)
           const kindMatches = kindFilter === 'any' || category.kind === kindFilter
+          const priorityMatches = priorityFilter === 'any' || category.priority === priorityFilter
 
-          if (nameMatches && excludedMatches && kindMatches) {
+          if (nameMatches && regularMatches && kindMatches && priorityMatches) {
             matchingIds.add(category.id)
             getCategoryHierarchy(category.id).forEach((id) => matchingIds.add(id))
           }
@@ -166,17 +175,18 @@ export const CategoriesPage = () => {
   }, [])
 
   const handleSaveCategory = useCallback(
-    async (
-      name: string,
-      parentId?: string,
-      categoryId?: string,
-      color?: string,
-      excludeFromSpending?: boolean,
-      kind?: CategoryKind
-    ) => {
+    async (fields: CategoryModalSaveFields) => {
+      const { name, parentId, categoryId, color, kind, priority, isRegular } = fields
       try {
         if (categoryId) {
-          const updatedCategory = await updateCategory(categoryId, name, parentId, color, excludeFromSpending, kind)
+          const updatedCategory = await updateCategory(categoryId, {
+            name,
+            parentId,
+            color,
+            kind,
+            priority,
+            isRegular,
+          })
           if (updatedCategory) {
             setToast({
               message: `Category "${name}" updated successfully`,
@@ -185,7 +195,7 @@ export const CategoriesPage = () => {
             setEditingCategory(null)
           }
         } else {
-          const newCategory = await addCategory(name, parentId, color, excludeFromSpending, kind)
+          const newCategory = await addCategory({ name, parentId, color, kind, priority, isRegular })
           if (newCategory) {
             setToast({
               message: `Category "${name}" created successfully`,
@@ -206,30 +216,44 @@ export const CategoriesPage = () => {
     [addCategory, updateCategory]
   )
 
-  const handleToggleExcludeFromSpending = useCallback(
+  const handleToggleIsRegular = useCallback(
     async (category: Category) => {
-      await updateCategory(
-        category.id,
-        category.name,
-        category.parent_id,
-        category.color,
-        !category.exclude_from_spending,
-        category.kind
-      )
+      await updateCategory(category.id, {
+        name: category.name,
+        parentId: category.parent_id,
+        color: category.color,
+        kind: category.kind,
+        priority: category.priority,
+        isRegular: !category.is_regular,
+      })
     },
     [updateCategory]
   )
 
   const handleChangeKind = useCallback(
     async (category: Category, kind: CategoryKind) => {
-      await updateCategory(
-        category.id,
-        category.name,
-        category.parent_id,
-        category.color,
-        category.exclude_from_spending,
-        kind
-      )
+      await updateCategory(category.id, {
+        name: category.name,
+        parentId: category.parent_id,
+        color: category.color,
+        kind,
+        priority: category.priority,
+        isRegular: category.is_regular,
+      })
+    },
+    [updateCategory]
+  )
+
+  const handleChangePriority = useCallback(
+    async (category: Category, priority: CategoryPriority) => {
+      await updateCategory(category.id, {
+        name: category.name,
+        parentId: category.parent_id,
+        color: category.color,
+        kind: category.kind,
+        priority,
+        isRegular: category.is_regular,
+      })
     },
     [updateCategory]
   )
@@ -366,21 +390,17 @@ export const CategoriesPage = () => {
             />
             <button
               type="button"
-              className={`category-filter-chip filter-${excludedFilter}`}
-              onClick={() => setExcludedFilter(cycleFilter(excludedFilter))}
+              className={`category-filter-chip filter-${regularFilter}`}
+              onClick={() => setRegularFilter(cycleFilter(regularFilter))}
               title={
-                excludedFilter === 'any'
-                  ? 'Showing all. Click to show only excluded.'
-                  : excludedFilter === 'on'
-                    ? 'Showing only excluded. Click to show only non-excluded.'
-                    : 'Showing only non-excluded. Click to show all.'
+                regularFilter === 'any'
+                  ? 'Showing all. Click to show only regular.'
+                  : regularFilter === 'on'
+                    ? 'Showing only regular. Click to show only irregular.'
+                    : 'Showing only irregular. Click to show all.'
               }
             >
-              {excludedFilter === 'any'
-                ? 'Excluded: any'
-                : excludedFilter === 'on'
-                  ? 'Excluded: only'
-                  : 'Excluded: none'}
+              {regularFilter === 'any' ? 'Regular: any' : regularFilter === 'on' ? 'Regular: only' : 'Regular: none'}
             </button>
             <select
               className="category-filter-select"
@@ -395,14 +415,28 @@ export const CategoriesPage = () => {
                 </option>
               ))}
             </select>
+            <select
+              className="category-filter-select"
+              value={priorityFilter}
+              onChange={(e) => setPriorityFilter(e.target.value as CategoryPriority | 'any')}
+              title="Filter by priority"
+            >
+              <option value="any">Priority: any</option>
+              {(Object.keys(CATEGORY_PRIORITY_LABELS) as CategoryPriority[]).map((p) => (
+                <option key={p} value={p}>
+                  Priority: {CATEGORY_PRIORITY_LABELS[p]}
+                </option>
+              ))}
+            </select>
             {hasActiveFilter && (
               <button
                 type="button"
                 className="category-filter-reset"
                 onClick={() => {
                   setSearchTerm('')
-                  setExcludedFilter('any')
+                  setRegularFilter('any')
                   setKindFilter('any')
+                  setPriorityFilter('any')
                 }}
                 title="Clear search and filters"
               >
@@ -481,8 +515,9 @@ export const CategoriesPage = () => {
             onEdit={handleEditCategory}
             onDelete={handleDeleteCategory}
             onCreateSubcategory={handleCreateCategory}
-            onToggleExcludeFromSpending={handleToggleExcludeFromSpending}
+            onToggleIsRegular={handleToggleIsRegular}
             onChangeKind={handleChangeKind}
+            onChangePriority={handleChangePriority}
             forceExpandedCategories={forceExpandedCategories}
           />
         </div>

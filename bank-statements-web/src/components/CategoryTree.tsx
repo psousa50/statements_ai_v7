@@ -1,5 +1,11 @@
 import { useState, useMemo, useCallback } from 'react'
-import { CATEGORY_KIND_LABELS, Category, CategoryKind } from '../types/Transaction'
+import {
+  CATEGORY_KIND_LABELS,
+  CATEGORY_PRIORITY_LABELS,
+  Category,
+  CategoryKind,
+  CategoryPriority,
+} from '../types/Transaction'
 import EditIcon from '@mui/icons-material/Edit'
 import DeleteIcon from '@mui/icons-material/Delete'
 import AddIcon from '@mui/icons-material/Add'
@@ -17,8 +23,9 @@ interface CategoryTreeProps {
   onEdit: (category: Category) => void
   onDelete: (category: Category) => void
   onCreateSubcategory: (parentId: string) => void
-  onToggleExcludeFromSpending: (category: Category) => void
+  onToggleIsRegular: (category: Category) => void
   onChangeKind: (category: Category, kind: CategoryKind) => void
+  onChangePriority: (category: Category, priority: CategoryPriority) => void
   forceExpandedCategories?: Set<string>
 }
 
@@ -29,8 +36,9 @@ interface CategoryTreeNodeProps {
   onEdit: (category: Category) => void
   onDelete: (category: Category) => void
   onCreateSubcategory: (parentId: string) => void
-  onToggleExcludeFromSpending: (category: Category) => void
+  onToggleIsRegular: (category: Category) => void
   onChangeKind: (category: Category, kind: CategoryKind) => void
+  onChangePriority: (category: Category, priority: CategoryPriority) => void
   expandedCategories: Set<string>
   onToggleExpand: (categoryId: string) => void
 }
@@ -42,8 +50,9 @@ const CategoryTreeNode = ({
   onEdit,
   onDelete,
   onCreateSubcategory,
-  onToggleExcludeFromSpending,
+  onToggleIsRegular,
   onChangeKind,
+  onChangePriority,
   expandedCategories,
   onToggleExpand,
 }: CategoryTreeNodeProps) => {
@@ -111,31 +120,12 @@ const CategoryTreeNode = ({
             style={{ backgroundColor: getCategoryColor(category, allCategories).solid }}
           />
           <div className="category-name">{category.name}</div>
-          <Tooltip
-            title={
-              category.exclude_from_spending
-                ? 'Transactions in this category are excluded from spending/income analytics. Click to include them.'
-                : 'Include this category in spending/income analytics. Toggle off for things like internal transfers or reimbursable expenses.'
-            }
-            arrow
-          >
-            <button
-              type="button"
-              className={`category-flag-toggle ${category.exclude_from_spending ? 'is-on' : ''}`}
-              onClick={(e) => {
-                stop(e)
-                onToggleExcludeFromSpending(category)
-              }}
-            >
-              {category.exclude_from_spending ? 'Excluded' : '+ Exclude'}
-            </button>
-          </Tooltip>
           <select
             className={`category-kind-select kind-${category.kind}`}
             value={category.kind}
             onClick={stop}
             onChange={(e) => onChangeKind(category, e.target.value as CategoryKind)}
-            title="Spending kind"
+            title="Structural kind"
           >
             {(Object.keys(CATEGORY_KIND_LABELS) as CategoryKind[]).map((k) => (
               <option key={k} value={k}>
@@ -143,6 +133,40 @@ const CategoryTreeNode = ({
               </option>
             ))}
           </select>
+          {category.kind === 'expense' && (
+            <select
+              className={`category-priority-select priority-${category.priority}`}
+              value={category.priority}
+              onClick={stop}
+              onChange={(e) => onChangePriority(category, e.target.value as CategoryPriority)}
+              title="Spending priority"
+            >
+              {(Object.keys(CATEGORY_PRIORITY_LABELS) as CategoryPriority[]).map((p) => (
+                <option key={p} value={p}>
+                  {CATEGORY_PRIORITY_LABELS[p]}
+                </option>
+              ))}
+            </select>
+          )}
+          <Tooltip
+            title={
+              category.is_regular
+                ? 'Part of your predictable monthly baseline. Click to mark as irregular.'
+                : 'Mark as part of your predictable monthly baseline (rent, fixed bills).'
+            }
+            arrow
+          >
+            <button
+              type="button"
+              className={`category-flag-toggle ${category.is_regular ? 'is-on' : ''}`}
+              onClick={(e) => {
+                stop(e)
+                onToggleIsRegular(category)
+              }}
+            >
+              {category.is_regular ? '★ Regular' : '+ Regular'}
+            </button>
+          </Tooltip>
           <div className="category-stats">
             {hasSubcategories && <span className="subcategory-count">{subcategories.length} subcategories</span>}
           </div>
@@ -181,8 +205,9 @@ const CategoryTreeNode = ({
               onEdit={onEdit}
               onDelete={onDelete}
               onCreateSubcategory={onCreateSubcategory}
-              onToggleExcludeFromSpending={onToggleExcludeFromSpending}
+              onToggleIsRegular={onToggleIsRegular}
               onChangeKind={onChangeKind}
+              onChangePriority={onChangePriority}
               expandedCategories={expandedCategories}
               onToggleExpand={onToggleExpand}
             />
@@ -200,8 +225,9 @@ export const CategoryTree = ({
   onEdit,
   onDelete,
   onCreateSubcategory,
-  onToggleExcludeFromSpending,
+  onToggleIsRegular,
   onChangeKind,
+  onChangePriority,
   forceExpandedCategories,
 }: CategoryTreeProps) => {
   const [userExpandedCategories, setUserExpandedCategories] = useState<Set<string>>(new Set())
@@ -311,8 +337,9 @@ export const CategoryTree = ({
             onEdit={onEdit}
             onDelete={onDelete}
             onCreateSubcategory={onCreateSubcategory}
-            onToggleExcludeFromSpending={onToggleExcludeFromSpending}
+            onToggleIsRegular={onToggleIsRegular}
             onChangeKind={onChangeKind}
+            onChangePriority={onChangePriority}
             expandedCategories={expandedCategories}
             onToggleExpand={handleToggleExpand}
           />

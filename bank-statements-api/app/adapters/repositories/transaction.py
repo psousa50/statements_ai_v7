@@ -9,17 +9,18 @@ from sqlalchemy.orm import Session
 
 from app.common.text_normalization import normalize_description
 from app.domain.dto.statement_processing import TransactionDTO
-from app.domain.models.category import Category
+from app.domain.models.category import Category, CategoryKind, CategoryPriority
 from app.domain.models.tag import Tag
 from app.domain.models.transaction import CategorizationStatus, SourceType, Transaction
 from app.ports.repositories.transaction import TransactionRepository
 
 
-def _spending_filter():
-    return or_(
-        Transaction.category_id.in_(select(Category.id).where(Category.exclude_from_spending.is_(False))),
-        and_(Transaction.category_id.is_(None), Transaction.counterparty_account_id.is_(None)),
-    )
+def _kinds_filter(kinds: List[CategoryKind]):
+    return Transaction.category_id.in_(select(Category.id).where(Category.kind.in_(kinds)))
+
+
+def _priorities_filter(priorities: List[CategoryPriority]):
+    return Transaction.category_id.in_(select(Category.id).where(Category.priority.in_(priorities)))
 
 
 class SQLAlchemyTransactionRepository(TransactionRepository):
@@ -102,6 +103,8 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         transaction_ids: Optional[List[UUID]] = None,
         tag_ids: Optional[List[UUID]] = None,
         exclude_from_analytics: Optional[bool] = None,
+        kinds: Optional[List[CategoryKind]] = None,
+        priorities: Optional[List[CategoryPriority]] = None,
         include_running_balance: bool = False,
     ) -> Tuple[List[Transaction], int, Decimal]:
         query = self.db_session.query(Transaction).filter(Transaction.user_id == user_id)
@@ -165,6 +168,12 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         if exclude_from_analytics is not None:
             filters.append(Transaction.exclude_from_analytics == exclude_from_analytics)
 
+        if kinds:
+            filters.append(_kinds_filter(kinds))
+
+        if priorities:
+            filters.append(_priorities_filter(priorities))
+
         if filters:
             query = query.filter(and_(*filters))
 
@@ -224,6 +233,7 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         exclude_uncategorized: Optional[bool] = None,
         transaction_type: Optional[str] = None,
         exclude_from_analytics: Optional[bool] = None,
+        kinds: Optional[List[CategoryKind]] = None,
     ) -> Dict[Optional[UUID], Dict[str, Decimal]]:
         query = self.db_session.query(
             Transaction.category_id,
@@ -268,7 +278,8 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         if end_date is not None:
             filters.append(Transaction.date <= end_date)
 
-            filters.append(_spending_filter())
+        if kinds:
+            filters.append(_kinds_filter(kinds))
 
         # Exclude uncategorized filter
         if exclude_uncategorized is True:
@@ -320,6 +331,7 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         exclude_uncategorized: Optional[bool] = None,
         transaction_type: Optional[str] = None,
         exclude_from_analytics: Optional[bool] = None,
+        kinds: Optional[List[CategoryKind]] = None,
     ) -> List[Dict]:
         if period == "month":
             period_expr = func.to_char(Transaction.date, "YYYY-MM")
@@ -377,7 +389,8 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         if end_date is not None:
             filters.append(Transaction.date <= end_date)
 
-            filters.append(_spending_filter())
+        if kinds:
+            filters.append(_kinds_filter(kinds))
 
         if exclude_uncategorized is True:
             filters.append(Transaction.category_id.isnot(None))
@@ -414,6 +427,7 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         end_date: Optional[date] = None,
         exclude_uncategorized: Optional[bool] = None,
         exclude_from_analytics: Optional[bool] = None,
+        kinds: Optional[List[CategoryKind]] = None,
     ) -> List[Dict]:
         if period == "month":
             period_expr = func.to_char(Transaction.date, "YYYY-MM")
@@ -454,7 +468,8 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
             filters.append(Transaction.date >= start_date)
         if end_date is not None:
             filters.append(Transaction.date <= end_date)
-            filters.append(_spending_filter())
+        if kinds:
+            filters.append(_kinds_filter(kinds))
         if exclude_uncategorized is True:
             filters.append(Transaction.category_id.isnot(None))
         if exclude_from_analytics:

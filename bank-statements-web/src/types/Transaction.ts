@@ -12,20 +12,37 @@ export interface Category {
   color?: string
   parent_id?: string
   parent?: CategoryParent
-  exclude_from_spending: boolean
   kind: CategoryKind
+  priority: CategoryPriority
+  is_regular: boolean
 }
 
-export type CategoryKind = 'need' | 'comfort' | 'unplanned' | 'extra'
+export type CategoryKind = 'expense' | 'income' | 'transfer' | 'reimbursable'
 
 export const CATEGORY_KIND_LABELS: Record<CategoryKind, string> = {
+  expense: 'Expense',
+  income: 'Income',
+  transfer: 'Transfer',
+  reimbursable: 'Reimbursable',
+}
+
+export const CATEGORY_KIND_DESCRIPTIONS: Record<CategoryKind, string> = {
+  expense: 'Money actually leaves (food, housing, transport, loans).',
+  income: 'Money actually comes in (salary, dividends, gifts).',
+  transfer: 'Movement between your own accounts; no effect on net worth.',
+  reimbursable: 'You pay then get refunded; nets to zero.',
+}
+
+export type CategoryPriority = 'need' | 'comfort' | 'unplanned' | 'extra'
+
+export const CATEGORY_PRIORITY_LABELS: Record<CategoryPriority, string> = {
   need: 'Need',
   comfort: 'Comfort',
   unplanned: 'Unplanned',
   extra: 'Extra',
 }
 
-export const CATEGORY_KIND_DESCRIPTIONS: Record<CategoryKind, string> = {
+export const CATEGORY_PRIORITY_DESCRIPTIONS: Record<CategoryPriority, string> = {
   need: 'Essential ongoing spending (rent, groceries, utilities).',
   comfort: 'Ongoing but cuttable (subscriptions, gym, takeaway).',
   unplanned: 'One-off necessities (repairs, projects, medical).',

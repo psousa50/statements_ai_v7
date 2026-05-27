@@ -13,7 +13,13 @@ import {
 import { TransactionFilters, CategorizationFilter } from '../components/TransactionFilters'
 import { TransactionModal } from '../components/TransactionModal'
 import { Pagination } from '../components/Pagination'
-import { CategorizationStatus, TransactionCreate, Transaction } from '../types/Transaction'
+import {
+  CategorizationStatus,
+  CategoryKind,
+  CategoryPriority,
+  TransactionCreate,
+  Transaction,
+} from '../types/Transaction'
 import { useApi } from '../api/ApiContext'
 import { TransactionFilters as FilterType, transactionClient } from '../api/TransactionClient'
 import { FilterPreset, FilterPresetData } from '../api/FilterPresetClient'
@@ -64,6 +70,8 @@ export const TransactionsPage = () => {
     const urlSavedFilterId = searchParams.get('saved_filter_id')
     const urlTagIds = searchParams.get('tag_ids')
     const urlExcludeFromAnalytics = searchParams.get('exclude_from_analytics')
+    const urlKinds = searchParams.get('kinds')
+    const urlPriorities = searchParams.get('priorities')
 
     return {
       page: 1,
@@ -85,6 +93,8 @@ export const TransactionsPage = () => {
       saved_filter_id: urlSavedFilterId || undefined,
       tag_ids: urlTagIds ? urlTagIds.split(',') : undefined,
       exclude_from_analytics: urlExcludeFromAnalytics === 'true' ? true : undefined,
+      kinds: urlKinds || undefined,
+      priorities: urlPriorities || undefined,
     }
   }
 
@@ -276,6 +286,8 @@ export const TransactionsPage = () => {
     if (filters.saved_filter_id) params.set('saved_filter_id', filters.saved_filter_id)
     if (filters.tag_ids?.length) params.set('tag_ids', filters.tag_ids.join(','))
     if (filters.exclude_from_analytics) params.set('exclude_from_analytics', 'true')
+    if (filters.kinds) params.set('kinds', filters.kinds)
+    if (filters.priorities) params.set('priorities', filters.priorities)
 
     const patternLabelParam = searchParams.get('pattern_label')
     if (patternLabelParam) params.set('pattern_label', patternLabelParam)
@@ -468,6 +480,20 @@ export const TransactionsPage = () => {
   const handleTransactionTypeFilter = useCallback(
     (transactionType: 'all' | 'debit' | 'credit') => {
       handleFilterChange({ transaction_type: transactionType })
+    },
+    [handleFilterChange]
+  )
+
+  const handleKindFilter = useCallback(
+    (kind: CategoryKind | 'all') => {
+      handleFilterChange({ kinds: kind === 'all' ? undefined : kind })
+    },
+    [handleFilterChange]
+  )
+
+  const handlePriorityFilter = useCallback(
+    (priority: CategoryPriority | 'all') => {
+      handleFilterChange({ priorities: priority === 'all' ? undefined : priority })
     },
     [handleFilterChange]
   )
@@ -861,6 +887,8 @@ export const TransactionsPage = () => {
               endDate={localEndDate}
               categorizationFilter={categorizationFilter}
               transactionType={filters.transaction_type || 'all'}
+              kind={(filters.kinds as CategoryKind | undefined) || 'all'}
+              priority={(filters.priorities as CategoryPriority | undefined) || 'all'}
               allTags={allTags}
               selectedTagIds={filters.tag_ids}
               excludedOnly={filters.exclude_from_analytics === true}
@@ -872,6 +900,8 @@ export const TransactionsPage = () => {
               onDateRangeChange={handleDateRangeFilter}
               onCategorizationFilterChange={handleCategorizationFilterChange}
               onTransactionTypeChange={handleTransactionTypeFilter}
+              onKindChange={handleKindFilter}
+              onPriorityChange={handlePriorityFilter}
               onExcludedOnlyChange={handleExcludedOnlyFilter}
               onClearFilters={handleClearFilters}
               filterPresets={filterPresets}

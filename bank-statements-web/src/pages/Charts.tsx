@@ -69,6 +69,7 @@ export const ChartsPage = () => {
   const [selectedRootCategory, setSelectedRootCategory] = useState<string | null>(null)
   const [hiddenChartCategoryIds, setHiddenChartCategoryIds] = useState<Set<string>>(new Set())
   const [essentialsOnly, setEssentialsOnly] = useState(() => searchParams.get('essentials_only') === 'true')
+  const [regularOnly, setRegularOnly] = useState(() => searchParams.get('regular_only') === 'true')
   const [transactionType, setTransactionType] = useState<'all' | 'debit' | 'credit'>(
     () => (searchParams.get('transaction_type') as 'all' | 'debit' | 'credit') || 'all'
   )
@@ -201,9 +202,10 @@ export const ChartsPage = () => {
     if (viewMode !== 'bar') params.set('view', viewMode)
     if (timeSeriesPeriod !== 'month') params.set('period', timeSeriesPeriod)
     if (essentialsOnly) params.set('essentials_only', 'true')
+    if (regularOnly) params.set('regular_only', 'true')
 
     setSearchParams(params, { replace: true })
-  }, [filters, viewMode, timeSeriesPeriod, essentialsOnly, setSearchParams])
+  }, [filters, viewMode, timeSeriesPeriod, essentialsOnly, regularOnly, setSearchParams])
 
   const handleFilterChange = useCallback(
     (newFilters: Partial<Omit<FilterType, 'page' | 'page_size'>>) => {
@@ -318,14 +320,25 @@ export const ChartsPage = () => {
         }
 
         if (essentialsOnly) {
-          if (rootCategory.kind === 'comfort' || rootCategory.kind === 'extra' || rootCategory.kind === 'unplanned')
+          if (
+            rootCategory.priority === 'comfort' ||
+            rootCategory.priority === 'extra' ||
+            rootCategory.priority === 'unplanned'
+          )
             return
           const isRootItself = category.id === rootCategory.id
           if (
             !isRootItself &&
-            (category.kind === 'comfort' || category.kind === 'extra' || category.kind === 'unplanned')
+            (category.priority === 'comfort' || category.priority === 'extra' || category.priority === 'unplanned')
           )
             return
+        }
+
+        if (regularOnly) {
+          if (!rootCategory.is_regular) return
+          const isRootItself = category.id === rootCategory.id
+          if (!isRootItself && !category.is_regular) return
+          if (rootCategory.kind !== 'expense') return
         }
 
         const existing = rootCategoryData.get(rootCategory.id)
@@ -339,9 +352,13 @@ export const ChartsPage = () => {
         .filter(([_, data]) => data.value > 0)
         .filter(([id, _]) => !(categorizationFilter === 'categorized' && id === 'uncategorized'))
         .filter(([id, _]) => {
-          if (!essentialsOnly) return true
+          if (!essentialsOnly && !regularOnly) return true
           if (id === 'uncategorized') return false
-          return !(categoryMap.get(id)?.kind !== 'need' ?? false)
+          const cat = categoryMap.get(id)
+          if (!cat) return false
+          if (essentialsOnly && cat.priority !== 'need') return false
+          if (regularOnly && (!cat.is_regular || cat.kind !== 'expense')) return false
+          return true
         })
         .map(([id, data]) => ({
           id,
@@ -356,15 +373,22 @@ export const ChartsPage = () => {
 
       if (essentialsOnly && selectedRootCategory !== 'uncategorized') {
         const root = categoryMap.get(selectedRootCategory)
-        if (root && root.kind !== 'need') return []
+        if (root && root.priority !== 'need') return []
       }
-      if (essentialsOnly && selectedRootCategory === 'uncategorized') return []
+      if (regularOnly && selectedRootCategory !== 'uncategorized') {
+        const root = categoryMap.get(selectedRootCategory)
+        if (root && (!root.is_regular || root.kind !== 'expense')) return []
+      }
+      if ((essentialsOnly || regularOnly) && selectedRootCategory === 'uncategorized') return []
 
       const subcategories =
         selectedRootCategory === 'uncategorized'
           ? []
           : categories.filter(
-              (cat) => cat.parent_id === selectedRootCategory && (!essentialsOnly || cat.kind === 'need')
+              (cat) =>
+                cat.parent_id === selectedRootCategory &&
+                (!essentialsOnly || cat.priority === 'need') &&
+                (!regularOnly || cat.is_regular)
             )
 
       const subcategoryData = new Map<string, { value: number; count: number }>()
@@ -448,7 +472,7 @@ export const ChartsPage = () => {
               : getCategoryColor(categoryMap.get(id)!, categories).solid,
         }))
     }
-  }, [categoryTotals, categories, chartType, selectedRootCategory, categorizationFilter, essentialsOnly])
+  }, [categoryTotals, categories, chartType, selectedRootCategory, categorizationFilter, essentialsOnly, regularOnly])
 
   const visibleChartData = useMemo(() => {
     const filtered = chartData.filter((d) => !hiddenChartCategoryIds.has(d.id))
@@ -880,14 +904,20 @@ export const ChartsPage = () => {
                 </button>
               )}
               {(viewMode === 'bar' || viewMode === 'pie') && (
-                <label className="regular-only-toggle">
-                  <input
-                    type="checkbox"
-                    checked={essentialsOnly}
-                    onChange={(e) => setEssentialsOnly(e.target.checked)}
-                  />
-                  Essentials only
-                </label>
+                <>
+                  <label className="regular-only-toggle">
+                    <input
+                      type="checkbox"
+                      checked={essentialsOnly}
+                      onChange={(e) => setEssentialsOnly(e.target.checked)}
+                    />
+                    Essentials only
+                  </label>
+                  <label className="regular-only-toggle">
+                    <input type="checkbox" checked={regularOnly} onChange={(e) => setRegularOnly(e.target.checked)} />
+                    Regular only
+                  </label>
+                </>
               )}
             </div>
           </div>

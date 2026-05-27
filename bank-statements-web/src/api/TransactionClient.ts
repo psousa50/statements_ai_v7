@@ -27,6 +27,8 @@ export interface TransactionFilters {
   saved_filter_id?: string
   tag_ids?: string[]
   exclude_from_analytics?: boolean
+  kinds?: string
+  priorities?: string
 }
 
 export interface SavedFilterCreate {
@@ -267,6 +269,12 @@ export const transactionClient: TransactionClient = {
     if (filters?.transaction_type) {
       params.append('transaction_type', filters.transaction_type)
     }
+    if (filters?.kinds) {
+      params.append('kinds', filters.kinds)
+    }
+    if (filters?.priorities) {
+      params.append('priorities', filters.priorities)
+    }
     if (filters?.transaction_ids && filters.transaction_ids.length > 0) {
       params.append('transaction_ids', filters.transaction_ids.join(','))
     }
@@ -323,6 +331,9 @@ export const transactionClient: TransactionClient = {
     }
     if (filters?.transaction_type) {
       params.append('transaction_type', filters.transaction_type)
+    }
+    if (filters?.kinds) {
+      params.append('kinds', filters.kinds)
     }
 
     const url = params.toString() ? `${API_URL}/export?${params.toString()}` : `${API_URL}/export`
@@ -381,6 +392,9 @@ export const transactionClient: TransactionClient = {
     if (filters?.transaction_type) {
       params.append('transaction_type', filters.transaction_type)
     }
+    if (filters?.kinds) {
+      params.append('kinds', filters.kinds)
+    }
 
     const url = params.toString() ? `${API_URL}/category-totals?${params.toString()}` : `${API_URL}/category-totals`
     const response = await axiosInstance.get<CategoryTotalsResponse>(url)
@@ -429,6 +443,9 @@ export const transactionClient: TransactionClient = {
     if (filters?.transaction_type) {
       params.append('transaction_type', filters.transaction_type)
     }
+    if (filters?.kinds) {
+      params.append('kinds', filters.kinds)
+    }
 
     const url = params.toString()
       ? `${API_URL}/category-time-series?${params.toString()}`
@@ -448,6 +465,7 @@ export const transactionClient: TransactionClient = {
     if (filters?.end_date) params.append('end_date', filters.end_date)
     if (filters?.exclude_uncategorized !== undefined)
       params.append('exclude_uncategorized', filters.exclude_uncategorized.toString())
+    if (filters?.kinds) params.append('kinds', filters.kinds)
 
     const url = `${API_URL}/income-spending-time-series?${params.toString()}`
     const response = await axiosInstance.get<IncomeSpendingResponse>(url)

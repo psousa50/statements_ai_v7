@@ -36,9 +36,28 @@ from app.api.schemas import (
 from app.common.text_normalization import normalize_description
 from app.core.config import settings
 from app.core.dependencies import InternalDependencies
+from app.domain.models.category import CategoryKind, CategoryPriority
 from app.domain.models.transaction import CategorizationStatus, SourceType, Transaction
 from app.domain.models.user import User
 from app.services.subscription import Feature
+
+
+def _parse_kinds(raw: Optional[str]) -> Optional[List[CategoryKind]]:
+    if not raw:
+        return None
+    try:
+        return [CategoryKind(value.strip()) for value in raw.split(",") if value.strip()]
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid kinds value")
+
+
+def _parse_priorities(raw: Optional[str]) -> Optional[List[CategoryPriority]]:
+    if not raw:
+        return None
+    try:
+        return [CategoryPriority(value.strip()) for value in raw.split(",") if value.strip()]
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid priorities value")
 
 
 def register_transaction_routes(
@@ -144,6 +163,14 @@ def register_transaction_routes(
             None,
             description="Filter by exclude_from_analytics flag",
         ),
+        kinds: Optional[str] = Query(
+            None,
+            description="Comma-separated category kinds (expense, income, transfer, reimbursable)",
+        ),
+        priorities: Optional[str] = Query(
+            None,
+            description="Comma-separated category priorities (need, comfort, unplanned, extra)",
+        ),
         internal: InternalDependencies = Depends(provide_dependencies),
         current_user: User = Depends(require_current_user),
     ):
@@ -207,6 +234,9 @@ def register_transaction_routes(
                     detail="Invalid tag IDs format",
                 )
 
+        parsed_kinds = _parse_kinds(kinds)
+        parsed_priorities = _parse_priorities(priorities)
+
         transactions = internal.transaction_service.get_transactions_paginated(
             user_id=current_user.id,
             page=page,
@@ -227,6 +257,8 @@ def register_transaction_routes(
             transaction_ids=parsed_transaction_ids,
             tag_ids=parsed_tag_ids,
             exclude_from_analytics=exclude_from_analytics,
+            kinds=parsed_kinds,
+            priorities=parsed_priorities,
         )
         return transactions
 
@@ -355,6 +387,10 @@ def register_transaction_routes(
             None,
             description="Filter by transaction type: 'debit', 'credit', or 'all'",
         ),
+        kinds: Optional[str] = Query(
+            None,
+            description="Comma-separated category kinds (expense, income, transfer, reimbursable)",
+        ),
         internal: InternalDependencies = Depends(provide_dependencies),
         current_user: User = Depends(require_current_user),
     ):
@@ -380,6 +416,7 @@ def register_transaction_routes(
             end_date=end_date,
             exclude_uncategorized=exclude_uncategorized,
             transaction_type=transaction_type,
+            kinds=_parse_kinds(kinds),
         )
 
         totals = [
@@ -434,6 +471,10 @@ def register_transaction_routes(
             None,
             description="Filter by transaction type: 'debit', 'credit', or 'all'",
         ),
+        kinds: Optional[str] = Query(
+            None,
+            description="Comma-separated category kinds (expense, income, transfer, reimbursable)",
+        ),
         internal: InternalDependencies = Depends(provide_dependencies),
         current_user: User = Depends(require_current_user),
     ):
@@ -461,6 +502,7 @@ def register_transaction_routes(
             end_date=end_date,
             exclude_uncategorized=exclude_uncategorized,
             transaction_type=transaction_type,
+            kinds=_parse_kinds(kinds),
         )
 
         response_data_points = [
@@ -485,6 +527,10 @@ def register_transaction_routes(
         start_date: Optional[date] = Query(None, description="Filter from this date"),
         end_date: Optional[date] = Query(None, description="Filter to this date"),
         exclude_uncategorized: Optional[bool] = Query(False, description="Exclude uncategorized transactions"),
+        kinds: Optional[str] = Query(
+            None,
+            description="Comma-separated category kinds (expense, income, transfer, reimbursable)",
+        ),
         internal: InternalDependencies = Depends(provide_dependencies),
         current_user: User = Depends(require_current_user),
     ):
@@ -495,6 +541,7 @@ def register_transaction_routes(
             start_date=start_date,
             end_date=end_date,
             exclude_uncategorized=exclude_uncategorized,
+            kinds=_parse_kinds(kinds),
         )
         return IncomeSpendingResponse(data_points=[IncomeSpendingDataPoint(**dp) for dp in data_points])
 

@@ -6,6 +6,7 @@ from uuid import UUID, uuid4
 from app.api.schemas import TransactionCreateRequest, TransactionListResponse
 from app.common.text_normalization import normalize_description
 from app.domain.dto.statement_processing import TransactionDTO
+from app.domain.models.category import CategoryKind, CategoryPriority
 from app.domain.models.enhancement_rule import EnhancementRule, EnhancementRuleSource, MatchType
 from app.domain.models.transaction import CategorizationStatus, SourceType, Transaction
 from app.ports.repositories.category import CategoryRepository
@@ -169,6 +170,8 @@ class TransactionService:
         transaction_ids: Optional[List[UUID]] = None,
         tag_ids: Optional[List[UUID]] = None,
         exclude_from_analytics: Optional[bool] = None,
+        kinds: Optional[List[CategoryKind]] = None,
+        priorities: Optional[List[CategoryPriority]] = None,
     ) -> TransactionListResponse:
         expanded_category_ids = self._expand_category_ids(category_ids, user_id)
         kwargs = dict(
@@ -190,6 +193,8 @@ class TransactionService:
             transaction_ids=transaction_ids,
             tag_ids=tag_ids,
             exclude_from_analytics=exclude_from_analytics,
+            kinds=kinds,
+            priorities=priorities,
         )
         (
             transactions,
@@ -297,6 +302,7 @@ class TransactionService:
         end_date: Optional[date] = None,
         exclude_uncategorized: Optional[bool] = None,
         transaction_type: Optional[str] = None,
+        kinds: Optional[List[CategoryKind]] = None,
     ) -> Dict[Optional[UUID], Dict[str, Decimal]]:
         expanded_category_ids = self._expand_category_ids(category_ids, user_id)
         return self.transaction_repository.get_category_totals(
@@ -312,6 +318,7 @@ class TransactionService:
             exclude_uncategorized=exclude_uncategorized,
             transaction_type=transaction_type,
             exclude_from_analytics=True,
+            kinds=kinds,
         )
 
     def get_category_time_series(
@@ -329,6 +336,7 @@ class TransactionService:
         end_date: Optional[date] = None,
         exclude_uncategorized: Optional[bool] = None,
         transaction_type: Optional[str] = None,
+        kinds: Optional[List[CategoryKind]] = None,
     ) -> List[Dict]:
         expanded_category_ids = self._expand_category_ids(category_ids, user_id)
         return self.transaction_repository.get_category_time_series(
@@ -346,6 +354,7 @@ class TransactionService:
             exclude_uncategorized=exclude_uncategorized,
             transaction_type=transaction_type,
             exclude_from_analytics=True,
+            kinds=kinds,
         )
 
     def get_income_spending_time_series(
@@ -356,6 +365,7 @@ class TransactionService:
         start_date: Optional[date] = None,
         end_date: Optional[date] = None,
         exclude_uncategorized: Optional[bool] = None,
+        kinds: Optional[List[CategoryKind]] = None,
     ) -> List[Dict]:
         return self.transaction_repository.get_income_spending_time_series(
             user_id=user_id,
@@ -365,6 +375,7 @@ class TransactionService:
             end_date=end_date,
             exclude_uncategorized=exclude_uncategorized,
             exclude_from_analytics=True,
+            kinds=kinds,
         )
 
     def update_transaction(

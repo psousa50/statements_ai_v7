@@ -50,8 +50,9 @@ const defaultTransaction: Transaction = {
 const defaultCategory: Category = {
   id: '1',
   name: 'Sample Category',
-  exclude_from_spending: false,
-  kind: 'need',
+  kind: 'expense',
+  priority: 'need',
+  is_regular: false,
 }
 
 // Default mock account
