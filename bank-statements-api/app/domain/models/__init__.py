@@ -2,6 +2,8 @@
 from .account import Account
 from .background_job import BackgroundJob, JobStatus, JobType
 from .category import Category
+from .enhancement_rule import EnhancementRule, EnhancementRuleSource, MatchType
+from .enhancement_rule_split_line import EnhancementRuleSplitLine
 from .initial_balance import InitialBalance
 from .processing import (
     AsyncCategorizationResult,
@@ -23,6 +25,11 @@ __all__ = [
     "JobType",
     # Category
     "Category",
+    # Enhancement Rule
+    "EnhancementRule",
+    "EnhancementRuleSource",
+    "EnhancementRuleSplitLine",
+    "MatchType",
     # Initial Balance
     "InitialBalance",
     # Processing

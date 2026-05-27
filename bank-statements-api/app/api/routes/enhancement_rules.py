@@ -237,6 +237,7 @@ def register_enhancement_rule_routes(
                 start_date=rule_data.start_date,
                 end_date=rule_data.end_date,
                 source=rule_data.source,
+                split_lines=[line.model_dump() for line in rule_data.split_lines] if rule_data.split_lines else None,
             )
 
             return EnhancementRuleResponse.model_validate(rule)
@@ -275,6 +276,7 @@ def register_enhancement_rule_routes(
                 end_date=rule_data.end_date,
                 source=rule_data.source,
                 apply_to_existing=rule_data.apply_to_existing,
+                split_lines=[line.model_dump() for line in rule_data.split_lines] if rule_data.split_lines else None,
             )
 
             if not rule:

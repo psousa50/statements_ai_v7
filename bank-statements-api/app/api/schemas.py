@@ -610,6 +610,24 @@ class BulkReplaceCategoryResponse(BaseModel):
 
 
 # Enhancement Rule Schemas
+class EnhancementRuleSplitLineInput(BaseModel):
+    label: Optional[str] = None
+    amount: Optional[Decimal] = None
+    is_remainder: bool = False
+    category_id: Optional[UUID] = None
+
+
+class EnhancementRuleSplitLineResponse(BaseModel):
+    id: UUID
+    label: Optional[str] = None
+    amount: Optional[Decimal] = None
+    is_remainder: bool
+    category_id: Optional[UUID] = None
+    sort_order: int
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class EnhancementRuleBase(BaseModel):
     normalized_description_pattern: str = Field(..., min_length=1, max_length=255)
     match_type: MatchType
@@ -620,6 +638,7 @@ class EnhancementRuleBase(BaseModel):
     start_date: Optional[str] = None
     end_date: Optional[str] = None
     source: EnhancementRuleSource = EnhancementRuleSource.MANUAL
+    split_lines: Optional[List[EnhancementRuleSplitLineInput]] = None
 
     @field_validator("normalized_description_pattern")
     @classmethod
@@ -680,6 +699,7 @@ class EnhancementRuleResponse(BaseModel):
     ai_processed_at: Optional[datetime] = None
     ai_suggested_category: Optional[CategoryResponse] = None
     ai_suggested_counterparty: Optional[AccountResponse] = None
+    split_lines: List[EnhancementRuleSplitLineResponse] = []
 
     model_config = ConfigDict(from_attributes=True)
 

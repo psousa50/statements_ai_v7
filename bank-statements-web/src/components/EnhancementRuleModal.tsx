@@ -26,9 +26,14 @@ import {
   EnhancementRuleCreate,
   EnhancementRuleUpdate,
   EnhancementRuleSource,
+  EnhancementRuleSplitLine,
   MatchType,
   MatchingTransactionsCountResponse,
 } from '../types/EnhancementRule'
+import IconButton from '@mui/material/IconButton'
+import Radio from '@mui/material/Radio'
+import AddIcon from '@mui/icons-material/Add'
+import DeleteIcon from '@mui/icons-material/Delete'
 import { Category } from '../types/Transaction'
 import { CategorySelector } from './CategorySelector'
 
@@ -121,6 +126,9 @@ export const EnhancementRuleModal: React.FC<EnhancementRuleModalProps> = ({
   // State for creating empty copy
   const [createEmptyCopy, setCreateEmptyCopy] = useState(true)
 
+  // Split template state
+  const [splitLines, setSplitLines] = useState<EnhancementRuleSplitLine[]>([])
+
   // State for amount type and display values
   const [amountType, setAmountType] = useState<AmountType>('all')
   const [displayMinAmount, setDisplayMinAmount] = useState<number | undefined>(undefined)
@@ -149,6 +157,7 @@ export const EnhancementRuleModal: React.FC<EnhancementRuleModalProps> = ({
         end_date: rule.end_date,
         source: rule.source,
       })
+      setSplitLines(rule.split_lines ? rule.split_lines.map((l) => ({ ...l })) : [])
     } else if (duplicateData) {
       // Creating new rule from duplicate data
       const inferredType = inferAmountType(duplicateData.min_amount, duplicateData.max_amount)
@@ -171,6 +180,7 @@ export const EnhancementRuleModal: React.FC<EnhancementRuleModalProps> = ({
         end_date: duplicateData.end_date,
         source: duplicateData.source || EnhancementRuleSource.MANUAL,
       })
+      setSplitLines(duplicateData.split_lines ? duplicateData.split_lines.map((l) => ({ ...l })) : [])
     } else {
       // Reset form for create mode
       setAmountType('all')
@@ -181,6 +191,7 @@ export const EnhancementRuleModal: React.FC<EnhancementRuleModalProps> = ({
         match_type: MatchType.INFIX,
         source: EnhancementRuleSource.MANUAL,
       })
+      setSplitLines([])
     }
   }, [rule, duplicateData])
 
@@ -303,8 +314,61 @@ export const EnhancementRuleModal: React.FC<EnhancementRuleModalProps> = ({
       }
     }
 
+    if (splitLines.length > 0) {
+      if (splitLines.length < 2) {
+        errors.split_lines = 'Split template needs at least two lines'
+      } else {
+        const remainderCount = splitLines.filter((l) => l.is_remainder).length
+        if (remainderCount !== 1) {
+          errors.split_lines = 'Split template must have exactly one remainder line'
+        } else if (
+          splitLines.some(
+            (l) => !l.is_remainder && (l.amount === undefined || l.amount === null || Number(l.amount) <= 0)
+          )
+        ) {
+          errors.split_lines = 'Fixed split lines must have a positive amount'
+        }
+      }
+    }
+
     setValidationErrors(errors)
     return Object.keys(errors).length === 0
+  }
+
+  const serializedSplitLines = (): EnhancementRuleSplitLine[] | undefined => {
+    if (splitLines.length === 0) return undefined
+    return splitLines.map((line, idx) => ({
+      label: line.label || undefined,
+      amount: line.is_remainder ? undefined : (line.amount ?? undefined),
+      is_remainder: !!line.is_remainder,
+      category_id: line.category_id || undefined,
+      sort_order: idx,
+    }))
+  }
+
+  const addSplitLine = (asRemainder = false) => {
+    setSplitLines((prev) => [
+      ...prev,
+      { is_remainder: asRemainder, amount: asRemainder ? null : 0, sort_order: prev.length },
+    ])
+  }
+
+  const updateSplitLine = (index: number, patch: Partial<EnhancementRuleSplitLine>) => {
+    setSplitLines((prev) => prev.map((line, i) => (i === index ? { ...line, ...patch } : line)))
+  }
+
+  const setRemainderLine = (index: number) => {
+    setSplitLines((prev) =>
+      prev.map((line, i) => ({
+        ...line,
+        is_remainder: i === index,
+        amount: i === index ? null : (line.amount ?? 0),
+      }))
+    )
+  }
+
+  const removeSplitLine = (index: number) => {
+    setSplitLines((prev) => prev.filter((_, i) => i !== index))
   }
 
   const handleSubmit = async () => {
@@ -317,6 +381,7 @@ export const EnhancementRuleModal: React.FC<EnhancementRuleModalProps> = ({
         const updateData: EnhancementRuleUpdate = {
           ...formData,
           apply_to_existing: applyToExisting,
+          split_lines: serializedSplitLines(),
         }
         await updateRule(rule.id, updateData)
       } else {
@@ -345,6 +410,10 @@ export const EnhancementRuleModal: React.FC<EnhancementRuleModalProps> = ({
         }
         if (formData.end_date) {
           cleanedData.end_date = formData.end_date
+        }
+        const splits = serializedSplitLines()
+        if (splits) {
+          cleanedData.split_lines = splits
         }
 
         await createRule(cleanedData)
@@ -383,6 +452,7 @@ export const EnhancementRuleModal: React.FC<EnhancementRuleModalProps> = ({
       setAmountType('all')
       setDisplayMinAmount(undefined)
       setDisplayMaxAmount(undefined)
+      setSplitLines([])
     }
     setValidationErrors({})
 
@@ -516,6 +586,85 @@ export const EnhancementRuleModal: React.FC<EnhancementRuleModalProps> = ({
               <FormHelperText>Counterparty to assign to matching transactions</FormHelperText>
             </FormControl>
           </Stack>
+
+          <Box>
+            <Stack direction="row" justifyContent="space-between" alignItems="center">
+              <Typography variant="h6" gutterBottom>
+                Split Template (Optional)
+              </Typography>
+              <Stack direction="row" spacing={1}>
+                <Button size="small" startIcon={<AddIcon />} onClick={() => addSplitLine(false)} disabled={loading}>
+                  Add line
+                </Button>
+                {splitLines.length === 0 && (
+                  <Button
+                    size="small"
+                    startIcon={<AddIcon />}
+                    onClick={() => {
+                      addSplitLine(false)
+                      addSplitLine(true)
+                    }}
+                    disabled={loading}
+                  >
+                    Start template
+                  </Button>
+                )}
+              </Stack>
+            </Stack>
+            <FormHelperText>
+              When this rule matches, automatically split the transaction into the lines below. Mark exactly one line as
+              the remainder; it absorbs whatever's left of the parent amount (e.g. price changes, VAT wobbles).
+            </FormHelperText>
+            {validationErrors.split_lines && <FormHelperText error>{validationErrors.split_lines}</FormHelperText>}
+          </Box>
+
+          {splitLines.length > 0 && (
+            <Stack spacing={1}>
+              {splitLines.map((line, idx) => (
+                <Stack key={idx} direction="row" spacing={1} alignItems="center">
+                  <Radio
+                    size="small"
+                    checked={!!line.is_remainder}
+                    onChange={() => setRemainderLine(idx)}
+                    title="Mark as remainder line"
+                  />
+                  <TextField
+                    size="small"
+                    label="Label"
+                    value={line.label ?? ''}
+                    onChange={(e) => updateSplitLine(idx, { label: e.target.value || undefined })}
+                    sx={{ flex: 2 }}
+                  />
+                  <TextField
+                    size="small"
+                    type="number"
+                    label={line.is_remainder ? 'Remainder' : 'Amount'}
+                    value={line.is_remainder ? '' : (line.amount ?? '')}
+                    onChange={(e) => updateSplitLine(idx, { amount: e.target.value ? parseFloat(e.target.value) : 0 })}
+                    disabled={!!line.is_remainder}
+                    sx={{ flex: 1 }}
+                    inputProps={{ min: 0, step: '0.01' }}
+                  />
+                  <Box sx={{ flex: 2 }}>
+                    <CategorySelector
+                      categories={categories}
+                      selectedCategoryId={line.category_id ?? undefined}
+                      onCategoryChange={(categoryId) => updateSplitLine(idx, { category_id: categoryId || null })}
+                      placeholder="Category"
+                      allowClear
+                      multiple={false}
+                      variant="form"
+                      allowCreate
+                      onCategoryCreate={handleCreateCategory}
+                    />
+                  </Box>
+                  <IconButton size="small" onClick={() => removeSplitLine(idx)} aria-label="Remove split line">
+                    <DeleteIcon fontSize="small" />
+                  </IconButton>
+                </Stack>
+              ))}
+            </Stack>
+          )}
 
           <Box>
             <Typography variant="h6" gutterBottom>

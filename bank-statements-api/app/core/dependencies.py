@@ -220,6 +220,7 @@ def build_internal_dependencies(
         category_repository=category_repo,
         account_repository=account_repo,
         transaction_repository=transaction_repo,
+        transaction_service=transaction_service,
     )
 
     # Row filter service for filtering statement rows

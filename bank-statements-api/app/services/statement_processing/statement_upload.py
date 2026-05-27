@@ -71,6 +71,8 @@ class StatementUploadService:
         parsed = self.parse_statement(user_id, upload_data)
         enhanced = self.enhance_transactions(user_id, parsed)
         saved = self.save_statement(user_id, enhanced, upload_data)
+        if saved.statement is not None:
+            self.transaction_service.apply_split_templates_for_statement(user_id, saved.statement.id)
         jobs = self.schedule_jobs(saved, enhanced)
 
         if background_tasks and internal_deps:

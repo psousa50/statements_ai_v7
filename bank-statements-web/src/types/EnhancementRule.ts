@@ -11,6 +11,15 @@ export enum MatchType {
   INFIX = 'infix',
 }
 
+export interface EnhancementRuleSplitLine {
+  id?: string
+  label?: string | null
+  amount?: number | null
+  is_remainder: boolean
+  category_id?: string | null
+  sort_order?: number
+}
+
 export interface EnhancementRule {
   id: string
   normalized_description_pattern: string
@@ -25,6 +34,7 @@ export interface EnhancementRule {
   created_at: string
   updated_at: string
   rule_type: string
+  split_lines?: EnhancementRuleSplitLine[]
   // Populated from joins
   category?: Category
   counterparty_account?: {
@@ -59,6 +69,7 @@ export interface EnhancementRuleCreate {
   start_date?: string
   end_date?: string
   source: EnhancementRuleSource
+  split_lines?: EnhancementRuleSplitLine[]
 }
 
 export interface EnhancementRuleUpdate {
@@ -72,6 +83,7 @@ export interface EnhancementRuleUpdate {
   end_date?: string
   source: EnhancementRuleSource
   apply_to_existing?: boolean
+  split_lines?: EnhancementRuleSplitLine[]
 }
 
 export interface MatchingTransactionsCountResponse {

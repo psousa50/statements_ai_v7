@@ -1,12 +1,15 @@
+from decimal import Decimal
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
 from app.common.text_normalization import normalize_description
 from app.domain.models.enhancement_rule import EnhancementRule, EnhancementRuleSource, MatchType
+from app.domain.models.enhancement_rule_split_line import EnhancementRuleSplitLine
 from app.ports.repositories.account import AccountRepository
 from app.ports.repositories.category import CategoryRepository
 from app.ports.repositories.enhancement_rule import EnhancementRuleRepository
 from app.ports.repositories.transaction import TransactionRepository
+from app.services.transaction import TransactionService
 
 
 class EnhancementRuleManagementService:
@@ -16,11 +19,13 @@ class EnhancementRuleManagementService:
         category_repository: CategoryRepository,
         account_repository: AccountRepository,
         transaction_repository: TransactionRepository,
+        transaction_service: TransactionService,
     ):
         self.enhancement_rule_repository = enhancement_rule_repository
         self.category_repository = category_repository
         self.account_repository = account_repository
         self.transaction_repository = transaction_repository
+        self.transaction_service = transaction_service
 
     def list_rules(
         self,
@@ -92,6 +97,7 @@ class EnhancementRuleManagementService:
         start_date: Optional[str] = None,
         end_date: Optional[str] = None,
         source: EnhancementRuleSource = EnhancementRuleSource.MANUAL,
+        split_lines: Optional[List[Dict[str, Any]]] = None,
     ) -> EnhancementRule:
         if category_id:
             category = self.category_repository.get_by_id(category_id, user_id)
@@ -119,6 +125,9 @@ class EnhancementRuleManagementService:
             source=source,
         )
 
+        if split_lines is not None:
+            rule.split_lines = self._build_split_lines(split_lines, user_id)
+
         return self.enhancement_rule_repository.save(rule)
 
     def update_rule(
@@ -135,6 +144,7 @@ class EnhancementRuleManagementService:
         end_date: Optional[str] = None,
         source: EnhancementRuleSource = EnhancementRuleSource.MANUAL,
         apply_to_existing: bool = False,
+        split_lines: Optional[List[Dict[str, Any]]] = None,
     ) -> Optional[EnhancementRule]:
         rule = self.enhancement_rule_repository.find_by_id(rule_id, user_id)
         if not rule:
@@ -162,6 +172,9 @@ class EnhancementRuleManagementService:
         rule.start_date = start_date
         rule.end_date = end_date
         rule.source = source
+
+        if split_lines is not None:
+            rule.split_lines = self._build_split_lines(split_lines, user_id)
 
         if category_id is not None:
             rule.ai_suggested_category_id = None
@@ -268,6 +281,45 @@ class EnhancementRuleManagementService:
                 for rule in unused_rules
             ],
         }
+
+    def _build_split_lines(self, lines: List[Dict[str, Any]], user_id: UUID) -> List[EnhancementRuleSplitLine]:
+        if not lines:
+            return []
+
+        if len(lines) < 2:
+            raise ValueError("Split template needs at least two lines")
+
+        remainder_count = sum(1 for line in lines if line.get("is_remainder"))
+        if remainder_count != 1:
+            raise ValueError("Split template must have exactly one remainder line")
+
+        built: List[EnhancementRuleSplitLine] = []
+        for idx, line in enumerate(lines):
+            is_remainder = bool(line.get("is_remainder"))
+            amount = line.get("amount")
+            if is_remainder and amount is not None:
+                raise ValueError("Remainder line cannot have a fixed amount")
+            if not is_remainder and amount is None:
+                raise ValueError("Fixed split lines must have an amount")
+            if not is_remainder and Decimal(str(amount)) <= 0:
+                raise ValueError("Fixed split line amounts must be positive")
+
+            category_id = line.get("category_id")
+            if category_id:
+                category = self.category_repository.get_by_id(category_id, user_id)
+                if not category:
+                    raise ValueError(f"Category with ID {category_id} not found")
+
+            built.append(
+                EnhancementRuleSplitLine(
+                    sort_order=idx,
+                    label=line.get("label"),
+                    amount=Decimal(str(amount)) if amount is not None else None,
+                    is_remainder=is_remainder,
+                    category_id=category_id,
+                )
+            )
+        return built
 
     def _get_rule_transaction_count(self, rule: EnhancementRule) -> int:
         try:
@@ -377,6 +429,7 @@ class EnhancementRuleManagementService:
         total_updated = 0
         page = 1
         batch_size = 1000
+        has_split_template = bool(rule.split_lines)
 
         while True:
             matching_transactions = self.transaction_repository.find_transactions_matching_rule(
@@ -387,6 +440,12 @@ class EnhancementRuleManagementService:
                 break
 
             for transaction in matching_transactions:
+                if has_split_template and transaction.parent_transaction_id is None:
+                    children = self.transaction_service.auto_split_with_rule(transaction, rule)
+                    if children:
+                        total_updated += 1
+                        continue
+
                 updated = False
 
                 if rule.category_id and transaction.categorization_status in [

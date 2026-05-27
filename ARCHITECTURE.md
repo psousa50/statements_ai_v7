@@ -72,7 +72,8 @@ bin/                             # Shell scripts (dev, db, deploy, test)
 | `transactions` | Belongs to account + statement; has category, counterparty_account, tags (M2M via `transaction_tags`) |
 | `categories` | Hierarchical (max 2 levels via parent_id); has colour; `kind` enum (expense/income/transfer/reimbursable) classifies the money-flow role used by analytics filters; `priority` enum (need/comfort/unplanned/extra) drives the Savings page and Charts "Essentials only" filter; `is_regular` flag marks predictable monthly baseline (root flag is authoritative for the tree) used by Charts "Regular only" filter |
 | `statements` | Belongs to account; stores raw file content |
-| `enhancement_rules` | Pattern matching rules with AI suggestion fields |
+| `enhancement_rules` | Pattern matching rules with AI suggestion fields; can carry a split template (`enhancement_rule_split_lines`) that auto-splits a matched transaction into children — fixed-amount lines plus one remainder line that absorbs any drift |
+| `enhancement_rule_split_lines` | Ordered child rows of an enhancement rule (label, amount, is_remainder, category_id). Applied post-save on upload and during retroactive "apply rule" |
 | `tags` | M2M with transactions via junction table |
 | `subscriptions` | One per user; tier (free/basic/pro) with Stripe integration |
 | `subscription_usage` | Monthly counters for statements and AI calls |

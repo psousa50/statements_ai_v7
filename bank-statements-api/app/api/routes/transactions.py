@@ -569,6 +569,7 @@ def register_transaction_routes(
             page_size=10000,
             start_date=lookback_start,
             transaction_type="debit",
+            exclude_from_analytics=False,
         )
 
         result = internal.recurring_expense_analyzer.analyze_patterns(

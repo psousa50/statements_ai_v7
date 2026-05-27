@@ -476,6 +476,85 @@ class TransactionService:
 
         return children
 
+    def auto_split_with_rule(self, transaction: Transaction, rule: EnhancementRule) -> Optional[List[Transaction]]:
+        if not rule.split_lines:
+            return None
+        if transaction.parent_transaction_id is not None:
+            return None
+
+        parts = self._build_split_parts_from_rule(rule, transaction.amount)
+        if parts is None:
+            return None
+
+        return self.split_transaction(transaction.id, transaction.user_id, parts)
+
+    def _build_split_parts_from_rule(self, rule: EnhancementRule, parent_amount: Decimal) -> Optional[List[Dict]]:
+        sign = Decimal(-1) if parent_amount < 0 else Decimal(1)
+        total_abs = abs(parent_amount)
+
+        fixed_sum = Decimal(0)
+        remainder_line = None
+        ordered_lines = sorted(rule.split_lines, key=lambda line: line.sort_order)
+
+        parts: List[Dict] = []
+        for line in ordered_lines:
+            if line.is_remainder:
+                remainder_line = line
+                parts.append({"_remainder": True, "category_id": line.category_id, "description": line.label})
+                continue
+            fixed_sum += Decimal(line.amount)
+            parts.append(
+                {
+                    "amount": (Decimal(line.amount) * sign).quantize(Decimal("0.01")),
+                    "category_id": line.category_id,
+                    "description": line.label,
+                }
+            )
+
+        if remainder_line is None:
+            return None
+
+        remainder_abs = total_abs - fixed_sum
+        if remainder_abs <= 0:
+            return None
+
+        for part in parts:
+            if part.get("_remainder"):
+                part.pop("_remainder")
+                part["amount"] = (remainder_abs * sign).quantize(Decimal("0.01"))
+
+        return parts
+
+    def apply_split_templates_for_statement(self, user_id: UUID, statement_id: UUID) -> int:
+        new_transactions = self.transaction_repository.get_by_statement_id(statement_id)
+        new_transactions = [t for t in new_transactions if t.user_id == user_id and t.parent_transaction_id is None]
+        if not new_transactions:
+            return 0
+
+        return self._apply_split_templates_to(new_transactions, user_id)
+
+    def _apply_split_templates_to(self, transactions: List[Transaction], user_id: UUID) -> int:
+        normalized_descriptions = list({t.normalized_description for t in transactions})
+        rules = self.enhancement_rule_repository.find_matching_rules_batch(normalized_descriptions, user_id)
+        rules_with_template = [r for r in rules if r.split_lines]
+        if not rules_with_template:
+            return 0
+
+        ordered_rules = sorted(rules_with_template, key=_rule_specificity_key_for_split)
+
+        split_count = 0
+        for transaction in transactions:
+            matched_rule = next(
+                (rule for rule in ordered_rules if rule.matches_transaction(transaction)),
+                None,
+            )
+            if matched_rule is None:
+                continue
+            children = self.auto_split_with_rule(transaction, matched_rule)
+            if children:
+                split_count += 1
+        return split_count
+
     def delete_transaction(self, transaction_id: UUID, user_id: UUID) -> bool:
         return self.transaction_repository.delete(transaction_id, user_id)
 
@@ -763,3 +842,17 @@ class TransactionService:
         )
 
         return transaction
+
+
+_MATCH_TYPE_PRIORITY_FOR_SPLIT = {MatchType.EXACT: 0, MatchType.PREFIX: 1, MatchType.INFIX: 2}
+
+
+def _rule_specificity_key_for_split(rule: EnhancementRule):
+    constraint_count = sum(
+        1 for value in (rule.min_amount, rule.max_amount, rule.start_date, rule.end_date) if value is not None
+    )
+    return (
+        -constraint_count,
+        _MATCH_TYPE_PRIORITY_FOR_SPLIT.get(rule.match_type, 99),
+        rule.created_at or datetime.min,
+    )

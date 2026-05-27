@@ -95,6 +95,17 @@ class EnhancementRule(Base):
     counterparty_account = relationship("Account", foreign_keys=[counterparty_account_id])
     ai_suggested_category = relationship("Category", foreign_keys=[ai_suggested_category_id])
     ai_suggested_counterparty = relationship("Account", foreign_keys=[ai_suggested_counterparty_id])
+    split_lines = relationship(
+        "EnhancementRuleSplitLine",
+        back_populates="rule",
+        cascade="all, delete-orphan",
+        order_by="EnhancementRuleSplitLine.sort_order",
+        lazy="selectin",
+    )
+
+    @property
+    def has_split_template(self) -> bool:
+        return bool(self.split_lines)
 
     @property
     def rule_type(self) -> str:
