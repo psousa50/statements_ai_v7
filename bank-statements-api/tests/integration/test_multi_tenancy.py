@@ -4,11 +4,9 @@ from uuid import uuid4
 
 from app.adapters.repositories.account import SQLAlchemyAccountRepository
 from app.adapters.repositories.category import SQLAlchemyCategoryRepository
-from app.adapters.repositories.description_group import SQLAlchemyDescriptionGroupRepository
 from app.adapters.repositories.enhancement_rule import SQLAlchemyEnhancementRuleRepository
 from app.adapters.repositories.statement import SqlAlchemyStatementRepository
 from app.adapters.repositories.transaction import SQLAlchemyTransactionRepository
-from app.domain.models.description_group import DescriptionGroup
 from app.domain.models.enhancement_rule import EnhancementRule
 from app.domain.models.statement import Statement
 from app.domain.models.transaction import Transaction
@@ -219,24 +217,23 @@ class TestStatementMultiTenancy:
         assert result.id == stmt_a.id
 
 
+def _build_rule(*, user_id, pattern: str):
+    from app.domain.models.enhancement_rule import EnhancementRuleSource, MatchType
+    from app.domain.models.enhancement_rule_pattern import EnhancementRulePattern
+
+    rule = EnhancementRule(
+        id=uuid4(),
+        source=EnhancementRuleSource.MANUAL,
+        user_id=user_id,
+    )
+    rule.patterns = [EnhancementRulePattern(normalized_description=pattern, match_type=MatchType.EXACT, sort_order=0)]
+    return rule
+
+
 class TestEnhancementRuleMultiTenancy:
     def test_user_can_only_see_own_enhancement_rules(self, db_session, user_a, user_b):
-        from app.domain.models.enhancement_rule import EnhancementRuleSource, MatchType
-
-        rule_a = EnhancementRule(
-            id=uuid4(),
-            normalized_description_pattern="test rule a",
-            match_type=MatchType.EXACT,
-            source=EnhancementRuleSource.MANUAL,
-            user_id=user_a.id,
-        )
-        rule_b = EnhancementRule(
-            id=uuid4(),
-            normalized_description_pattern="test rule b",
-            match_type=MatchType.EXACT,
-            source=EnhancementRuleSource.MANUAL,
-            user_id=user_b.id,
-        )
+        rule_a = _build_rule(user_id=user_a.id, pattern="test rule a")
+        rule_b = _build_rule(user_id=user_b.id, pattern="test rule b")
         db_session.add(rule_a)
         db_session.add(rule_b)
         db_session.flush()
@@ -252,15 +249,7 @@ class TestEnhancementRuleMultiTenancy:
         assert user_b_rules[0].id == rule_b.id
 
     def test_user_cannot_get_other_users_rule_by_id(self, db_session, user_a, user_b):
-        from app.domain.models.enhancement_rule import EnhancementRuleSource, MatchType
-
-        rule_a = EnhancementRule(
-            id=uuid4(),
-            normalized_description_pattern="test rule a",
-            match_type=MatchType.EXACT,
-            source=EnhancementRuleSource.MANUAL,
-            user_id=user_a.id,
-        )
+        rule_a = _build_rule(user_id=user_a.id, pattern="test rule a")
         db_session.add(rule_a)
         db_session.flush()
 
@@ -272,48 +261,3 @@ class TestEnhancementRuleMultiTenancy:
         result = repo.find_by_id(rule_a.id, user_a.id)
         assert result is not None
         assert result.id == rule_a.id
-
-
-class TestDescriptionGroupMultiTenancy:
-    def test_user_can_only_see_own_description_groups(self, db_session, user_a, user_b):
-        group_a = DescriptionGroup(
-            id=uuid4(),
-            name="Group A",
-            user_id=user_a.id,
-        )
-        group_b = DescriptionGroup(
-            id=uuid4(),
-            name="Group B",
-            user_id=user_b.id,
-        )
-        db_session.add(group_a)
-        db_session.add(group_b)
-        db_session.flush()
-
-        repo = SQLAlchemyDescriptionGroupRepository(db_session)
-
-        user_a_groups = repo.get_all(user_a.id)
-        user_b_groups = repo.get_all(user_b.id)
-
-        assert len(user_a_groups) == 1
-        assert user_a_groups[0].id == group_a.id
-        assert len(user_b_groups) == 1
-        assert user_b_groups[0].id == group_b.id
-
-    def test_user_cannot_get_other_users_group_by_id(self, db_session, user_a, user_b):
-        group_a = DescriptionGroup(
-            id=uuid4(),
-            name="Group A",
-            user_id=user_a.id,
-        )
-        db_session.add(group_a)
-        db_session.flush()
-
-        repo = SQLAlchemyDescriptionGroupRepository(db_session)
-
-        result = repo.get_by_id(group_a.id, user_b.id)
-        assert result is None
-
-        result = repo.get_by_id(group_a.id, user_a.id)
-        assert result is not None
-        assert result.id == group_a.id
