@@ -574,7 +574,7 @@ class SQLAlchemyEnhancementRuleRepository(EnhancementRuleRepository):
                 )
             )
 
-        return (
+        rows = (
             self.db.query(EnhancementRule)
             .join(EnhancementRulePattern, EnhancementRulePattern.rule_id == EnhancementRule.id)
             .filter(EnhancementRule.user_id == user_id, or_(*conditions))
@@ -582,6 +582,14 @@ class SQLAlchemyEnhancementRuleRepository(EnhancementRuleRepository):
                 EnhancementRulePattern.match_type.asc(),
                 EnhancementRule.created_at.asc(),
             )
-            .distinct()
             .all()
         )
+
+        seen: set[UUID] = set()
+        unique_rules: List[EnhancementRule] = []
+        for rule in rows:
+            if rule.id in seen:
+                continue
+            seen.add(rule.id)
+            unique_rules.append(rule)
+        return unique_rules

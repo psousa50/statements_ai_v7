@@ -201,8 +201,8 @@ class TestStatementUploadIntegration:
                 EnhancementRuleSource.MANUAL,
                 EnhancementRuleSource.AUTO,
             ]
-            assert rule.normalized_description_pattern is not None
-            assert len(rule.normalized_description_pattern) > 0
+            assert rule.patterns
+            assert all(p.normalized_description for p in rule.patterns)
             assert rule.created_at is not None
 
     def test_upload_with_real_categorization_processing(self, db_session, llm_client, test_user):
@@ -270,8 +270,8 @@ class TestStatementUploadIntegration:
                 EnhancementRuleSource.MANUAL,
                 EnhancementRuleSource.AUTO,
             ]
-            assert rule.normalized_description_pattern is not None
-            assert len(rule.normalized_description_pattern) > 0
+            assert rule.patterns
+            assert all(p.normalized_description for p in rule.patterns)
             assert rule.created_at is not None
 
         # Verify transactions have proper categorization status
@@ -336,7 +336,8 @@ class TestStatementUploadIntegration:
             # Verify each enhancement rule has complete data
             for rule in enhancement_rules:
                 assert rule.source is not None
-                assert rule.normalized_description_pattern is not None
+                assert rule.patterns
+                assert all(p.normalized_description for p in rule.patterns)
                 assert rule.created_at is not None
                 # Note: category_id and counterparty_account_id can be None for unmatched rules
 
