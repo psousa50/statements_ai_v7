@@ -20,10 +20,16 @@ export interface EnhancementRuleSplitLine {
   sort_order?: number
 }
 
+export interface EnhancementRulePattern {
+  id?: string
+  normalized_description: string
+  match_type: MatchType
+  sort_order?: number
+}
+
 export interface EnhancementRule {
   id: string
-  normalized_description_pattern: string
-  match_type: MatchType
+  patterns: EnhancementRulePattern[]
   category_id?: string
   counterparty_account_id?: string
   min_amount?: number
@@ -60,8 +66,7 @@ export interface EnhancementRule {
 }
 
 export interface EnhancementRuleCreate {
-  normalized_description_pattern: string
-  match_type: MatchType
+  patterns: EnhancementRulePattern[]
   category_id?: string
   counterparty_account_id?: string
   min_amount?: number
@@ -73,8 +78,7 @@ export interface EnhancementRuleCreate {
 }
 
 export interface EnhancementRuleUpdate {
-  normalized_description_pattern: string
-  match_type: MatchType
+  patterns: EnhancementRulePattern[]
   category_id?: string
   counterparty_account_id?: string
   min_amount?: number

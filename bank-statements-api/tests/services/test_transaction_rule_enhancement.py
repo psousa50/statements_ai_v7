@@ -5,8 +5,31 @@ import pytest
 
 from app.domain.dto.statement_processing import TransactionDTO
 from app.domain.models.enhancement_rule import EnhancementRule, EnhancementRuleSource, MatchType
+from app.domain.models.enhancement_rule_pattern import EnhancementRulePattern
 from app.domain.models.transaction import CategorizationStatus
 from app.services.transaction_rule_enhancement import EnhancementResult, TransactionRuleEnhancementService
+
+
+def _make_rule(
+    pattern: str,
+    match_type: MatchType,
+    *,
+    category_id=None,
+    counterparty_account_id=None,
+    min_amount=None,
+    max_amount=None,
+    source: EnhancementRuleSource = EnhancementRuleSource.MANUAL,
+) -> EnhancementRule:
+    rule = EnhancementRule(
+        id=uuid4(),
+        category_id=category_id,
+        counterparty_account_id=counterparty_account_id,
+        min_amount=min_amount,
+        max_amount=max_amount,
+        source=source,
+    )
+    rule.patterns = [EnhancementRulePattern(normalized_description=pattern, match_type=match_type, sort_order=0)]
+    return rule
 
 
 class TestTransactionRuleEnhancementService:
@@ -62,22 +85,10 @@ class TestTransactionRuleEnhancementService:
     @pytest.fixture
     def sample_enhancement_rules(self):
         return [
-            EnhancementRule(
-                id=uuid4(),
-                normalized_description_pattern="grocery store purchase",
-                match_type=MatchType.EXACT,
-                category_id="category-1",
-                counterparty_account_id="counterparty-1",
-                source=EnhancementRuleSource.MANUAL,
+            _make_rule(
+                "grocery store purchase", MatchType.EXACT, category_id="category-1", counterparty_account_id="counterparty-1"
             ),
-            EnhancementRule(
-                id=uuid4(),
-                normalized_description_pattern="salary",
-                match_type=MatchType.PREFIX,
-                category_id="category-2",
-                counterparty_account_id=None,
-                source=EnhancementRuleSource.AUTO,
-            ),
+            _make_rule("salary", MatchType.PREFIX, category_id="category-2", source=EnhancementRuleSource.AUTO),
         ]
 
     def test_enhance_transactions_empty_list(self, enhancement_service, user_id):
@@ -172,7 +183,7 @@ class TestTransactionRuleEnhancementService:
             assert rule.category_id is None
             assert rule.counterparty_account_id is None
             assert rule.source == EnhancementRuleSource.AUTO
-            assert rule.match_type == MatchType.EXACT
+            assert rule.patterns[0].match_type == MatchType.EXACT
 
     def test_enhance_transactions_handles_empty_descriptions(
         self,
@@ -312,7 +323,7 @@ class TestTransactionRuleEnhancementService:
         assert mock_enhancement_rule_repository.save.call_count == 2
 
         save_calls = mock_enhancement_rule_repository.save.call_args_list
-        created_patterns = {call[0][0].normalized_description_pattern for call in save_calls}
+        created_patterns = {call[0][0].patterns[0].normalized_description for call in save_calls}
         expected_patterns = {
             "grocery store purchase",
             "atm withdrawal",
@@ -331,24 +342,19 @@ class TestTransactionRuleEnhancementService:
     ):
         from decimal import Decimal
 
-        looser_rule = EnhancementRule(
-            id=uuid4(),
-            normalized_description_pattern="transferencia vencimento",
-            match_type=MatchType.EXACT,
-            min_amount=None,
+        looser_rule = _make_rule(
+            "transferencia vencimento",
+            MatchType.EXACT,
             max_amount=Decimal("2000.00"),
             category_id="category-travel",
-            counterparty_account_id=None,
             source=EnhancementRuleSource.AUTO,
         )
-        tighter_rule = EnhancementRule(
-            id=uuid4(),
-            normalized_description_pattern="transferencia vencimento",
-            match_type=MatchType.EXACT,
+        tighter_rule = _make_rule(
+            "transferencia vencimento",
+            MatchType.EXACT,
             min_amount=Decimal("100.00"),
             max_amount=Decimal("120.00"),
             category_id="category-claude-code",
-            counterparty_account_id=None,
             source=EnhancementRuleSource.AUTO,
         )
         mock_enhancement_rule_repository.find_matching_rules_batch.return_value = [
@@ -379,22 +385,13 @@ class TestTransactionRuleEnhancementService:
     ):
         from decimal import Decimal
 
-        storage_rule = EnhancementRule(
-            id=uuid4(),
-            normalized_description_pattern="google",
-            match_type=MatchType.EXACT,
-            category_id="category-storage",
-            counterparty_account_id=None,
-            source=EnhancementRuleSource.AUTO,
-        )
-        youtube_rule = EnhancementRule(
-            id=uuid4(),
-            normalized_description_pattern="google",
-            match_type=MatchType.EXACT,
+        storage_rule = _make_rule("google", MatchType.EXACT, category_id="category-storage", source=EnhancementRuleSource.AUTO)
+        youtube_rule = _make_rule(
+            "google",
+            MatchType.EXACT,
             min_amount=Decimal("-17.99"),
             max_amount=Decimal("-17.99"),
             category_id="category-youtube",
-            counterparty_account_id=None,
             source=EnhancementRuleSource.AUTO,
         )
         mock_enhancement_rule_repository.find_matching_rules_batch.return_value = [

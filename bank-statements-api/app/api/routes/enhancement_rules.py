@@ -228,8 +228,7 @@ def register_enhancement_rule_routes(
         try:
             rule = service.create_rule(
                 user_id=current_user.id,
-                normalized_description_pattern=rule_data.normalized_description_pattern,
-                match_type=rule_data.match_type,
+                patterns=[pattern.model_dump() for pattern in rule_data.patterns],
                 category_id=rule_data.category_id,
                 counterparty_account_id=rule_data.counterparty_account_id,
                 min_amount=float(rule_data.min_amount) if rule_data.min_amount else None,
@@ -266,8 +265,7 @@ def register_enhancement_rule_routes(
             rule = service.update_rule(
                 rule_id=rule_id,
                 user_id=current_user.id,
-                normalized_description_pattern=rule_data.normalized_description_pattern,
-                match_type=rule_data.match_type,
+                patterns=[pattern.model_dump() for pattern in rule_data.patterns],
                 category_id=rule_data.category_id,
                 counterparty_account_id=rule_data.counterparty_account_id,
                 min_amount=float(rule_data.min_amount) if rule_data.min_amount else None,
@@ -298,6 +296,55 @@ def register_enhancement_rule_routes(
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Failed to update enhancement rule: {str(e)}",
+            )
+
+    @router.post("/merge-by-description", response_model=EnhancementRuleResponse)
+    def merge_enhancement_rules_by_description(
+        body: dict,
+        internal: InternalDependencies = Depends(provide_dependencies),
+        current_user: User = Depends(require_current_user),
+    ) -> EnhancementRuleResponse:
+        winner_desc = body.get("winner_normalized_description")
+        loser_desc = body.get("loser_normalized_description")
+        if not winner_desc or not loser_desc:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="winner_normalized_description and loser_normalized_description are required",
+            )
+
+        repo = internal.enhancement_rule_repository
+        winner = repo.find_by_normalized_description(winner_desc, current_user.id)
+        loser = repo.find_by_normalized_description(loser_desc, current_user.id)
+        if not winner or not loser:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="One or both rules not found for the given descriptions",
+            )
+
+        service: EnhancementRuleManagementService = internal.enhancement_rule_management_service
+        try:
+            merged = service.merge_rules(winner.id, loser.id, current_user.id)
+            return EnhancementRuleResponse.model_validate(merged)
+        except ValueError as e:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+    @router.post("/{winner_id}/merge/{loser_id}", response_model=EnhancementRuleResponse)
+    def merge_enhancement_rules(
+        winner_id: UUID,
+        loser_id: UUID,
+        internal: InternalDependencies = Depends(provide_dependencies),
+        current_user: User = Depends(require_current_user),
+    ) -> EnhancementRuleResponse:
+        service: EnhancementRuleManagementService = internal.enhancement_rule_management_service
+        try:
+            merged = service.merge_rules(winner_id, loser_id, current_user.id)
+            return EnhancementRuleResponse.model_validate(merged)
+        except ValueError as e:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Failed to merge rules: {str(e)}",
             )
 
     @router.delete("/{rule_id}", status_code=status.HTTP_204_NO_CONTENT)

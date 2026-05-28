@@ -6,7 +6,7 @@ from typing import Dict, List, Optional
 from uuid import UUID
 
 from app.domain.models.transaction import Transaction
-from app.ports.repositories.description_group import DescriptionGroupRepository
+from app.ports.repositories.enhancement_rule import EnhancementRuleRepository
 
 ACTIVE_PATTERNS_DAYS = 365
 
@@ -77,11 +77,11 @@ class RecurringExpenseAnalyzer:
 
     def __init__(
         self,
-        description_group_repository: Optional[DescriptionGroupRepository] = None,
+        enhancement_rule_repository: Optional[EnhancementRuleRepository] = None,
         min_occurrences: int = 3,
         amount_variance_threshold: float = 0.99,
     ):
-        self.description_group_repository = description_group_repository
+        self.enhancement_rule_repository = enhancement_rule_repository
         self.min_occurrences = min_occurrences
         self.amount_variance_threshold = amount_variance_threshold
 
@@ -107,7 +107,7 @@ class RecurringExpenseAnalyzer:
 
         yearly_patterns = self._find_yearly_patterns(remaining_transactions)
 
-        if self.description_group_repository:
+        if self.enhancement_rule_repository:
             monthly_patterns = self._merge_grouped_patterns(monthly_patterns, user_id)
             quarterly_patterns = self._merge_grouped_patterns(quarterly_patterns, user_id, pattern_type="quarterly")
             yearly_patterns = self._merge_grouped_patterns(yearly_patterns, user_id, pattern_type="yearly")
@@ -410,7 +410,7 @@ class RecurringExpenseAnalyzer:
     def _merge_grouped_patterns(
         self, patterns: List[RecurringPattern], user_id: UUID, pattern_type: str = "monthly"
     ) -> List[RecurringPattern]:
-        description_to_group = self.description_group_repository.get_description_to_group_map(user_id)
+        description_to_group = self.enhancement_rule_repository.get_description_to_rule_map(user_id)
 
         grouped_patterns = defaultdict(list)
 

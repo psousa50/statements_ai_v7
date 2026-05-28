@@ -670,17 +670,12 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         end_date: Optional[date] = None,
         rule=None,
     ) -> int:
-        from app.domain.models.enhancement_rule import MatchType
+        from app.adapters.repositories.enhancement_rule import build_pattern_match_filter
 
         subquery = self.db_session.query(Transaction.id).filter(Transaction.user_id == user_id)
 
         if rule:
-            if rule.match_type == MatchType.EXACT:
-                subquery = subquery.filter(Transaction.normalized_description == rule.normalized_description_pattern)
-            elif rule.match_type == MatchType.PREFIX:
-                subquery = subquery.filter(Transaction.normalized_description.like(f"{rule.normalized_description_pattern}%"))
-            elif rule.match_type == MatchType.INFIX:
-                subquery = subquery.filter(Transaction.normalized_description.like(f"%{rule.normalized_description_pattern}%"))
+            subquery = subquery.filter(build_pattern_match_filter(Transaction.normalized_description, rule.patterns))
 
             if rule.min_amount is not None:
                 subquery = subquery.filter(Transaction.amount >= rule.min_amount)
@@ -725,17 +720,12 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         end_date: Optional[date] = None,
         rule=None,
     ) -> int:
-        from app.domain.models.enhancement_rule import MatchType
+        from app.adapters.repositories.enhancement_rule import build_pattern_match_filter
 
         query = self.db_session.query(func.count(Transaction.id)).filter(Transaction.user_id == user_id)
 
         if rule:
-            if rule.match_type == MatchType.EXACT:
-                query = query.filter(Transaction.normalized_description == rule.normalized_description_pattern)
-            elif rule.match_type == MatchType.PREFIX:
-                query = query.filter(Transaction.normalized_description.like(f"{rule.normalized_description_pattern}%"))
-            elif rule.match_type == MatchType.INFIX:
-                query = query.filter(Transaction.normalized_description.like(f"%{rule.normalized_description_pattern}%"))
+            query = query.filter(build_pattern_match_filter(Transaction.normalized_description, rule.patterns))
 
             if rule.min_amount is not None:
                 query = query.filter(Transaction.amount >= rule.min_amount)
@@ -926,17 +916,11 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
 
     def count_matching_rule(self, rule, uncategorized_only: bool = False) -> int:
         """Count transactions that would match the given enhancement rule"""
-        from app.domain.models.enhancement_rule import MatchType
+        from app.adapters.repositories.enhancement_rule import build_pattern_match_filter
 
         query = self.db_session.query(func.count(Transaction.id)).filter(Transaction.user_id == rule.user_id)
 
-        # Match description pattern based on rule type
-        if rule.match_type == MatchType.EXACT:
-            query = query.filter(Transaction.normalized_description == rule.normalized_description_pattern)
-        elif rule.match_type == MatchType.PREFIX:
-            query = query.filter(Transaction.normalized_description.like(f"{rule.normalized_description_pattern}%"))
-        elif rule.match_type == MatchType.INFIX:
-            query = query.filter(Transaction.normalized_description.like(f"%{rule.normalized_description_pattern}%"))
+        query = query.filter(build_pattern_match_filter(Transaction.normalized_description, rule.patterns))
 
         # Apply amount constraints if specified
         if rule.min_amount is not None:
@@ -957,19 +941,14 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         return int(result) if result is not None else 0
 
     def count_pending_for_rule(self, rule) -> int:
-        from app.domain.models.enhancement_rule import MatchType
+        from app.adapters.repositories.enhancement_rule import build_pattern_match_filter
 
         if rule.category_id is None:
             return 0
 
         query = self.db_session.query(func.count(Transaction.id)).filter(Transaction.user_id == rule.user_id)
 
-        if rule.match_type == MatchType.EXACT:
-            query = query.filter(Transaction.normalized_description == rule.normalized_description_pattern)
-        elif rule.match_type == MatchType.PREFIX:
-            query = query.filter(Transaction.normalized_description.like(f"{rule.normalized_description_pattern}%"))
-        elif rule.match_type == MatchType.INFIX:
-            query = query.filter(Transaction.normalized_description.like(f"%{rule.normalized_description_pattern}%"))
+        query = query.filter(build_pattern_match_filter(Transaction.normalized_description, rule.patterns))
 
         if rule.min_amount is not None:
             query = query.filter(Transaction.amount >= rule.min_amount)
@@ -1001,17 +980,11 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         page_size: int = 1000,
     ) -> List[Transaction]:
         """Find transactions that match the given enhancement rule with pagination"""
-        from app.domain.models.enhancement_rule import MatchType
+        from app.adapters.repositories.enhancement_rule import build_pattern_match_filter
 
         query = self.db_session.query(Transaction).filter(Transaction.user_id == rule.user_id)
 
-        # Match description pattern based on rule type (same logic as count_matching_rule)
-        if rule.match_type == MatchType.EXACT:
-            query = query.filter(Transaction.normalized_description == rule.normalized_description_pattern)
-        elif rule.match_type == MatchType.PREFIX:
-            query = query.filter(Transaction.normalized_description.like(f"{rule.normalized_description_pattern}%"))
-        elif rule.match_type == MatchType.INFIX:
-            query = query.filter(Transaction.normalized_description.like(f"%{rule.normalized_description_pattern}%"))
+        query = query.filter(build_pattern_match_filter(Transaction.normalized_description, rule.patterns))
 
         # Apply amount constraints if specified
         if rule.min_amount is not None:
@@ -1081,16 +1054,11 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         return transactions, total, Decimal(str(total_amount)) if total_amount else Decimal("0")
 
     def get_latest_matching_date(self, rule) -> Optional[date]:
-        from app.domain.models.enhancement_rule import MatchType
+        from app.adapters.repositories.enhancement_rule import build_pattern_match_filter
 
         query = self.db_session.query(func.max(Transaction.date)).filter(Transaction.user_id == rule.user_id)
 
-        if rule.match_type == MatchType.EXACT:
-            query = query.filter(Transaction.normalized_description == rule.normalized_description_pattern)
-        elif rule.match_type == MatchType.PREFIX:
-            query = query.filter(Transaction.normalized_description.like(f"{rule.normalized_description_pattern}%"))
-        elif rule.match_type == MatchType.INFIX:
-            query = query.filter(Transaction.normalized_description.like(f"%{rule.normalized_description_pattern}%"))
+        query = query.filter(build_pattern_match_filter(Transaction.normalized_description, rule.patterns))
 
         if rule.min_amount is not None:
             query = query.filter(Transaction.amount >= rule.min_amount)
@@ -1110,18 +1078,12 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
 
         from sqlalchemy import literal, union_all
 
-        from app.domain.models.enhancement_rule import MatchType
+        from app.adapters.repositories.enhancement_rule import build_pattern_match_filter
 
         subqueries = []
         for rule in rules:
             filters = [Transaction.user_id == rule.user_id]
-
-            if rule.match_type == MatchType.EXACT:
-                filters.append(Transaction.normalized_description == rule.normalized_description_pattern)
-            elif rule.match_type == MatchType.PREFIX:
-                filters.append(Transaction.normalized_description.like(f"{rule.normalized_description_pattern}%"))
-            elif rule.match_type == MatchType.INFIX:
-                filters.append(Transaction.normalized_description.like(f"%{rule.normalized_description_pattern}%"))
+            filters.append(build_pattern_match_filter(Transaction.normalized_description, rule.patterns))
 
             if rule.min_amount is not None:
                 filters.append(Transaction.amount >= rule.min_amount)
@@ -1156,18 +1118,12 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
 
         from sqlalchemy import literal, union_all
 
-        from app.domain.models.enhancement_rule import MatchType
+        from app.adapters.repositories.enhancement_rule import build_pattern_match_filter
 
         subqueries = []
         for rule in rules_with_category:
             filters = [Transaction.user_id == rule.user_id]
-
-            if rule.match_type == MatchType.EXACT:
-                filters.append(Transaction.normalized_description == rule.normalized_description_pattern)
-            elif rule.match_type == MatchType.PREFIX:
-                filters.append(Transaction.normalized_description.like(f"{rule.normalized_description_pattern}%"))
-            elif rule.match_type == MatchType.INFIX:
-                filters.append(Transaction.normalized_description.like(f"%{rule.normalized_description_pattern}%"))
+            filters.append(build_pattern_match_filter(Transaction.normalized_description, rule.patterns))
 
             if rule.min_amount is not None:
                 filters.append(Transaction.amount >= rule.min_amount)
@@ -1210,18 +1166,12 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
 
         from sqlalchemy import literal, union_all
 
-        from app.domain.models.enhancement_rule import MatchType
+        from app.adapters.repositories.enhancement_rule import build_pattern_match_filter
 
         subqueries = []
         for rule in rules:
             filters = [Transaction.user_id == rule.user_id]
-
-            if rule.match_type == MatchType.EXACT:
-                filters.append(Transaction.normalized_description == rule.normalized_description_pattern)
-            elif rule.match_type == MatchType.PREFIX:
-                filters.append(Transaction.normalized_description.like(f"{rule.normalized_description_pattern}%"))
-            elif rule.match_type == MatchType.INFIX:
-                filters.append(Transaction.normalized_description.like(f"%{rule.normalized_description_pattern}%"))
+            filters.append(build_pattern_match_filter(Transaction.normalized_description, rule.patterns))
 
             if rule.min_amount is not None:
                 filters.append(Transaction.amount >= rule.min_amount)

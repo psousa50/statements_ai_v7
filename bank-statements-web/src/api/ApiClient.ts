@@ -6,7 +6,6 @@ import { StatementClient } from './StatementClient'
 import { TransactionClient } from './TransactionClient'
 import { TransactionCategorizationClient } from './TransactionCategorizationClient'
 import { EnhancementRuleClient } from './EnhancementRuleClient'
-import { DescriptionGroupClient } from './DescriptionGroupClient'
 import { SubscriptionClient } from './SubscriptionClient'
 import { TagClient } from './TagClient'
 import { FilterPresetClient } from './FilterPresetClient'
@@ -108,7 +107,6 @@ export interface ApiClient {
   categories: CategoryClient
   statements: StatementClient
   accounts: AccountClient
-  descriptionGroups: DescriptionGroupClient
   subscription: SubscriptionClient
   tags: TagClient
   chatClient: ChatClient

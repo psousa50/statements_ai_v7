@@ -94,23 +94,6 @@ export const EnhancementRuleTable: React.FC<EnhancementRuleTableProps> = ({
     }
   }
 
-  const getRuleTypeColor = (
-    ruleType: string
-  ): 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning' => {
-    switch (ruleType) {
-      case 'Category + Counterparty':
-        return 'primary'
-      case 'Category Only':
-        return 'secondary'
-      case 'Counterparty Only':
-        return 'info'
-      case 'Unconfigured':
-        return 'error'
-      default:
-        return 'default'
-    }
-  }
-
   const formatConstraints = (rule: EnhancementRule) => {
     const constraints = []
     if (rule.min_amount !== null || rule.max_amount !== null) {
@@ -156,8 +139,6 @@ export const EnhancementRuleTable: React.FC<EnhancementRuleTableProps> = ({
                 Description
               </TableSortLabel>
             </TableCell>
-            <TableCell>Match Type</TableCell>
-            <TableCell>Rule Type</TableCell>
             <TableCell>
               <TableSortLabel
                 active={filters.sort_field === 'category'}
@@ -203,19 +184,22 @@ export const EnhancementRuleTable: React.FC<EnhancementRuleTableProps> = ({
           {rules.map((rule) => (
             <TableRow key={rule.id} hover>
               <TableCell>
-                <Typography variant="body2" fontFamily="monospace">
-                  {rule.normalized_description_pattern}
-                </Typography>
-              </TableCell>
-              <TableCell>
-                <Chip
-                  label={getMatchTypeLabel(rule.match_type)}
-                  color={getMatchTypeColor(rule.match_type)}
-                  size="small"
-                />
-              </TableCell>
-              <TableCell>
-                <Chip label={rule.rule_type} color={getRuleTypeColor(rule.rule_type)} size="small" />
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                  {rule.patterns?.map((pattern) => (
+                    <Tooltip
+                      key={pattern.id ?? pattern.normalized_description}
+                      title={getMatchTypeLabel(pattern.match_type)}
+                    >
+                      <Chip
+                        label={pattern.normalized_description}
+                        color={getMatchTypeColor(pattern.match_type)}
+                        size="small"
+                        variant="outlined"
+                        sx={{ fontFamily: 'monospace' }}
+                      />
+                    </Tooltip>
+                  ))}
+                </Box>
               </TableCell>
               <TableCell>
                 {rule.category ? (

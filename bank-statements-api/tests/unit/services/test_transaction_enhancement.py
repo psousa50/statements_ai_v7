@@ -42,10 +42,17 @@ class TestTransactionEnhancer:
         end_date: date = None,
     ) -> EnhancementRule:
         """Helper method to create test enhancement rules"""
+        from app.domain.models.enhancement_rule_pattern import EnhancementRulePattern
+
         rule = EnhancementRule()
         rule.id = uuid.uuid4()
-        rule.normalized_description_pattern = pattern
-        rule.match_type = match_type
+        rule.patterns = [
+            EnhancementRulePattern(
+                normalized_description=pattern,
+                match_type=match_type,
+                sort_order=0,
+            )
+        ]
         rule.category_id = category_id
         rule.counterparty_account_id = counterparty_account_id
         rule.min_amount = min_amount

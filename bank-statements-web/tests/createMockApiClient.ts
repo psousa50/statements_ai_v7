@@ -4,7 +4,6 @@ import { Account, AccountClient } from '@/api/AccountClient'
 import { FilterPresetClient } from '@/api/FilterPresetClient'
 import { SubscriptionClient, SubscriptionResponse } from '@/api/SubscriptionClient'
 import { CategoryClient, CategoryListResponse } from '@/api/CategoryClient'
-import { DescriptionGroupClient, DescriptionGroupListResponse } from '@/api/DescriptionGroupClient'
 import { EnhancementRuleClient } from '@/api/EnhancementRuleClient'
 import {
   StatementAnalysisResponse,
@@ -332,14 +331,8 @@ const defaultEnhancementRuleClient: EnhancementRuleClient = {
   suggestCounterparties: () => Promise.resolve({ processed: 0, auto_applied: 0, suggestions: 0, failed: 0 }),
   applySuggestion: () => Promise.resolve({ rule_id: '', applied: true, transactions_updated: 0 }),
   rejectSuggestion: () => Promise.resolve({ rule_id: '', applied: false, transactions_updated: 0 }),
-}
-
-const defaultDescriptionGroupClient: DescriptionGroupClient = {
-  getAll: () => Promise.resolve({ groups: [], total: 0 } as DescriptionGroupListResponse),
-  getById: () => Promise.reject(new Error('Not implemented')),
-  create: () => Promise.reject(new Error('Not implemented')),
-  update: () => Promise.reject(new Error('Not implemented')),
-  delete: () => Promise.resolve(),
+  merge: () => Promise.reject(new Error('Not implemented')),
+  mergeByDescription: () => Promise.reject(new Error('Not implemented')),
 }
 
 const defaultFilterPresetClient: FilterPresetClient = {
@@ -426,7 +419,6 @@ export const createMockApiClient = (overrides: ApiClientOverrides = {}): ApiClie
       ...overrides.statements,
     },
     enhancementRules: defaultEnhancementRuleClient,
-    descriptionGroups: defaultDescriptionGroupClient,
     subscription: defaultSubscriptionClient,
     filterPresets: defaultFilterPresetClient,
     tags: {

@@ -149,8 +149,11 @@ export const EnhancementRules: React.FC = () => {
 
   const handleDuplicateRule = (rule: EnhancementRule) => {
     const duplicatedData = {
-      normalized_description_pattern: rule.normalized_description_pattern,
-      match_type: rule.match_type,
+      patterns: rule.patterns?.map((p, i) => ({
+        normalized_description: p.normalized_description,
+        match_type: p.match_type,
+        sort_order: i,
+      })),
       category_id: rule.category_id,
       counterparty_account_id: rule.counterparty_account_id,
       min_amount: rule.min_amount,
@@ -293,8 +296,11 @@ export const EnhancementRules: React.FC = () => {
     setApplyLoading(true)
     try {
       await updateRule(applyingRule.id, {
-        normalized_description_pattern: applyingRule.normalized_description_pattern,
-        match_type: applyingRule.match_type,
+        patterns: applyingRule.patterns.map((p, i) => ({
+          normalized_description: p.normalized_description,
+          match_type: p.match_type,
+          sort_order: i,
+        })),
         category_id: applyingRule.category_id,
         counterparty_account_id: applyingRule.counterparty_account_id,
         min_amount: applyingRule.min_amount,

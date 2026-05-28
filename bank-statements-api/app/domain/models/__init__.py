@@ -3,6 +3,7 @@ from .account import Account
 from .background_job import BackgroundJob, JobStatus, JobType
 from .category import Category
 from .enhancement_rule import EnhancementRule, EnhancementRuleSource, MatchType
+from .enhancement_rule_pattern import EnhancementRulePattern
 from .enhancement_rule_split_line import EnhancementRuleSplitLine
 from .initial_balance import InitialBalance
 from .processing import (
@@ -27,6 +28,7 @@ __all__ = [
     "Category",
     # Enhancement Rule
     "EnhancementRule",
+    "EnhancementRulePattern",
     "EnhancementRuleSource",
     "EnhancementRuleSplitLine",
     "MatchType",

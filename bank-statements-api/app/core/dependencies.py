@@ -7,7 +7,6 @@ from sqlalchemy.orm import Session
 from app.adapters.repositories.account import SQLAlchemyAccountRepository
 from app.adapters.repositories.background_job import SQLAlchemyBackgroundJobRepository
 from app.adapters.repositories.category import SQLAlchemyCategoryRepository
-from app.adapters.repositories.description_group import SQLAlchemyDescriptionGroupRepository
 from app.adapters.repositories.enhancement_rule import SQLAlchemyEnhancementRuleRepository
 from app.adapters.repositories.filter_preset import SQLAlchemyFilterPresetRepository
 from app.adapters.repositories.initial_balance import SQLAlchemyInitialBalanceRepository
@@ -29,7 +28,6 @@ from app.services.ai.llm_category_generator import LLMCategoryGenerator
 from app.services.background.background_job_service import BackgroundJobService
 from app.services.category import CategoryService
 from app.services.chat import ChatService
-from app.services.description_group import DescriptionGroupService
 from app.services.enhancement_rule_management import EnhancementRuleManagementService
 from app.services.initial_balance_service import InitialBalanceService
 from app.services.recurring_expense_analyzer import RecurringExpenseAnalyzer
@@ -127,7 +125,6 @@ class InternalDependencies:
         category_repository: SQLAlchemyCategoryRepository,
         account_repository: SQLAlchemyAccountRepository,
         recurring_expense_analyzer: RecurringExpenseAnalyzer,
-        description_group_service: DescriptionGroupService,
         saved_filter_repository: SQLAlchemySavedFilterRepository,
         filter_preset_repository: SQLAlchemyFilterPresetRepository,
         llm_rule_categorizer: LLMRuleCategorizer,
@@ -154,7 +151,6 @@ class InternalDependencies:
         self.category_repository = category_repository
         self.account_repository = account_repository
         self.recurring_expense_analyzer = recurring_expense_analyzer
-        self.description_group_service = description_group_service
         self.saved_filter_repository = saved_filter_repository
         self.filter_preset_repository = filter_preset_repository
         self.llm_rule_categorizer = llm_rule_categorizer
@@ -181,7 +177,6 @@ def build_internal_dependencies(
     statement_repo = SqlAlchemyStatementRepository(external.db)
     enhancement_rule_repo = SQLAlchemyEnhancementRuleRepository(external.db)
     background_job_repo = SQLAlchemyBackgroundJobRepository(external.db)
-    description_group_repo = SQLAlchemyDescriptionGroupRepository(external.db)
     saved_filter_repo = SQLAlchemySavedFilterRepository(external.db)
     filter_preset_repo = SQLAlchemyFilterPresetRepository(external.db)
     tag_repo = SQLAlchemyTagRepository(external.db)
@@ -250,8 +245,7 @@ def build_internal_dependencies(
         row_filter_service=row_filter_service,
     )
 
-    recurring_expense_analyzer = RecurringExpenseAnalyzer(description_group_repository=description_group_repo)
-    description_group_service = DescriptionGroupService(description_group_repo)
+    recurring_expense_analyzer = RecurringExpenseAnalyzer(enhancement_rule_repository=enhancement_rule_repo)
     llm_rule_categorizer = LLMRuleCategorizer(
         categories_repository=category_repo,
         llm_client=external.llm_client,
@@ -311,7 +305,6 @@ def build_internal_dependencies(
         category_repository=category_repo,
         account_repository=account_repo,
         recurring_expense_analyzer=recurring_expense_analyzer,
-        description_group_service=description_group_service,
         saved_filter_repository=saved_filter_repo,
         filter_preset_repository=filter_preset_repo,
         llm_rule_categorizer=llm_rule_categorizer,

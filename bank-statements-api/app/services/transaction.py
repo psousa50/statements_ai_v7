@@ -113,17 +113,24 @@ class TransactionService:
         if existing_rule:
             return
 
+        from app.domain.models.enhancement_rule_pattern import EnhancementRulePattern
+
         rule = EnhancementRule(
             id=uuid4(),
             user_id=user_id,
-            normalized_description_pattern=normalized_description,
-            match_type=MatchType.EXACT,
             category_id=None,
             counterparty_account_id=None,
             source=EnhancementRuleSource.AUTO,
             created_at=datetime.now(timezone.utc),
             updated_at=datetime.now(timezone.utc),
         )
+        rule.patterns = [
+            EnhancementRulePattern(
+                normalized_description=normalized_description,
+                match_type=MatchType.EXACT,
+                sort_order=0,
+            )
+        ]
 
         self.enhancement_rule_repository.save(rule)
 
@@ -851,8 +858,12 @@ def _rule_specificity_key_for_split(rule: EnhancementRule):
     constraint_count = sum(
         1 for value in (rule.min_amount, rule.max_amount, rule.start_date, rule.end_date) if value is not None
     )
+    best_match_priority = min(
+        (_MATCH_TYPE_PRIORITY_FOR_SPLIT.get(p.match_type, 99) for p in rule.patterns),
+        default=99,
+    )
     return (
         -constraint_count,
-        _MATCH_TYPE_PRIORITY_FOR_SPLIT.get(rule.match_type, 99),
+        best_match_priority,
         rule.created_at or datetime.min,
     )

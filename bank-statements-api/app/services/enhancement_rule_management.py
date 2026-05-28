@@ -4,6 +4,7 @@ from uuid import UUID
 
 from app.common.text_normalization import normalize_description
 from app.domain.models.enhancement_rule import EnhancementRule, EnhancementRuleSource, MatchType
+from app.domain.models.enhancement_rule_pattern import EnhancementRulePattern
 from app.domain.models.enhancement_rule_split_line import EnhancementRuleSplitLine
 from app.ports.repositories.account import AccountRepository
 from app.ports.repositories.category import CategoryRepository
@@ -88,8 +89,7 @@ class EnhancementRuleManagementService:
     def create_rule(
         self,
         user_id: UUID,
-        normalized_description_pattern: str,
-        match_type: MatchType,
+        patterns: List[Dict[str, Any]],
         category_id: Optional[UUID] = None,
         counterparty_account_id: Optional[UUID] = None,
         min_amount: Optional[float] = None,
@@ -114,8 +114,6 @@ class EnhancementRuleManagementService:
 
         rule = EnhancementRule(
             user_id=user_id,
-            normalized_description_pattern=normalize_description(normalized_description_pattern),
-            match_type=match_type,
             category_id=category_id,
             counterparty_account_id=counterparty_account_id,
             min_amount=min_amount,
@@ -124,6 +122,8 @@ class EnhancementRuleManagementService:
             end_date=end_date,
             source=source,
         )
+
+        rule.patterns = self._build_patterns(patterns)
 
         if split_lines is not None:
             rule.split_lines = self._build_split_lines(split_lines, user_id)
@@ -134,8 +134,7 @@ class EnhancementRuleManagementService:
         self,
         rule_id: UUID,
         user_id: UUID,
-        normalized_description_pattern: str,
-        match_type: MatchType,
+        patterns: List[Dict[str, Any]],
         category_id: Optional[UUID] = None,
         counterparty_account_id: Optional[UUID] = None,
         min_amount: Optional[float] = None,
@@ -163,8 +162,7 @@ class EnhancementRuleManagementService:
         if min_amount is not None and max_amount is not None and min_amount > max_amount:
             raise ValueError("min_amount cannot be greater than max_amount")
 
-        rule.normalized_description_pattern = normalize_description(normalized_description_pattern)
-        rule.match_type = match_type
+        rule.patterns = self._build_patterns(patterns)
         rule.category_id = category_id
         rule.counterparty_account_id = counterparty_account_id
         rule.min_amount = min_amount
@@ -198,6 +196,37 @@ class EnhancementRuleManagementService:
 
         self.enhancement_rule_repository.delete(rule)
         return True
+
+    def merge_rules(self, winner_id: UUID, loser_id: UUID, user_id: UUID) -> EnhancementRule:
+        if winner_id == loser_id:
+            raise ValueError("Cannot merge a rule with itself")
+
+        winner = self.enhancement_rule_repository.find_by_id(winner_id, user_id)
+        if not winner:
+            raise ValueError(f"Winner rule {winner_id} not found")
+
+        loser = self.enhancement_rule_repository.find_by_id(loser_id, user_id)
+        if not loser:
+            raise ValueError(f"Loser rule {loser_id} not found")
+
+        existing_descriptions = {p.normalized_description for p in winner.patterns}
+        next_sort_order = max((p.sort_order for p in winner.patterns), default=-1) + 1
+
+        for pattern in loser.patterns:
+            if pattern.normalized_description in existing_descriptions:
+                continue
+            winner.patterns.append(
+                EnhancementRulePattern(
+                    normalized_description=pattern.normalized_description,
+                    match_type=pattern.match_type,
+                    sort_order=next_sort_order,
+                )
+            )
+            existing_descriptions.add(pattern.normalized_description)
+            next_sort_order += 1
+
+        self.enhancement_rule_repository.delete(loser)
+        return self.enhancement_rule_repository.save(winner)
 
     def cleanup_unused_rules(self, user_id: UUID) -> Dict[str, Any]:
         all_rules = self.enhancement_rule_repository.get_all(user_id=user_id, limit=10000)
@@ -259,7 +288,7 @@ class EnhancementRuleManagementService:
             "top_rules_by_usage": [
                 {
                     "rule_id": str(rule.id),
-                    "normalized_description": rule.normalized_description_pattern,
+                    "normalized_description": _first_pattern_text(rule),
                     "category_name": rule.category.name if rule.category else None,
                     "counterparty_name": rule.counterparty_account.name if rule.counterparty_account else None,
                     "transaction_count": count,
@@ -271,7 +300,7 @@ class EnhancementRuleManagementService:
             "unused_rules": [
                 {
                     "rule_id": str(rule.id),
-                    "normalized_description": rule.normalized_description_pattern,
+                    "normalized_description": _first_pattern_text(rule),
                     "category_name": rule.category.name if rule.category else None,
                     "counterparty_name": rule.counterparty_account.name if rule.counterparty_account else None,
                     "source": rule.source.value,
@@ -281,6 +310,29 @@ class EnhancementRuleManagementService:
                 for rule in unused_rules
             ],
         }
+
+    def _build_patterns(self, patterns: List[Dict[str, Any]]) -> List[EnhancementRulePattern]:
+        if not patterns:
+            raise ValueError("A rule must have at least one pattern")
+
+        seen = set()
+        built: List[EnhancementRulePattern] = []
+        for idx, raw in enumerate(patterns):
+            normalized = normalize_description(raw["normalized_description"])
+            if not normalized:
+                raise ValueError("Pattern description cannot be empty")
+            if normalized in seen:
+                raise ValueError(f"Duplicate pattern: {normalized}")
+            match_type = MatchType(raw.get("match_type", MatchType.INFIX))
+            built.append(
+                EnhancementRulePattern(
+                    normalized_description=normalized,
+                    match_type=match_type,
+                    sort_order=idx,
+                )
+            )
+            seen.add(normalized)
+        return built
 
     def _build_split_lines(self, lines: List[Dict[str, Any]], user_id: UUID) -> List[EnhancementRuleSplitLine]:
         if not lines:
@@ -400,8 +452,6 @@ class EnhancementRuleManagementService:
 
         temp_rule = EnhancementRule(
             user_id=user_id,
-            normalized_description_pattern=normalize_description(rule_preview.normalized_description_pattern),
-            match_type=rule_preview.match_type,
             category_id=rule_preview.category_id,
             counterparty_account_id=rule_preview.counterparty_account_id,
             min_amount=rule_preview.min_amount,
@@ -410,6 +460,7 @@ class EnhancementRuleManagementService:
             end_date=rule_preview.end_date,
             source=rule_preview.source,
         )
+        temp_rule.patterns = self._build_patterns(rule_preview.patterns)
 
         count = self.transaction_repository.count_matching_rule(temp_rule)
 
@@ -476,3 +527,9 @@ class EnhancementRuleManagementService:
                 break
 
         return total_updated
+
+
+def _first_pattern_text(rule: EnhancementRule) -> str:
+    if not rule.patterns:
+        return ""
+    return min(p.normalized_description for p in rule.patterns)

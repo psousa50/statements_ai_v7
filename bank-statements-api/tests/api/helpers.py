@@ -23,7 +23,6 @@ from app.services.ai.llm_category_generator import LLMCategoryGenerator
 from app.services.background.background_job_service import BackgroundJobService
 from app.services.category import CategoryService
 from app.services.chat import ChatService
-from app.services.description_group import DescriptionGroupService
 from app.services.enhancement_rule_management import EnhancementRuleManagementService
 from app.services.initial_balance_service import InitialBalanceService
 from app.services.recurring_expense_analyzer import RecurringExpenseAnalyzer
@@ -66,7 +65,6 @@ def mocked_dependencies(
     category_repository: SQLAlchemyCategoryRepository = None,
     account_repository: SQLAlchemyAccountRepository = None,
     recurring_expense_analyzer: RecurringExpenseAnalyzer = None,
-    description_group_service: DescriptionGroupService = None,
     saved_filter_repository: SQLAlchemySavedFilterRepository = None,
     filter_preset_repository: SQLAlchemyFilterPresetRepository = None,
     llm_rule_categorizer: LLMRuleCategorizer = None,
@@ -101,7 +99,6 @@ def mocked_dependencies(
         category_repository=category_repository or MagicMock(spec=SQLAlchemyCategoryRepository),
         account_repository=account_repository or MagicMock(spec=SQLAlchemyAccountRepository),
         recurring_expense_analyzer=recurring_expense_analyzer or MagicMock(spec=RecurringExpenseAnalyzer),
-        description_group_service=description_group_service or MagicMock(spec=DescriptionGroupService),
         saved_filter_repository=saved_filter_repository or MagicMock(spec=SQLAlchemySavedFilterRepository),
         filter_preset_repository=filter_preset_repository or MagicMock(spec=SQLAlchemyFilterPresetRepository),
         llm_rule_categorizer=llm_rule_categorizer or MagicMock(spec=LLMRuleCategorizer),

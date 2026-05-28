@@ -48,17 +48,23 @@ class TransactionEnhancer:
         return transactions
 
     def _sort_rules_by_precedence(self, rules: List[EnhancementRule]) -> List[EnhancementRule]:
-        """Sort rules by match type precedence: exact, prefix, infix"""
+        """Sort rules by match type precedence: exact, prefix, infix.
+
+        A rule with multiple patterns is sorted by its most specific (lowest priority number) match type.
+        """
         precedence_order = {
             MatchType.EXACT: 1,
             MatchType.PREFIX: 2,
             MatchType.INFIX: 3,
         }
 
-        return sorted(
-            rules,
-            key=lambda rule: precedence_order[rule.match_type],
-        )
+        def rule_precedence(rule: EnhancementRule) -> int:
+            return min(
+                (precedence_order[p.match_type] for p in rule.patterns),
+                default=precedence_order[MatchType.INFIX],
+            )
+
+        return sorted(rules, key=rule_precedence)
 
     def _find_first_matching_rule(
         self,

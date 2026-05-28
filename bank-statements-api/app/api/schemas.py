@@ -628,9 +628,29 @@ class EnhancementRuleSplitLineResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-class EnhancementRuleBase(BaseModel):
-    normalized_description_pattern: str = Field(..., min_length=1, max_length=255)
+class EnhancementRulePatternInput(BaseModel):
+    normalized_description: str = Field(..., min_length=1, max_length=255)
+    match_type: MatchType = MatchType.INFIX
+
+    @field_validator("normalized_description")
+    @classmethod
+    def validate_description(cls, v: str) -> str:
+        if not v.strip():
+            raise ValueError("Pattern description cannot be empty")
+        return v.strip()
+
+
+class EnhancementRulePatternResponse(BaseModel):
+    id: UUID
+    normalized_description: str
     match_type: MatchType
+    sort_order: int
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class EnhancementRuleBase(BaseModel):
+    patterns: List[EnhancementRulePatternInput] = Field(..., min_length=1)
     category_id: Optional[UUID] = None
     counterparty_account_id: Optional[UUID] = None
     min_amount: Optional[Decimal] = None
@@ -639,13 +659,6 @@ class EnhancementRuleBase(BaseModel):
     end_date: Optional[str] = None
     source: EnhancementRuleSource = EnhancementRuleSource.MANUAL
     split_lines: Optional[List[EnhancementRuleSplitLineInput]] = None
-
-    @field_validator("normalized_description_pattern")
-    @classmethod
-    def validate_description(cls, v: str) -> str:
-        if not v.strip():
-            raise ValueError("Description cannot be empty")
-        return v.strip()
 
     @field_validator("min_amount", "max_amount")
     @classmethod
@@ -673,8 +686,7 @@ class EnhancementRulePreview(EnhancementRuleBase):
 
 class EnhancementRuleResponse(BaseModel):
     id: UUID
-    normalized_description_pattern: str
-    match_type: MatchType
+    patterns: List[EnhancementRulePatternResponse] = []
     category_id: Optional[UUID] = None
     counterparty_account_id: Optional[UUID] = None
     min_amount: Optional[Decimal] = None
@@ -783,42 +795,6 @@ class RecurringPatternsSummary(BaseModel):
 class RecurringPatternsResponse(BaseModel):
     patterns: List[RecurringPatternResponse]
     summary: RecurringPatternsSummary
-
-
-class DescriptionGroupMemberResponse(BaseModel):
-    id: UUID
-    normalized_description: str
-
-    model_config = ConfigDict(from_attributes=True)
-
-
-class DescriptionGroupBase(BaseModel):
-    name: str
-
-
-class DescriptionGroupCreate(DescriptionGroupBase):
-    normalized_descriptions: List[str]
-
-
-class DescriptionGroupUpdate(DescriptionGroupBase):
-    normalized_descriptions: List[str]
-
-
-class DescriptionGroupResponse(BaseModel):
-    id: UUID
-    name: str
-    members: List[DescriptionGroupMemberResponse]
-    created_at: datetime
-    updated_at: datetime
-
-    model_config = ConfigDict(from_attributes=True)
-
-
-class DescriptionGroupListResponse(BaseModel):
-    groups: Sequence[DescriptionGroupResponse]
-    total: int
-
-    model_config = ConfigDict(from_attributes=True)
 
 
 class SavedFilterCreate(BaseModel):

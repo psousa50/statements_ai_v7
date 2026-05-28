@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react'
+import { createPortal } from 'react-dom'
 import { RecurringPattern } from '../api/TransactionClient'
 import { Category } from '../types/Transaction'
 import { useApi } from '../api/ApiContext'
@@ -125,10 +126,7 @@ export const RecurringPatternsTable = ({
     setMergeError(null)
 
     try {
-      await api.descriptionGroups.create({
-        name: `Merged: ${patternToMerge.description}`,
-        normalized_descriptions: [patternToMerge.normalized_description, selectedTargetPattern],
-      })
+      await api.enhancementRules.mergeByDescription(patternToMerge.normalized_description, selectedTargetPattern)
 
       setMergeModalOpen(false)
       setPatternToMerge(null)
@@ -286,49 +284,56 @@ export const RecurringPatternsTable = ({
         </table>
       </div>
 
-      {mergeModalOpen && patternToMerge && (
-        <div className="merge-modal-overlay" onClick={handleMergeCancel}>
-          <div className="merge-modal" onClick={(e) => e.stopPropagation()}>
-            <h3>Merge Recurring Pattern</h3>
-            <p className="modal-description">
-              Merge "<strong>{patternToMerge.description}</strong>" with:
-            </p>
+      {mergeModalOpen &&
+        patternToMerge &&
+        createPortal(
+          <div className="merge-modal-overlay" onClick={handleMergeCancel}>
+            <div className="merge-modal" onClick={(e) => e.stopPropagation()}>
+              <h3>Merge Recurring Pattern</h3>
+              <p className="modal-description">
+                Merge "<strong>{patternToMerge.description}</strong>" with:
+              </p>
 
-            {mergeError && <div className="error-message">{mergeError}</div>}
+              {mergeError && <div className="error-message">{mergeError}</div>}
 
-            <div className="pattern-selector">
-              {sortedPatterns
-                .filter((p) => p.normalized_description !== patternToMerge.normalized_description)
-                .map((pattern) => (
-                  <label key={pattern.normalized_description} className="pattern-option">
-                    <input
-                      type="radio"
-                      name="target-pattern"
-                      value={pattern.normalized_description}
-                      checked={selectedTargetPattern === pattern.normalized_description}
-                      onChange={(e) => setSelectedTargetPattern(e.target.value)}
-                    />
-                    <div className="pattern-option-content">
-                      <div className="pattern-option-description">{pattern.description}</div>
-                      <div className="pattern-option-details">
-                        {pattern.transaction_count} transactions • {formatCurrency(pattern.average_amount)}/month
+              <div className="pattern-selector">
+                {sortedPatterns
+                  .filter((p) => p.normalized_description !== patternToMerge.normalized_description)
+                  .map((pattern) => (
+                    <label key={pattern.normalized_description} className="pattern-option">
+                      <input
+                        type="radio"
+                        name="target-pattern"
+                        value={pattern.normalized_description}
+                        checked={selectedTargetPattern === pattern.normalized_description}
+                        onChange={(e) => setSelectedTargetPattern(e.target.value)}
+                      />
+                      <div className="pattern-option-content">
+                        <div className="pattern-option-description">{pattern.description}</div>
+                        <div className="pattern-option-details">
+                          {pattern.transaction_count} transactions • {formatCurrency(pattern.average_amount)}/month
+                        </div>
                       </div>
-                    </div>
-                  </label>
-                ))}
-            </div>
+                    </label>
+                  ))}
+              </div>
 
-            <div className="modal-actions">
-              <button className="cancel-btn" onClick={handleMergeCancel} disabled={merging}>
-                Cancel
-              </button>
-              <button className="confirm-btn" onClick={handleMergeConfirm} disabled={!selectedTargetPattern || merging}>
-                {merging ? 'Merging...' : 'Merge'}
-              </button>
+              <div className="modal-actions">
+                <button className="cancel-btn" onClick={handleMergeCancel} disabled={merging}>
+                  Cancel
+                </button>
+                <button
+                  className="confirm-btn"
+                  onClick={handleMergeConfirm}
+                  disabled={!selectedTargetPattern || merging}
+                >
+                  {merging ? 'Merging...' : 'Merge'}
+                </button>
+              </div>
             </div>
-          </div>
-        </div>
-      )}
+          </div>,
+          document.body
+        )}
 
       <style>{`
         .recurring-patterns-container {

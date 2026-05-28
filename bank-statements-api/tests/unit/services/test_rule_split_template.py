@@ -6,6 +6,7 @@ from uuid import uuid4
 import pytest
 
 from app.domain.models.enhancement_rule import EnhancementRule, EnhancementRuleSource, MatchType
+from app.domain.models.enhancement_rule_pattern import EnhancementRulePattern
 from app.domain.models.enhancement_rule_split_line import EnhancementRuleSplitLine
 from app.domain.models.transaction import CategorizationStatus, SourceType, Transaction
 from app.ports.repositories.enhancement_rule import EnhancementRuleRepository
@@ -39,12 +40,11 @@ def _make_rule(split_lines):
     rule = EnhancementRule(
         id=uuid4(),
         user_id=uuid4(),
-        normalized_description_pattern="vodafone dd",
-        match_type=MatchType.EXACT,
         source=EnhancementRuleSource.MANUAL,
         created_at=datetime(2026, 1, 1),
         updated_at=datetime(2026, 1, 1),
     )
+    rule.patterns = [EnhancementRulePattern(normalized_description="vodafone dd", match_type=MatchType.EXACT, sort_order=0)]
     rule.split_lines = split_lines
     return rule
 

@@ -5,7 +5,6 @@ import { statementClient } from './StatementClient'
 import { transactionClient } from './TransactionClient'
 import { transactionCategorizationClient } from './TransactionCategorizationClient'
 import { enhancementRuleClient } from './EnhancementRuleClient'
-import { descriptionGroupClient } from './DescriptionGroupClient'
 import { subscriptionClient } from './SubscriptionClient'
 import { createChatClient } from './ChatClient'
 import { tagClient } from './TagClient'
@@ -21,7 +20,6 @@ export const createApiClient = (): ApiClient => {
     categories: categoryClient,
     statements: statementClient,
     accounts: accountClient,
-    descriptionGroups: descriptionGroupClient,
     subscription: subscriptionClient,
     tags: tagClient,
     chatClient: createChatClient(BASE_URL),

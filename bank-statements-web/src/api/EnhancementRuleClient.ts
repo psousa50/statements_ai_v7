@@ -27,6 +27,8 @@ export interface EnhancementRuleClient {
   suggestCounterparties(request: AISuggestCategoriesRequest): Promise<AISuggestCategoriesResponse>
   applySuggestion(ruleId: string, request: AIApplySuggestionRequest): Promise<AIApplySuggestionResponse>
   rejectSuggestion(ruleId: string): Promise<AIApplySuggestionResponse>
+  merge(winnerId: string, loserId: string): Promise<EnhancementRule>
+  mergeByDescription(winnerDescription: string, loserDescription: string): Promise<EnhancementRule>
 }
 
 const BASE_URL = import.meta.env.VITE_API_URL || ''
@@ -145,6 +147,19 @@ export const enhancementRuleClient: EnhancementRuleClient = {
 
   async rejectSuggestion(ruleId: string) {
     const response = await axiosInstance.post<AIApplySuggestionResponse>(`${API_URL}/${ruleId}/ai-suggestion/reject`)
+    return response.data
+  },
+
+  async merge(winnerId: string, loserId: string) {
+    const response = await axiosInstance.post<EnhancementRule>(`${API_URL}/${winnerId}/merge/${loserId}`)
+    return response.data
+  },
+
+  async mergeByDescription(winnerDescription: string, loserDescription: string) {
+    const response = await axiosInstance.post<EnhancementRule>(`${API_URL}/merge-by-description`, {
+      winner_normalized_description: winnerDescription,
+      loser_normalized_description: loserDescription,
+    })
     return response.data
   },
 }

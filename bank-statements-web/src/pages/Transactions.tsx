@@ -836,7 +836,10 @@ export const TransactionsPage = () => {
         <div className="rule-filter-banner">
           <div className="rule-filter-content">
             <span className="rule-filter-text">
-              🔍 Filtered by rule: <strong>"{enhancementRule?.normalized_description_pattern || 'Loading...'}"</strong>
+              🔍 Filtered by rule:{' '}
+              <strong>
+                "{enhancementRule?.patterns?.map((p) => p.normalized_description).join(', ') || 'Loading...'}"
+              </strong>
               {enhancementRule?.category && <span> → {enhancementRule.category.name}</span>}
             </span>
             <button

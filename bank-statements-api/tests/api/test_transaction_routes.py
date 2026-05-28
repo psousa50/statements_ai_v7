@@ -8,8 +8,16 @@ from app.api.schemas import TransactionCreate, TransactionResponse
 from app.domain.models.account import Account
 from app.domain.models.category import Category
 from app.domain.models.enhancement_rule import EnhancementRule, EnhancementRuleSource, MatchType
+from app.domain.models.enhancement_rule_pattern import EnhancementRulePattern
 from app.domain.models.transaction import CategorizationStatus, SourceType, Transaction
 from tests.api.helpers import TEST_USER_ID, build_client, mocked_dependencies
+
+
+def _rule_with_pattern(pattern: str, match_type: MatchType, **kwargs) -> EnhancementRule:
+    kwargs.setdefault("source", EnhancementRuleSource.MANUAL)
+    rule = EnhancementRule(**kwargs)
+    rule.patterns = [EnhancementRulePattern(normalized_description=pattern, match_type=match_type, sort_order=0)]
+    return rule
 
 
 def test_create_transaction():
@@ -170,12 +178,8 @@ def test_preview_enhancement_with_exact_match():
     rule_id = uuid4()
 
     mock_category = Category(id=category_id, name="Groceries")
-    mock_rule = EnhancementRule(
-        id=rule_id,
-        normalized_description_pattern="tesco",
-        match_type=MatchType.EXACT,
-        category_id=category_id,
-        source=EnhancementRuleSource.MANUAL,
+    mock_rule = _rule_with_pattern(
+        "tesco", MatchType.EXACT, id=rule_id, category_id=category_id, source=EnhancementRuleSource.MANUAL
     )
 
     internal_dependencies.enhancement_rule_repository.find_matching_rules.return_value = [mock_rule]
@@ -220,12 +224,8 @@ def test_preview_enhancement_with_prefix_match():
     rule_id = uuid4()
 
     mock_category = Category(id=category_id, name="Transport")
-    mock_rule = EnhancementRule(
-        id=rule_id,
-        normalized_description_pattern="uber",
-        match_type=MatchType.PREFIX,
-        category_id=category_id,
-        source=EnhancementRuleSource.MANUAL,
+    mock_rule = _rule_with_pattern(
+        "uber", MatchType.PREFIX, id=rule_id, category_id=category_id, source=EnhancementRuleSource.MANUAL
     )
 
     internal_dependencies.enhancement_rule_repository.find_matching_rules.return_value = [mock_rule]
@@ -267,12 +267,8 @@ def test_preview_enhancement_with_infix_match():
     rule_id = uuid4()
 
     mock_category = Category(id=category_id, name="Dining")
-    mock_rule = EnhancementRule(
-        id=rule_id,
-        normalized_description_pattern="restaurant",
-        match_type=MatchType.INFIX,
-        category_id=category_id,
-        source=EnhancementRuleSource.MANUAL,
+    mock_rule = _rule_with_pattern(
+        "restaurant", MatchType.INFIX, id=rule_id, category_id=category_id, source=EnhancementRuleSource.MANUAL
     )
 
     internal_dependencies.enhancement_rule_repository.find_matching_rules.return_value = [mock_rule]
@@ -314,10 +310,10 @@ def test_preview_enhancement_with_counterparty():
     rule_id = uuid4()
 
     mock_counterparty = Account(id=counterparty_account_id, name="Savings Account")
-    mock_rule = EnhancementRule(
+    mock_rule = _rule_with_pattern(
+        "transfer to savings",
+        MatchType.EXACT,
         id=rule_id,
-        normalized_description_pattern="transfer to savings",
-        match_type=MatchType.EXACT,
         counterparty_account_id=counterparty_account_id,
         source=EnhancementRuleSource.MANUAL,
     )
@@ -363,10 +359,10 @@ def test_preview_enhancement_with_amount_constraint():
     rule_id = uuid4()
 
     mock_category = Category(id=category_id, name="Large Purchases")
-    mock_rule = EnhancementRule(
+    mock_rule = _rule_with_pattern(
+        "amazon",
+        MatchType.PREFIX,
         id=rule_id,
-        normalized_description_pattern="amazon",
-        match_type=MatchType.PREFIX,
         category_id=category_id,
         min_amount=Decimal("100.00"),
         source=EnhancementRuleSource.MANUAL,
@@ -411,10 +407,10 @@ def test_preview_enhancement_with_date_constraint():
     rule_id = uuid4()
 
     mock_category = Category(id=category_id, name="Holiday Shopping")
-    mock_rule = EnhancementRule(
+    mock_rule = _rule_with_pattern(
+        "shop",
+        MatchType.INFIX,
         id=rule_id,
-        normalized_description_pattern="shop",
-        match_type=MatchType.INFIX,
         category_id=category_id,
         start_date=date(2023, 12, 1),
         end_date=date(2023, 12, 31),
@@ -459,10 +455,10 @@ def test_preview_enhancement_no_match():
     account_id = uuid4()
     rule_id = uuid4()
 
-    mock_rule = EnhancementRule(
+    mock_rule = _rule_with_pattern(
+        "tesco",
+        MatchType.EXACT,
         id=rule_id,
-        normalized_description_pattern="tesco",
-        match_type=MatchType.EXACT,
         category_id=uuid4(),
         source=EnhancementRuleSource.MANUAL,
     )
@@ -505,21 +501,8 @@ def test_preview_enhancement_rule_precedence():
 
     mock_category_exact = Category(id=category_exact_id, name="Exact Match Category")
 
-    exact_rule = EnhancementRule(
-        id=uuid4(),
-        normalized_description_pattern="tesco supermarket",
-        match_type=MatchType.EXACT,
-        category_id=category_exact_id,
-        source=EnhancementRuleSource.MANUAL,
-    )
-
-    prefix_rule = EnhancementRule(
-        id=uuid4(),
-        normalized_description_pattern="tesco",
-        match_type=MatchType.PREFIX,
-        category_id=category_prefix_id,
-        source=EnhancementRuleSource.MANUAL,
-    )
+    exact_rule = _rule_with_pattern("tesco supermarket", MatchType.EXACT, id=uuid4(), category_id=category_exact_id)
+    prefix_rule = _rule_with_pattern("tesco", MatchType.PREFIX, id=uuid4(), category_id=category_prefix_id)
 
     internal_dependencies.enhancement_rule_repository.find_matching_rules.return_value = [prefix_rule, exact_rule]
     internal_dependencies.category_repository.get_by_id.return_value = mock_category_exact

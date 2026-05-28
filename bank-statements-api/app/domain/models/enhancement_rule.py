@@ -4,7 +4,7 @@ from uuid import uuid4
 
 from sqlalchemy import Column, Date, DateTime
 from sqlalchemy import Enum as SQLAlchemyEnum
-from sqlalchemy import ForeignKey, Numeric, String
+from sqlalchemy import ForeignKey, Numeric
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
@@ -30,10 +30,6 @@ class EnhancementRule(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
-    normalized_description_pattern = Column(String, nullable=False, index=True)
-    match_type = Column(
-        SQLAlchemyEnum(MatchType, name="matchtype", values_callable=lambda x: [e.value for e in x]), nullable=False
-    )
 
     # Optional amount constraints
     min_amount = Column(Numeric(precision=10, scale=2), nullable=True)
@@ -91,6 +87,13 @@ class EnhancementRule(Base):
     )
 
     # Relationships
+    patterns = relationship(
+        "EnhancementRulePattern",
+        back_populates="rule",
+        cascade="all, delete-orphan",
+        order_by="EnhancementRulePattern.sort_order",
+        lazy="selectin",
+    )
     category = relationship("Category", foreign_keys=[category_id])
     counterparty_account = relationship("Account", foreign_keys=[counterparty_account_id])
     ai_suggested_category = relationship("Category", foreign_keys=[ai_suggested_category_id])
@@ -133,26 +136,24 @@ class EnhancementRule(Base):
     def has_any_ai_suggestion(self) -> bool:
         return self.has_ai_category_suggestion or self.has_ai_counterparty_suggestion
 
-    def matches_transaction(self, transaction) -> bool:
-        """Check if this rule matches the given transaction"""
-        # Check description pattern
-        if self.match_type == MatchType.EXACT:
-            if transaction.normalized_description != self.normalized_description_pattern:
-                return False
-        elif self.match_type == MatchType.PREFIX:
-            if not transaction.normalized_description.startswith(self.normalized_description_pattern):
-                return False
-        elif self.match_type == MatchType.INFIX:
-            if self.normalized_description_pattern not in transaction.normalized_description:
-                return False
+    def _pattern_matches(self, pattern, normalized_description: str) -> bool:
+        if pattern.match_type == MatchType.EXACT:
+            return normalized_description == pattern.normalized_description
+        if pattern.match_type == MatchType.PREFIX:
+            return normalized_description.startswith(pattern.normalized_description)
+        if pattern.match_type == MatchType.INFIX:
+            return pattern.normalized_description in normalized_description
+        return False
 
-        # Check amount constraints
+    def matches_transaction(self, transaction) -> bool:
+        if not any(self._pattern_matches(p, transaction.normalized_description) for p in self.patterns):
+            return False
+
         if self.min_amount is not None and transaction.amount < self.min_amount:
             return False
         if self.max_amount is not None and transaction.amount > self.max_amount:
             return False
 
-        # Check date constraints
         if self.start_date is not None and transaction.date < self.start_date:
             return False
         if self.end_date is not None and transaction.date > self.end_date:
@@ -161,10 +162,10 @@ class EnhancementRule(Base):
         return True
 
     def __repr__(self):
+        pattern_repr = ",".join(p.normalized_description for p in (self.patterns or []))
         return (
             f"<EnhancementRule(id={self.id}, "
-            f"pattern={self.normalized_description_pattern}, "
-            f"match_type={self.match_type}, "
+            f"patterns=[{pattern_repr}], "
             f"category_id={self.category_id}, "
             f"counterparty_account_id={self.counterparty_account_id})>"
         )

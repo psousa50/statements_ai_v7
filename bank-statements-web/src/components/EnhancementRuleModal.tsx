@@ -24,6 +24,7 @@ import { useEnhancementRules } from '../services/hooks/useEnhancementRules'
 import {
   EnhancementRule,
   EnhancementRuleCreate,
+  EnhancementRulePattern,
   EnhancementRuleUpdate,
   EnhancementRuleSource,
   EnhancementRuleSplitLine,
@@ -110,11 +111,13 @@ export const EnhancementRuleModal: React.FC<EnhancementRuleModalProps> = ({
   const isEditing = !!rule?.id
   const [categories, setCategories] = useState<Category[]>([])
   const [counterpartyAccounts, setCounterpartyAccounts] = useState<CounterpartyAccount[]>([])
-  const [formData, setFormData] = useState<EnhancementRuleCreate | EnhancementRuleUpdate>({
-    normalized_description_pattern: '',
-    match_type: MatchType.INFIX,
+  type FormData = Omit<EnhancementRuleCreate, 'patterns'> & { apply_to_existing?: boolean }
+  const [formData, setFormData] = useState<FormData>({
     source: EnhancementRuleSource.MANUAL,
   })
+  const [patterns, setPatterns] = useState<EnhancementRulePattern[]>([
+    { normalized_description: '', match_type: MatchType.INFIX, sort_order: 0 },
+  ])
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
 
   // State for retroactive application
@@ -147,8 +150,6 @@ export const EnhancementRuleModal: React.FC<EnhancementRuleModalProps> = ({
       setDisplayMinAmount(displayMin)
       setDisplayMaxAmount(displayMax)
       setFormData({
-        normalized_description_pattern: rule.normalized_description_pattern,
-        match_type: rule.match_type,
         category_id: rule.category_id,
         counterparty_account_id: rule.counterparty_account_id,
         min_amount: rule.min_amount,
@@ -157,6 +158,11 @@ export const EnhancementRuleModal: React.FC<EnhancementRuleModalProps> = ({
         end_date: rule.end_date,
         source: rule.source,
       })
+      setPatterns(
+        rule.patterns && rule.patterns.length > 0
+          ? rule.patterns.map((p, i) => ({ ...p, sort_order: i }))
+          : [{ normalized_description: '', match_type: MatchType.INFIX, sort_order: 0 }]
+      )
       setSplitLines(rule.split_lines ? rule.split_lines.map((l) => ({ ...l })) : [])
     } else if (duplicateData) {
       // Creating new rule from duplicate data
@@ -170,8 +176,6 @@ export const EnhancementRuleModal: React.FC<EnhancementRuleModalProps> = ({
       setDisplayMinAmount(displayMin)
       setDisplayMaxAmount(displayMax)
       setFormData({
-        normalized_description_pattern: duplicateData.normalized_description_pattern || '',
-        match_type: duplicateData.match_type || MatchType.INFIX,
         category_id: duplicateData.category_id,
         counterparty_account_id: duplicateData.counterparty_account_id,
         min_amount: duplicateData.min_amount,
@@ -180,6 +184,11 @@ export const EnhancementRuleModal: React.FC<EnhancementRuleModalProps> = ({
         end_date: duplicateData.end_date,
         source: duplicateData.source || EnhancementRuleSource.MANUAL,
       })
+      setPatterns(
+        duplicateData.patterns && duplicateData.patterns.length > 0
+          ? duplicateData.patterns.map((p, i) => ({ ...p, sort_order: i }))
+          : [{ normalized_description: '', match_type: MatchType.INFIX, sort_order: 0 }]
+      )
       setSplitLines(duplicateData.split_lines ? duplicateData.split_lines.map((l) => ({ ...l })) : [])
     } else {
       // Reset form for create mode
@@ -187,10 +196,9 @@ export const EnhancementRuleModal: React.FC<EnhancementRuleModalProps> = ({
       setDisplayMinAmount(undefined)
       setDisplayMaxAmount(undefined)
       setFormData({
-        normalized_description_pattern: '',
-        match_type: MatchType.INFIX,
         source: EnhancementRuleSource.MANUAL,
       })
+      setPatterns([{ normalized_description: '', match_type: MatchType.INFIX, sort_order: 0 }])
       setSplitLines([])
     }
   }, [rule, duplicateData])
@@ -239,8 +247,8 @@ export const EnhancementRuleModal: React.FC<EnhancementRuleModalProps> = ({
 
   // Simple preview effect: always use preview endpoint for everything
   useEffect(() => {
-    // Only run if modal is open and we have a valid description
-    if (!open || !formData.normalized_description_pattern.trim()) {
+    // Only run if modal is open and we have at least one non-empty pattern
+    if (!open || patterns.every((p) => !p.normalized_description.trim())) {
       setMatchingCount(null)
       return
     }
@@ -255,7 +263,11 @@ export const EnhancementRuleModal: React.FC<EnhancementRuleModalProps> = ({
       setFetchingCount(true)
       setPreviewError(null)
       try {
-        const count = await apiClient.enhancementRules.previewMatchingTransactionsCount(formData)
+        const payload = {
+          ...formData,
+          patterns: patterns.filter((p) => p.normalized_description.trim()),
+        }
+        const count = await apiClient.enhancementRules.previewMatchingTransactionsCount(payload)
         setMatchingCount(count)
       } catch (err) {
         setMatchingCount(null)
@@ -273,8 +285,7 @@ export const EnhancementRuleModal: React.FC<EnhancementRuleModalProps> = ({
     }
   }, [
     open,
-    formData.normalized_description_pattern,
-    formData.match_type,
+    patterns,
     formData.category_id,
     formData.counterparty_account_id,
     formData.min_amount,
@@ -296,8 +307,19 @@ export const EnhancementRuleModal: React.FC<EnhancementRuleModalProps> = ({
   const validateForm = () => {
     const errors: Record<string, string> = {}
 
-    if (!formData.normalized_description_pattern.trim()) {
-      errors.normalized_description_pattern = 'Description is required'
+    const cleanPatterns = patterns.filter((p) => p.normalized_description.trim())
+    if (cleanPatterns.length === 0) {
+      errors.patterns = 'At least one pattern is required'
+    } else {
+      const seen = new Set<string>()
+      for (const p of cleanPatterns) {
+        const desc = p.normalized_description.trim().toLowerCase()
+        if (seen.has(desc)) {
+          errors.patterns = 'Patterns must be unique'
+          break
+        }
+        seen.add(desc)
+      }
     }
 
     if (
@@ -377,53 +399,47 @@ export const EnhancementRuleModal: React.FC<EnhancementRuleModalProps> = ({
     }
 
     try {
+      const cleanPatterns = patterns
+        .filter((p) => p.normalized_description.trim())
+        .map((p, i) => ({
+          normalized_description: p.normalized_description.trim(),
+          match_type: p.match_type,
+          sort_order: i,
+        }))
+
       if (isEditing && rule) {
         const updateData: EnhancementRuleUpdate = {
           ...formData,
+          patterns: cleanPatterns,
+          source: formData.source ?? EnhancementRuleSource.MANUAL,
           apply_to_existing: applyToExisting,
           split_lines: serializedSplitLines(),
         }
         await updateRule(rule.id, updateData)
       } else {
-        // Clean the data by removing null and undefined values
         const cleanedData: EnhancementRuleCreate = {
-          normalized_description_pattern: formData.normalized_description_pattern,
-          match_type: formData.match_type,
-          source: formData.source,
+          patterns: cleanPatterns,
+          source: formData.source ?? EnhancementRuleSource.MANUAL,
         }
 
-        // Only add optional fields if they have valid values
-        if (formData.category_id) {
-          cleanedData.category_id = formData.category_id
-        }
-        if (formData.counterparty_account_id) {
-          cleanedData.counterparty_account_id = formData.counterparty_account_id
-        }
-        if (formData.min_amount !== undefined && formData.min_amount !== null) {
+        if (formData.category_id) cleanedData.category_id = formData.category_id
+        if (formData.counterparty_account_id) cleanedData.counterparty_account_id = formData.counterparty_account_id
+        if (formData.min_amount !== undefined && formData.min_amount !== null)
           cleanedData.min_amount = formData.min_amount
-        }
-        if (formData.max_amount !== undefined && formData.max_amount !== null) {
+        if (formData.max_amount !== undefined && formData.max_amount !== null)
           cleanedData.max_amount = formData.max_amount
-        }
-        if (formData.start_date) {
-          cleanedData.start_date = formData.start_date
-        }
-        if (formData.end_date) {
-          cleanedData.end_date = formData.end_date
-        }
+        if (formData.start_date) cleanedData.start_date = formData.start_date
+        if (formData.end_date) cleanedData.end_date = formData.end_date
         const splits = serializedSplitLines()
-        if (splits) {
-          cleanedData.split_lines = splits
-        }
+        if (splits) cleanedData.split_lines = splits
 
         await createRule(cleanedData)
       }
 
       if (createEmptyCopy && hasConstraints()) {
         const emptyCopyData: EnhancementRuleCreate = {
-          normalized_description_pattern: formData.normalized_description_pattern,
-          match_type: formData.match_type,
-          source: formData.source,
+          patterns: cleanPatterns,
+          source: formData.source ?? EnhancementRuleSource.MANUAL,
         }
         await createRule(emptyCopyData)
       }
@@ -444,10 +460,9 @@ export const EnhancementRuleModal: React.FC<EnhancementRuleModalProps> = ({
     if (!isEditing) {
       // Reset form only for create mode
       setFormData({
-        normalized_description_pattern: '',
-        match_type: MatchType.INFIX,
         source: EnhancementRuleSource.MANUAL,
       })
+      setPatterns([{ normalized_description: '', match_type: MatchType.INFIX, sort_order: 0 }])
       // Reset amount state
       setAmountType('all')
       setDisplayMinAmount(undefined)
@@ -500,29 +515,78 @@ export const EnhancementRuleModal: React.FC<EnhancementRuleModalProps> = ({
         )}
 
         <Stack spacing={3} sx={{ mt: 1 }}>
-          <TextField
-            fullWidth
-            size="small"
-            label="Description Pattern"
-            value={formData.normalized_description_pattern}
-            onChange={(e) => handleFieldChange('normalized_description_pattern', e.target.value)}
-            error={!!validationErrors.normalized_description_pattern}
-            helperText={
-              validationErrors.normalized_description_pattern ||
-              'Enter the text pattern to match in transaction descriptions'
-            }
-            required
-            autoFocus={!isEditing}
-          />
+          <Box>
+            <Stack direction="row" justifyContent="space-between" alignItems="center">
+              <Typography variant="h6" gutterBottom>
+                Description Patterns
+              </Typography>
+              <Button
+                size="small"
+                startIcon={<AddIcon />}
+                onClick={() =>
+                  setPatterns((prev) => [
+                    ...prev,
+                    { normalized_description: '', match_type: MatchType.INFIX, sort_order: prev.length },
+                  ])
+                }
+                disabled={loading}
+              >
+                Add pattern
+              </Button>
+            </Stack>
+            <FormHelperText>
+              The rule matches a transaction whose description satisfies any of these patterns.
+            </FormHelperText>
+            {validationErrors.patterns && <FormHelperText error>{validationErrors.patterns}</FormHelperText>}
+          </Box>
+
+          <Stack spacing={1}>
+            {patterns.map((pattern, idx) => (
+              <Stack key={idx} direction="row" spacing={1} alignItems="center">
+                <TextField
+                  size="small"
+                  label="Description"
+                  value={pattern.normalized_description}
+                  onChange={(e) =>
+                    setPatterns((prev) =>
+                      prev.map((p, i) => (i === idx ? { ...p, normalized_description: e.target.value } : p))
+                    )
+                  }
+                  sx={{ flex: 3 }}
+                  autoFocus={!isEditing && idx === 0}
+                />
+                <FormControl size="small" sx={{ flex: 1, minWidth: 130 }}>
+                  <InputLabel>Match</InputLabel>
+                  <Select
+                    value={pattern.match_type}
+                    label="Match"
+                    onChange={(e) =>
+                      setPatterns((prev) =>
+                        prev.map((p, i) => (i === idx ? { ...p, match_type: e.target.value as MatchType } : p))
+                      )
+                    }
+                  >
+                    <MenuItem value={MatchType.EXACT}>Exact</MenuItem>
+                    <MenuItem value={MatchType.PREFIX}>Prefix</MenuItem>
+                    <MenuItem value={MatchType.INFIX}>Infix</MenuItem>
+                  </Select>
+                </FormControl>
+                <IconButton
+                  size="small"
+                  onClick={() => setPatterns((prev) => prev.filter((_, i) => i !== idx))}
+                  disabled={patterns.length === 1}
+                  aria-label="Remove pattern"
+                >
+                  <DeleteIcon fontSize="small" />
+                </IconButton>
+              </Stack>
+            ))}
+          </Stack>
 
           <Stack direction="row" spacing={2}>
-            <FormControl fullWidth size="small">
+            <FormControl sx={{ display: 'none' }} fullWidth size="small">
               <InputLabel>Match Type *</InputLabel>
-              <Select
-                value={formData.match_type}
-                label="Match Type *"
-                onChange={(e) => handleFieldChange('match_type', e.target.value)}
-              >
+              <Select value={MatchType.INFIX} label="Match Type *">
                 <MenuItem value={MatchType.EXACT}>Exact Match</MenuItem>
                 <MenuItem value={MatchType.PREFIX}>Starts With (Prefix)</MenuItem>
                 <MenuItem value={MatchType.INFIX}>Contains (Infix)</MenuItem>

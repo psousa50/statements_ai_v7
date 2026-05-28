@@ -625,15 +625,18 @@ def register_transaction_routes(
             counterparty = internal.account_repository.get_by_id(enhanced_transaction.counterparty_account_id, current_user.id)
             counterparty_name = counterparty.name if counterparty else None
 
-        matched_rule = None
+        matched_pattern_text = None
         for rule in rules:
-            if rule.normalized_description_pattern in normalized_desc:
-                matched_rule = rule
+            for pattern in rule.patterns:
+                if pattern.normalized_description in normalized_desc:
+                    matched_pattern_text = pattern.normalized_description
+                    break
+            if matched_pattern_text:
                 break
 
         return EnhancementPreviewResponse(
             matched=True,
-            rule_pattern=matched_rule.normalized_description_pattern if matched_rule else normalized_desc,
+            rule_pattern=matched_pattern_text or normalized_desc,
             category_id=enhanced_transaction.category_id,
             category_name=category_name,
             counterparty_account_id=enhanced_transaction.counterparty_account_id,

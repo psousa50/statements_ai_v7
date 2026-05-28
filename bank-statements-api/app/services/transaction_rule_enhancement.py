@@ -8,6 +8,7 @@ from uuid import UUID, uuid4
 from app.common.text_normalization import normalize_description
 from app.domain.dto.statement_processing import TransactionDTO
 from app.domain.models.enhancement_rule import EnhancementRule, EnhancementRuleSource, MatchType
+from app.domain.models.enhancement_rule_pattern import EnhancementRulePattern
 from app.domain.models.transaction import CategorizationStatus, SourceType, Transaction
 from app.ports.repositories.enhancement_rule import EnhancementRuleRepository
 from app.services.transaction_enhancement import TransactionEnhancer
@@ -156,14 +157,19 @@ class TransactionRuleEnhancementService:
             rule = EnhancementRule(
                 id=uuid4(),
                 user_id=user_id,
-                normalized_description_pattern=normalized_description,
-                match_type=MatchType.EXACT,
                 category_id=None,
                 counterparty_account_id=None,
                 source=EnhancementRuleSource.AUTO,
                 created_at=datetime.now(timezone.utc),
                 updated_at=datetime.now(timezone.utc),
             )
+            rule.patterns = [
+                EnhancementRulePattern(
+                    normalized_description=normalized_description,
+                    match_type=MatchType.EXACT,
+                    sort_order=0,
+                )
+            ]
 
             self.enhancement_rule_repository.save(rule)
             logger.debug(f"Created unmatched rule for: {normalized_description}")
@@ -205,8 +211,12 @@ def _rule_specificity_key(rule: EnhancementRule):
     constraint_count = sum(
         1 for value in (rule.min_amount, rule.max_amount, rule.start_date, rule.end_date) if value is not None
     )
+    best_match_priority = min(
+        (_MATCH_TYPE_PRIORITY.get(p.match_type, 99) for p in rule.patterns),
+        default=99,
+    )
     return (
         -constraint_count,
-        _MATCH_TYPE_PRIORITY.get(rule.match_type, 99),
+        best_match_priority,
         rule.created_at or datetime.min,
     )

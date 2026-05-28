@@ -7,12 +7,20 @@ import pytest
 
 from app.api.schemas import TransactionCreateRequest
 from app.domain.models.enhancement_rule import EnhancementRule, EnhancementRuleSource, MatchType
+from app.domain.models.enhancement_rule_pattern import EnhancementRulePattern
 from app.domain.models.transaction import CategorizationStatus, Transaction
 from app.ports.repositories.enhancement_rule import EnhancementRuleRepository
 from app.ports.repositories.initial_balance import InitialBalanceRepository
 from app.ports.repositories.transaction import TransactionRepository
 from app.services.transaction import TransactionService
 from app.services.transaction_enhancement import TransactionEnhancer
+
+
+def _rule_with_pattern(pattern: str, match_type: MatchType, **kwargs) -> EnhancementRule:
+    kwargs.setdefault("source", EnhancementRuleSource.MANUAL)
+    rule = EnhancementRule(id=uuid4(), **kwargs)
+    rule.patterns = [EnhancementRulePattern(normalized_description=pattern, match_type=match_type, sort_order=0)]
+    return rule
 
 
 class TestTransactionService:
@@ -213,14 +221,7 @@ class TestTransactionService:
     ):
         category_id = uuid4()
         account_id = uuid4()
-        rule = EnhancementRule(
-            id=uuid4(),
-            normalized_description_pattern="test merchant",
-            match_type=MatchType.EXACT,
-            category_id=category_id,
-            counterparty_account_id=None,
-            source=EnhancementRuleSource.MANUAL,
-        )
+        rule = _rule_with_pattern("test merchant", MatchType.EXACT, category_id=category_id)
 
         mock_enhancement_rule_repository.find_matching_rules_batch.return_value = [rule]
 
@@ -259,14 +260,7 @@ class TestTransactionService:
     ):
         category_id = uuid4()
         account_id = uuid4()
-        rule = EnhancementRule(
-            id=uuid4(),
-            normalized_description_pattern="amazon",
-            match_type=MatchType.PREFIX,
-            category_id=category_id,
-            counterparty_account_id=None,
-            source=EnhancementRuleSource.MANUAL,
-        )
+        rule = _rule_with_pattern("amazon", MatchType.PREFIX, category_id=category_id)
 
         mock_enhancement_rule_repository.find_matching_rules_batch.return_value = [rule]
 
@@ -304,14 +298,7 @@ class TestTransactionService:
     ):
         category_id = uuid4()
         account_id = uuid4()
-        rule = EnhancementRule(
-            id=uuid4(),
-            normalized_description_pattern="coffee",
-            match_type=MatchType.INFIX,
-            category_id=category_id,
-            counterparty_account_id=None,
-            source=EnhancementRuleSource.MANUAL,
-        )
+        rule = _rule_with_pattern("coffee", MatchType.INFIX, category_id=category_id)
 
         mock_enhancement_rule_repository.find_matching_rules_batch.return_value = [rule]
 
@@ -376,8 +363,8 @@ class TestTransactionService:
         mock_enhancement_rule_repository.save.assert_called_once()
 
         saved_rule = mock_enhancement_rule_repository.save.call_args[0][0]
-        assert saved_rule.normalized_description_pattern == "new merchant"
-        assert saved_rule.match_type == MatchType.EXACT
+        assert saved_rule.patterns[0].normalized_description == "new merchant"
+        assert saved_rule.patterns[0].match_type == MatchType.EXACT
         assert saved_rule.category_id is None
         assert saved_rule.source == EnhancementRuleSource.AUTO
 
@@ -390,14 +377,7 @@ class TestTransactionService:
         user_id,
     ):
         account_id = uuid4()
-        existing_rule = EnhancementRule(
-            id=uuid4(),
-            normalized_description_pattern="existing merchant",
-            match_type=MatchType.EXACT,
-            category_id=None,
-            counterparty_account_id=None,
-            source=EnhancementRuleSource.AUTO,
-        )
+        existing_rule = _rule_with_pattern("existing merchant", MatchType.EXACT, source=EnhancementRuleSource.AUTO)
 
         mock_enhancement_rule_repository.get_all.return_value = []
         mock_enhancement_rule_repository.find_by_normalized_description.return_value = existing_rule

@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import List, Optional
+from typing import Dict, List, Optional
 from uuid import UUID
 
 from app.domain.models.enhancement_rule import EnhancementRule
@@ -28,4 +28,8 @@ class EnhancementRuleRepository(ABC):
 
     @abstractmethod
     def find_matching_rules_batch(self, normalized_descriptions: List[str], user_id: UUID) -> List[EnhancementRule]:
+        pass
+
+    @abstractmethod
+    def get_description_to_rule_map(self, user_id: UUID) -> Dict[str, UUID]:
         pass
