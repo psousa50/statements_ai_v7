@@ -1,0 +1,29 @@
+Consultar saldos e movimentos à ordem - 27-06-2026	="0217005412400"
+Nome empresa 	CONDOMINIO PREDIO SITO R LIMA 142
+NIF 	901152420
+
+Dados da conta 
+Conta 	0217005412400 - EUR - Conta à ordem 
+Saldo contabilístico 	5.094,51 EUR 
+Saldo disponível 	5.094,51 EUR 
+
+Dados da consulta 
+Período 	Último mês 
+Intervalo de 	01-01-2026 a 27-06-2026 
+Tipos de movimento 	Todos 
+
+Data mov. 	Data-valor 	Descrição 	Montante 	Saldo contabilístico após movimento 	
+06-06-2026	06-06-2026	COM MANUTENCAO CONTA 	-10,40	5.094,51	
+01-06-2026	01-06-2026	Salvador Madeira 1 e 	19,80	5.104,91	
+16-05-2026	16-05-2026	TFI JORGE JESUS COSTA 	51,27	5.085,11	
+10-05-2026	10-05-2026	COM MANUTENCAO CONTA 	-10,40	5.033,84	
+01-05-2026	01-05-2026	TFI JORGE JESUS COSTA 	51,27	5.044,24	
+01-05-2026	01-05-2026	Salvador Madeira 1 e 	19,80	4.992,97	
+04-04-2026	04-04-2026	COM MANUTENCAO CONTA 	-10,40	4.973,17	
+01-04-2026	01-04-2026	Salvador Madeira 1 e 	19,80	4.983,57	
+07-03-2026	07-03-2026	COM MANUTENCAO CONTA 	-10,40	4.963,77	
+01-03-2026	01-03-2026	Salvador Madeira 1 e 	19,80	4.974,17	
+07-02-2026	07-02-2026	COM MANUTENCAO CONTA 	-10,40	4.954,37	
+01-02-2026	01-02-2026	Salvador Madeira 1 e 	19,80	4.964,77	
+05-01-2026	05-01-2026	COM MANUTENCAO CONTA 	-10,40	4.944,97	
+01-01-2026	01-01-2026	Salvador Madeira 1 e 	19,80	4.955,37	
