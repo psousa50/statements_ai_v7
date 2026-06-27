@@ -59,6 +59,8 @@ bin/                             # Shell scripts (dev, db, deploy, test)
 ## Data Flow
 
 1. **Upload**: File → FileTypeDetector → StatementParser (CSV/TSV/Excel) → HeuristicSchemaDetector (column mapping) → TransactionNormalizer → deduplication → persist
+   - Delimited parsing decodes UTF-8 with a cp1252 fallback (Western-European bank exports) and pads ragged rows, so files with a metadata preamble above the real header (header not on row 1) are handled
+   - A file is matched to its saved import config (account, mapping, row filters) by a **source fingerprint**: a hash of the heuristically-detected header row, with a fallback to the legacy column-name hash for configs saved before this scheme
 2. **Categorisation**: Enhancement rules (exact/prefix/infix match with amount/date constraints) → LLM suggestions (batched) → manual override
 3. **Query**: Route → Service → Repository (user_id filtered) → paginated response with running balances
 4. **Chat**: User message → ChatService → LLM with transaction context → streamed SSE response
@@ -79,7 +81,7 @@ bin/                             # Shell scripts (dev, db, deploy, test)
 | `subscriptions` | One per user; tier (free/basic/pro) with Stripe integration |
 | `subscription_usage` | Monthly counters for statements and AI calls |
 | `filter_presets` | Saved filter configurations as JSONB |
-| `file_analysis_metadata` | Cached schema detection results per file hash + account |
+| `file_analysis_metadata` | Saved import config (column mapping, header/data rows, row filters) keyed by source fingerprint (detected-header hash, legacy column-name hash as fallback) + account |
 | `background_jobs` | Job queue with status tracking |
 | `uploaded_files` | Raw file storage for processing |
 | `refresh_tokens` | Hashed tokens for JWT refresh |
