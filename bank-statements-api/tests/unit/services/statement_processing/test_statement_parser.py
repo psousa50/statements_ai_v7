@@ -25,6 +25,37 @@ class TestStatementParser:
         assert df.iloc[0]["amount"] == "100.00"
         assert df.iloc[0]["description"] == "Test transaction"
 
+    def test_parse_tsv_file(self):
+        parser = StatementParser()
+        file_content = b"date\tamount\tdescription\n2023-01-01\t1,234.56\tShop, Lisbon"
+        file_type = "TSV"
+
+        df = parser.parse(file_content, file_type)
+
+        assert isinstance(df, pd.DataFrame)
+        assert df.shape == (1, 3)
+        assert list(df.columns) == [
+            "date",
+            "amount",
+            "description",
+        ]
+        assert df.iloc[0]["date"] == "2023-01-01"
+        assert df.iloc[0]["amount"] == "1,234.56"
+        assert df.iloc[0]["description"] == "Shop, Lisbon"
+
+    def test_parse_tsv_file_with_cp1252_encoding(self):
+        parser = StatementParser()
+        file_content = "Data\tDescrição\tMontante\n2024-01-01\tConta à ordem\t19,80".encode("cp1252")
+        file_type = "TSV"
+
+        df = parser.parse(file_content, file_type)
+
+        assert isinstance(df, pd.DataFrame)
+        assert df.shape == (1, 3)
+        assert list(df.columns) == ["Data", "Descrição", "Montante"]
+        assert df.iloc[0]["Descrição"] == "Conta à ordem"
+        assert df.iloc[0]["Montante"] == "19,80"
+
     def test_parse_xlsx_file(self):
         parser = StatementParser()
 

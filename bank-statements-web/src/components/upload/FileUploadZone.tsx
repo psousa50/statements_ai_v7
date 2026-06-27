@@ -22,8 +22,8 @@ export const FileUploadZone: React.FC<FileUploadZoneProps> = ({ onFileSelected, 
 
       // Check file type
       const fileName = file.name.toLowerCase()
-      if (!fileName.endsWith('.csv') && !fileName.endsWith('.xlsx')) {
-        setError('Only CSV and XLSX files are supported')
+      if (!fileName.endsWith('.csv') && !fileName.endsWith('.tsv') && !fileName.endsWith('.xlsx')) {
+        setError('Only CSV, TSV and XLSX files are supported')
         return
       }
 
@@ -42,6 +42,7 @@ export const FileUploadZone: React.FC<FileUploadZoneProps> = ({ onFileSelected, 
     onDrop,
     accept: {
       'text/csv': ['.csv'],
+      'text/tab-separated-values': ['.tsv'],
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
     },
     maxFiles: 1,
@@ -77,7 +78,7 @@ export const FileUploadZone: React.FC<FileUploadZoneProps> = ({ onFileSelected, 
             Browse Files
           </Button>
           <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
-            Supported formats: CSV, XLSX (max 10MB)
+            Supported formats: CSV, TSV, XLSX (max 10MB)
           </Typography>
 
           {error && (

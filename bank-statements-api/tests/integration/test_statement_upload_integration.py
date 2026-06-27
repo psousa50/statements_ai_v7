@@ -205,6 +205,204 @@ class TestStatementUploadIntegration:
             assert all(p.normalized_description for p in rule.patterns)
             assert rule.created_at is not None
 
+    def test_complete_tsv_statement_upload_flow(self, db_session, llm_client, test_user):
+        """Test the full upload flow for a TSV file whose data contains commas."""
+
+        filename = "bank_statement.tsv"
+        tsv_content = (
+            b"Date\tAmount\tDescription\tBalance\n"
+            b"2023-01-01\t100.50\tCoffee Shop, Lisbon\t1500.50\n"
+            b"2023-01-02\t-50.00\tATM Withdrawal\t1450.50\n"
+            b"2023-01-03\t2500.00\tSalary Deposit\t3950.50\n"
+            b"2023-01-04\t-25.99\tOnline Shopping\t3924.51"
+        )
+
+        dependencies = build_internal_dependencies(ExternalDependencies(db=db_session, llm_client=llm_client))
+
+        analysis_result = dependencies.statement_analyzer_service.analyze(
+            user_id=test_user.id,
+            filename=filename,
+            file_content=tsv_content,
+        )
+
+        assert analysis_result.uploaded_file_id is not None
+        assert analysis_result.file_type == "TSV"
+        assert analysis_result.column_mapping["date"] == "Date"
+        assert analysis_result.column_mapping["amount"] == "Amount"
+        assert analysis_result.column_mapping["description"] == "Description"
+        assert len(analysis_result.sample_data) > 0
+
+        account = Account(name="TSV Bank", user_id=test_user.id)
+        db_session.add(account)
+        db_session.flush()
+
+        upload_request = StatementUploadRequest(
+            uploaded_file_id=analysis_result.uploaded_file_id,
+            account_id=str(account.id),
+            column_mapping=analysis_result.column_mapping,
+            header_row_index=analysis_result.header_row_index,
+            data_start_row_index=analysis_result.data_start_row_index,
+        )
+
+        upload_result = dependencies.statement_upload_service.upload_statement(
+            user_id=test_user.id,
+            upload_data=upload_request,
+            background_tasks=MagicMock(),
+            internal_deps=dependencies,
+        )
+
+        assert upload_result.transactions_saved == 4
+        assert upload_result.total_processed == 4
+
+        statement = db_session.query(Statement).filter(Statement.account_id == account.id).first()
+        assert statement is not None
+
+        transactions = db_session.query(Transaction).filter(Transaction.statement_id == statement.id).all()
+        assert len(transactions) == 4
+
+        amounts = [float(t.amount) for t in transactions]
+        descriptions = [t.description for t in transactions]
+
+        assert 100.50 in amounts
+        assert -50.00 in amounts
+        assert 2500.00 in amounts
+        assert -25.99 in amounts
+
+        assert any(desc == "Coffee Shop, Lisbon" for desc in descriptions)
+        assert any("Salary" in desc for desc in descriptions)
+
+    def test_upload_portuguese_bank_tsv_with_preamble_and_european_format(self, db_session, llm_client, test_user):
+        """A real-world Portuguese bank TSV: cp1252 encoding, metadata preamble,
+        ragged rows, European decimals and DD-MM-YYYY dates."""
+
+        filename = "extrato.tsv"
+        tsv_text = (
+            'Consultar saldos e movimentos à ordem\t="0217005412400"\n'
+            "Conta\t0217005412400 - EUR\n"
+            "\n"
+            "Data mov.\tDescrição\tMontante\tSaldo contabilístico\n"
+            "11-12-2024\tTRF ANA JÉSSICA DA PA\t19,80\t10.535,05\n"
+            "07-12-2024\tCOM MANUTENÇÃO CONTA\t-10,40\t10.515,25\n"
+            "10-10-2024\tTRF JORGE COSTA\t51,27\t10.536,05"
+        )
+        tsv_content = tsv_text.encode("cp1252")
+
+        llm_client.generate.return_value = """
+        {
+            "column_mapping": {
+                "date": "Data mov.",
+                "amount": "Montante",
+                "description": "Descrição"
+            },
+            "header_row_index": 2,
+            "data_start_row_index": 3
+        }
+        """
+
+        dependencies = build_internal_dependencies(ExternalDependencies(db=db_session, llm_client=llm_client))
+
+        analysis_result = dependencies.statement_analyzer_service.analyze(
+            user_id=test_user.id,
+            filename=filename,
+            file_content=tsv_content,
+        )
+
+        assert analysis_result.file_type == "TSV"
+        assert analysis_result.column_mapping["amount"] == "Montante"
+        assert analysis_result.total_transactions == 3
+
+        account = Account(name="Condomínio", user_id=test_user.id)
+        db_session.add(account)
+        db_session.flush()
+
+        upload_request = StatementUploadRequest(
+            uploaded_file_id=analysis_result.uploaded_file_id,
+            account_id=str(account.id),
+            column_mapping=analysis_result.column_mapping,
+            header_row_index=analysis_result.header_row_index,
+            data_start_row_index=analysis_result.data_start_row_index,
+        )
+
+        upload_result = dependencies.statement_upload_service.upload_statement(
+            user_id=test_user.id,
+            upload_data=upload_request,
+            background_tasks=MagicMock(),
+            internal_deps=dependencies,
+        )
+
+        assert upload_result.transactions_saved == 3
+        assert upload_result.total_processed == 3
+
+        statement = db_session.query(Statement).filter(Statement.account_id == account.id).first()
+        transactions = db_session.query(Transaction).filter(Transaction.statement_id == statement.id).all()
+        assert len(transactions) == 3
+
+        amounts = sorted(float(t.amount) for t in transactions)
+        assert amounts == [-10.40, 19.80, 51.27]
+
+        descriptions = [t.description for t in transactions]
+        assert any("JÉSSICA" in desc for desc in descriptions)
+
+        dates = {t.date.strftime("%Y-%m-%d") for t in transactions}
+        assert dates == {"2024-12-11", "2024-12-07", "2024-10-10"}
+
+    def test_reupload_same_tsv_detects_duplicates_and_remembers_account(self, db_session, llm_client, test_user):
+        """Re-uploading the same TSV should recognise the file (account memory) and dedupe every row."""
+
+        filename = "extrato.tsv"
+        tsv_text = (
+            'Consultar saldos e movimentos à ordem - 27-06-2026\t="0217005412400"\n'
+            "Conta\t0217005412400 - EUR\n"
+            "\n"
+            "Data mov.\tDescrição\tMontante\tSaldo contabilístico\n"
+            "11-12-2024\tTRF ANA JÉSSICA DA PA\t19,80\t10.535,05\n"
+            "07-12-2024\tCOM MANUTENÇÃO CONTA\t-10,40\t10.515,25\n"
+            "10-10-2024\tTRF JORGE COSTA\t51,27\t10.536,05"
+        )
+        tsv_content = tsv_text.encode("cp1252")
+
+        dependencies = build_internal_dependencies(ExternalDependencies(db=db_session, llm_client=llm_client))
+
+        first_analysis = dependencies.statement_analyzer_service.analyze(
+            user_id=test_user.id, filename=filename, file_content=tsv_content
+        )
+
+        account = Account(name="Condomínio", user_id=test_user.id)
+        db_session.add(account)
+        db_session.flush()
+
+        first_request = StatementUploadRequest(
+            uploaded_file_id=first_analysis.uploaded_file_id,
+            account_id=str(account.id),
+            column_mapping=first_analysis.column_mapping,
+            header_row_index=first_analysis.header_row_index,
+            data_start_row_index=first_analysis.data_start_row_index,
+        )
+        first_result = dependencies.statement_upload_service.upload_statement(
+            user_id=test_user.id, upload_data=first_request, background_tasks=MagicMock(), internal_deps=dependencies
+        )
+        assert first_result.transactions_saved == 3
+
+        second_analysis = dependencies.statement_analyzer_service.analyze(
+            user_id=test_user.id, filename=filename, file_content=tsv_content
+        )
+
+        assert second_analysis.account_id == str(account.id)
+        assert second_analysis.duplicate_transactions == 3
+        assert second_analysis.unique_transactions == 0
+
+        second_request = StatementUploadRequest(
+            uploaded_file_id=second_analysis.uploaded_file_id,
+            account_id=str(account.id),
+            column_mapping=second_analysis.column_mapping,
+            header_row_index=second_analysis.header_row_index,
+            data_start_row_index=second_analysis.data_start_row_index,
+        )
+        second_result = dependencies.statement_upload_service.upload_statement(
+            user_id=test_user.id, upload_data=second_request, background_tasks=MagicMock(), internal_deps=dependencies
+        )
+        assert second_result.transactions_saved == 0
+
     def test_upload_with_real_categorization_processing(self, db_session, llm_client, test_user):
         """Test upload with real transaction categorization flow."""
 

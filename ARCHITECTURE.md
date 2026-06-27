@@ -58,7 +58,7 @@ bin/                             # Shell scripts (dev, db, deploy, test)
 
 ## Data Flow
 
-1. **Upload**: File → FileTypeDetector → StatementParser (CSV/Excel/OFX) → HeuristicSchemaDetector (column mapping) → TransactionNormalizer → deduplication → persist
+1. **Upload**: File → FileTypeDetector → StatementParser (CSV/TSV/Excel) → HeuristicSchemaDetector (column mapping) → TransactionNormalizer → deduplication → persist
 2. **Categorisation**: Enhancement rules (exact/prefix/infix match with amount/date constraints) → LLM suggestions (batched) → manual override
 3. **Query**: Route → Service → Repository (user_id filtered) → paginated response with running balances
 4. **Chat**: User message → ChatService → LLM with transaction context → streamed SSE response
