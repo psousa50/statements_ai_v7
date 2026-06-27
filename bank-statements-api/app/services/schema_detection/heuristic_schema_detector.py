@@ -53,18 +53,49 @@ def find_first_valid_streak(series: pd.Series, predicate, streak_length: int = 2
     return None
 
 
+def infer_data_start_row(df: pd.DataFrame) -> int:
+    first_data_rows = []
+
+    for col in df.columns:
+        col_data = df[col]
+        i_date = find_first_valid_streak(col_data, is_probable_date)
+        i_amt = find_first_valid_streak(col_data, is_probable_amount)
+        i = min(
+            [i for i in [i_date, i_amt] if i is not None],
+            default=None,
+        )
+        if i is not None:
+            first_data_rows.append(i)
+
+    if not first_data_rows:
+        return 1 if len(df) > 1 else 0  # fallback
+
+    most_common_row, _ = Counter(first_data_rows).most_common(1)[0]
+    return most_common_row
+
+
+def find_header_row(df: pd.DataFrame) -> int:
+    return max(0, infer_data_start_row(df))
+
+
+def header_values_at(df: pd.DataFrame, header_row: int) -> list:
+    if header_row == 0:
+        return df.columns.tolist()
+    return df.iloc[header_row - 1].astype(str).tolist()
+
+
+def find_header_values(df: pd.DataFrame) -> list:
+    return header_values_at(df, find_header_row(df))
+
+
 class HeuristicSchemaDetector(SchemaDetectorProtocol):
     def detect_schema(self, df: pd.DataFrame) -> ConversionModel:
         if df.empty:
             raise ValueError("Cannot detect schema from an empty DataFrame")
 
-        start_row = self._infer_data_start_row(df) + 1
-        header_row = max(0, start_row - 1)
-
-        if header_row == 0:
-            header = df.columns.tolist()
-        else:
-            header = df.iloc[header_row - 1].astype(str).tolist()
+        header_row = find_header_row(df)
+        start_row = header_row + 1
+        header = header_values_at(df, header_row)
 
         data_df = df.iloc[start_row - 1 :].reset_index(drop=True).copy()
         data_df.columns = header
@@ -76,26 +107,6 @@ class HeuristicSchemaDetector(SchemaDetectorProtocol):
             header_row_index=header_row,
             data_start_row_index=start_row,
         )
-
-    def _infer_data_start_row(self, df: pd.DataFrame) -> int:
-        first_data_rows = []
-
-        for col in df.columns:
-            col_data = df[col]
-            i_date = find_first_valid_streak(col_data, is_probable_date)
-            i_amt = find_first_valid_streak(col_data, is_probable_amount)
-            i = min(
-                [i for i in [i_date, i_amt] if i is not None],
-                default=None,
-            )
-            if i is not None:
-                first_data_rows.append(i)
-
-        if not first_data_rows:
-            return 1 if len(df) > 1 else 0  # fallback
-
-        most_common_row, _ = Counter(first_data_rows).most_common(1)[0]
-        return most_common_row
 
     def _infer_standard_columns(self, df: pd.DataFrame) -> Dict[str, str]:
         candidates = {

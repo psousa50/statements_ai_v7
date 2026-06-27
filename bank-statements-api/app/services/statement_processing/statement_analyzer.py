@@ -12,7 +12,7 @@ from app.domain.dto.statement_processing import (
     RowFilter,
     StatisticsPreviewDTO,
 )
-from app.services.common import compute_hash, process_dataframe
+from app.services.common import find_metadata_with_fallback, process_dataframe
 from app.services.schema_detection.schema_detector import ConversionModel
 from app.services.statement_processing.row_filter_service import RowFilterService
 
@@ -48,8 +48,9 @@ class StatementAnalyzerService:
         file_type = self.file_type_detector.detect(file_content)
         raw_df = self.statement_parser.parse(file_content, file_type)
 
-        file_hash = compute_hash(file_type, raw_df)
-        existing_metadata = self.file_analysis_metadata_repo.find_by_hash(file_hash, user_id)
+        existing_metadata = find_metadata_with_fallback(
+            file_type, raw_df, lambda file_hash: self.file_analysis_metadata_repo.find_by_hash(file_hash, user_id)
+        )
 
         if existing_metadata:
             conversion_model = ConversionModel(

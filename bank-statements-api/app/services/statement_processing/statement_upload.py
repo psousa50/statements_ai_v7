@@ -105,12 +105,13 @@ class StatementUploadService:
         row_filters_to_apply = upload_request.row_filters
         if not row_filters_to_apply:
             # Check if we have saved row filters for this file
-            from app.services.common import compute_hash
+            from app.services.common import find_metadata_with_fallback
 
-            file_hash = compute_hash(file_type, raw_df)
-            existing_metadata = self.file_analysis_metadata_repo.find_by_hash(file_hash, user_id)
+            existing_metadata = find_metadata_with_fallback(
+                file_type, raw_df, lambda file_hash: self.file_analysis_metadata_repo.find_by_hash(file_hash, user_id)
+            )
             if existing_metadata and existing_metadata.row_filters:
-                logger.info(f"Using saved row filters for file hash {file_hash}")
+                logger.info("Using saved row filters for re-uploaded file")
                 # Convert saved filters back to API format
                 from app.api.schemas import FilterConditionRequest, RowFilterRequest
                 from app.domain.dto.statement_processing import FilterOperator, LogicalOperator
@@ -127,7 +128,8 @@ class StatementUploadService:
                     )
 
                 row_filters_to_apply = RowFilterRequest(
-                    conditions=conditions, logical_operator=LogicalOperator.AND  # Default logical operator
+                    conditions=conditions,
+                    logical_operator=LogicalOperator.AND,  # Default logical operator
                 )
 
         # Apply row filters if available (BEFORE column normalization)

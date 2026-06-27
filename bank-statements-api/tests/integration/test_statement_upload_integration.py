@@ -403,6 +403,54 @@ class TestStatementUploadIntegration:
         )
         assert second_result.transactions_saved == 0
 
+    def test_reexport_with_changed_header_date_is_still_recognised(self, db_session, llm_client, test_user):
+        """A re-export of the same statement with a different generation date in line 1
+        must still be recognised as the same source (account memory + duplicates)."""
+
+        def statement_bytes(generation_date):
+            return (
+                f'Consultar saldos e movimentos à ordem - {generation_date}\t="0217005412400"\n'
+                "Conta\t0217005412400 - EUR\n"
+                "\n"
+                "Data mov.\tDescrição\tMontante\tSaldo contabilístico\n"
+                "11-12-2024\tTRF ANA JÉSSICA DA PA\t19,80\t10.535,05\n"
+                "07-12-2024\tCOM MANUTENÇÃO CONTA\t-10,40\t10.515,25\n"
+                "10-10-2024\tTRF JORGE COSTA\t51,27\t10.536,05"
+            ).encode("cp1252")
+
+        dependencies = build_internal_dependencies(ExternalDependencies(db=db_session, llm_client=llm_client))
+
+        first_analysis = dependencies.statement_analyzer_service.analyze(
+            user_id=test_user.id, filename="extrato.tsv", file_content=statement_bytes("27-06-2026")
+        )
+
+        account = Account(name="Condomínio", user_id=test_user.id)
+        db_session.add(account)
+        db_session.flush()
+
+        first_result = dependencies.statement_upload_service.upload_statement(
+            user_id=test_user.id,
+            upload_data=StatementUploadRequest(
+                uploaded_file_id=first_analysis.uploaded_file_id,
+                account_id=str(account.id),
+                column_mapping=first_analysis.column_mapping,
+                header_row_index=first_analysis.header_row_index,
+                data_start_row_index=first_analysis.data_start_row_index,
+            ),
+            background_tasks=MagicMock(),
+            internal_deps=dependencies,
+        )
+        assert first_result.transactions_saved == 3
+
+        # Same statement re-exported on a different day: only line 1's date differs.
+        second_analysis = dependencies.statement_analyzer_service.analyze(
+            user_id=test_user.id, filename="extrato.tsv", file_content=statement_bytes("15-08-2026")
+        )
+
+        assert second_analysis.account_id == str(account.id)
+        assert second_analysis.duplicate_transactions == 3
+        assert second_analysis.unique_transactions == 0
+
     def test_upload_with_real_categorization_processing(self, db_session, llm_client, test_user):
         """Test upload with real transaction categorization flow."""
 
