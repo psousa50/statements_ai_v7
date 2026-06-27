@@ -9,7 +9,6 @@ usage() {
     echo ""
     echo "Directions:"
     echo "  from-remote    Dump remote DB and restore to local"
-    echo "  to-remote      Dump local DB and restore to remote"
     echo ""
     echo "Remote connection string must be provided via:"
     echo "  - REMOTE_DATABASE_URL environment variable, or"
@@ -17,7 +16,6 @@ usage() {
     echo ""
     echo "Examples:"
     echo "  REMOTE_DATABASE_URL='postgresql://...' $0 from-remote"
-    echo "  $0 to-remote  # uses clipboard"
     exit 1
 }
 
@@ -68,28 +66,9 @@ from_remote() {
     echo "==> Done! Local database synced from remote."
 }
 
-to_remote() {
-    REMOTE_URL=$(get_remote_url)
-
-    echo "==> Dumping local database..."
-    pg_dump "$LOCAL_DB" --no-owner --no-acl -F p > "$DUMP_FILE"
-
-    echo "==> Restoring to remote database..."
-    psql "$REMOTE_URL" -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;" 2>/dev/null || true
-    psql "$REMOTE_URL" < "$DUMP_FILE"
-
-    rm -f "$DUMP_FILE"
-    echo "==> Done! Remote database synced from local."
-    echo ""
-    echo "NOTE: You may need to redeploy to run migrations."
-}
-
 case "${1:-}" in
     from-remote)
         from_remote
-        ;;
-    to-remote)
-        to_remote
         ;;
     *)
         usage
