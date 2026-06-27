@@ -19,6 +19,9 @@ from app.services.statement_processing.row_filter_service import RowFilterServic
 logger_content = logging.getLogger("app.llm.big")
 logger = logging.getLogger("app")
 
+MIN_PREVIEW_ROWS = 50
+PREVIEW_ROWS_AFTER_DATA_START = 20
+
 
 class StatementAnalyzerService:
     def __init__(
@@ -60,7 +63,7 @@ class StatementAnalyzerService:
         saved_file = self.uploaded_file_repo.save(filename, file_content, file_type)
         uploaded_file_id = saved_file.id
 
-        sample_data = self._generate_sample_data(raw_df)
+        sample_data = self._generate_sample_data(raw_df, conversion_model.data_start_row_index)
 
         account_id = existing_metadata.account_id if existing_metadata else None
 
@@ -172,13 +175,14 @@ class StatementAnalyzerService:
             filter_preview=filter_preview,
         )
 
-    def _generate_sample_data(self, raw_df):
+    def _generate_sample_data(self, raw_df, data_start_row_index=0):
         rows_as_lists = []
 
         column_names_row = [str(col) for col in raw_df.columns.tolist()]
         rows_as_lists.append(column_names_row)
 
-        for _, row in raw_df.iloc[:10].iterrows():
+        preview_rows = max(MIN_PREVIEW_ROWS, data_start_row_index + PREVIEW_ROWS_AFTER_DATA_START)
+        for _, row in raw_df.iloc[:preview_rows].iterrows():
             row_as_list = []
             for val in row.values:
                 if pd.isna(val) or val is None:

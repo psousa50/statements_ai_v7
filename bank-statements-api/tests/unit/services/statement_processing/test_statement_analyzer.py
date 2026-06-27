@@ -114,6 +114,26 @@ class TestStatementAnalyzerService:
         file_analysis_metadata_repo.find_by_hash.assert_called_once()
         uploaded_file_repo.save.assert_called_once_with(filename, file_content, "CSV")
 
+    def test_sample_data_window_reaches_past_data_start(self):
+        analyzer = StatementAnalyzerService.__new__(StatementAnalyzerService)
+
+        preamble = pd.DataFrame({"col": [f"preamble {i}" for i in range(40)] + [f"tx {i}" for i in range(40)]})
+
+        sample = analyzer._generate_sample_data(preamble, data_start_row_index=41)
+
+        assert len(sample) == 41 + 20 + 1
+        assert sample[41] == ["tx 0"]
+        assert sample[55] == ["tx 14"]
+
+    def test_sample_data_uses_minimum_when_data_starts_early(self):
+        analyzer = StatementAnalyzerService.__new__(StatementAnalyzerService)
+
+        df = pd.DataFrame({"col": [f"row {i}" for i in range(200)]})
+
+        sample = analyzer._generate_sample_data(df, data_start_row_index=1)
+
+        assert len(sample) == 50 + 1
+
     def test_duplicate_counting_logic(self, user_id):
         """Test that duplicate counting works correctly when multiple identical transactions exist in file"""
         file_type_detector = MagicMock()
