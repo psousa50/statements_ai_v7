@@ -6,7 +6,7 @@ from uuid import uuid4
 
 from sqlalchemy import Boolean, Column, Date, DateTime
 from sqlalchemy import Enum as SQLAlchemyEnum
-from sqlalchemy import ForeignKey, Integer, Numeric, String
+from sqlalchemy import ForeignKey, Index, Integer, Numeric, String
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
@@ -54,8 +54,8 @@ class Transaction(Base):
 
     statement_id = Column(
         UUID(as_uuid=True),
-        ForeignKey("statements.id"),
-        nullable=False,
+        ForeignKey("statements.id", ondelete="CASCADE"),
+        nullable=True,
     )
     statement = relationship("Statement", back_populates="transactions")
 
@@ -110,7 +110,7 @@ class Transaction(Base):
     )
 
     # New ordering fields
-    row_index = Column(Integer, nullable=False)
+    row_index = Column(Integer, nullable=True)
     sort_index = Column(Integer, nullable=False, default=0)
     source_type = Column(
         SQLAlchemyEnum(
@@ -133,6 +133,12 @@ class Transaction(Base):
         ForeignKey("transactions.id"),
         nullable=True,
         index=True,
+    )
+
+    __table_args__ = (
+        Index("ix_transactions_account_id_date", "account_id", "date"),
+        Index("ix_transactions_user_id_category_id", "user_id", "category_id"),
+        Index("ix_transactions_user_id_date", "user_id", "date"),
     )
 
     def __init__(self, *args, **kwargs):

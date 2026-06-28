@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from uuid import uuid4
 
-from sqlalchemy import Column, Date, DateTime, ForeignKey, Numeric, UniqueConstraint
+from sqlalchemy import Column, Date, DateTime, ForeignKey, Index, Numeric, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
@@ -39,6 +39,7 @@ class InitialBalance(Base):
             "balance_date",
             name="uq_initial_balance_account_date",
         ),
+        Index("ix_initial_balances_account_id_balance_date", "account_id", "balance_date"),
     )
 
     def __repr__(self):

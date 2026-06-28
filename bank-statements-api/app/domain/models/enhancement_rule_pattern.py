@@ -2,7 +2,7 @@ from uuid import uuid4
 
 from sqlalchemy import Column
 from sqlalchemy import Enum as SQLAlchemyEnum
-from sqlalchemy import ForeignKey, Integer, String
+from sqlalchemy import ForeignKey, Integer, String, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
@@ -28,6 +28,14 @@ class EnhancementRulePattern(Base):
     sort_order = Column(Integer, nullable=False, default=0)
 
     rule = relationship("EnhancementRule", back_populates="patterns")
+
+    __table_args__ = (
+        UniqueConstraint(
+            "rule_id",
+            "normalized_description",
+            name="uq_enhancement_rule_patterns_rule_description",
+        ),
+    )
 
     def __repr__(self):
         return (

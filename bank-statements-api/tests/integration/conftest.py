@@ -2,20 +2,21 @@ import os
 from uuid import uuid4
 
 import pytest
+from alembic import command
+from alembic.config import Config
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from app.core.database import Base
 from app.domain.models.account import Account
 from app.domain.models.category import Category
-from app.domain.models.refresh_token import RefreshToken  # noqa: F401
-from app.domain.models.uploaded_file import FileAnalysisMetadata, UploadedFile  # noqa: F401
 from app.domain.models.user import User
 
 TEST_DATABASE_URL = os.getenv(
     "TEST_DATABASE_URL",
     "postgresql+psycopg://postgres:postgres@localhost:15432/bank_statements_test",
 )
+
+ALEMBIC_INI = os.path.join(os.path.dirname(__file__), "..", "..", "alembic.ini")
 
 
 @pytest.fixture(scope="session")
@@ -25,9 +26,13 @@ def engine():
 
 @pytest.fixture(scope="session")
 def tables(engine):
-    Base.metadata.create_all(engine)
+    with engine.begin() as connection:
+        connection.exec_driver_sql("DROP SCHEMA public CASCADE")
+        connection.exec_driver_sql("CREATE SCHEMA public")
+
+    os.environ["DATABASE_URL"] = TEST_DATABASE_URL
+    command.upgrade(Config(ALEMBIC_INI), "head")
     yield
-    Base.metadata.drop_all(engine)
 
 
 @pytest.fixture

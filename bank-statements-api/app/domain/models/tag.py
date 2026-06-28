@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from uuid import uuid4
 
-from sqlalchemy import Column, DateTime, ForeignKey, String, Table
+from sqlalchemy import Column, DateTime, ForeignKey, Index, String, Table, func, text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
@@ -22,6 +22,8 @@ transaction_tags = Table(
         ForeignKey("tags.id", ondelete="CASCADE"),
         primary_key=True,
     ),
+    Index("ix_transaction_tags_tag_id", "tag_id"),
+    Index("ix_transaction_tags_transaction_id", "transaction_id"),
 )
 
 
@@ -37,7 +39,7 @@ class Tag(Base):
         index=True,
     )
     created_at = Column(
-        DateTime,
+        DateTime(timezone=True),
         default=lambda: datetime.now(timezone.utc),
         nullable=False,
     )
@@ -48,3 +50,5 @@ class Tag(Base):
         secondary=transaction_tags,
         back_populates="tags",
     )
+
+    __table_args__ = (Index("uq_tags_user_id_lower_name", "user_id", func.lower(text("name")), unique=True),)

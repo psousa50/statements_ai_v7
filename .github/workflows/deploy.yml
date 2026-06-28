@@ -73,6 +73,12 @@ jobs:
           DATABASE_URL: postgresql+psycopg://postgres:postgres@localhost:15432/bank_statements_test
         run: uv run alembic upgrade head
 
+      - name: Verify models and migrations are in sync
+        working-directory: bank-statements-api
+        env:
+          DATABASE_URL: postgresql+psycopg://postgres:postgres@localhost:15432/bank_statements_test
+        run: uv run alembic check
+
       - name: Run tests
         working-directory: bank-statements-api
         env:

@@ -1,7 +1,7 @@
 from enum import Enum as PyEnum
 from uuid import uuid4
 
-from sqlalchemy import Boolean, Column, Enum, ForeignKey, String
+from sqlalchemy import Boolean, Column, Enum, ForeignKey, Index, String
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
@@ -54,6 +54,8 @@ class Category(Base):
         remote_side=[id],
         backref="subcategories",
     )
+
+    __table_args__ = (Index("ix_categories_user_id_parent_id", "user_id", "parent_id"),)
 
     def __init__(self, **kwargs):
         kwargs.setdefault("kind", CategoryKind.EXPENSE)
