@@ -8,3 +8,5 @@ node_modules
 .DS_Store
 config/settings.*.yaml
 docs/reviews
+backups/
+*.dump
