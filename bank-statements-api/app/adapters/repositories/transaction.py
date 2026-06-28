@@ -1015,16 +1015,11 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         sort_direction: Optional[str] = None,
         uncategorized_only: bool = False,
     ) -> Tuple[List[Transaction], int, Decimal]:
-        from app.domain.models.enhancement_rule import MatchType
+        from app.adapters.repositories.enhancement_rule import build_pattern_match_filter
 
         filters = [Transaction.user_id == user_id]
 
-        if rule.match_type == MatchType.EXACT:
-            filters.append(Transaction.normalized_description == rule.normalized_description_pattern)
-        elif rule.match_type == MatchType.PREFIX:
-            filters.append(Transaction.normalized_description.like(f"{rule.normalized_description_pattern}%"))
-        elif rule.match_type == MatchType.INFIX:
-            filters.append(Transaction.normalized_description.like(f"%{rule.normalized_description_pattern}%"))
+        filters.append(build_pattern_match_filter(Transaction.normalized_description, rule.patterns))
 
         if rule.min_amount is not None:
             filters.append(Transaction.amount >= rule.min_amount)

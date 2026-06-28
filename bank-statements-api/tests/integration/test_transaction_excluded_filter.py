@@ -35,6 +35,7 @@ def _create_transaction(db_session, account, statement, **overrides):
         statement_id=statement.id,
         source_type=SourceType.UPLOAD,
         categorization_status=CategorizationStatus.UNCATEGORIZED,
+        row_index=0,
         sort_index=0,
         exclude_from_analytics=False,
     )
