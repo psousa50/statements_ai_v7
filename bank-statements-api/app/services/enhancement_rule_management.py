@@ -460,7 +460,7 @@ class EnhancementRuleManagementService:
             end_date=rule_preview.end_date,
             source=rule_preview.source,
         )
-        temp_rule.patterns = self._build_patterns(rule_preview.patterns)
+        temp_rule.patterns = self._build_patterns([pattern.model_dump() for pattern in rule_preview.patterns])
 
         count = self.transaction_repository.count_matching_rule(temp_rule)
 

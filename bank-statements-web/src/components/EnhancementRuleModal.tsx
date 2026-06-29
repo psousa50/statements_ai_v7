@@ -35,6 +35,7 @@ import IconButton from '@mui/material/IconButton'
 import Radio from '@mui/material/Radio'
 import AddIcon from '@mui/icons-material/Add'
 import DeleteIcon from '@mui/icons-material/Delete'
+import { getErrorMessage } from '../types/ApiError'
 import { Category } from '../types/Transaction'
 import { CategorySelector } from './CategorySelector'
 
@@ -271,7 +272,7 @@ export const EnhancementRuleModal: React.FC<EnhancementRuleModalProps> = ({
         setMatchingCount(count)
       } catch (err) {
         setMatchingCount(null)
-        setPreviewError(err instanceof Error ? err.message : 'Failed to fetch preview')
+        setPreviewError(getErrorMessage(err))
       } finally {
         setFetchingCount(false)
       }
