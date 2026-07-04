@@ -1,6 +1,7 @@
 import React from 'react'
 import {
   Box,
+  Button,
   FormControl,
   MenuItem,
   Paper,
@@ -15,6 +16,8 @@ import {
   SelectChangeEvent,
   useTheme,
 } from '@mui/material'
+
+const DEFAULT_VISIBLE_ROWS = 10
 
 interface ColumnMappingTableProps {
   sampleData: string[][]
@@ -36,6 +39,14 @@ export const ColumnMappingTable: React.FC<ColumnMappingTableProps> = ({
   onDataStartRowIndexChange,
 }) => {
   const theme = useTheme()
+  const [showAllRows, setShowAllRows] = React.useState(false)
+
+  // Keep the header and data-start rows visible even when collapsed
+  const visibleRowCount = showAllRows
+    ? sampleData.length
+    : Math.min(sampleData.length, Math.max(DEFAULT_VISIBLE_ROWS, headerRowIndex + 1, dataStartRowIndex + 1))
+
+  const hiddenRowCount = sampleData.length - visibleRowCount
 
   // Get the number of columns from the sample data
   const columns = React.useMemo(() => {
@@ -87,7 +98,7 @@ export const ColumnMappingTable: React.FC<ColumnMappingTableProps> = ({
 
   // Display all rows including the first row with account information
   const renderTableRows = () => {
-    return sampleData.map((row, rowIndex) => {
+    return sampleData.slice(0, visibleRowCount).map((row, rowIndex) => {
       // Highlight the header and data start rows based on the props values, not metadata
       const isHeaderRow = rowIndex === headerRowIndex
       const isDataStartRow = rowIndex === dataStartRowIndex
@@ -277,6 +288,14 @@ export const ColumnMappingTable: React.FC<ColumnMappingTableProps> = ({
           <TableBody>{renderTableRows()}</TableBody>
         </Table>
       </TableContainer>
+
+      {(hiddenRowCount > 0 || showAllRows) && sampleData.length > DEFAULT_VISIBLE_ROWS && (
+        <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
+          <Button variant="text" size="small" onClick={() => setShowAllRows((prev) => !prev)}>
+            {showAllRows ? 'Show less' : `Show more (${hiddenRowCount} more)`}
+          </Button>
+        </Box>
+      )}
     </Box>
   )
 }
