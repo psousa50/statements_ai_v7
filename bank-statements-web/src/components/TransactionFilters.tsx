@@ -52,7 +52,6 @@ interface TransactionFiltersProps {
   onExcludedOnlyChange?: (excludedOnly: boolean) => void
   onClearFilters: () => void
   filterPresets?: FilterPreset[]
-  filterPresetsLoading?: boolean
   currentPresetName?: string
   onSavePreset?: (name: string, isRelative: boolean) => Promise<void>
   onLoadPreset?: (preset: FilterPreset) => void
@@ -93,7 +92,6 @@ export const TransactionFilters = ({
   onExcludedOnlyChange,
   onClearFilters,
   filterPresets = [],
-  filterPresetsLoading = false,
   currentPresetName,
   onSavePreset,
   onLoadPreset,
@@ -175,13 +173,12 @@ export const TransactionFilters = ({
       <div className="filter-header" onClick={handleHeaderClick}>
         <h3>Filters</h3>
         <div className="filter-header-actions">
-          {onLoadPreset && (
+          {onLoadPreset && filterPresets.length > 0 && (
             <div className="preset-dropdown-container">
               <StyledSelect
                 onChange={handleLoadPreset}
-                disabled={filterPresetsLoading || filterPresets.length === 0}
                 value={filterPresets.find((p) => p.name === currentPresetName)?.id ?? ''}
-                placeholder={filterPresetsLoading ? 'Loading...' : 'Load preset...'}
+                placeholder="Load preset..."
                 options={filterPresets.map((preset) => ({
                   value: preset.id,
                   label: preset.name,

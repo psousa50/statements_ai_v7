@@ -164,7 +164,6 @@ export const TransactionsPage = () => {
   const [editingTransaction, setEditingTransaction] = useState<Transaction | undefined>(undefined)
   const [isExporting, setIsExporting] = useState(false)
   const [filterPresets, setFilterPresets] = useState<FilterPreset[]>([])
-  const [filterPresetsLoading, setFilterPresetsLoading] = useState(false)
   const [currentPresetName, setCurrentPresetName] = useState<string | undefined>(undefined)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
 
@@ -206,14 +205,11 @@ export const TransactionsPage = () => {
 
   useEffect(() => {
     const fetchPresets = async () => {
-      setFilterPresetsLoading(true)
       try {
         const presets = await apiClient.filterPresets.getAll()
         setFilterPresets(presets)
       } catch {
         console.error('Failed to fetch filter presets')
-      } finally {
-        setFilterPresetsLoading(false)
       }
     }
     fetchPresets()
@@ -908,7 +904,6 @@ export const TransactionsPage = () => {
               onExcludedOnlyChange={handleExcludedOnlyFilter}
               onClearFilters={handleClearFilters}
               filterPresets={filterPresets}
-              filterPresetsLoading={filterPresetsLoading}
               currentPresetName={currentPresetName}
               onSavePreset={handleSavePreset}
               onLoadPreset={handleLoadPreset}
