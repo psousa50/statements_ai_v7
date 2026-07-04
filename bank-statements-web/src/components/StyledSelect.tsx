@@ -118,8 +118,16 @@ export const StyledSelect = ({ value, onChange, options, disabled = false, id, p
         aria-haspopup="listbox"
         aria-expanded={isOpen}
       >
-        <span className={`styled-select-value ${!selectedOption && placeholder ? 'placeholder' : ''}`}>
-          {displayLabel}
+        <span className="styled-select-value-wrap">
+          <span className={`styled-select-value ${!selectedOption && placeholder ? 'placeholder' : ''}`}>
+            {displayLabel}
+          </span>
+          <span className="styled-select-sizer" aria-hidden="true">
+            {placeholder && <span>{placeholder}</span>}
+            {options.map((opt) => (
+              <span key={opt.value}>{opt.label}</span>
+            ))}
+          </span>
         </span>
         <KeyboardArrowDownIcon className={`styled-select-icon ${isOpen ? 'rotated' : ''}`} fontSize="small" />
       </button>
