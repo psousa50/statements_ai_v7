@@ -15,6 +15,7 @@ import { CategoryTotalsBarChart } from '../components/CategoryTotalsBarChart'
 import { Category } from '../types/Transaction'
 import { TransactionFilters as FilterType } from '../api/TransactionClient'
 import { getCategoryColor } from '../utils/categoryColors'
+import { formatCurrency } from '../utils/format'
 import './ChartsPage.css'
 
 interface ChartData {
@@ -118,6 +119,11 @@ export const ChartsPage = () => {
 
   const { categories, loading: categoriesLoading, error: categoriesError } = useCategories()
   const { accounts, loading: accountsLoading, error: accountsError } = useAccounts()
+
+  const displayCurrency = useMemo(() => {
+    if (!filters.account_id) return 'EUR'
+    return accounts?.find((a) => a.id === filters.account_id)?.currency ?? 'EUR'
+  }, [accounts, filters.account_id])
 
   const loading =
     categoryTotalsLoading || categoriesLoading || accountsLoading || timeSeriesLoading || incomeSpendingLoading
@@ -706,7 +712,7 @@ export const ChartsPage = () => {
           dominantBaseline="central"
           fontSize={10}
         >
-          ${value.toFixed(0)} ({(percent * 100).toFixed(1)}%)
+          {formatCurrency(value, displayCurrency, 0)} ({(percent * 100).toFixed(1)}%)
         </text>
       </g>
     )
@@ -852,7 +858,7 @@ export const ChartsPage = () => {
               {!loading && viewMode !== 'income-spending' && (
                 <div className="chart-stats">
                   <span className="stat">
-                    <strong>Total Amount:</strong> ${totalAmount.toFixed(2)}
+                    <strong>Total Amount:</strong> {formatCurrency(totalAmount, displayCurrency)}
                   </span>
                   <span className="stat">
                     <strong>Transactions:</strong> {totalTransactions}
@@ -982,7 +988,7 @@ export const ChartsPage = () => {
                       formatter={(value: number, _name: string, props: unknown) => {
                         const payload = (props as { payload: ChartData }).payload
                         return [
-                          [`$${value.toFixed(2)}`, 'Amount'],
+                          [formatCurrency(value, displayCurrency), 'Amount'],
                           [`${payload.count} transactions`, 'Count'],
                         ]
                       }}
@@ -1012,6 +1018,7 @@ export const ChartsPage = () => {
               <div className="bar-chart-wrapper">
                 <CategoryTotalsBarChart
                   data={visibleChartData}
+                  currency={displayCurrency}
                   loading={loading}
                   onBarClick={handleChartClick}
                   noDataMessage={noDataMessage}

@@ -1,4 +1,5 @@
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts'
+import { formatCurrency } from '../utils/format'
 
 interface ChartData {
   name: string
@@ -15,12 +16,19 @@ interface NoDataMessage {
 
 interface CategoryTotalsBarChartProps {
   data: ChartData[]
+  currency: string
   loading?: boolean
   onBarClick?: (data: ChartData, modifiers: { shiftKey: boolean }) => void
   noDataMessage?: NoDataMessage
 }
 
-export const CategoryTotalsBarChart = ({ data, loading, onBarClick, noDataMessage }: CategoryTotalsBarChartProps) => {
+export const CategoryTotalsBarChart = ({
+  data,
+  currency,
+  loading,
+  onBarClick,
+  noDataMessage,
+}: CategoryTotalsBarChartProps) => {
   if (loading) {
     return <div className="loading-indicator">Loading chart data...</div>
   }
@@ -51,7 +59,7 @@ export const CategoryTotalsBarChart = ({ data, loading, onBarClick, noDataMessag
             type="number"
             stroke="var(--text-muted)"
             style={{ fontSize: 12 }}
-            tickFormatter={(value) => `$${value.toLocaleString()}`}
+            tickFormatter={(value) => formatCurrency(value, currency, 0)}
             axisLine={{ stroke: 'rgba(255, 255, 255, 0.1)' }}
             tickLine={{ stroke: 'rgba(255, 255, 255, 0.1)' }}
           />
@@ -83,7 +91,7 @@ export const CategoryTotalsBarChart = ({ data, loading, onBarClick, noDataMessag
                 >
                   <div style={{ color: '#f1f5f9', fontWeight: 600, marginBottom: '4px' }}>{data.name}</div>
                   <div style={{ color: '#f1f5f9', fontSize: '16px', fontWeight: 600 }}>
-                    ${data.value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    {formatCurrency(data.value, currency)}
                   </div>
                   <div style={{ color: '#94a3b8', fontSize: '12px', marginTop: '4px' }}>{data.count} transactions</div>
                 </div>
