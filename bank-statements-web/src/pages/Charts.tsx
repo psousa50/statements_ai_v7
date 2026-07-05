@@ -16,6 +16,8 @@ import { Category } from '../types/Transaction'
 import { TransactionFilters as FilterType } from '../api/TransactionClient'
 import { getCategoryColor } from '../utils/categoryColors'
 import { formatCurrency } from '../utils/format'
+
+const INCOME_SPENDING_KINDS = 'expense,income,reimbursable'
 import './ChartsPage.css'
 
 interface ChartData {
@@ -117,6 +119,12 @@ export const ChartsPage = () => {
     fetchIncomeSpendingTimeSeries,
   } = useIncomeSpendingTimeSeries()
 
+  const fetchIncomeSpending = useCallback(
+    (period: 'month' | 'week' | 'day', chartFilters: Omit<FilterType, 'page' | 'page_size'>) =>
+      fetchIncomeSpendingTimeSeries(period, { ...chartFilters, kinds: INCOME_SPENDING_KINDS }),
+    [fetchIncomeSpendingTimeSeries]
+  )
+
   const { categories, loading: categoriesLoading, error: categoriesError } = useCategories()
   const { accounts, loading: accountsLoading, error: accountsError } = useAccounts()
 
@@ -168,7 +176,7 @@ export const ChartsPage = () => {
         fetchCategoryTotals(updatedFilters)
         if (viewMode === 'income-spending') {
           const period = detectPeriod(updatedFilters.start_date, updatedFilters.end_date)
-          fetchIncomeSpendingTimeSeries(period, updatedFilters)
+          fetchIncomeSpending(period, updatedFilters)
         }
       }
     }, 500) // 500ms debounce
@@ -186,7 +194,7 @@ export const ChartsPage = () => {
     localEndDate,
     filters,
     fetchCategoryTotals,
-    fetchIncomeSpendingTimeSeries,
+    fetchIncomeSpending,
     detectPeriod,
     viewMode,
     transactionType,
@@ -220,10 +228,10 @@ export const ChartsPage = () => {
       fetchCategoryTotals(updatedFilters)
       if (viewMode === 'income-spending') {
         const period = detectPeriod(updatedFilters.start_date, updatedFilters.end_date)
-        fetchIncomeSpendingTimeSeries(period, updatedFilters)
+        fetchIncomeSpending(period, updatedFilters)
       }
     },
-    [filters, fetchCategoryTotals, fetchIncomeSpendingTimeSeries, viewMode, detectPeriod]
+    [filters, fetchCategoryTotals, fetchIncomeSpending, viewMode, detectPeriod]
   )
 
   // Immediate updates (no debouncing needed)
@@ -752,10 +760,10 @@ export const ChartsPage = () => {
         fetchCategoryTimeSeries(undefined, timeSeriesPeriod, currentFilters)
       } else if (mode === 'income-spending') {
         const period = detectPeriod(currentFilters.start_date, currentFilters.end_date)
-        fetchIncomeSpendingTimeSeries(period, currentFilters)
+        fetchIncomeSpending(period, currentFilters)
       }
     },
-    [timeSeriesPeriod, getCurrentFilters, fetchCategoryTimeSeries, fetchIncomeSpendingTimeSeries, detectPeriod]
+    [timeSeriesPeriod, getCurrentFilters, fetchCategoryTimeSeries, fetchIncomeSpending, detectPeriod]
   )
 
   const handlePeriodChange = useCallback(
