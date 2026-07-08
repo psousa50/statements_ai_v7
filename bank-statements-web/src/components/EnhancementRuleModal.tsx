@@ -44,7 +44,7 @@ interface EnhancementRuleModalProps {
   rule?: EnhancementRule // undefined for create, defined for edit
   duplicateData?: Partial<EnhancementRule> // data to pre-fill when duplicating
   onClose: () => void
-  onSuccess: () => void
+  onSuccess: (result: { rule: EnhancementRule; isEditing: boolean }) => void
 }
 
 type AmountType = 'all' | 'debit' | 'credit'
@@ -408,6 +408,7 @@ export const EnhancementRuleModal: React.FC<EnhancementRuleModalProps> = ({
           sort_order: i,
         }))
 
+      let savedRule: EnhancementRule
       if (isEditing && rule) {
         const updateData: EnhancementRuleUpdate = {
           ...formData,
@@ -416,7 +417,7 @@ export const EnhancementRuleModal: React.FC<EnhancementRuleModalProps> = ({
           apply_to_existing: applyToExisting,
           split_lines: serializedSplitLines(),
         }
-        await updateRule(rule.id, updateData)
+        savedRule = await updateRule(rule.id, updateData)
       } else {
         const cleanedData: EnhancementRuleCreate = {
           patterns: cleanPatterns,
@@ -434,7 +435,7 @@ export const EnhancementRuleModal: React.FC<EnhancementRuleModalProps> = ({
         const splits = serializedSplitLines()
         if (splits) cleanedData.split_lines = splits
 
-        await createRule(cleanedData)
+        savedRule = await createRule(cleanedData)
       }
 
       if (createEmptyCopy && hasConstraints()) {
@@ -445,7 +446,7 @@ export const EnhancementRuleModal: React.FC<EnhancementRuleModalProps> = ({
         await createRule(emptyCopyData)
       }
 
-      onSuccess()
+      onSuccess({ rule: savedRule, isEditing })
       handleClose()
     } catch (err) {
       console.error(`Failed to ${isEditing ? 'update' : 'create'} enhancement rule:`, err)

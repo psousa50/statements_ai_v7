@@ -27,6 +27,7 @@ import { EnhancementRuleFiltersComponent } from '../components/EnhancementRuleFi
 import { EnhancementRuleModal } from '../components/EnhancementRuleModal'
 import { Pagination } from '../components/Pagination'
 import './EnhancementRules.css'
+import { ruleHiddenReason } from '../utils/enhancementRuleVisibility'
 
 export const EnhancementRules: React.FC = () => {
   const apiClient = useApi()
@@ -176,11 +177,19 @@ export const EnhancementRules: React.FC = () => {
     }
   }
 
-  const handleModalSuccess = () => {
+  const handleModalSuccess = ({ rule, isEditing }: { rule: EnhancementRule; isEditing: boolean }) => {
     setModalOpen(false)
     setSelectedRule(null)
     setDuplicateData(null)
     loadRules()
+
+    const hiddenReason = ruleHiddenReason(rule, filters)
+    const base = isEditing ? 'Rule updated.' : 'Rule created.'
+    setSnackbar({
+      open: true,
+      message: hiddenReason ? `${base} It's hidden by ${hiddenReason}.` : base,
+      severity: 'success',
+    })
   }
 
   const handleModalClose = () => {
