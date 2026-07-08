@@ -37,6 +37,7 @@ import AddIcon from '@mui/icons-material/Add'
 import DeleteIcon from '@mui/icons-material/Delete'
 import { getErrorMessage } from '../types/ApiError'
 import { Category } from '../types/Transaction'
+import { buildPreviewMessage } from '../utils/enhancementRulePreviewMessage'
 import { CategorySelector } from './CategorySelector'
 
 interface EnhancementRuleModalProps {
@@ -837,36 +838,31 @@ export const EnhancementRuleModal: React.FC<EnhancementRuleModalProps> = ({
               )}
 
               {/* Show results */}
-              {!fetchingCount && !previewError && matchingCount && (
-                <Alert
-                  severity={isEditing && applyToExisting && matchingCount.count > 0 ? 'warning' : 'info'}
-                  sx={{ mt: 1 }}
-                >
-                  {matchingCount.count > 0 ? (
-                    <>
-                      {isEditing && applyToExisting ? '⚠️' : '📊'} This rule would{' '}
-                      {isEditing && applyToExisting ? 'update' : 'match'} <strong>{matchingCount.count}</strong>{' '}
-                      existing transactions.
-                      <br />
-                      <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-                        {isEditing && applyToExisting
-                          ? "Only transactions that haven't been manually categorized will be updated."
-                          : isEditing
-                            ? 'These transactions could be updated if you apply changes to existing transactions.'
-                            : 'These transactions will be enhanced when you create this rule.'}
-                      </Typography>
-                    </>
-                  ) : (
-                    <>
-                      📊 No existing transactions match this rule pattern.
-                      <br />
-                      <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-                        This rule will only apply to future transactions.
-                      </Typography>
-                    </>
-                  )}
-                </Alert>
-              )}
+              {!fetchingCount &&
+                !previewError &&
+                matchingCount &&
+                (() => {
+                  const message = buildPreviewMessage({
+                    matchCount: matchingCount.match_count ?? matchingCount.count,
+                    wouldUpdate: matchingCount.count,
+                    isEditing,
+                    applyToExisting,
+                    hasAction: !!(formData.category_id || formData.counterparty_account_id),
+                  })
+                  return (
+                    <Alert severity={message.severity} sx={{ mt: 1 }}>
+                      {message.primary}
+                      {message.secondary && (
+                        <>
+                          <br />
+                          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                            {message.secondary}
+                          </Typography>
+                        </>
+                      )}
+                    </Alert>
+                  )
+                })()}
             </>
           )}
 

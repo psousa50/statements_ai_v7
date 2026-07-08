@@ -738,6 +738,7 @@ class EnhancementRuleStatsResponse(BaseModel):
 
 class MatchingTransactionsCountResponse(BaseModel):
     count: int
+    match_count: Optional[int] = None
     date_range: Optional[Tuple[str, str]] = None
     amount_range: Optional[Tuple[float, float]] = None
 

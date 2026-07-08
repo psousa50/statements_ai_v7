@@ -448,10 +448,9 @@ class EnhancementRuleManagementService:
         if not rule:
             raise ValueError(f"Enhancement rule with ID {rule_id} not found")
 
-        count = self.transaction_repository.count_rule_would_update(rule)
-
         return {
-            "count": count,
+            "count": self.transaction_repository.count_rule_would_update(rule),
+            "match_count": self.transaction_repository.count_matching_rule(rule),
             "date_range": None,
             "amount_range": None,
         }
@@ -479,10 +478,9 @@ class EnhancementRuleManagementService:
         )
         temp_rule.patterns = self._build_patterns([pattern.model_dump() for pattern in rule_preview.patterns])
 
-        count = self.transaction_repository.count_rule_would_update(temp_rule)
-
         return {
-            "count": count,
+            "count": self.transaction_repository.count_rule_would_update(temp_rule),
+            "match_count": self.transaction_repository.count_matching_rule(temp_rule),
             "date_range": None,
             "amount_range": None,
         }

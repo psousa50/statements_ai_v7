@@ -93,6 +93,7 @@ export interface EnhancementRuleUpdate {
 
 export interface MatchingTransactionsCountResponse {
   count: number
+  match_count?: number
   date_range?: [string, string]
   amount_range?: [number, number]
 }
