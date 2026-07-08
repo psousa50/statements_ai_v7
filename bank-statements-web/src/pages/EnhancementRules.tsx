@@ -74,6 +74,9 @@ export const EnhancementRules: React.FC = () => {
   const [applyMatchingCount, setApplyMatchingCount] = useState<number>(0)
   const [applyLoading, setApplyLoading] = useState(false)
 
+  const [deletingRule, setDeletingRule] = useState<EnhancementRule | null>(null)
+  const [deleteLoading, setDeleteLoading] = useState(false)
+
   const bottomPaginationRef = useRef<HTMLDivElement>(null)
   const [isBottomPaginationVisible, setIsBottomPaginationVisible] = useState(true)
 
@@ -167,12 +170,24 @@ export const EnhancementRules: React.FC = () => {
     setModalOpen(true)
   }
 
-  const handleDeleteRule = async (id: string) => {
+  const handleDeleteRule = (id: string) => {
+    const rule = rules.find((r) => r.id === id)
+    if (rule) setDeletingRule(rule)
+  }
+
+  const handleDeleteConfirm = async () => {
+    if (!deletingRule) return
+    setDeleteLoading(true)
     try {
-      await deleteRule(id)
+      await deleteRule(deletingRule.id)
       await loadRules()
+      setSnackbar({ open: true, message: 'Rule deleted.', severity: 'success' })
     } catch (err) {
       console.error('Failed to delete enhancement rule:', err)
+      setSnackbar({ open: true, message: 'Failed to delete rule.', severity: 'error' })
+    } finally {
+      setDeleteLoading(false)
+      setDeletingRule(null)
     }
   }
 
@@ -457,6 +472,31 @@ export const EnhancementRules: React.FC = () => {
         onClose={handleModalClose}
         onSuccess={handleModalSuccess}
       />
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={!!deletingRule} onClose={() => !deleteLoading && setDeletingRule(null)}>
+        <DialogTitle>Delete Enhancement Rule</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Delete the rule <strong>{deletingRule?.patterns?.[0]?.normalized_description ?? 'this rule'}</strong>? This
+            cannot be undone.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeletingRule(null)} disabled={deleteLoading}>
+            Cancel
+          </Button>
+          <Button
+            onClick={handleDeleteConfirm}
+            color="error"
+            variant="contained"
+            disabled={deleteLoading}
+            startIcon={deleteLoading ? <CircularProgress size={16} /> : undefined}
+          >
+            {deleteLoading ? 'Deleting...' : 'Delete'}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Cleanup Confirmation Dialog */}
       <Dialog open={cleanupDialogOpen} onClose={() => setCleanupDialogOpen(false)}>
