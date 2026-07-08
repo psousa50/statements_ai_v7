@@ -37,6 +37,7 @@ import AddIcon from '@mui/icons-material/Add'
 import DeleteIcon from '@mui/icons-material/Delete'
 import { getErrorMessage } from '../types/ApiError'
 import { Category } from '../types/Transaction'
+import { hasRuleConstraints } from '../utils/enhancementRuleConstraints'
 import { buildPreviewMessage } from '../utils/enhancementRulePreviewMessage'
 import { CategorySelector } from './CategorySelector'
 
@@ -297,14 +298,13 @@ export const EnhancementRuleModal: React.FC<EnhancementRuleModalProps> = ({
     apiClient,
   ])
 
-  const hasConstraints = () => {
-    return !!(
-      displayMinAmount !== undefined ||
-      displayMaxAmount !== undefined ||
-      formData.start_date ||
-      formData.end_date
-    )
-  }
+  const hasConstraints = () =>
+    hasRuleConstraints({
+      displayMinAmount,
+      displayMaxAmount,
+      startDate: formData.start_date,
+      endDate: formData.end_date,
+    })
 
   const validateForm = () => {
     const errors: Record<string, string> = {}
