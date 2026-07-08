@@ -185,7 +185,7 @@ class EnhancementRuleManagementService:
         updated_rule = self.enhancement_rule_repository.save(rule)
 
         if apply_to_existing:
-            self.apply_rule_to_existing_transactions(rule_id, user_id)
+            updated_rule.applied_transaction_count = self.apply_rule_to_existing_transactions(rule_id, user_id)
 
         return updated_rule
 
@@ -488,7 +488,7 @@ class EnhancementRuleManagementService:
         }
 
     def apply_rule_to_existing_transactions(self, rule_id: UUID, user_id: UUID) -> int:
-        from app.domain.models.transaction import CategorizationStatus, CounterpartyStatus
+        from app.domain.models.transaction import CategorizationStatus, CounterpartyStatus, Transaction
 
         rule = self.enhancement_rule_repository.find_by_id(rule_id, user_id)
         if not rule:
@@ -506,6 +506,8 @@ class EnhancementRuleManagementService:
 
             if not matching_transactions:
                 break
+
+            changed: List[Transaction] = []
 
             for transaction in matching_transactions:
                 if has_split_template and transaction.parent_transaction_id is None:
@@ -535,8 +537,10 @@ class EnhancementRuleManagementService:
                     updated = True
 
                 if updated:
-                    self.transaction_repository.update(transaction)
+                    changed.append(transaction)
                     total_updated += 1
+
+            self.transaction_repository.save_all(changed)
 
             page += 1
 

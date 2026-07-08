@@ -496,6 +496,12 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         self.db_session.refresh(transaction)
         return transaction
 
+    def save_all(self, transactions: List[Transaction]) -> None:
+        if not transactions:
+            return
+        self.db_session.add_all(transactions)
+        self.db_session.commit()
+
     def delete(self, transaction_id: UUID, user_id: UUID) -> bool:
         transaction = self.get_by_id(transaction_id, user_id)
         if transaction:

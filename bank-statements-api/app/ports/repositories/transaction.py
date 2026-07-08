@@ -145,6 +145,11 @@ class TransactionRepository(ABC):
         pass
 
     @abstractmethod
+    def save_all(self, transactions: List[Transaction]) -> None:
+        """Persist attribute changes for many already-tracked transactions in a single commit"""
+        pass
+
+    @abstractmethod
     def delete(self, transaction_id: UUID, user_id: UUID) -> bool:
         pass
 

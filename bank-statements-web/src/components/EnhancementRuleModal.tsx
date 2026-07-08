@@ -929,7 +929,9 @@ export const EnhancementRuleModal: React.FC<EnhancementRuleModalProps> = ({
         >
           {loading
             ? isEditing
-              ? 'Saving...'
+              ? applyToExisting && matchingCount && matchingCount.count > 0
+                ? `Applying to ${matchingCount.count} transactions...`
+                : 'Saving...'
               : 'Creating...'
             : isEditing
               ? applyToExisting && matchingCount && matchingCount.count > 0

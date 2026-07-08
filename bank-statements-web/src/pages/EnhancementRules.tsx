@@ -183,13 +183,19 @@ export const EnhancementRules: React.FC = () => {
     setDuplicateData(null)
     loadRules()
 
+    const parts = [isEditing ? 'Rule updated.' : 'Rule created.']
+
+    if (typeof rule.applied_transaction_count === 'number') {
+      const n = rule.applied_transaction_count
+      parts.push(n === 1 ? 'Applied to 1 transaction.' : `Applied to ${n} transactions.`)
+    }
+
     const hiddenReason = ruleHiddenReason(rule, filters)
-    const base = isEditing ? 'Rule updated.' : 'Rule created.'
-    setSnackbar({
-      open: true,
-      message: hiddenReason ? `${base} It's hidden by ${hiddenReason}.` : base,
-      severity: 'success',
-    })
+    if (hiddenReason) {
+      parts.push(`It's hidden by ${hiddenReason}.`)
+    }
+
+    setSnackbar({ open: true, message: parts.join(' '), severity: 'success' })
   }
 
   const handleModalClose = () => {

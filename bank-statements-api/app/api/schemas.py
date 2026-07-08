@@ -703,6 +703,8 @@ class EnhancementRuleResponse(BaseModel):
     transaction_count: Optional[int] = None
     pending_transaction_count: Optional[int] = None
     latest_match_date: Optional[date] = None
+    # Number of existing transactions updated when apply_to_existing was requested
+    applied_transaction_count: Optional[int] = None
     # AI suggestion fields
     ai_suggested_category_id: Optional[UUID] = None
     ai_category_confidence: Optional[Decimal] = None

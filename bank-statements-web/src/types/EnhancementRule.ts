@@ -51,6 +51,7 @@ export interface EnhancementRule {
   transaction_count?: number
   pending_transaction_count?: number
   latest_match_date?: string
+  applied_transaction_count?: number
   // AI suggestion fields
   ai_suggested_category_id?: string
   ai_category_confidence?: number
