@@ -162,7 +162,7 @@ class EnhancementRuleManagementService:
         if min_amount is not None and max_amount is not None and min_amount > max_amount:
             raise ValueError("min_amount cannot be greater than max_amount")
 
-        rule.patterns = self._build_patterns(patterns)
+        self._reconcile_patterns(rule, patterns)
         rule.category_id = category_id
         rule.counterparty_account_id = counterparty_account_id
         rule.min_amount = min_amount
@@ -333,6 +333,23 @@ class EnhancementRuleManagementService:
             )
             seen.add(normalized)
         return built
+
+    def _reconcile_patterns(self, rule: EnhancementRule, patterns: List[Dict[str, Any]]) -> None:
+        desired = self._build_patterns(patterns)
+        desired_by_desc = {p.normalized_description: p for p in desired}
+        existing_by_desc = {p.normalized_description: p for p in rule.patterns}
+
+        for existing in list(rule.patterns):
+            if existing.normalized_description not in desired_by_desc:
+                rule.patterns.remove(existing)
+
+        for pattern in desired:
+            existing = existing_by_desc.get(pattern.normalized_description)
+            if existing is not None:
+                existing.match_type = pattern.match_type
+                existing.sort_order = pattern.sort_order
+            else:
+                rule.patterns.append(pattern)
 
     def _build_split_lines(self, lines: List[Dict[str, Any]], user_id: UUID) -> List[EnhancementRuleSplitLine]:
         if not lines:
