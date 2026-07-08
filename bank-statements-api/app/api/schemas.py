@@ -736,6 +736,14 @@ class EnhancementRuleStatsResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class NormalizeDescriptionsRequest(BaseModel):
+    descriptions: List[str]
+
+
+class NormalizeDescriptionsResponse(BaseModel):
+    normalized: List[str]
+
+
 class MatchingTransactionsCountResponse(BaseModel):
     count: int
     match_count: Optional[int] = None

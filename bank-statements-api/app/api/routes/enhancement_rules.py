@@ -19,7 +19,10 @@ from app.api.schemas import (
     EnhancementRuleStatsResponse,
     EnhancementRuleUpdate,
     MatchingTransactionsCountResponse,
+    NormalizeDescriptionsRequest,
+    NormalizeDescriptionsResponse,
 )
+from app.common.text_normalization import normalize_description
 from app.core.config import settings
 from app.core.dependencies import InternalDependencies
 from app.domain.models.enhancement_rule import EnhancementRuleSource, MatchType
@@ -186,6 +189,15 @@ def register_enhancement_rule_routes(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Failed to preview matching transactions count: {str(e)}",
             )
+
+    @router.post("/normalize-descriptions", response_model=NormalizeDescriptionsResponse)
+    def normalize_descriptions(
+        request: NormalizeDescriptionsRequest,
+        current_user: User = Depends(require_current_user),
+    ) -> NormalizeDescriptionsResponse:
+        return NormalizeDescriptionsResponse(
+            normalized=[normalize_description(description) for description in request.descriptions]
+        )
 
     @router.get("/{rule_id}", response_model=EnhancementRuleResponse)
     def get_enhancement_rule(

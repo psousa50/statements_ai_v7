@@ -323,6 +323,7 @@ const defaultEnhancementRuleClient: EnhancementRuleClient = {
   getById: () => Promise.reject(new Error('Not implemented')),
   getMatchingTransactionsCount: () => Promise.resolve({ count: 0 }),
   previewMatchingTransactionsCount: () => Promise.resolve({ count: 0 }),
+  normalizeDescriptions: (descriptions: string[]) => Promise.resolve(descriptions.map((d) => d.trim().toLowerCase())),
   create: () => Promise.reject(new Error('Not implemented')),
   update: () => Promise.reject(new Error('Not implemented')),
   delete: () => Promise.resolve(),

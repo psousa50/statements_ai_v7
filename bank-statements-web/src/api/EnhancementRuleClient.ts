@@ -19,6 +19,7 @@ export interface EnhancementRuleClient {
   getById(id: string): Promise<EnhancementRule>
   getMatchingTransactionsCount(id: string): Promise<MatchingTransactionsCountResponse>
   previewMatchingTransactionsCount(data: EnhancementRuleCreate): Promise<MatchingTransactionsCountResponse>
+  normalizeDescriptions(descriptions: string[]): Promise<string[]>
   create(data: EnhancementRuleCreate): Promise<EnhancementRule>
   update(id: string, data: EnhancementRuleUpdate): Promise<EnhancementRule>
   delete(id: string): Promise<void>
@@ -103,6 +104,13 @@ export const enhancementRuleClient: EnhancementRuleClient = {
       data
     )
     return response.data
+  },
+
+  async normalizeDescriptions(descriptions: string[]) {
+    const response = await axiosInstance.post<{ normalized: string[] }>(`${API_URL}/normalize-descriptions`, {
+      descriptions,
+    })
+    return response.data.normalized
   },
 
   async create(data: EnhancementRuleCreate) {

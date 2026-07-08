@@ -128,6 +128,7 @@ export const EnhancementRuleModal: React.FC<EnhancementRuleModalProps> = ({
   const [matchingCount, setMatchingCount] = useState<MatchingTransactionsCountResponse | null>(null)
   const [fetchingCount, setFetchingCount] = useState(false)
   const [previewError, setPreviewError] = useState<string | null>(null)
+  const [normalizedCache, setNormalizedCache] = useState<Record<string, string>>({})
 
   // State for creating empty copy
   const [createEmptyCopy, setCreateEmptyCopy] = useState(true)
@@ -298,6 +299,31 @@ export const EnhancementRuleModal: React.FC<EnhancementRuleModalProps> = ({
     apiClient,
   ])
 
+  // Fetch how the backend will normalise each typed description, so users can see
+  // that numbers/symbols are stripped instead of their edits silently vanishing.
+  useEffect(() => {
+    if (!open) return
+    const raws = Array.from(new Set(patterns.map((p) => p.normalized_description.trim()).filter(Boolean)))
+    const unknown = raws.filter((raw) => normalizedCache[raw] === undefined)
+    if (unknown.length === 0) return
+
+    const handle = setTimeout(async () => {
+      try {
+        const normalized = await apiClient.enhancementRules.normalizeDescriptions(unknown)
+        setNormalizedCache((prev) => {
+          const next = { ...prev }
+          unknown.forEach((raw, i) => {
+            next[raw] = normalized[i]
+          })
+          return next
+        })
+      } catch {
+        // best-effort preview; ignore failures
+      }
+    }, 400)
+    return () => clearTimeout(handle)
+  }, [open, patterns, normalizedCache, apiClient])
+
   const hasConstraints = () =>
     hasRuleConstraints({
       displayMinAmount,
@@ -312,6 +338,9 @@ export const EnhancementRuleModal: React.FC<EnhancementRuleModalProps> = ({
     const cleanPatterns = patterns.filter((p) => p.normalized_description.trim())
     if (cleanPatterns.length === 0) {
       errors.patterns = 'At least one pattern is required'
+    } else if (cleanPatterns.some((p) => normalizedCache[p.normalized_description.trim()] === '')) {
+      errors.patterns =
+        'A description has no matchable text — numbers, dates and symbols are ignored. Use letters or words.'
     } else {
       const seen = new Set<string>()
       for (const p of cleanPatterns) {
@@ -544,46 +573,58 @@ export const EnhancementRuleModal: React.FC<EnhancementRuleModalProps> = ({
           </Box>
 
           <Stack spacing={1}>
-            {patterns.map((pattern, idx) => (
-              <Stack key={idx} direction="row" spacing={1} alignItems="center">
-                <TextField
-                  size="small"
-                  label="Description"
-                  value={pattern.normalized_description}
-                  onChange={(e) =>
-                    setPatterns((prev) =>
-                      prev.map((p, i) => (i === idx ? { ...p, normalized_description: e.target.value } : p))
-                    )
-                  }
-                  sx={{ flex: 3 }}
-                  autoFocus={!isEditing && idx === 0}
-                />
-                <FormControl size="small" sx={{ flex: 1, minWidth: 130 }}>
-                  <InputLabel>Match</InputLabel>
-                  <Select
-                    value={pattern.match_type}
-                    label="Match"
+            {patterns.map((pattern, idx) => {
+              const raw = pattern.normalized_description.trim()
+              const normalized = raw ? normalizedCache[raw] : undefined
+              const noMatchableText = raw !== '' && normalized === ''
+              const helperText = noMatchableText
+                ? 'No matchable text — numbers, dates and symbols are ignored. Use letters or words.'
+                : normalized
+                  ? `Will match: ${normalized}`
+                  : undefined
+              return (
+                <Stack key={idx} direction="row" spacing={1} alignItems="flex-start">
+                  <TextField
+                    size="small"
+                    label="Description"
+                    value={pattern.normalized_description}
                     onChange={(e) =>
                       setPatterns((prev) =>
-                        prev.map((p, i) => (i === idx ? { ...p, match_type: e.target.value as MatchType } : p))
+                        prev.map((p, i) => (i === idx ? { ...p, normalized_description: e.target.value } : p))
                       )
                     }
+                    sx={{ flex: 3 }}
+                    autoFocus={!isEditing && idx === 0}
+                    error={noMatchableText}
+                    helperText={helperText}
+                  />
+                  <FormControl size="small" sx={{ flex: 1, minWidth: 130 }}>
+                    <InputLabel>Match</InputLabel>
+                    <Select
+                      value={pattern.match_type}
+                      label="Match"
+                      onChange={(e) =>
+                        setPatterns((prev) =>
+                          prev.map((p, i) => (i === idx ? { ...p, match_type: e.target.value as MatchType } : p))
+                        )
+                      }
+                    >
+                      <MenuItem value={MatchType.EXACT}>Exact</MenuItem>
+                      <MenuItem value={MatchType.PREFIX}>Prefix</MenuItem>
+                      <MenuItem value={MatchType.INFIX}>Infix</MenuItem>
+                    </Select>
+                  </FormControl>
+                  <IconButton
+                    size="small"
+                    onClick={() => setPatterns((prev) => prev.filter((_, i) => i !== idx))}
+                    disabled={patterns.length === 1}
+                    aria-label="Remove pattern"
                   >
-                    <MenuItem value={MatchType.EXACT}>Exact</MenuItem>
-                    <MenuItem value={MatchType.PREFIX}>Prefix</MenuItem>
-                    <MenuItem value={MatchType.INFIX}>Infix</MenuItem>
-                  </Select>
-                </FormControl>
-                <IconButton
-                  size="small"
-                  onClick={() => setPatterns((prev) => prev.filter((_, i) => i !== idx))}
-                  disabled={patterns.length === 1}
-                  aria-label="Remove pattern"
-                >
-                  <DeleteIcon fontSize="small" />
-                </IconButton>
-              </Stack>
-            ))}
+                    <DeleteIcon fontSize="small" />
+                  </IconButton>
+                </Stack>
+              )
+            })}
           </Stack>
 
           <Stack direction="row" spacing={2}>

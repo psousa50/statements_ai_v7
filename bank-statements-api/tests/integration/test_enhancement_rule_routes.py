@@ -33,6 +33,16 @@ def test_preview_endpoint_deserializes_patterns_and_returns_count(client):
     assert response.json()["count"] == 0
 
 
+def test_normalize_descriptions_endpoint(client):
+    response = client.post(
+        "/api/v1/enhancement-rules/normalize-descriptions",
+        json={"descriptions": ["Pocket EUR Savings EUR 2", "12345", "Netflix Monthly"]},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["normalized"] == ["pocket eur savings eur", "", "netflix monthly"]
+
+
 def test_preview_endpoint_with_category_constraint(client, category_for_user_a):
     response = client.post(
         "/api/v1/enhancement-rules/preview/matching-transactions/count",
