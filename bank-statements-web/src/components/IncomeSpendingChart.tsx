@@ -10,6 +10,7 @@ import {
   ReferenceLine,
 } from 'recharts'
 import { IncomeSpendingDataPoint } from '../api/TransactionClient'
+import { formatCurrency } from '../utils/format'
 
 interface IncomeSpendingChartProps {
   dataPoints: IncomeSpendingDataPoint[]
@@ -19,9 +20,9 @@ interface IncomeSpendingChartProps {
 const INCOME_COLOR = '#22c55e'
 const SPENDING_COLOR = '#ef4444'
 
-const formatCurrency = (value: number) => {
-  if (value >= 1000) return `${(value / 1000).toFixed(1)}k`
-  return value.toFixed(0)
+const formatAxisTick = (value: number) => {
+  if (value >= 1000) return `€${(value / 1000).toFixed(1)}k`
+  return `€${value.toFixed(0)}`
 }
 
 export const IncomeSpendingChart = ({ dataPoints, loading }: IncomeSpendingChartProps) => {
@@ -47,16 +48,19 @@ export const IncomeSpendingChart = ({ dataPoints, loading }: IncomeSpendingChart
       <div style={{ display: 'flex', gap: '24px', marginBottom: '16px', justifyContent: 'center' }}>
         <div style={{ textAlign: 'center' }}>
           <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Total Income</div>
-          <div style={{ fontSize: '18px', fontWeight: 600, color: INCOME_COLOR }}>${totalIncome.toFixed(2)}</div>
+          <div style={{ fontSize: '18px', fontWeight: 600, color: INCOME_COLOR }}>{formatCurrency(totalIncome)}</div>
         </div>
         <div style={{ textAlign: 'center' }}>
           <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Total Spending</div>
-          <div style={{ fontSize: '18px', fontWeight: 600, color: SPENDING_COLOR }}>${totalSpending.toFixed(2)}</div>
+          <div style={{ fontSize: '18px', fontWeight: 600, color: SPENDING_COLOR }}>
+            {formatCurrency(totalSpending)}
+          </div>
         </div>
         <div style={{ textAlign: 'center' }}>
           <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Net</div>
           <div style={{ fontSize: '18px', fontWeight: 600, color: totalNet >= 0 ? INCOME_COLOR : SPENDING_COLOR }}>
-            {totalNet >= 0 ? '+' : ''}${totalNet.toFixed(2)}
+            {totalNet >= 0 ? '+' : ''}
+            {formatCurrency(totalNet)}
           </div>
         </div>
       </div>
@@ -65,7 +69,7 @@ export const IncomeSpendingChart = ({ dataPoints, loading }: IncomeSpendingChart
           <BarChart data={dataPoints} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--border-secondary)" />
             <XAxis dataKey="period" stroke="var(--text-secondary)" style={{ fontSize: 12 }} />
-            <YAxis stroke="var(--text-secondary)" style={{ fontSize: 12 }} tickFormatter={formatCurrency} />
+            <YAxis stroke="var(--text-secondary)" style={{ fontSize: 12 }} tickFormatter={formatAxisTick} />
             <Tooltip
               contentStyle={{
                 backgroundColor: 'var(--bg-primary)',
@@ -77,7 +81,7 @@ export const IncomeSpendingChart = ({ dataPoints, loading }: IncomeSpendingChart
               labelStyle={{ color: 'var(--text-primary)' }}
               formatter={(value: number, name: string) => {
                 const label = name === 'income' ? 'Income' : 'Spending'
-                return [`$${value.toFixed(2)}`, label]
+                return [formatCurrency(value), label]
               }}
             />
             <Legend
