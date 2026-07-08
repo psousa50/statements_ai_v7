@@ -10,7 +10,6 @@ from app.adapters.repositories.category import SQLAlchemyCategoryRepository
 from app.adapters.repositories.enhancement_rule import SQLAlchemyEnhancementRuleRepository
 from app.adapters.repositories.transaction import SQLAlchemyTransactionRepository
 from app.domain.models.enhancement_rule import MatchType
-from app.domain.models.statement import Statement
 from app.domain.models.transaction import CategorizationStatus, CounterpartyStatus, SourceType, Transaction
 from app.services.enhancement_rule_management import EnhancementRuleManagementService
 
@@ -24,6 +23,30 @@ def service(db_session):
         transaction_repository=SQLAlchemyTransactionRepository(db_session),
         transaction_service=MagicMock(),
     )
+
+
+def _make_transaction(db_session, account, index=0, **overrides):
+    defaults = dict(
+        id=uuid4(),
+        user_id=account.user_id,
+        date=date(2024, 1, 1),
+        description="Pocket EUR",
+        normalized_description="pocket eur savings eur",
+        amount=Decimal("-10.00"),
+        account_id=account.id,
+        statement_id=None,
+        source_type=SourceType.UPLOAD,
+        categorization_status=CategorizationStatus.UNCATEGORIZED,
+        counterparty_status=CounterpartyStatus.UNPROCESSED,
+        row_index=index,
+        sort_index=index,
+        exclude_from_analytics=False,
+    )
+    defaults.update(overrides)
+    transaction = Transaction(**defaults)
+    db_session.add(transaction)
+    db_session.flush()
+    return transaction
 
 
 def test_update_rule_keeping_unchanged_pattern_does_not_violate_unique_constraint(service, user_a, category_for_user_a):
@@ -68,47 +91,26 @@ def test_update_rule_adds_and_removes_patterns(service, user_a):
     assert by_desc["add me"].match_type == MatchType.INFIX
 
 
+def _make_rule(service, user_id, category_id):
+    rule = service.create_rule(
+        user_id=user_id,
+        patterns=[{"normalized_description": "pocket eur savings eur", "match_type": MatchType.EXACT}],
+    )
+    return service.update_rule(
+        rule_id=rule.id,
+        user_id=user_id,
+        patterns=[{"normalized_description": "pocket eur savings eur", "match_type": MatchType.EXACT}],
+        category_id=category_id,
+        apply_to_existing=True,
+    )
+
+
 def test_apply_to_existing_updates_matching_transactions_and_reports_count(
     service, db_session, user_a, account_for_user_a, category_for_user_a
 ):
-    statement = Statement(id=uuid4(), filename="t.csv", file_type="CSV", content=b"x", account_id=account_for_user_a.id)
-    db_session.add(statement)
-    db_session.flush()
+    transactions = [_make_transaction(db_session, account_for_user_a, index=i) for i in range(3)]
 
-    transactions = []
-    for i in range(3):
-        transaction = Transaction(
-            id=uuid4(),
-            user_id=user_a.id,
-            date=date(2024, 1, 1),
-            description="Pocket EUR",
-            normalized_description="pocket eur savings eur",
-            amount=Decimal("-10.00"),
-            account_id=account_for_user_a.id,
-            statement_id=statement.id,
-            source_type=SourceType.UPLOAD,
-            categorization_status=CategorizationStatus.UNCATEGORIZED,
-            counterparty_status=CounterpartyStatus.UNPROCESSED,
-            row_index=i,
-            sort_index=i,
-            exclude_from_analytics=False,
-        )
-        db_session.add(transaction)
-        transactions.append(transaction)
-    db_session.flush()
-
-    rule = service.create_rule(
-        user_id=user_a.id,
-        patterns=[{"normalized_description": "pocket eur savings eur", "match_type": MatchType.EXACT}],
-    )
-
-    updated = service.update_rule(
-        rule_id=rule.id,
-        user_id=user_a.id,
-        patterns=[{"normalized_description": "pocket eur savings eur", "match_type": MatchType.EXACT}],
-        category_id=category_for_user_a.id,
-        apply_to_existing=True,
-    )
+    updated = _make_rule(service, user_a.id, category_for_user_a.id)
 
     assert updated.applied_transaction_count == 3
     for transaction in transactions:
@@ -120,35 +122,61 @@ def test_apply_to_existing_updates_matching_transactions_and_reports_count(
 def test_apply_to_existing_skips_manually_categorized_transactions(
     service, db_session, user_a, account_for_user_a, category_for_user_a
 ):
-    statement = Statement(id=uuid4(), filename="t.csv", file_type="CSV", content=b"x", account_id=account_for_user_a.id)
-    db_session.add(statement)
-    db_session.flush()
+    manual = _make_transaction(db_session, account_for_user_a, categorization_status=CategorizationStatus.MANUAL)
 
-    manual = Transaction(
-        id=uuid4(),
-        user_id=user_a.id,
-        date=date(2024, 1, 1),
-        description="Pocket EUR",
-        normalized_description="pocket eur savings eur",
-        amount=Decimal("-10.00"),
-        account_id=account_for_user_a.id,
-        statement_id=statement.id,
-        source_type=SourceType.UPLOAD,
-        categorization_status=CategorizationStatus.MANUAL,
-        counterparty_status=CounterpartyStatus.UNPROCESSED,
-        row_index=0,
-        sort_index=0,
-        exclude_from_analytics=False,
+    updated = _make_rule(service, user_a.id, category_for_user_a.id)
+
+    assert updated.applied_transaction_count == 0
+    db_session.refresh(manual)
+    assert manual.category_id != category_for_user_a.id
+    assert manual.categorization_status == CategorizationStatus.MANUAL
+
+
+def test_preview_count_excludes_transactions_already_at_target(
+    service, db_session, user_a, account_for_user_a, category_for_user_a
+):
+    for i in range(5):
+        _make_transaction(
+            db_session,
+            account_for_user_a,
+            index=i,
+            categorization_status=CategorizationStatus.RULE_BASED,
+            category_id=category_for_user_a.id,
+        )
+
+    updated = _make_rule(service, user_a.id, category_for_user_a.id)
+
+    preview = service.get_matching_transactions_count(updated.id, user_a.id)
+
+    assert preview["count"] == 0
+    assert updated.applied_transaction_count == 0
+
+
+def test_preview_count_matches_apply_count(service, db_session, user_a, account_for_user_a, category_for_user_a):
+    _make_transaction(db_session, account_for_user_a, index=0, categorization_status=CategorizationStatus.UNCATEGORIZED)
+    _make_transaction(db_session, account_for_user_a, index=1, categorization_status=CategorizationStatus.MANUAL)
+    _make_transaction(
+        db_session,
+        account_for_user_a,
+        index=2,
+        categorization_status=CategorizationStatus.RULE_BASED,
+        category_id=category_for_user_a.id,
     )
-    db_session.add(manual)
-    db_session.flush()
 
     rule = service.create_rule(
         user_id=user_a.id,
         patterns=[{"normalized_description": "pocket eur savings eur", "match_type": MatchType.EXACT}],
     )
+    rule = service.update_rule(
+        rule_id=rule.id,
+        user_id=user_a.id,
+        patterns=[{"normalized_description": "pocket eur savings eur", "match_type": MatchType.EXACT}],
+        category_id=category_for_user_a.id,
+    )
 
-    updated = service.update_rule(
+    preview = service.get_matching_transactions_count(rule.id, user_a.id)
+
+    applied = service.update_rule(
         rule_id=rule.id,
         user_id=user_a.id,
         patterns=[{"normalized_description": "pocket eur savings eur", "match_type": MatchType.EXACT}],
@@ -156,7 +184,5 @@ def test_apply_to_existing_skips_manually_categorized_transactions(
         apply_to_existing=True,
     )
 
-    assert updated.applied_transaction_count == 0
-    db_session.refresh(manual)
-    assert manual.category_id != category_for_user_a.id
-    assert manual.categorization_status == CategorizationStatus.MANUAL
+    assert preview["count"] == 1
+    assert applied.applied_transaction_count == 1

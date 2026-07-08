@@ -301,6 +301,11 @@ class TransactionRepository(ABC):
         pass
 
     @abstractmethod
+    def count_rule_would_update(self, rule) -> int:
+        """Count transactions that applying the rule would actually change"""
+        pass
+
+    @abstractmethod
     def find_transactions_matching_rule(
         self,
         rule,

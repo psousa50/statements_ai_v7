@@ -10,7 +10,7 @@ from app.services.enhancement_rule_management import EnhancementRuleManagementSe
 @pytest.fixture
 def service():
     transaction_repository = MagicMock()
-    transaction_repository.count_matching_rule.return_value = 7
+    transaction_repository.count_rule_would_update.return_value = 7
 
     return (
         EnhancementRuleManagementService(
@@ -34,6 +34,6 @@ def test_preview_accepts_pydantic_pattern_inputs(service):
     result = rule_service.preview_matching_transactions_count(preview, user_id=None)
 
     assert result["count"] == 7
-    temp_rule = transaction_repository.count_matching_rule.call_args[0][0]
+    temp_rule = transaction_repository.count_rule_would_update.call_args[0][0]
     assert [p.normalized_description for p in temp_rule.patterns] == ["tfi jorge jesus costa"]
     assert temp_rule.patterns[0].match_type == MatchType.EXACT

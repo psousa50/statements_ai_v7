@@ -11,7 +11,7 @@ from app.common.text_normalization import normalize_description
 from app.domain.dto.statement_processing import TransactionDTO
 from app.domain.models.category import Category, CategoryKind, CategoryPriority
 from app.domain.models.tag import Tag
-from app.domain.models.transaction import CategorizationStatus, SourceType, Transaction
+from app.domain.models.transaction import CategorizationStatus, CounterpartyStatus, SourceType, Transaction
 from app.ports.repositories.transaction import TransactionRepository
 
 
@@ -942,6 +942,76 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
 
         if uncategorized_only:
             query = query.filter(Transaction.category_id.is_(None))
+
+        result = query.scalar()
+        return int(result) if result is not None else 0
+
+    def count_rule_would_update(self, rule) -> int:
+        """Count transactions that applying the rule would actually change.
+
+        Mirrors apply_rule_to_existing_transactions: excludes transactions that are
+        ineligible (manually categorised) and those already at the rule's target values.
+        Split-template rules fall back to the plain match count, since splitting is not
+        a field-level no-op.
+        """
+        from app.adapters.repositories.enhancement_rule import build_pattern_match_filter
+
+        if rule.split_lines:
+            return self.count_matching_rule(rule)
+
+        would_change_conditions = []
+
+        if rule.category_id is not None:
+            would_change_conditions.append(
+                and_(
+                    Transaction.categorization_status.in_(
+                        [
+                            CategorizationStatus.UNCATEGORIZED,
+                            CategorizationStatus.RULE_BASED,
+                            CategorizationStatus.FAILURE,
+                        ]
+                    ),
+                    or_(
+                        Transaction.category_id.is_distinct_from(rule.category_id),
+                        Transaction.categorization_status != CategorizationStatus.RULE_BASED,
+                    ),
+                )
+            )
+
+        if rule.counterparty_account_id is not None:
+            would_change_conditions.append(
+                and_(
+                    Transaction.counterparty_status.in_(
+                        [
+                            CounterpartyStatus.UNPROCESSED,
+                            CounterpartyStatus.RULE_BASED,
+                            CounterpartyStatus.FAILURE,
+                        ]
+                    ),
+                    or_(
+                        Transaction.counterparty_account_id.is_distinct_from(rule.counterparty_account_id),
+                        Transaction.counterparty_status != CounterpartyStatus.RULE_BASED,
+                    ),
+                )
+            )
+
+        if not would_change_conditions:
+            return 0
+
+        query = self.db_session.query(func.count(Transaction.id)).filter(Transaction.user_id == rule.user_id)
+        query = query.filter(build_pattern_match_filter(Transaction.normalized_description, rule.patterns))
+
+        if rule.min_amount is not None:
+            query = query.filter(Transaction.amount >= rule.min_amount)
+        if rule.max_amount is not None:
+            query = query.filter(Transaction.amount <= rule.max_amount)
+
+        if rule.start_date is not None:
+            query = query.filter(Transaction.date >= rule.start_date)
+        if rule.end_date is not None:
+            query = query.filter(Transaction.date <= rule.end_date)
+
+        query = query.filter(or_(*would_change_conditions))
 
         result = query.scalar()
         return int(result) if result is not None else 0

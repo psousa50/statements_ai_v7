@@ -448,7 +448,7 @@ class EnhancementRuleManagementService:
         if not rule:
             raise ValueError(f"Enhancement rule with ID {rule_id} not found")
 
-        count = self.transaction_repository.count_matching_rule(rule)
+        count = self.transaction_repository.count_rule_would_update(rule)
 
         return {
             "count": count,
@@ -479,7 +479,7 @@ class EnhancementRuleManagementService:
         )
         temp_rule.patterns = self._build_patterns([pattern.model_dump() for pattern in rule_preview.patterns])
 
-        count = self.transaction_repository.count_matching_rule(temp_rule)
+        count = self.transaction_repository.count_rule_would_update(temp_rule)
 
         return {
             "count": count,
@@ -518,20 +518,36 @@ class EnhancementRuleManagementService:
 
                 updated = False
 
-                if rule.category_id and transaction.categorization_status in [
-                    CategorizationStatus.UNCATEGORIZED,
-                    CategorizationStatus.RULE_BASED,
-                    CategorizationStatus.FAILURE,
-                ]:
+                if (
+                    rule.category_id
+                    and transaction.categorization_status
+                    in [
+                        CategorizationStatus.UNCATEGORIZED,
+                        CategorizationStatus.RULE_BASED,
+                        CategorizationStatus.FAILURE,
+                    ]
+                    and (
+                        transaction.category_id != rule.category_id
+                        or transaction.categorization_status != CategorizationStatus.RULE_BASED
+                    )
+                ):
                     transaction.category_id = rule.category_id
                     transaction.categorization_status = CategorizationStatus.RULE_BASED
                     updated = True
 
-                if rule.counterparty_account_id and transaction.counterparty_status in [
-                    CounterpartyStatus.UNPROCESSED,
-                    CounterpartyStatus.RULE_BASED,
-                    CounterpartyStatus.FAILURE,
-                ]:
+                if (
+                    rule.counterparty_account_id
+                    and transaction.counterparty_status
+                    in [
+                        CounterpartyStatus.UNPROCESSED,
+                        CounterpartyStatus.RULE_BASED,
+                        CounterpartyStatus.FAILURE,
+                    ]
+                    and (
+                        transaction.counterparty_account_id != rule.counterparty_account_id
+                        or transaction.counterparty_status != CounterpartyStatus.RULE_BASED
+                    )
+                ):
                     transaction.counterparty_account_id = rule.counterparty_account_id
                     transaction.counterparty_status = CounterpartyStatus.RULE_BASED
                     updated = True
