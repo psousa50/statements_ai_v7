@@ -349,10 +349,7 @@ export const ChartsPage = () => {
         }
 
         if (regularOnly) {
-          if (!rootCategory.is_regular) return
-          const isRootItself = category.id === rootCategory.id
-          if (!isRootItself && !category.is_regular) return
-          if (rootCategory.kind !== 'expense') return
+          if (!category.is_regular || category.kind !== 'expense') return
         }
 
         const existing = rootCategoryData.get(rootCategory.id)
@@ -371,7 +368,6 @@ export const ChartsPage = () => {
           const cat = categoryMap.get(id)
           if (!cat) return false
           if (essentialsOnly && cat.priority !== 'need') return false
-          if (regularOnly && (!cat.is_regular || cat.kind !== 'expense')) return false
           return true
         })
         .map(([id, data]) => ({
@@ -389,10 +385,6 @@ export const ChartsPage = () => {
         const root = categoryMap.get(selectedRootCategory)
         if (root && root.priority !== 'need') return []
       }
-      if (regularOnly && selectedRootCategory !== 'uncategorized') {
-        const root = categoryMap.get(selectedRootCategory)
-        if (root && (!root.is_regular || root.kind !== 'expense')) return []
-      }
       if ((essentialsOnly || regularOnly) && selectedRootCategory === 'uncategorized') return []
 
       const subcategories =
@@ -402,7 +394,7 @@ export const ChartsPage = () => {
               (cat) =>
                 cat.parent_id === selectedRootCategory &&
                 (!essentialsOnly || cat.priority === 'need') &&
-                (!regularOnly || cat.is_regular)
+                (!regularOnly || (cat.is_regular && cat.kind === 'expense'))
             )
 
       const subcategoryData = new Map<string, { value: number; count: number }>()
@@ -580,6 +572,18 @@ export const ChartsPage = () => {
       }
     }
 
+    if (essentialsOnly || regularOnly) {
+      const filterLabel =
+        essentialsOnly && regularOnly ? 'essential and regular' : essentialsOnly ? 'essential' : 'regular'
+      const guidance = regularOnly
+        ? 'Flag the subcategories that recur every month as regular to build your baseline.'
+        : 'Set a category’s priority to “Need” to include it here.'
+      return {
+        title: `No ${filterLabel} spending to display`,
+        description: `None of your categories match the ${filterLabel}-only filter. ${guidance}`,
+      }
+    }
+
     const totalSpending = categoryTotals.totals.reduce((sum, t) => sum + t.total_amount, 0)
     const totalCount = categoryTotals.totals.reduce((sum, t) => sum + t.transaction_count, 0)
 
@@ -604,7 +608,7 @@ export const ChartsPage = () => {
       title: 'No data for selected filters',
       description: 'Try adjusting your filters or date range to see more transactions.',
     }
-  }, [categoryTotals, categorizationFilter])
+  }, [categoryTotals, categorizationFilter, essentialsOnly, regularOnly])
 
   const openTransactionsWindow = useCallback(
     (categoryId: string) => {

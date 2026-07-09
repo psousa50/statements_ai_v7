@@ -148,25 +148,27 @@ const CategoryTreeNode = ({
               ))}
             </select>
           )}
-          <Tooltip
-            title={
-              category.is_regular
-                ? 'Part of your predictable monthly baseline. Click to mark as irregular.'
-                : 'Mark as part of your predictable monthly baseline (rent, fixed bills).'
-            }
-            arrow
-          >
-            <button
-              type="button"
-              className={`category-flag-toggle ${category.is_regular ? 'is-on' : ''}`}
-              onClick={(e) => {
-                stop(e)
-                onToggleIsRegular(category)
-              }}
+          {category.parent_id && (
+            <Tooltip
+              title={
+                category.is_regular
+                  ? 'Part of your predictable monthly baseline. Click to mark as irregular.'
+                  : 'Mark as part of your predictable monthly baseline (rent, fixed bills).'
+              }
+              arrow
             >
-              {category.is_regular ? '★ Regular' : '+ Regular'}
-            </button>
-          </Tooltip>
+              <button
+                type="button"
+                className={`category-flag-toggle ${category.is_regular ? 'is-on' : ''}`}
+                onClick={(e) => {
+                  stop(e)
+                  onToggleIsRegular(category)
+                }}
+              >
+                {category.is_regular ? '★ Regular' : '+ Regular'}
+              </button>
+            </Tooltip>
+          )}
           <div className="category-stats">
             {hasSubcategories && <span className="subcategory-count">{subcategories.length} subcategories</span>}
           </div>

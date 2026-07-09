@@ -49,14 +49,6 @@ export const CategoryModal = ({ isOpen, category, parentId, categories, onSave, 
       : 'Create Root Category'
   const isRootCategory = !selectedParentId
   const parentForSelected = selectedParentId ? categories.find((c) => c.id === selectedParentId) : null
-  const rootForRegular = isRootCategory ? null : parentForSelected
-  const regularDisabled = !isRootCategory && rootForRegular ? !rootForRegular.is_regular : false
-  const regularHelp =
-    !isRootCategory && rootForRegular
-      ? rootForRegular.is_regular
-        ? 'Counts as regular only if both this and its root are flagged.'
-        : `Root "${rootForRegular.name}" is not flagged regular, so this subcategory is excluded from the regular baseline regardless.`
-      : 'Part of your predictable monthly baseline.'
   const showPriority = kind === 'expense'
 
   useEffect(() => {
@@ -151,7 +143,7 @@ export const CategoryModal = ({ isOpen, category, parentId, categories, onSave, 
         color: isRootCategory ? selectedColor : undefined,
         kind,
         priority,
-        isRegular,
+        isRegular: isRootCategory ? false : isRegular,
       })
     } catch (error) {
       console.error('Failed to save category:', error)
@@ -262,19 +254,20 @@ export const CategoryModal = ({ isOpen, category, parentId, categories, onSave, 
             </div>
           )}
 
-          <div className="form-group">
-            <label className="checkbox-label" htmlFor="is-regular">
-              <input
-                id="is-regular"
-                type="checkbox"
-                checked={isRegular}
-                onChange={(e) => setIsRegular(e.target.checked)}
-                disabled={regularDisabled}
-              />
-              Regular monthly {kind === 'income' ? 'income' : 'expense'}
-            </label>
-            <div className="form-help-text">{regularHelp}</div>
-          </div>
+          {!isRootCategory && (
+            <div className="form-group">
+              <label className="checkbox-label" htmlFor="is-regular">
+                <input
+                  id="is-regular"
+                  type="checkbox"
+                  checked={isRegular}
+                  onChange={(e) => setIsRegular(e.target.checked)}
+                />
+                Regular monthly {kind === 'income' ? 'income' : 'expense'}
+              </label>
+              <div className="form-help-text">Part of your predictable monthly baseline.</div>
+            </div>
+          )}
 
           {isEditing && category && (
             <div className="form-group">
