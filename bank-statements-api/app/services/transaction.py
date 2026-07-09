@@ -54,12 +54,19 @@ class TransactionService:
             return category_ids
         return self.category_repository.get_all_descendant_ids(category_ids, user_id)
 
+    def _ensure_leaf_category(self, category_id: Optional[UUID], user_id: UUID) -> None:
+        if category_id is None or not self.category_repository:
+            return
+        if self.category_repository.get_subcategories(category_id, user_id):
+            raise ValueError("Cannot assign a transaction to a category that has subcategories; choose a subcategory instead.")
+
     def create_transaction(
         self,
         user_id: UUID,
         transaction_data: TransactionCreateRequest,
         after_transaction_id: Optional[UUID] = None,
     ) -> Transaction:
+        self._ensure_leaf_category(transaction_data.category_id, user_id)
         enhanced_data = transaction_data
 
         if transaction_data.category_id is None:
@@ -396,6 +403,7 @@ class TransactionService:
         category_id: Optional[UUID] = None,
         counterparty_account_id: Optional[UUID] = None,
     ) -> Optional[Transaction]:
+        self._ensure_leaf_category(category_id, user_id)
         transaction = self.transaction_repository.get_by_id(transaction_id, user_id)
         if transaction:
             transaction.date = transaction_date
@@ -442,6 +450,9 @@ class TransactionService:
 
         if len(parts) < 2:
             raise ValueError("At least two parts are required")
+
+        for part in parts:
+            self._ensure_leaf_category(part.get("category_id"), user_id)
 
         parts_amounts = [Decimal(str(p["amount"])) for p in parts]
         total = sum(parts_amounts)
@@ -571,6 +582,7 @@ class TransactionService:
         transaction_id: UUID,
         category_id: Optional[UUID],
     ) -> Optional[Transaction]:
+        self._ensure_leaf_category(category_id, user_id)
         transaction = self.transaction_repository.get_by_id(transaction_id, user_id)
         if not transaction:
             return None
@@ -599,6 +611,7 @@ class TransactionService:
         end_date: Optional[date] = None,
         enhancement_rule_id: Optional[UUID] = None,
     ) -> int:
+        self._ensure_leaf_category(category_id, user_id)
         rule = None
         if enhancement_rule_id:
             rule = self.enhancement_rule_repository.find_by_id(enhancement_rule_id, user_id)
@@ -621,6 +634,7 @@ class TransactionService:
         transaction_ids: List[UUID],
         category_id: Optional[UUID],
     ) -> int:
+        self._ensure_leaf_category(category_id, user_id)
         owned_ids = self.transaction_repository.filter_owned_ids(transaction_ids, user_id)
         if not owned_ids:
             return 0
@@ -680,6 +694,7 @@ class TransactionService:
         start_date: Optional[date] = None,
         end_date: Optional[date] = None,
     ) -> int:
+        self._ensure_leaf_category(to_category_id, user_id)
         return self.transaction_repository.bulk_update_by_category_id(
             user_id=user_id,
             from_category_id=from_category_id,
