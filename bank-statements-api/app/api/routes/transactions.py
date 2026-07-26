@@ -19,6 +19,8 @@ from app.api.schemas import (
     CategoryTimeSeriesResponse,
     CategoryTotalResponse,
     CategoryTotalsResponse,
+    CounterpartyTotalResponse,
+    CounterpartyTotalsResponse,
     CountSimilarResponse,
     EnhancementPreviewRequest,
     EnhancementPreviewResponse,
@@ -429,6 +431,46 @@ def register_transaction_routes(
         ]
 
         return CategoryTotalsResponse(totals=totals)
+
+    @router.get(
+        "/counterparty-totals",
+        response_model=CounterpartyTotalsResponse,
+    )
+    def get_counterparty_totals(
+        account_id: Optional[UUID] = Query(None, description="Filter by source account ID"),
+        min_amount: Optional[Decimal] = Query(None, description="Minimum transaction amount"),
+        max_amount: Optional[Decimal] = Query(None, description="Maximum transaction amount"),
+        description_search: Optional[str] = Query(None, description="Search in transaction description"),
+        start_date: Optional[date] = Query(None, description="Filter transactions from this date"),
+        end_date: Optional[date] = Query(None, description="Filter transactions to this date"),
+        transaction_type: Optional[str] = Query(
+            None,
+            description="Filter by transaction type: 'debit', 'credit', or 'all'",
+        ),
+        internal: InternalDependencies = Depends(provide_dependencies),
+        current_user: User = Depends(require_current_user),
+    ):
+        totals_dict = internal.transaction_service.get_counterparty_totals(
+            user_id=current_user.id,
+            account_id=account_id,
+            min_amount=min_amount,
+            max_amount=max_amount,
+            description_search=description_search,
+            start_date=start_date,
+            end_date=end_date,
+            transaction_type=transaction_type,
+        )
+
+        totals = [
+            CounterpartyTotalResponse(
+                counterparty_account_id=counterparty_account_id,
+                total_amount=values["total_amount"],
+                transaction_count=int(values["transaction_count"]),
+            )
+            for counterparty_account_id, values in totals_dict.items()
+        ]
+
+        return CounterpartyTotalsResponse(totals=totals)
 
     @router.get(
         "/category-time-series",

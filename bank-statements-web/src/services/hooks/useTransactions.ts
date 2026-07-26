@@ -5,6 +5,7 @@ import { useApi } from '../../api/ApiContext'
 import {
   TransactionFilters,
   CategoryTotalsResponse,
+  CounterpartyTotalsResponse,
   CategoryTimeSeriesDataPoint,
   IncomeSpendingDataPoint,
   IncomeSpendingResponse,
@@ -25,6 +26,7 @@ export const TRANSACTION_QUERY_KEYS = {
   all: ['transactions'] as const,
   list: (filters?: TransactionFilters) => ['transactions', 'list', filters] as const,
   categoryTotals: (filters?: object) => ['transactions', 'categoryTotals', filters] as const,
+  counterpartyTotals: (filters?: object) => ['transactions', 'counterpartyTotals', filters] as const,
   timeSeries: (categoryId?: string, period?: string, filters?: object) =>
     ['transactions', 'timeSeries', categoryId, period, filters] as const,
   incomeSpending: (period?: string, filters?: object) => ['transactions', 'incomeSpending', period, filters] as const,
@@ -407,6 +409,52 @@ export const useCategoryTotals = () => {
     loading,
     error,
     fetchCategoryTotals,
+  }
+}
+
+export const useCounterpartyTotals = () => {
+  const api = useApi()
+  const queryClient = useQueryClient()
+  const [counterpartyTotals, setCounterpartyTotals] = useState<CounterpartyTotalsResponse | null>(null)
+  const [loading, setLoading] = useState<boolean>(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const fetchCounterpartyTotals = useCallback(
+    async (filters?: Omit<TransactionFilters, 'page' | 'page_size'>) => {
+      setLoading(true)
+      setError(null)
+      try {
+        const cacheKey = TRANSACTION_QUERY_KEYS.counterpartyTotals(filters)
+        const queryState = queryClient.getQueryState(cacheKey)
+        const cached = queryClient.getQueryData<CounterpartyTotalsResponse>(cacheKey)
+
+        let response
+        const isStale = queryState?.isInvalidated || !queryState
+        if (cached && !isStale) {
+          response = cached
+        } else {
+          response = await api.transactions.getCounterpartyTotals(filters)
+          queryClient.setQueryData(cacheKey, response)
+        }
+
+        setCounterpartyTotals(response)
+        return response
+      } catch (err) {
+        console.error('Error fetching counterparty totals:', err)
+        setError('Failed to fetch counterparty totals. Please try again later.')
+        return null
+      } finally {
+        setLoading(false)
+      }
+    },
+    [api.transactions, queryClient]
+  )
+
+  return {
+    counterpartyTotals,
+    loading,
+    error,
+    fetchCounterpartyTotals,
   }
 }
 

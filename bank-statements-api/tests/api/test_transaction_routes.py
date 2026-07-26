@@ -171,6 +171,47 @@ def test_get_category_totals():
     internal_dependencies.transaction_service.get_category_totals.assert_called_once()
 
 
+def test_get_counterparty_totals():
+    internal_dependencies = mocked_dependencies()
+    counterparty_id_1 = uuid4()
+    counterparty_id_2 = uuid4()
+
+    mock_totals = {
+        counterparty_id_1: {
+            "total_amount": Decimal("-1437.48"),
+            "transaction_count": Decimal("32"),
+        },
+        counterparty_id_2: {
+            "total_amount": Decimal("471.51"),
+            "transaction_count": Decimal("9"),
+        },
+    }
+
+    internal_dependencies.transaction_service.get_counterparty_totals.return_value = mock_totals
+    client = build_client(internal_dependencies)
+
+    response = client.get("/api/v1/transactions/counterparty-totals")
+
+    assert response.status_code == 200
+    response_data = response.json()
+
+    assert "totals" in response_data
+    totals = response_data["totals"]
+    assert len(totals) == 2
+
+    totals_by_id = {total["counterparty_account_id"]: total for total in totals}
+
+    assert str(counterparty_id_1) in totals_by_id
+    assert totals_by_id[str(counterparty_id_1)]["total_amount"] == -1437.48
+    assert totals_by_id[str(counterparty_id_1)]["transaction_count"] == 32
+
+    assert str(counterparty_id_2) in totals_by_id
+    assert totals_by_id[str(counterparty_id_2)]["total_amount"] == 471.51
+    assert totals_by_id[str(counterparty_id_2)]["transaction_count"] == 9
+
+    internal_dependencies.transaction_service.get_counterparty_totals.assert_called_once()
+
+
 def test_preview_enhancement_with_exact_match():
     internal_dependencies = mocked_dependencies()
 

@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts'
 import {
   useCategoryTotals,
+  useCounterpartyTotals,
   useCategoryTimeSeries,
   useIncomeSpendingTimeSeries,
 } from '../services/hooks/useTransactions'
@@ -42,6 +43,19 @@ interface LabelProps {
 
 const UNCATEGORIZED_COLOR = '#EF4444'
 
+type GroupBy = 'category' | 'counterparty'
+type Direction = 'spending' | 'income'
+
+const keepByDirection = (value: number, direction: Direction) => (direction === 'income' ? value < 0 : value > 0)
+
+const toMagnitude = (value: number, direction: Direction) => (direction === 'income' ? -value : value)
+
+const counterpartyColor = (id: string) => {
+  let hash = 0
+  for (let i = 0; i < id.length; i++) hash = (hash * 31 + id.charCodeAt(i)) | 0
+  return `hsl(${Math.abs(hash) % 360}, 65%, 55%)`
+}
+
 export const ChartsPage = () => {
   const [searchParams, setSearchParams] = useSearchParams()
 
@@ -80,6 +94,10 @@ export const ChartsPage = () => {
   const [viewMode, setViewMode] = useState<'pie' | 'bar' | 'timeseries' | 'income-spending'>(
     () => (searchParams.get('view') as 'pie' | 'bar' | 'timeseries' | 'income-spending') || 'bar'
   )
+  const [groupBy, setGroupBy] = useState<GroupBy>(() => (searchParams.get('group_by') as GroupBy) || 'category')
+  const [direction, setDirection] = useState<Direction>(
+    () => (searchParams.get('direction') as Direction) || 'spending'
+  )
   const [timeSeriesPeriod, setTimeSeriesPeriod] = useState<'month' | 'week'>(
     () => (searchParams.get('period') as 'month' | 'week') || 'month'
   )
@@ -113,6 +131,13 @@ export const ChartsPage = () => {
   } = useCategoryTimeSeries()
 
   const {
+    counterpartyTotals,
+    loading: counterpartyTotalsLoading,
+    error: counterpartyTotalsError,
+    fetchCounterpartyTotals,
+  } = useCounterpartyTotals()
+
+  const {
     data: incomeSpendingData,
     loading: incomeSpendingLoading,
     error: incomeSpendingError,
@@ -135,7 +160,13 @@ export const ChartsPage = () => {
 
   const loading =
     categoryTotalsLoading || categoriesLoading || accountsLoading || timeSeriesLoading || incomeSpendingLoading
-  const error = categoryTotalsError || categoriesError || accountsError || timeSeriesError || incomeSpendingError
+  const error =
+    categoryTotalsError ||
+    counterpartyTotalsError ||
+    categoriesError ||
+    accountsError ||
+    timeSeriesError ||
+    incomeSpendingError
 
   const detectPeriod = useCallback((startDate?: string, endDate?: string): 'month' | 'week' | 'day' => {
     if (!startDate || !endDate) return 'month'
@@ -217,9 +248,11 @@ export const ChartsPage = () => {
     if (timeSeriesPeriod !== 'month') params.set('period', timeSeriesPeriod)
     if (essentialsOnly) params.set('essentials_only', 'true')
     if (regularOnly) params.set('regular_only', 'true')
+    if (groupBy !== 'category') params.set('group_by', groupBy)
+    if (direction !== 'spending') params.set('direction', direction)
 
     setSearchParams(params, { replace: true })
-  }, [filters, viewMode, timeSeriesPeriod, essentialsOnly, regularOnly, setSearchParams])
+  }, [filters, viewMode, timeSeriesPeriod, essentialsOnly, regularOnly, groupBy, direction, setSearchParams])
 
   const handleFilterChange = useCallback(
     (newFilters: Partial<Omit<FilterType, 'page' | 'page_size'>>) => {
@@ -360,7 +393,7 @@ export const ChartsPage = () => {
       })
 
       return Array.from(rootCategoryData.entries())
-        .filter(([_, data]) => data.value > 0)
+        .filter(([_, data]) => keepByDirection(data.value, direction))
         .filter(([id, _]) => !(categorizationFilter === 'categorized' && id === 'uncategorized'))
         .filter(([id, _]) => {
           if (!essentialsOnly && !regularOnly) return true
@@ -373,7 +406,7 @@ export const ChartsPage = () => {
         .map(([id, data]) => ({
           id,
           name: id === 'uncategorized' ? 'Uncategorized' : categoryMap.get(id)?.name || 'Unknown',
-          value: data.value,
+          value: toMagnitude(data.value, direction),
           count: data.count,
           color:
             id === 'uncategorized' ? UNCATEGORIZED_COLOR : getCategoryColor(categoryMap.get(id)!, categories).solid,
@@ -460,7 +493,7 @@ export const ChartsPage = () => {
       })
 
       return Array.from(subcategoryData.entries())
-        .filter(([_, data]) => data.value > 0)
+        .filter(([_, data]) => keepByDirection(data.value, direction))
         .filter(([id, _]) => !(categorizationFilter === 'categorized' && id === 'uncategorized'))
         .map(([id, data]) => ({
           id,
@@ -470,7 +503,7 @@ export const ChartsPage = () => {
               : id === 'other'
                 ? 'Other'
                 : categoryMap.get(id)?.name || 'Unknown',
-          value: data.value,
+          value: toMagnitude(data.value, direction),
           count: data.count,
           color:
             id === 'uncategorized' || id === 'other'
@@ -478,7 +511,16 @@ export const ChartsPage = () => {
               : getCategoryColor(categoryMap.get(id)!, categories).solid,
         }))
     }
-  }, [categoryTotals, categories, chartType, selectedRootCategory, categorizationFilter, essentialsOnly, regularOnly])
+  }, [
+    categoryTotals,
+    categories,
+    chartType,
+    selectedRootCategory,
+    categorizationFilter,
+    essentialsOnly,
+    regularOnly,
+    direction,
+  ])
 
   const visibleChartData = useMemo(() => {
     const filtered = chartData.filter((d) => !hiddenChartCategoryIds.has(d.id))
@@ -487,7 +529,8 @@ export const ChartsPage = () => {
     const categoryMap = new Map(categories.map((c) => [c.id, c]))
     const rawTotals = new Map<string, { value: number; count: number }>()
     categoryTotals.totals.forEach((t) => {
-      if (t.category_id) rawTotals.set(t.category_id, { value: t.total_amount, count: t.transaction_count })
+      if (t.category_id)
+        rawTotals.set(t.category_id, { value: toMagnitude(t.total_amount, direction), count: t.transaction_count })
     })
 
     const rootIdOf = (id: string): string | null => {
@@ -526,7 +569,23 @@ export const ChartsPage = () => {
         }
       })
       .filter((entry) => entry.value > 0)
-  }, [chartData, hiddenChartCategoryIds, chartType, categories, categoryTotals])
+  }, [chartData, hiddenChartCategoryIds, chartType, categories, categoryTotals, direction])
+
+  const counterpartyChartData = useMemo(() => {
+    if (!counterpartyTotals) return []
+    const accountName = new Map((accounts || []).map((a) => [a.id, a.name]))
+    return counterpartyTotals.totals
+      .filter((t) => t.counterparty_account_id)
+      .filter((t) => keepByDirection(t.total_amount, direction))
+      .map((t) => ({
+        id: t.counterparty_account_id!,
+        name: accountName.get(t.counterparty_account_id!) || 'Unknown',
+        value: toMagnitude(t.total_amount, direction),
+        count: t.transaction_count,
+        color: counterpartyColor(t.counterparty_account_id!),
+      }))
+      .sort((a, b) => b.value - a.value)
+  }, [counterpartyTotals, accounts, direction])
 
   const hiddenChartEntries = useMemo(() => {
     if (!categories) return chartData.filter((d) => hiddenChartCategoryIds.has(d.id))
@@ -730,8 +789,29 @@ export const ChartsPage = () => {
     )
   }
 
-  const totalAmount = visibleChartData.reduce((sum, item) => sum + item.value, 0)
-  const totalTransactions = visibleChartData.reduce((sum, item) => sum + item.count, 0)
+  const isCounterparty = groupBy === 'counterparty'
+  const pieData = isCounterparty ? counterpartyChartData : chartData
+  const barData = isCounterparty ? counterpartyChartData : visibleChartData
+  const activeLoading = isCounterparty ? counterpartyTotalsLoading || accountsLoading : loading
+  const activeNoDataMessage = useMemo(() => {
+    if (!isCounterparty) return noDataMessage
+    if (!counterpartyTotals) return { title: 'Loading...', description: 'Fetching transaction data.' }
+    return {
+      title: `No ${direction} to display`,
+      description: 'No transactions with a counterparty match these filters. Assign counterparties to see them here.',
+    }
+  }, [isCounterparty, noDataMessage, counterpartyTotals, direction])
+
+  const totalAmount = barData.reduce((sum, item) => sum + item.value, 0)
+  const totalTransactions = barData.reduce((sum, item) => sum + item.count, 0)
+
+  const handleGroupByChange = useCallback(
+    (g: GroupBy) => {
+      setGroupBy(g)
+      if (g === 'counterparty' && viewMode !== 'pie' && viewMode !== 'bar') setViewMode('bar')
+    },
+    [viewMode]
+  )
 
   const getCurrentFilters = useCallback(
     () => ({
@@ -811,6 +891,10 @@ export const ChartsPage = () => {
     fetchCategoryTotals(filters)
   }, [])
 
+  useEffect(() => {
+    if (groupBy === 'counterparty') fetchCounterpartyTotals(filters)
+  }, [groupBy, filters, fetchCounterpartyTotals])
+
   return (
     <div className="charts-page transactions-page">
       <header className="page-header">
@@ -861,11 +945,13 @@ export const ChartsPage = () => {
               <h2>
                 {viewMode === 'income-spending'
                   ? 'Income vs Spending'
-                  : chartType === 'root'
-                    ? 'Spending by Category'
-                    : selectedRootCategory === 'uncategorized'
-                      ? 'Uncategorized Transactions'
-                      : `${categories?.find((c) => c.id === selectedRootCategory)?.name || ''} Breakdown`}
+                  : isCounterparty
+                    ? `${direction === 'income' ? 'Income' : 'Spending'} by Counterparty`
+                    : chartType === 'root'
+                      ? `${direction === 'income' ? 'Income' : 'Spending'} by Category`
+                      : selectedRootCategory === 'uncategorized'
+                        ? 'Uncategorized Transactions'
+                        : `${categories?.find((c) => c.id === selectedRootCategory)?.name || ''} Breakdown`}
               </h2>
               {!loading && viewMode !== 'income-spending' && (
                 <div className="chart-stats">
@@ -880,68 +966,116 @@ export const ChartsPage = () => {
             </div>
 
             <div className="charts-controls">
-              <div className="view-mode-toggle">
-                <button onClick={() => handleViewModeChange('bar')} className={viewMode === 'bar' ? 'active' : ''}>
-                  Bar Chart
-                </button>
-                <button onClick={() => handleViewModeChange('pie')} className={viewMode === 'pie' ? 'active' : ''}>
-                  Pie Chart
-                </button>
-                <button
-                  onClick={() => handleViewModeChange('timeseries')}
-                  className={viewMode === 'timeseries' ? 'active' : ''}
-                >
-                  Time Series
-                </button>
-                <button
-                  onClick={() => handleViewModeChange('income-spending')}
-                  className={viewMode === 'income-spending' ? 'active' : ''}
-                >
-                  Income vs Spending
-                </button>
-              </div>
-              {viewMode === 'timeseries' && (
-                <div className="period-toggle">
-                  <button
-                    onClick={() => handlePeriodChange('month')}
-                    className={timeSeriesPeriod === 'month' ? 'active' : ''}
-                  >
-                    Monthly
-                  </button>
-                  <button
-                    onClick={() => handlePeriodChange('week')}
-                    className={timeSeriesPeriod === 'week' ? 'active' : ''}
-                  >
-                    Weekly
-                  </button>
-                </div>
-              )}
-              {chartType === 'sub' && (viewMode === 'pie' || viewMode === 'bar') && (
-                <button onClick={handleBackToRoot} className="back-button">
-                  ← Back to All Categories
-                </button>
-              )}
               {(viewMode === 'bar' || viewMode === 'pie') && (
                 <>
-                  <label className="regular-only-toggle">
-                    <input
-                      type="checkbox"
-                      checked={essentialsOnly}
-                      onChange={(e) => setEssentialsOnly(e.target.checked)}
-                    />
-                    Essentials only
-                  </label>
-                  <label className="regular-only-toggle">
-                    <input type="checkbox" checked={regularOnly} onChange={(e) => setRegularOnly(e.target.checked)} />
-                    Regular only
-                  </label>
+                  <div className="control-group">
+                    <span className="control-label">Group by</span>
+                    <div className="segmented">
+                      <button
+                        onClick={() => handleGroupByChange('category')}
+                        className={groupBy === 'category' ? 'active' : ''}
+                      >
+                        Category
+                      </button>
+                      <button
+                        onClick={() => handleGroupByChange('counterparty')}
+                        className={groupBy === 'counterparty' ? 'active' : ''}
+                      >
+                        Counterparty
+                      </button>
+                    </div>
+                  </div>
+                  <div className="control-group">
+                    <span className="control-label">Show</span>
+                    <div className="segmented">
+                      <button
+                        onClick={() => setDirection('spending')}
+                        className={direction === 'spending' ? 'active' : ''}
+                      >
+                        Spending
+                      </button>
+                      <button onClick={() => setDirection('income')} className={direction === 'income' ? 'active' : ''}>
+                        Income
+                      </button>
+                    </div>
+                  </div>
                 </>
+              )}
+              <div className="control-group">
+                <span className="control-label">Chart</span>
+                <div className="segmented">
+                  <button onClick={() => handleViewModeChange('bar')} className={viewMode === 'bar' ? 'active' : ''}>
+                    Bar
+                  </button>
+                  <button onClick={() => handleViewModeChange('pie')} className={viewMode === 'pie' ? 'active' : ''}>
+                    Pie
+                  </button>
+                  {!isCounterparty && (
+                    <>
+                      <button
+                        onClick={() => handleViewModeChange('timeseries')}
+                        className={viewMode === 'timeseries' ? 'active' : ''}
+                      >
+                        Time series
+                      </button>
+                      <button
+                        onClick={() => handleViewModeChange('income-spending')}
+                        className={viewMode === 'income-spending' ? 'active' : ''}
+                      >
+                        Income vs spending
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+              {viewMode === 'timeseries' && (
+                <div className="control-group">
+                  <span className="control-label">Period</span>
+                  <div className="segmented">
+                    <button
+                      onClick={() => handlePeriodChange('month')}
+                      className={timeSeriesPeriod === 'month' ? 'active' : ''}
+                    >
+                      Monthly
+                    </button>
+                    <button
+                      onClick={() => handlePeriodChange('week')}
+                      className={timeSeriesPeriod === 'week' ? 'active' : ''}
+                    >
+                      Weekly
+                    </button>
+                  </div>
+                </div>
+              )}
+              {!isCounterparty && (viewMode === 'bar' || viewMode === 'pie') && (
+                <div className="control-group">
+                  <span className="control-label">Filter</span>
+                  <div className="filter-checks">
+                    <label className="regular-only-toggle">
+                      <input
+                        type="checkbox"
+                        checked={essentialsOnly}
+                        onChange={(e) => setEssentialsOnly(e.target.checked)}
+                      />
+                      Essentials only
+                    </label>
+                    <label className="regular-only-toggle">
+                      <input type="checkbox" checked={regularOnly} onChange={(e) => setRegularOnly(e.target.checked)} />
+                      Regular only
+                    </label>
+                  </div>
+                </div>
+              )}
+              {!isCounterparty && chartType === 'sub' && (viewMode === 'pie' || viewMode === 'bar') && (
+                <button onClick={handleBackToRoot} className="back-button">
+                  ← Back to all categories
+                </button>
               )}
             </div>
           </div>
 
           <div className="chart-container">
-            {viewMode === 'bar' && (
+            {!isCounterparty && viewMode === 'bar' && (
               <div className="hidden-chart-chips">
                 {hiddenChartEntries.length > 0 && (
                   <>
@@ -967,18 +1101,18 @@ export const ChartsPage = () => {
               </div>
             )}
             {viewMode === 'pie' ? (
-              loading ? (
+              activeLoading ? (
                 <div className="loading-indicator">Loading chart data...</div>
-              ) : chartData.length === 0 ? (
+              ) : pieData.length === 0 ? (
                 <div className="no-data-message">
-                  <strong>{noDataMessage.title}</strong>
-                  <p>{noDataMessage.description}</p>
+                  <strong>{activeNoDataMessage.title}</strong>
+                  <p>{activeNoDataMessage.description}</p>
                 </div>
               ) : (
                 <ResponsiveContainer width="100%" height={500}>
                   <PieChart>
                     <Pie
-                      data={chartData}
+                      data={pieData}
                       cx="50%"
                       cy="50%"
                       labelLine={false}
@@ -988,11 +1122,13 @@ export const ChartsPage = () => {
                       paddingAngle={2}
                       fill="#8884d8"
                       dataKey="value"
-                      onClick={(data) => handleChartClick(data as ChartData)}
-                      style={{ cursor: 'pointer' }}
+                      onClick={(data) => {
+                        if (!isCounterparty) handleChartClick(data as ChartData)
+                      }}
+                      style={{ cursor: isCounterparty ? 'default' : 'pointer' }}
                       animationDuration={300}
                     >
-                      {chartData.map((entry, index) => (
+                      {pieData.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
                     </Pie>
@@ -1004,7 +1140,7 @@ export const ChartsPage = () => {
                           [`${payload.count} transactions`, 'Count'],
                         ]
                       }}
-                      labelFormatter={(label: string) => `Category: ${label}`}
+                      labelFormatter={(label: string) => `${isCounterparty ? 'Counterparty' : 'Category'}: ${label}`}
                       contentStyle={{
                         backgroundColor: 'rgba(30, 41, 59, 0.9)',
                         backdropFilter: 'blur(8px)',
@@ -1029,13 +1165,13 @@ export const ChartsPage = () => {
             ) : viewMode === 'bar' ? (
               <div className="bar-chart-wrapper">
                 <CategoryTotalsBarChart
-                  data={visibleChartData}
+                  data={barData}
                   currency={displayCurrency}
-                  loading={loading}
-                  onBarClick={handleChartClick}
-                  noDataMessage={noDataMessage}
+                  loading={activeLoading}
+                  onBarClick={isCounterparty ? undefined : handleChartClick}
+                  noDataMessage={activeNoDataMessage}
                 />
-                <div className="chart-hint">Shift+click a bar to hide it.</div>
+                {!isCounterparty && <div className="chart-hint">Shift+click a bar to hide it.</div>}
               </div>
             ) : viewMode === 'income-spending' ? (
               <IncomeSpendingChart dataPoints={incomeSpendingData || []} loading={incomeSpendingLoading} />
@@ -1053,6 +1189,11 @@ export const ChartsPage = () => {
               <p>
                 Showing income vs spending over time. Granularity adjusts automatically based on the selected date
                 range.
+              </p>
+            ) : isCounterparty ? (
+              <p>
+                Showing {direction} grouped by counterparty. Switch direction to see the other side, or group by
+                category instead.
               </p>
             ) : viewMode === 'pie' || viewMode === 'bar' ? (
               chartType === 'root' ? (

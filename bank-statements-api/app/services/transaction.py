@@ -335,6 +335,29 @@ class TransactionService:
             kinds=kinds,
         )
 
+    def get_counterparty_totals(
+        self,
+        user_id: UUID,
+        account_id: Optional[UUID] = None,
+        start_date: Optional[date] = None,
+        end_date: Optional[date] = None,
+        min_amount: Optional[Decimal] = None,
+        max_amount: Optional[Decimal] = None,
+        description_search: Optional[str] = None,
+        transaction_type: Optional[str] = None,
+    ) -> Dict[Optional[UUID], Dict[str, Decimal]]:
+        return self.transaction_repository.get_counterparty_totals(
+            user_id=user_id,
+            account_id=account_id,
+            start_date=start_date,
+            end_date=end_date,
+            min_amount=min_amount,
+            max_amount=max_amount,
+            description_search=description_search,
+            transaction_type=transaction_type,
+            exclude_from_analytics=True,
+        )
+
     def get_category_time_series(
         self,
         user_id: UUID,

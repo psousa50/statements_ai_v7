@@ -315,6 +315,72 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
 
         return totals
 
+    def get_counterparty_totals(
+        self,
+        user_id: UUID,
+        account_id: Optional[UUID] = None,
+        start_date: Optional[date] = None,
+        end_date: Optional[date] = None,
+        min_amount: Optional[Decimal] = None,
+        max_amount: Optional[Decimal] = None,
+        description_search: Optional[str] = None,
+        transaction_type: Optional[str] = None,
+        exclude_from_analytics: Optional[bool] = None,
+    ) -> Dict[Optional[UUID], Dict[str, Decimal]]:
+        query = self.db_session.query(
+            Transaction.counterparty_account_id,
+            func.sum(-Transaction.amount).label("total_amount"),
+            func.count(Transaction.id).label("transaction_count"),
+        ).filter(
+            Transaction.user_id == user_id,
+            Transaction.counterparty_account_id.isnot(None),
+        )
+
+        filters = []
+
+        if account_id is not None:
+            filters.append(Transaction.account_id == account_id)
+        if start_date is not None:
+            filters.append(Transaction.date >= start_date)
+        if end_date is not None:
+            filters.append(Transaction.date <= end_date)
+        if min_amount is not None:
+            filters.append(Transaction.amount >= min_amount)
+        if max_amount is not None:
+            filters.append(Transaction.amount <= max_amount)
+        if description_search:
+            search_term = f"%{description_search.lower()}%"
+            filters.append(
+                or_(
+                    func.lower(Transaction.description).like(search_term),
+                    func.lower(Transaction.normalized_description).like(search_term),
+                )
+            )
+        if transaction_type == "debit":
+            filters.append(Transaction.amount < 0)
+        elif transaction_type == "credit":
+            filters.append(Transaction.amount > 0)
+        if exclude_from_analytics:
+            filters.append(Transaction.exclude_from_analytics.is_(False))
+
+        if filters:
+            query = query.filter(and_(*filters))
+
+        results = query.group_by(Transaction.counterparty_account_id).all()
+
+        totals = {}
+        for (
+            counterparty_account_id,
+            total_amount,
+            transaction_count,
+        ) in results:
+            totals[counterparty_account_id] = {
+                "total_amount": Decimal(str(total_amount)) if total_amount else Decimal("0"),
+                "transaction_count": Decimal(str(transaction_count)),
+            }
+
+        return totals
+
     def get_category_time_series(
         self,
         user_id: UUID,

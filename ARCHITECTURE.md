@@ -92,7 +92,7 @@ All routes under `/api/v1`, all require authentication.
 
 | Domain | Endpoints | Key Operations |
 |--------|-----------|---------------|
-| Transactions | 11 | CRUD, bulk categorise/tag, category totals, time series, recurring patterns |
+| Transactions | 12 | CRUD, bulk categorise/tag, category totals, counterparty totals, time series, recurring patterns |
 | Statements | 6 | Analyse (schema detect + preview), upload, preview-filter, preview-statistics |
 | Categories | 7 | CRUD, CSV import, AI suggestions, generate from transactions |
 | Accounts | 6 | CRUD, CSV import, initial balance |

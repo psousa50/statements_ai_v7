@@ -50,6 +50,16 @@ export interface CategoryTotalsResponse {
   totals: CategoryTotal[]
 }
 
+export interface CounterpartyTotal {
+  counterparty_account_id?: string
+  total_amount: number
+  transaction_count: number
+}
+
+export interface CounterpartyTotalsResponse {
+  totals: CounterpartyTotal[]
+}
+
 export interface CategoryTimeSeriesDataPoint {
   period: string
   category_id?: string
@@ -177,6 +187,7 @@ export interface TransactionClient {
   getAll(filters?: TransactionFilters): Promise<TransactionListResponse>
   exportCSV(filters?: Omit<TransactionFilters, 'page' | 'page_size'>): Promise<void>
   getCategoryTotals(filters?: Omit<TransactionFilters, 'page' | 'page_size'>): Promise<CategoryTotalsResponse>
+  getCounterpartyTotals(filters?: Omit<TransactionFilters, 'page' | 'page_size'>): Promise<CounterpartyTotalsResponse>
   getCategoryTimeSeries(
     categoryId?: string,
     period?: 'month' | 'week',
@@ -398,6 +409,38 @@ export const transactionClient: TransactionClient = {
 
     const url = params.toString() ? `${API_URL}/category-totals?${params.toString()}` : `${API_URL}/category-totals`
     const response = await axiosInstance.get<CategoryTotalsResponse>(url)
+    return response.data
+  },
+
+  async getCounterpartyTotals(filters?: Omit<TransactionFilters, 'page' | 'page_size'>) {
+    const params = new URLSearchParams()
+
+    if (filters?.min_amount !== undefined) {
+      params.append('min_amount', filters.min_amount.toString())
+    }
+    if (filters?.max_amount !== undefined) {
+      params.append('max_amount', filters.max_amount.toString())
+    }
+    if (filters?.description_search) {
+      params.append('description_search', filters.description_search)
+    }
+    if (filters?.account_id) {
+      params.append('account_id', filters.account_id)
+    }
+    if (filters?.start_date) {
+      params.append('start_date', filters.start_date)
+    }
+    if (filters?.end_date) {
+      params.append('end_date', filters.end_date)
+    }
+    if (filters?.transaction_type) {
+      params.append('transaction_type', filters.transaction_type)
+    }
+
+    const url = params.toString()
+      ? `${API_URL}/counterparty-totals?${params.toString()}`
+      : `${API_URL}/counterparty-totals`
+    const response = await axiosInstance.get<CounterpartyTotalsResponse>(url)
     return response.data
   },
 

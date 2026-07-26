@@ -311,6 +311,24 @@ class CategoryTotalsResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class CounterpartyTotalResponse(BaseModel):
+    counterparty_account_id: Optional[UUID] = None
+    total_amount: Decimal
+    transaction_count: int
+
+    model_config = ConfigDict(from_attributes=True)
+
+    @field_serializer("total_amount")
+    def serialize_total_amount(self, value: Decimal) -> float:
+        return float(value)
+
+
+class CounterpartyTotalsResponse(BaseModel):
+    totals: Sequence[CounterpartyTotalResponse]
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class CategoryTimeSeriesDataPoint(BaseModel):
     period: str
     category_id: Optional[UUID] = None

@@ -99,6 +99,16 @@ const defaultTransactionClient: TransactionClient = {
         },
       ],
     } as CategoryTotalsResponse),
+  getCounterpartyTotals: () =>
+    Promise.resolve({
+      totals: [
+        {
+          counterparty_account_id: '1',
+          total_amount: -100,
+          transaction_count: 1,
+        },
+      ],
+    }),
   getCategoryTimeSeries: () =>
     Promise.resolve({
       data_points: [],
