@@ -790,6 +790,7 @@ export const ChartsPage = () => {
   }
 
   const isCounterparty = groupBy === 'counterparty'
+  const isBreakdown = viewMode === 'bar' || viewMode === 'pie'
   const pieData = isCounterparty ? counterpartyChartData : chartData
   const barData = isCounterparty ? counterpartyChartData : visibleChartData
   const activeLoading = isCounterparty ? counterpartyTotalsLoading || accountsLoading : loading
@@ -966,107 +967,71 @@ export const ChartsPage = () => {
             </div>
 
             <div className="charts-controls">
-              {(viewMode === 'bar' || viewMode === 'pie') && (
-                <>
-                  <div className="control-group">
-                    <span className="control-label">Group by</span>
-                    <div className="segmented">
-                      <button
-                        onClick={() => handleGroupByChange('category')}
-                        className={groupBy === 'category' ? 'active' : ''}
-                      >
-                        Category
-                      </button>
-                      <button
-                        onClick={() => handleGroupByChange('counterparty')}
-                        className={groupBy === 'counterparty' ? 'active' : ''}
-                      >
-                        Counterparty
-                      </button>
-                    </div>
-                  </div>
-                  <div className="control-group">
-                    <span className="control-label">Show</span>
-                    <div className="segmented">
-                      <button
-                        onClick={() => setDirection('spending')}
-                        className={direction === 'spending' ? 'active' : ''}
-                      >
-                        Spending
-                      </button>
-                      <button onClick={() => setDirection('income')} className={direction === 'income' ? 'active' : ''}>
-                        Income
-                      </button>
-                    </div>
-                  </div>
-                </>
+              {!isCounterparty && isBreakdown && (
+                <div className="chart-filter-checks">
+                  <label className="regular-only-toggle">
+                    <input
+                      type="checkbox"
+                      checked={essentialsOnly}
+                      onChange={(e) => setEssentialsOnly(e.target.checked)}
+                    />
+                    Essentials only
+                  </label>
+                  <label className="regular-only-toggle">
+                    <input type="checkbox" checked={regularOnly} onChange={(e) => setRegularOnly(e.target.checked)} />
+                    Regular only
+                  </label>
+                </div>
               )}
               <div className="control-group">
+                <span className="control-label">Group by</span>
+                <select
+                  value={groupBy}
+                  onChange={(e) => handleGroupByChange(e.target.value as GroupBy)}
+                  disabled={!isBreakdown}
+                >
+                  <option value="category">Category</option>
+                  <option value="counterparty">Counterparty</option>
+                </select>
+              </div>
+              <div className="control-group">
+                <span className="control-label">Show</span>
+                <select
+                  value={direction}
+                  onChange={(e) => setDirection(e.target.value as Direction)}
+                  disabled={!isBreakdown}
+                >
+                  <option value="spending">Spending</option>
+                  <option value="income">Income</option>
+                </select>
+              </div>
+              <div className="control-group">
                 <span className="control-label">Chart</span>
-                <div className="segmented">
-                  <button onClick={() => handleViewModeChange('bar')} className={viewMode === 'bar' ? 'active' : ''}>
-                    Bar
-                  </button>
-                  <button onClick={() => handleViewModeChange('pie')} className={viewMode === 'pie' ? 'active' : ''}>
-                    Pie
-                  </button>
-                  {!isCounterparty && (
-                    <>
-                      <button
-                        onClick={() => handleViewModeChange('timeseries')}
-                        className={viewMode === 'timeseries' ? 'active' : ''}
-                      >
-                        Time series
-                      </button>
-                      <button
-                        onClick={() => handleViewModeChange('income-spending')}
-                        className={viewMode === 'income-spending' ? 'active' : ''}
-                      >
-                        Income vs spending
-                      </button>
-                    </>
-                  )}
-                </div>
+                <select
+                  value={viewMode}
+                  onChange={(e) =>
+                    handleViewModeChange(e.target.value as 'pie' | 'bar' | 'timeseries' | 'income-spending')
+                  }
+                >
+                  <option value="bar">Bar</option>
+                  <option value="pie">Pie</option>
+                  {!isCounterparty && <option value="timeseries">Time series</option>}
+                  {!isCounterparty && <option value="income-spending">Income vs spending</option>}
+                </select>
               </div>
               {viewMode === 'timeseries' && (
                 <div className="control-group">
                   <span className="control-label">Period</span>
-                  <div className="segmented">
-                    <button
-                      onClick={() => handlePeriodChange('month')}
-                      className={timeSeriesPeriod === 'month' ? 'active' : ''}
-                    >
-                      Monthly
-                    </button>
-                    <button
-                      onClick={() => handlePeriodChange('week')}
-                      className={timeSeriesPeriod === 'week' ? 'active' : ''}
-                    >
-                      Weekly
-                    </button>
-                  </div>
+                  <select
+                    value={timeSeriesPeriod}
+                    onChange={(e) => handlePeriodChange(e.target.value as 'month' | 'week')}
+                  >
+                    <option value="month">Monthly</option>
+                    <option value="week">Weekly</option>
+                  </select>
                 </div>
               )}
-              {!isCounterparty && (viewMode === 'bar' || viewMode === 'pie') && (
-                <div className="control-group">
-                  <span className="control-label">Filter</span>
-                  <div className="filter-checks">
-                    <label className="regular-only-toggle">
-                      <input
-                        type="checkbox"
-                        checked={essentialsOnly}
-                        onChange={(e) => setEssentialsOnly(e.target.checked)}
-                      />
-                      Essentials only
-                    </label>
-                    <label className="regular-only-toggle">
-                      <input type="checkbox" checked={regularOnly} onChange={(e) => setRegularOnly(e.target.checked)} />
-                      Regular only
-                    </label>
-                  </div>
-                </div>
-              )}
-              {!isCounterparty && chartType === 'sub' && (viewMode === 'pie' || viewMode === 'bar') && (
+              {!isCounterparty && chartType === 'sub' && isBreakdown && (
                 <button onClick={handleBackToRoot} className="back-button">
                   ← Back to all categories
                 </button>

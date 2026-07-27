@@ -152,53 +152,47 @@
   padding-left: 0.15rem;
 }
 
-.charts-page .segmented {
-  display: inline-flex;
+.charts-page .control-group select {
+  appearance: none;
+  -webkit-appearance: none;
+  background-color: transparent;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' fill='none' stroke='%23999' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'><path d='M2.5 4.5 6 8l3.5-3.5'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 0.65rem center;
   border: 1px solid var(--border-primary);
   border-radius: var(--radius-md);
-  overflow: hidden;
-  align-self: flex-start;
-}
-
-.charts-page .segmented button {
-  background: transparent;
-  border: none;
-  border-left: 1px solid var(--border-primary);
-  padding: 0.5rem 0.95rem;
-  cursor: pointer;
+  padding: 0.5rem 2rem 0.5rem 0.85rem;
   font-family: var(--font-display);
   font-size: 0.72rem;
   font-weight: 600;
-  color: var(--text-secondary);
-  transition: all var(--transition-base);
-  white-space: nowrap;
   text-transform: uppercase;
   letter-spacing: 0.03em;
-}
-
-.charts-page .segmented button:first-child {
-  border-left: none;
-}
-
-.charts-page .segmented button:hover {
   color: var(--text-primary);
-  background: var(--bg-hover);
+  cursor: pointer;
+  transition: all var(--transition-base);
 }
 
-.charts-page .segmented button.active {
-  background: var(--gradient-accent, var(--button-primary));
-  color: var(--text-on-accent);
+.charts-page .control-group select:hover {
+  border-color: var(--border-secondary);
+  background-color: var(--bg-hover);
 }
 
-.charts-page .segmented button.active:hover {
-  filter: brightness(1.04);
+.charts-page .control-group select:focus-visible {
+  outline: 2px solid var(--accent-amber);
+  outline-offset: 1px;
 }
 
-.charts-page .filter-checks {
+.charts-page .control-group select:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.charts-page .chart-filter-checks {
   display: inline-flex;
   align-items: center;
   gap: 1rem;
   min-height: 37px;
+  margin-right: 0.25rem;
 }
 
 .charts-page .regular-only-toggle {
