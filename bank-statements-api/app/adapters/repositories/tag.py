@@ -4,6 +4,7 @@ from uuid import UUID
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
+from app.domain.dto.tag import TagUsage
 from app.domain.models.tag import Tag, transaction_tags
 from app.ports.repositories.tag import TagRepository
 
@@ -18,11 +19,27 @@ class SQLAlchemyTagRepository(TagRepository):
         self.db_session.refresh(tag)
         return tag
 
+    def update(self, tag: Tag) -> Tag:
+        self.db_session.commit()
+        self.db_session.refresh(tag)
+        return tag
+
     def get_by_id(self, tag_id: UUID, user_id: UUID) -> Optional[Tag]:
         return self.db_session.query(Tag).filter(Tag.id == tag_id, Tag.user_id == user_id).first()
 
     def get_all(self, user_id: UUID) -> List[Tag]:
         return self.db_session.query(Tag).filter(Tag.user_id == user_id).order_by(Tag.name).all()
+
+    def get_all_with_usage(self, user_id: UUID) -> List[TagUsage]:
+        rows = (
+            self.db_session.query(Tag, func.count(transaction_tags.c.transaction_id))
+            .outerjoin(transaction_tags, transaction_tags.c.tag_id == Tag.id)
+            .filter(Tag.user_id == user_id)
+            .group_by(Tag.id)
+            .order_by(Tag.name)
+            .all()
+        )
+        return [TagUsage(tag=tag, transaction_count=count) for tag, count in rows]
 
     def get_by_name_ci(self, name: str, user_id: UUID) -> Optional[Tag]:
         return (
@@ -53,10 +70,6 @@ class SQLAlchemyTagRepository(TagRepository):
             )
         )
         self.db_session.commit()
-
-    def has_transactions(self, tag_id: UUID) -> bool:
-        count = self.db_session.query(transaction_tags).filter(transaction_tags.c.tag_id == tag_id).count()
-        return count > 0
 
     def bulk_add_to_transactions(self, transaction_ids: List[UUID], tag_id: UUID) -> int:
         existing = {

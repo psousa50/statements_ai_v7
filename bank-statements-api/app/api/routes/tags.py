@@ -4,7 +4,16 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, FastAPI, status
 
 from app.api.routes.auth import require_current_user
-from app.api.schemas import BulkTagRequest, BulkTagResponse, TagCreate, TagListResponse, TagResponse, TransactionResponse
+from app.api.schemas import (
+    BulkTagRequest,
+    BulkTagResponse,
+    TagCreate,
+    TagListResponse,
+    TagResponse,
+    TagUpdate,
+    TagUsageResponse,
+    TransactionResponse,
+)
 from app.core.config import settings
 from app.core.dependencies import InternalDependencies
 from app.domain.models.user import User
@@ -21,7 +30,16 @@ def register_tag_routes(
         internal: InternalDependencies = Depends(provide_dependencies),
         current_user: User = Depends(require_current_user),
     ):
-        tags = internal.tag_service.get_all_tags(current_user.id)
+        usages = internal.tag_service.get_all_tags_with_usage(current_user.id)
+        tags = [
+            TagUsageResponse(
+                id=usage.tag.id,
+                name=usage.tag.name,
+                created_at=usage.tag.created_at,
+                transaction_count=usage.transaction_count,
+            )
+            for usage in usages
+        ]
         return TagListResponse(tags=tags, total=len(tags))
 
     @tag_router.post(
@@ -38,6 +56,27 @@ def register_tag_routes(
             name=tag_data.name,
             user_id=current_user.id,
         )
+
+    @tag_router.patch("/{tag_id}", response_model=TagResponse)
+    def rename_tag(
+        tag_id: UUID,
+        tag_data: TagUpdate,
+        internal: InternalDependencies = Depends(provide_dependencies),
+        current_user: User = Depends(require_current_user),
+    ):
+        return internal.tag_service.rename_tag(
+            tag_id=tag_id,
+            name=tag_data.name,
+            user_id=current_user.id,
+        )
+
+    @tag_router.delete("/{tag_id}", status_code=status.HTTP_204_NO_CONTENT)
+    def delete_tag(
+        tag_id: UUID,
+        internal: InternalDependencies = Depends(provide_dependencies),
+        current_user: User = Depends(require_current_user),
+    ):
+        internal.tag_service.delete_tag(tag_id, current_user.id)
 
     @tag_router.post("/bulk-add", response_model=BulkTagResponse)
     def bulk_add_tag(

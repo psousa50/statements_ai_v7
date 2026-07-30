@@ -1,8 +1,8 @@
-import { Tag, Transaction } from '../types/Transaction'
+import { Tag, TagWithUsage, Transaction } from '../types/Transaction'
 import { axiosInstance } from './ApiClient'
 
 export interface TagListResponse {
-  tags: Tag[]
+  tags: TagWithUsage[]
   total: number
 }
 
@@ -14,6 +14,8 @@ export interface BulkTagResponse {
 export interface TagClient {
   getAll(): Promise<TagListResponse>
   create(name: string): Promise<Tag>
+  rename(tagId: string, name: string): Promise<Tag>
+  delete(tagId: string): Promise<void>
   addToTransaction(transactionId: string, tagId: string): Promise<Transaction>
   removeFromTransaction(transactionId: string, tagId: string): Promise<Transaction>
   bulkAddToTransactions(transactionIds: string[], tagId: string): Promise<BulkTagResponse>
@@ -32,6 +34,15 @@ export const tagClient: TagClient = {
   async create(name: string) {
     const response = await axiosInstance.post<Tag>(TAGS_URL, { name })
     return response.data
+  },
+
+  async rename(tagId: string, name: string) {
+    const response = await axiosInstance.patch<Tag>(`${TAGS_URL}/${tagId}`, { name })
+    return response.data
+  },
+
+  async delete(tagId: string) {
+    await axiosInstance.delete(`${TAGS_URL}/${tagId}`)
   },
 
   async addToTransaction(transactionId: string, tagId: string) {

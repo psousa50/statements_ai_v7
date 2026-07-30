@@ -4,6 +4,7 @@ from uuid import uuid4
 import pytest
 
 from app.api.errors import ConflictError, NotFoundError, ValidationError
+from app.domain.dto.tag import TagUsage
 from app.domain.models.tag import Tag
 from app.domain.models.transaction import Transaction
 from app.ports.repositories.tag import TagRepository
@@ -83,6 +84,71 @@ class TestTagService:
         assert result == [sample_tag]
         mock_tag_repository.get_all.assert_called_once_with(user_id)
 
+    def test_get_all_tags_with_usage(self, service, mock_tag_repository, user_id, sample_tag):
+        usage = TagUsage(tag=sample_tag, transaction_count=7)
+        mock_tag_repository.get_all_with_usage.return_value = [usage]
+
+        result = service.get_all_tags_with_usage(user_id)
+
+        assert result == [usage]
+        mock_tag_repository.get_all_with_usage.assert_called_once_with(user_id)
+
+    def test_rename_tag(self, service, mock_tag_repository, sample_tag, user_id):
+        mock_tag_repository.get_by_id.return_value = sample_tag
+        mock_tag_repository.get_by_name_ci.return_value = None
+        mock_tag_repository.update.return_value = sample_tag
+
+        result = service.rename_tag(tag_id=sample_tag.id, name="  Holidays  ", user_id=user_id)
+
+        assert result == sample_tag
+        assert sample_tag.name == "Holidays"
+        mock_tag_repository.update.assert_called_once_with(sample_tag)
+
+    def test_rename_tag_to_same_name_is_allowed(self, service, mock_tag_repository, sample_tag, user_id):
+        mock_tag_repository.get_by_id.return_value = sample_tag
+        mock_tag_repository.get_by_name_ci.return_value = sample_tag
+        mock_tag_repository.update.return_value = sample_tag
+
+        service.rename_tag(tag_id=sample_tag.id, name="Holiday", user_id=user_id)
+
+        mock_tag_repository.update.assert_called_once_with(sample_tag)
+
+    def test_rename_tag_to_existing_name_raises_conflict(self, service, mock_tag_repository, sample_tag, user_id):
+        mock_tag_repository.get_by_id.return_value = sample_tag
+        mock_tag_repository.get_by_name_ci.return_value = Tag(id=uuid4(), name="groceries", user_id=user_id)
+
+        with pytest.raises(ConflictError, match="already exists"):
+            service.rename_tag(tag_id=sample_tag.id, name="Groceries", user_id=user_id)
+
+        mock_tag_repository.update.assert_not_called()
+
+    def test_rename_tag_blank_name_raises(self, service, mock_tag_repository, sample_tag, user_id):
+        mock_tag_repository.get_by_id.return_value = sample_tag
+
+        with pytest.raises(ValidationError, match="cannot be blank"):
+            service.rename_tag(tag_id=sample_tag.id, name="   ", user_id=user_id)
+
+    def test_rename_tag_not_found_raises(self, service, mock_tag_repository, user_id):
+        mock_tag_repository.get_by_id.return_value = None
+
+        with pytest.raises(NotFoundError, match="Tag not found"):
+            service.rename_tag(tag_id=uuid4(), name="Holidays", user_id=user_id)
+
+    def test_delete_tag(self, service, mock_tag_repository, sample_tag, user_id):
+        mock_tag_repository.get_by_id.return_value = sample_tag
+
+        service.delete_tag(sample_tag.id, user_id)
+
+        mock_tag_repository.delete.assert_called_once_with(sample_tag.id, user_id)
+
+    def test_delete_tag_not_found_raises(self, service, mock_tag_repository, user_id):
+        mock_tag_repository.get_by_id.return_value = None
+
+        with pytest.raises(NotFoundError, match="Tag not found"):
+            service.delete_tag(uuid4(), user_id)
+
+        mock_tag_repository.delete.assert_not_called()
+
     def test_add_tag_to_transaction(
         self,
         service,
@@ -155,7 +221,6 @@ class TestTagService:
     ):
         mock_tag_repository.get_by_id.return_value = sample_tag
         mock_transaction_repository.get_by_id.return_value = sample_transaction
-        mock_tag_repository.has_transactions.return_value = True
 
         service.remove_tag_from_transaction(
             transaction_id=sample_transaction.id,
@@ -164,9 +229,8 @@ class TestTagService:
         )
 
         mock_tag_repository.remove_from_transaction.assert_called_once_with(sample_transaction.id, sample_tag.id)
-        mock_tag_repository.delete.assert_not_called()
 
-    def test_remove_tag_deletes_orphan(
+    def test_remove_tag_keeps_orphaned_tag(
         self,
         service,
         mock_tag_repository,
@@ -177,7 +241,6 @@ class TestTagService:
     ):
         mock_tag_repository.get_by_id.return_value = sample_tag
         mock_transaction_repository.get_by_id.return_value = sample_transaction
-        mock_tag_repository.has_transactions.return_value = False
 
         service.remove_tag_from_transaction(
             transaction_id=sample_transaction.id,
@@ -185,8 +248,7 @@ class TestTagService:
             user_id=user_id,
         )
 
-        mock_tag_repository.remove_from_transaction.assert_called_once()
-        mock_tag_repository.delete.assert_called_once_with(sample_tag.id, user_id)
+        mock_tag_repository.delete.assert_not_called()
 
     def test_bulk_add_tag_to_transactions(
         self,

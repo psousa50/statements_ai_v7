@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from typing import List, Optional
 from uuid import UUID
 
+from app.domain.dto.tag import TagUsage
 from app.domain.models.tag import Tag
 
 
@@ -11,11 +12,19 @@ class TagRepository(ABC):
         pass
 
     @abstractmethod
+    def update(self, tag: Tag) -> Tag:
+        pass
+
+    @abstractmethod
     def get_by_id(self, tag_id: UUID, user_id: UUID) -> Optional[Tag]:
         pass
 
     @abstractmethod
     def get_all(self, user_id: UUID) -> List[Tag]:
+        pass
+
+    @abstractmethod
+    def get_all_with_usage(self, user_id: UUID) -> List[TagUsage]:
         pass
 
     @abstractmethod
@@ -32,10 +41,6 @@ class TagRepository(ABC):
 
     @abstractmethod
     def remove_from_transaction(self, transaction_id: UUID, tag_id: UUID) -> None:
-        pass
-
-    @abstractmethod
-    def has_transactions(self, tag_id: UUID) -> bool:
         pass
 
     @abstractmethod

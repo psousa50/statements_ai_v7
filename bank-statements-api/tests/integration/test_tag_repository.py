@@ -22,6 +22,55 @@ class TestTagRepository:
         assert "holiday" in names
         assert "refund" in names
 
+    def test_update_renames_tag(self, db_session, user_a):
+        repo = SQLAlchemyTagRepository(db_session)
+        tag = repo.create(Tag(name="holiday", user_id=user_a.id))
+
+        tag.name = "Holidays"
+        repo.update(tag)
+
+        db_session.expire_all()
+        assert repo.get_by_id(tag.id, user_a.id).name == "Holidays"
+
+    def test_get_all_with_usage_counts_transactions(self, db_session, user_a, account_for_user_a):
+        tag_repo = SQLAlchemyTagRepository(db_session)
+
+        stmt = Statement(
+            id=uuid4(),
+            filename="test.csv",
+            file_type="CSV",
+            content=b"test",
+            account_id=account_for_user_a.id,
+        )
+        db_session.add(stmt)
+        db_session.flush()
+
+        transactions = []
+        for index in range(2):
+            tx = Transaction(
+                id=uuid4(),
+                user_id=user_a.id,
+                date=date(2024, 1, 15),
+                description="Test",
+                normalized_description="test",
+                amount=Decimal("50.00"),
+                account_id=account_for_user_a.id,
+                statement_id=stmt.id,
+                row_index=index,
+            )
+            db_session.add(tx)
+            transactions.append(tx)
+        db_session.flush()
+
+        used = tag_repo.create(Tag(name="used", user_id=user_a.id))
+        tag_repo.create(Tag(name="unused", user_id=user_a.id))
+        for tx in transactions:
+            tag_repo.add_to_transaction(tx.id, used.id)
+
+        usage_by_name = {u.tag.name: u.transaction_count for u in tag_repo.get_all_with_usage(user_a.id)}
+
+        assert usage_by_name == {"used": 2, "unused": 0}
+
     def test_tag_transaction_association(self, db_session, user_a, account_for_user_a):
         tag_repo = SQLAlchemyTagRepository(db_session)
         tx_repo = SQLAlchemyTransactionRepository(db_session)

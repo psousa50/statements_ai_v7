@@ -4,6 +4,7 @@ import { TransactionCategorizationsPage } from './pages/TransactionCategorizatio
 import { EnhancementRules } from './pages/EnhancementRules'
 import { CategoriesPage } from './pages/Categories'
 import { AccountsPage } from './pages/Accounts'
+import { TagsPage } from './pages/Tags'
 import { ChartsPage } from './pages/Charts'
 import { SavingsPage } from './pages/Savings'
 import { RecurringExpensesPage } from './pages/RecurringExpensesPage'
@@ -48,6 +49,7 @@ const router = createBrowserRouter(
         { path: 'enhancement-rules', element: <EnhancementRules /> },
         { path: 'categories', element: <CategoriesPage /> },
         { path: 'accounts', element: <AccountsPage /> },
+        { path: 'tags', element: <TagsPage /> },
         { path: 'charts', element: <ChartsPage /> },
         { path: 'savings', element: <SavingsPage /> },
         { path: 'recurring', element: <RecurringExpensesPage /> },

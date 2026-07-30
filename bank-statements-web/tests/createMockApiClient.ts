@@ -435,6 +435,8 @@ export const createMockApiClient = (overrides: ApiClientOverrides = {}): ApiClie
     tags: {
       getAll: vi.fn().mockResolvedValue({ tags: [], total: 0 }),
       create: vi.fn().mockResolvedValue({ id: 'mock-tag-id', name: 'mock-tag', created_at: '' }),
+      rename: vi.fn().mockResolvedValue({ id: 'mock-tag-id', name: 'renamed-tag', created_at: '' }),
+      delete: vi.fn().mockResolvedValue(undefined),
       addToTransaction: vi.fn().mockResolvedValue({}),
       removeFromTransaction: vi.fn().mockResolvedValue({}),
       bulkAddToTransactions: vi.fn().mockResolvedValue({ tagged_count: 0, message: '' }),

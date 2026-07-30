@@ -6,6 +6,7 @@ import UploadFileIcon from '@mui/icons-material/UploadFile'
 import BarChartIcon from '@mui/icons-material/BarChart'
 import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh'
 import AccountTreeIcon from '@mui/icons-material/AccountTree'
+import LocalOfferIcon from '@mui/icons-material/LocalOffer'
 import AccountBalanceIcon from '@mui/icons-material/AccountBalance'
 import DescriptionIcon from '@mui/icons-material/Description'
 import RepeatIcon from '@mui/icons-material/Repeat'
@@ -55,6 +56,7 @@ const navSections: NavSection[] = [
     icon: <SettingsIcon fontSize="small" />,
     items: [
       { path: '/categories', label: 'Categories', icon: <AccountTreeIcon /> },
+      { path: '/tags', label: 'Tags', icon: <LocalOfferIcon /> },
       { path: '/enhancement-rules', label: 'Enhancement Rules', icon: <AutoFixHighIcon /> },
       { path: '/accounts', label: 'Accounts', icon: <AccountBalanceIcon /> },
       { path: '/settings/billing', label: 'Billing', icon: <PaymentIcon /> },

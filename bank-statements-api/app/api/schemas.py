@@ -28,6 +28,18 @@ class TagCreate(BaseModel):
         return stripped
 
 
+class TagUpdate(BaseModel):
+    name: str = Field(..., min_length=1, max_length=50)
+
+    @field_validator("name")
+    @classmethod
+    def validate_name(cls, v: str) -> str:
+        stripped = v.strip()
+        if not stripped:
+            raise ValueError("Tag name cannot be blank")
+        return stripped
+
+
 class TagResponse(BaseModel):
     id: UUID
     name: str
@@ -36,8 +48,12 @@ class TagResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class TagUsageResponse(TagResponse):
+    transaction_count: int
+
+
 class TagListResponse(BaseModel):
-    tags: Sequence[TagResponse]
+    tags: Sequence[TagUsageResponse]
     total: int
 
     model_config = ConfigDict(from_attributes=True)

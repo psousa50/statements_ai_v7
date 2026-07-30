@@ -40,7 +40,7 @@ bank-statements-api/
 
 bank-statements-web/
 ├── src/
-│   ├── pages/                   # Route components (15 pages)
+│   ├── pages/                   # Route components (16 pages)
 │   ├── components/              # Feature-organised UI (layout, upload, charts, modals)
 │   ├── services/hooks/          # TanStack Query hooks per domain
 │   ├── api/                     # Typed API clients per entity + ApiContext
@@ -77,7 +77,7 @@ bin/                             # Shell scripts (dev, db, deploy, test)
 | `enhancement_rules` | Pattern matching rules with AI suggestion fields; can carry a split template (`enhancement_rule_split_lines`) that auto-splits a matched transaction into children — fixed-amount lines plus one remainder line that absorbs any drift |
 | `enhancement_rule_patterns` | Ordered list of `(normalized_description, match_type)` rows per rule. A rule matches a transaction if ANY of its patterns matches. Replaces both the old single-pattern column and the separate description-groups concept |
 | `enhancement_rule_split_lines` | Ordered child rows of an enhancement rule (label, amount, is_remainder, category_id). Applied post-save on upload and during retroactive "apply rule" |
-| `tags` | M2M with transactions via junction table |
+| `tags` | M2M with transactions via junction table; names unique per user (case-insensitive). Tags are durable entities managed on the Tags page — untagging the last transaction leaves the tag in place, and deleting a tag drops its transaction associations via cascade |
 | `subscriptions` | One per user; tier (free/basic/pro) with Stripe integration |
 | `subscription_usage` | Monthly counters for statements and AI calls |
 | `filter_presets` | Saved filter configurations as JSONB |
@@ -97,7 +97,7 @@ All routes under `/api/v1`, all require authentication.
 | Categories | 7 | CRUD, CSV import, AI suggestions, generate from transactions |
 | Accounts | 6 | CRUD, CSV import, initial balance |
 | Enhancement Rules | 6 | CRUD, apply rule, preview matches, AI suggestions |
-| Tags | 5 | CRUD, add/remove from transaction, bulk add |
+| Tags | 7 | CRUD (list includes per-tag transaction counts), rename, delete, add/remove from transaction, bulk add |
 | Auth | 7 | Register, login, OAuth (Google), refresh, logout, test-login |
 | Chat | 1 | Streaming chat with financial insights |
 | Filter Presets | 4 | CRUD for saved filters |

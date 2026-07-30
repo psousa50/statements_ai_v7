@@ -29,6 +29,26 @@ export const useTags = () => {
     },
   })
 
+  const renameMutation = useMutation({
+    mutationFn: async ({ tagId, name }: { tagId: string; name: string }) => {
+      return api.tags.rename(tagId, name)
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: TAG_QUERY_KEYS.all })
+      queryClient.invalidateQueries({ queryKey: TRANSACTION_QUERY_KEYS.all })
+    },
+  })
+
+  const deleteMutation = useMutation({
+    mutationFn: async (tagId: string) => {
+      await api.tags.delete(tagId)
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: TAG_QUERY_KEYS.all })
+      queryClient.invalidateQueries({ queryKey: TRANSACTION_QUERY_KEYS.all })
+    },
+  })
+
   const addToTransactionMutation = useMutation({
     mutationFn: async ({ transactionId, tagId }: { transactionId: string; tagId: string }) => {
       return api.tags.addToTransaction(transactionId, tagId)
@@ -70,6 +90,29 @@ export const useTags = () => {
     [createMutation]
   )
 
+  const renameTag = useCallback(
+    async (tagId: string, name: string) => {
+      try {
+        return await renameMutation.mutateAsync({ tagId, name })
+      } catch {
+        return null
+      }
+    },
+    [renameMutation]
+  )
+
+  const deleteTag = useCallback(
+    async (tagId: string) => {
+      try {
+        await deleteMutation.mutateAsync(tagId)
+        return true
+      } catch {
+        return false
+      }
+    },
+    [deleteMutation]
+  )
+
   const addTagToTransaction = useCallback(
     async (transactionId: string, tagId: string) => {
       try {
@@ -108,9 +151,12 @@ export const useTags = () => {
     loading: tagsQuery.isLoading,
     error: tagsQuery.error?.message || null,
     createTag,
+    renameTag,
+    deleteTag,
     addTagToTransaction,
     removeTagFromTransaction,
     bulkAddTag,
     isCreating: createMutation.isPending,
+    isSaving: createMutation.isPending || renameMutation.isPending || deleteMutation.isPending,
   }
 }
