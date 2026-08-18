@@ -2,10 +2,12 @@
 set -uo pipefail
 
 APP="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-CHECKOUT="$(dirname "$APP")"
 
+CONTAINER="${BSAI_API_DB_CONTAINER:-bsai-api-db}"
+DB_PORT="${BSAI_API_DB_PORT:-15442}"
+DB_NAME="${BSAI_API_DB_NAME:-bsai_api_behavioural}"
+DB="${BSAI_API_DATABASE_URL:-postgresql+psycopg://postgres:postgres@localhost:$DB_PORT/$DB_NAME}"
 PORT="${BSAI_API_PORT:-8020}"
-DB="${BSAI_API_DATABASE_URL:-postgresql+psycopg://postgres:postgres@localhost:15432/bank_statements_test}"
 PIDFILE="${BSAI_API_PIDFILE:-$APP/.bsai-api.pid}"
 LOGFILE="${BSAI_API_LOGFILE:-$APP/.bsai-api.log}"
 READY_TIMEOUT="${BSAI_API_READY_TIMEOUT:-90}"
@@ -15,11 +17,28 @@ APP_FAILURE=1
 
 "$APP/bin/down" >/dev/null 2>&1
 
-cd "$CHECKOUT" || exit $HARNESS_ERROR
-if ! docker compose --profile test up test-db -d --wait >/dev/null 2>&1; then
-    echo "up: could not bring up the test database" >&2
-    exit $HARNESS_ERROR
+# The harness owns its database container outright. It deliberately does not use the
+# repository's compose service: that pins container_name, so a second checkout — which is
+# exactly what slipway runs every step in — collides with the first and nothing runs.
+if [ -z "$(docker ps -q -f "name=^${CONTAINER}$" 2>/dev/null)" ]; then
+    if [ -n "$(docker ps -aq -f "name=^${CONTAINER}$" 2>/dev/null)" ]; then
+        docker start "$CONTAINER" >/dev/null 2>&1
+    else
+        docker run -d --name "$CONTAINER" \
+            -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB="$DB_NAME" \
+            -p "$DB_PORT:5432" postgres:15 >/dev/null 2>&1
+    fi
+    [ $? -eq 0 ] || { echo "up: could not start the database container $CONTAINER" >&2; exit $HARNESS_ERROR; }
 fi
+
+deadline=$(( $(date +%s) + 60 ))
+until docker exec "$CONTAINER" pg_isready -U postgres -d "$DB_NAME" >/dev/null 2>&1; do
+    if [ "$(date +%s)" -ge "$deadline" ]; then
+        echo "up: database container $CONTAINER never became ready" >&2
+        exit $HARNESS_ERROR
+    fi
+    sleep 0.3
+done
 
 cd "$APP" || exit $HARNESS_ERROR
 if ! DATABASE_URL="$DB" uv run alembic upgrade head >/dev/null 2>&1; then

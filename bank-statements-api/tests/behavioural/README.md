@@ -29,7 +29,11 @@ bypass, gated on `E2E_TEST_MODE`. It resolves to one fixed user, `e2e-test@examp
 **every test in this suite is that same user.** That is chosen, not accidental — see the
 isolation strategy below.
 
-**Which dependencies are real.** Postgres is real, on the compose `test-db`. The LLM provider
+**Which dependencies are real.** Postgres is real, in a container this harness owns —
+`bsai-api-db` on port 15442, database `bsai_api_behavioural`. It deliberately does *not* use
+the repository's compose `test-db` service, which pins `container_name`: slipway runs every
+step in a separate git worktree, and a pinned name means the second checkout collides with
+the first and no test runs at all. The LLM provider
 is not: `E2E_TEST_MODE=true` swaps in `NoopLLMClient`. **So any test touching AI
 categorisation or chat describes the stub, not a real model.** Do not write assertions here
 that only a real provider could satisfy, and do not read a green suite as evidence that
@@ -60,7 +64,7 @@ today against 200 rows behaves differently against 200,000. The reset is to dest
 database and let `bin/up` migrate a fresh one:
 
 ```
-docker compose --profile test rm -sfv test-db
+docker rm -f bsai-api-db
 ```
 
 Do that between tasks, and always before a mutation campaign.
@@ -93,7 +97,8 @@ use.
 | `APP_DIR` | the checkout to test. Required. |
 | `BSAI_API_APP_SUBDIR` | where the application sits inside it. Falls back to `APP_SUBDIR`, then to this suite's own location. |
 | `BSAI_API_RECORD_DIR` | where `invocations.jsonl` is appended. Defaults to `$APP_DIR/.bsai-api/`. |
-| `BSAI_API_DATABASE_URL` | defaults to the compose `test-db` on 15432. |
+| `BSAI_API_DATABASE_URL` | defaults to `bsai_api_behavioural` on 15442, in this harness's own container. |
+| `BSAI_API_DB_CONTAINER`, `BSAI_API_DB_PORT`, `BSAI_API_DB_NAME` | the container `bin/up` starts if nothing is already listening. |
 | `BSAI_API_PORT` | defaults to 8020. |
 | `BSAI_API_SEED` | seeds generated names. Recorded every run. |
 
