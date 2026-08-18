@@ -1,0 +1,4 @@
+# How runs are configured. What is verified is named per component, in
+# .slipway/components/<name>/config — one directory each, however many there are.
+# What belongs here: WORKSPACE, MODEL, MODEL_<STEP>, RESOLVER_<GATE>, VERIFY_CAP,
+# SPEC_ATTEMPTS, LABEL.

@@ -1,0 +1,110 @@
+#!/usr/bin/env bash
+set -uo pipefail
+
+PASSED=0
+APP_FAILURE=1
+TESTS_FAILED=2
+HARNESS_ERROR=3
+
+fail_harness() { echo "bsai-api-verify: $1" >&2; exit $HARNESS_ERROR; }
+
+[ -n "${APP_DIR:-}" ] || fail_harness "APP_DIR is not set — it names the checkout to test"
+CHECKOUT="$(cd "$APP_DIR" 2>/dev/null && pwd)" || fail_harness "APP_DIR does not exist: $APP_DIR"
+
+HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DERIVED="$(cd "$HERE/../../.." && basename "$(pwd)")"
+SUBDIR="${BSAI_API_APP_SUBDIR:-${APP_SUBDIR:-$DERIVED}}"
+APP="$CHECKOUT/$SUBDIR"
+[ -d "$APP" ] || fail_harness "no application at $APP"
+
+RECORD_DIR="${BSAI_API_RECORD_DIR:-$CHECKOUT/.bsai-api}"
+mkdir -p "$RECORD_DIR" || fail_harness "cannot write to $RECORD_DIR"
+
+PORT="${BSAI_API_PORT:-8020}"
+SEED="${BSAI_API_SEED:-$(python3 -c 'import secrets; print(secrets.token_hex(8))')}"
+RUN_ID="$(python3 -c 'import uuid; print(uuid.uuid4())')"
+STARTED_AT="$(python3 -c 'import datetime; print(datetime.datetime.now(datetime.timezone.utc).isoformat())')"
+STARTED_MS="$(python3 -c 'import time; print(int(time.time()*1000))')"
+
+RESULT_JSON="$(mktemp)"
+PIDFILE="$APP/.bsai-api.pid"
+
+write_record() {
+    local outcome="$1" app_exit="$2"
+    BSAI_RECORD_DIR="$RECORD_DIR" \
+    BSAI_RESULT_JSON="$RESULT_JSON" \
+    BSAI_RUN_ID="$RUN_ID" \
+    BSAI_STARTED_AT="$STARTED_AT" \
+    BSAI_STARTED_MS="$STARTED_MS" \
+    BSAI_OUTCOME="$outcome" \
+    BSAI_SEED="$SEED" \
+    BSAI_APP_EXIT="$app_exit" \
+    python3 - <<'PY'
+import json, os, time
+
+result = {"summary": {"total": 0, "passed": 0, "failed": 0, "skipped": 0}, "failed": []}
+path = os.environ["BSAI_RESULT_JSON"]
+try:
+    with open(path) as handle:
+        result = json.load(handle)
+except (OSError, ValueError):
+    pass
+
+app_exit = os.environ["BSAI_APP_EXIT"]
+record = {
+    "runId": os.environ["BSAI_RUN_ID"],
+    "startedAt": os.environ["BSAI_STARTED_AT"],
+    "durationMs": int(time.time() * 1000) - int(os.environ["BSAI_STARTED_MS"]),
+    "outcome": os.environ["BSAI_OUTCOME"],
+    "summary": result["summary"],
+    "failed": result["failed"],
+    "seed": os.environ["BSAI_SEED"],
+    "appExitCode": None if app_exit == "" else int(app_exit),
+}
+destination = os.path.join(os.environ["BSAI_RECORD_DIR"], "invocations.jsonl")
+with open(destination, "a") as handle:
+    handle.write(json.dumps(record) + "\n")
+
+summary = record["summary"]
+print()
+print(f"bsai-api-verify: {record['outcome']} in {record['durationMs']}ms (seed {record['seed']})")
+print(f"  {summary['passed']} passed, {summary['failed']} failed, {summary['skipped']} skipped")
+for identifier in record["failed"]:
+    print(f"  failed: {identifier}")
+PY
+}
+
+finish() {
+    local outcome="$1" app_exit="$2" code="$3"
+    write_record "$outcome" "$app_exit"
+    "$APP/bin/down" >/dev/null 2>&1
+    rm -f "$RESULT_JSON"
+    exit "$code"
+}
+
+trap '"$APP/bin/down" >/dev/null 2>&1' EXIT
+
+BSAI_API_PORT="$PORT" "$APP/bin/up"
+up_status=$?
+if [ $up_status -eq $HARNESS_ERROR ]; then
+    finish "harness_error" "" $HARNESS_ERROR
+elif [ $up_status -ne 0 ]; then
+    finish "app_failure" "$up_status" $APP_FAILURE
+fi
+
+cd "$APP" || finish "harness_error" "" $HARNESS_ERROR
+BSAI_API_PORT="$PORT" \
+BSAI_API_SEED="$SEED" \
+BSAI_API_RESULT_JSON="$RESULT_JSON" \
+    uv run pytest tests/behavioural -q -p no:cacheprovider "$@"
+pytest_status=$?
+
+if [ -f "$PIDFILE" ] && ! kill -0 "$(cat "$PIDFILE")" 2>/dev/null; then
+    finish "app_failure" "1" $APP_FAILURE
+fi
+
+case $pytest_status in
+    0) finish "passed" "" $PASSED ;;
+    1) finish "failed" "" $TESTS_FAILED ;;
+    *) finish "harness_error" "" $HARNESS_ERROR ;;
+esac

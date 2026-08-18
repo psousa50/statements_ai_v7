@@ -1,0 +1,2 @@
+APP_SUBDIR=bank-statements-api
+SUITE_DIR=bank-statements-api/tests/behavioural

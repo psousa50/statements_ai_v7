@@ -10,3 +10,7 @@ config/settings.*.yaml
 docs/reviews
 backups/
 *.dump
+# slipway behavioural harness bookkeeping
+.bsai-api/
+bank-statements-api/.bsai-api.pid
+bank-statements-api/.bsai-api.log

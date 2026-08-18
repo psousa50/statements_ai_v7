@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+set -uo pipefail
+
+APP="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+CHECKOUT="$(dirname "$APP")"
+
+PORT="${BSAI_API_PORT:-8020}"
+DB="${BSAI_API_DATABASE_URL:-postgresql+psycopg://postgres:postgres@localhost:15432/bank_statements_test}"
+PIDFILE="${BSAI_API_PIDFILE:-$APP/.bsai-api.pid}"
+LOGFILE="${BSAI_API_LOGFILE:-$APP/.bsai-api.log}"
+READY_TIMEOUT="${BSAI_API_READY_TIMEOUT:-90}"
+
+HARNESS_ERROR=3
+APP_FAILURE=1
+
+"$APP/bin/down" >/dev/null 2>&1
+
+cd "$CHECKOUT" || exit $HARNESS_ERROR
+if ! docker compose --profile test up test-db -d --wait >/dev/null 2>&1; then
+    echo "up: could not bring up the test database" >&2
+    exit $HARNESS_ERROR
+fi
+
+cd "$APP" || exit $HARNESS_ERROR
+if ! DATABASE_URL="$DB" uv run alembic upgrade head >/dev/null 2>&1; then
+    echo "up: alembic upgrade head failed" >&2
+    exit $APP_FAILURE
+fi
+
+DATABASE_URL="$DB" \
+API_PORT="$PORT" \
+API_BASE_URL="http://localhost:$PORT" \
+E2E_TEST_MODE=true \
+    uv run uvicorn app.main:app --host 127.0.0.1 --port "$PORT" --no-access-log \
+    >"$LOGFILE" 2>&1 &
+echo $! >"$PIDFILE"
+APP_PID="$(cat "$PIDFILE")"
+
+deadline=$(( $(date +%s) + READY_TIMEOUT ))
+while :; do
+    if ! kill -0 "$APP_PID" 2>/dev/null; then
+        echo "up: the application exited during startup — see $LOGFILE" >&2
+        exit $APP_FAILURE
+    fi
+    code="$(curl -s -o /dev/null -w '%{http_code}' -X POST \
+        "http://127.0.0.1:$PORT/api/v1/auth/test-login" 2>/dev/null)"
+    [ "$code" = "200" ] && break
+    if [ "$(date +%s)" -ge "$deadline" ]; then
+        echo "up: not ready after ${READY_TIMEOUT}s (last status ${code:-none}) — see $LOGFILE" >&2
+        exit $APP_FAILURE
+    fi
+    sleep 0.3
+done
