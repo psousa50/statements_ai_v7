@@ -31,16 +31,36 @@ if [ -z "$(docker ps -q -f "name=^${CONTAINER}$" 2>/dev/null)" ]; then
     [ $? -eq 0 ] || { echo "up: could not start the database container $CONTAINER" >&2; exit $HARNESS_ERROR; }
 fi
 
-deadline=$(( $(date +%s) + 60 ))
-until docker exec "$CONTAINER" pg_isready -U postgres -d "$DB_NAME" >/dev/null 2>&1; do
-    if [ "$(date +%s)" -ge "$deadline" ]; then
-        echo "up: database container $CONTAINER never became ready" >&2
-        exit $HARNESS_ERROR
-    fi
-    sleep 0.3
-done
-
 cd "$APP" || exit $HARNESS_ERROR
+
+# Readiness is a TCP connection that answers a query on the real url, not `pg_isready` over
+# the container's socket. The image runs a temporary server with listen_addresses='' while it
+# initialises, so a socket check reports ready while the published port has nothing behind it
+# and the migration that follows connects to nobody.
+if ! DATABASE_URL="$DB" uv run python - <<'READY'
+import os
+import sys
+import time
+
+import psycopg
+
+url = os.environ["DATABASE_URL"].replace("+psycopg", "", 1)
+deadline = time.time() + 60
+while True:
+    try:
+        with psycopg.connect(url, connect_timeout=3) as connection:
+            connection.execute("select 1")
+        sys.exit(0)
+    except psycopg.OperationalError:
+        if time.time() >= deadline:
+            sys.exit(1)
+        time.sleep(0.3)
+READY
+then
+    echo "up: database at $DB never became ready" >&2
+    exit $HARNESS_ERROR
+fi
+
 if ! DATABASE_URL="$DB" uv run alembic upgrade head >/dev/null 2>&1; then
     echo "up: alembic upgrade head failed" >&2
     exit $APP_FAILURE
