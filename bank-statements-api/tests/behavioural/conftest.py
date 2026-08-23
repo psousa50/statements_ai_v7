@@ -5,6 +5,8 @@ import random
 import httpx
 import pytest
 
+SUITE = os.path.dirname(os.path.abspath(__file__))
+
 IDS = {}
 FAILED = []
 COUNTS = {"passed": 0, "failed": 0, "skipped": 0}
@@ -20,6 +22,8 @@ def pytest_configure(config):
 def pytest_collection_modifyitems(config, items):
     unmarked = []
     for item in items:
+        if not str(item.path).startswith(SUITE):
+            continue
         marker = item.get_closest_marker("behaviour")
         if marker is None or not marker.args:
             unmarked.append(item.nodeid)
